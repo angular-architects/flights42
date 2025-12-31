@@ -4,6 +4,5 @@ import { Component } from '@angular/core';
   selector: 'app-flight-card',
   imports: [],
   templateUrl: './flight-card.html',
-  styleUrl: './flight-card.css',
 })
 export class FlightCard {}

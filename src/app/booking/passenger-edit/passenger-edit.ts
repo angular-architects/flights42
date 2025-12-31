@@ -4,6 +4,5 @@ import { Component } from '@angular/core';
   selector: 'app-passenger-edit',
   imports: [],
   templateUrl: './passenger-edit.html',
-  styleUrl: './passenger-edit.css',
 })
 export class PassengerEdit {}
