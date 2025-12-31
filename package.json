@@ -8,7 +8,11 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\""
+    "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*": "prettier --write --ignore-unknown"
   },
   "prettier": {
     "printWidth": 100,
@@ -38,9 +42,13 @@
     "@angular/build": "^21.0.4",
     "@angular/cli": "^21.0.4",
     "@angular/compiler-cli": "^21.0.0",
+    "@commitlint/config-conventional": "^20.2.0",
     "angular-eslint": "21.1.0",
+    "commitlint": "^20.2.0",
     "eslint": "^9.39.1",
+    "husky": "^9.1.7",
     "jsdom": "^27.1.0",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.47.0",

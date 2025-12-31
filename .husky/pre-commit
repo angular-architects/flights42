@@ -1,0 +1,5 @@
+# Run prettier (see package.json)
+npx lint-staged
+
+ng lint 
+
