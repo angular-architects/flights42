@@ -31,7 +31,7 @@ export class PassengerSearch {
   protected readonly error = this.store.error;
   protected readonly loaded = this.store.loaded;
 
-  protected readonly basket = this.store.basket;
+  protected readonly selected = this.store.selected;
 
   constructor() {
     this.showError();
@@ -63,7 +63,7 @@ export class PassengerSearch {
     this.store.reload();
   }
 
-  updateBasket(passengerId: number, selected: boolean): void {
-    this.store.updateBasket(passengerId, selected);
+  updateSelected(passengerId: number, selected: boolean): void {
+    this.store.updateSelected(passengerId, selected);
   }
 }

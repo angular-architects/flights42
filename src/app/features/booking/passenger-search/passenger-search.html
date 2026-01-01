@@ -19,8 +19,8 @@
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <app-passenger-card
         [item]="p"
-        [selected]="basket()[p.id]"
-        (selectedChange)="updateBasket(p.id, $event)"
+        [selected]="selected()[p.id]"
+        (selectedChange)="updateSelected(p.id, $event)"
       >
         <button [routerLink]="['/passenger-edit', p.id]">Edit</button>
       </app-passenger-card>
@@ -31,5 +31,5 @@
 <p>&nbsp;</p>
 
 <div>
-  <pre>{{ basket() | json }}</pre>
+  <pre>{{ selected() | json }}</pre>
 </div>

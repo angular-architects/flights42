@@ -4,6 +4,7 @@ import { FlightSearch } from './flight-search/flight-search';
 import { FlightEdit } from './flight-edit/flight-edit';
 import { PassengerSearch } from './passenger-search/passenger-search';
 import { PassengerEdit } from './passenger-edit/passenger-edit';
+import { Summary } from './summary/summary';
 
 export const bookingRoutes: Routes = [
   {
@@ -30,6 +31,10 @@ export const bookingRoutes: Routes = [
       {
         path: 'passenger-edit/:id',
         component: PassengerEdit,
+      },
+      {
+        path: 'summary',
+        component: Summary,
       },
     ],
   },

@@ -424,6 +424,15 @@ body {
   margin-top: 40px;
 }
 
+.mb-40 {
+  margin-bottom: 40px;
+}
+
 .active-tab {
   margin-bottom: 4px solid #3f51b5;
+}
+
+.info {
+  margin-left: 15px;
+  margin-bottom: 0;
 }

@@ -13,9 +13,9 @@ export class PassengerStore {
   private readonly _firstName = signal('');
   readonly firstName = this._firstName.asReadonly();
 
-  // Basket
-  private readonly _basket = signal<Record<number, boolean>>({});
-  readonly basket = this._basket.asReadonly();
+  // Selected
+  private readonly _selected = signal<Record<number, boolean>>({});
+  readonly selected = this._selected.asReadonly();
 
   // PassengerResource
   private readonly passengersResource = this.passengerService.findResource(
@@ -33,9 +33,9 @@ export class PassengerStore {
     this.passengersResource.reload();
   }
 
-  updateBasket(passengerId: number, selected: boolean): void {
-    this._basket.update((basket) => ({
-      ...basket,
+  updateSelected(passengerId: number, selected: boolean): void {
+    this._selected.update((current) => ({
+      ...current,
       [passengerId]: selected,
     }));
   }
