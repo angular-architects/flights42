@@ -1,9 +1,5 @@
 import { Routes } from '@angular/router';
 import { Home } from './shell/home/home';
-import { FlightSearch } from './features/booking/flight-search/flight-search';
-import { FlightEdit } from './features/booking/flight-edit/flight-edit';
-import { PassengerSearch } from './features/booking/passenger-search/passenger-search';
-import { PassengerEdit } from './features/booking/passenger-edit/passenger-edit';
 import { NextFlights } from './features/next-flights/next-flights';
 import { Luggage } from './features/luggage/luggage';
 import { Checkin } from './features/checkin/checkin';
@@ -20,20 +16,8 @@ export const routes: Routes = [
     component: Home,
   },
   {
-    path: 'flight-search',
-    component: FlightSearch,
-  },
-  {
-    path: 'flight-edit/:id',
-    component: FlightEdit,
-  },
-  {
-    path: 'passenger-search',
-    component: PassengerSearch,
-  },
-  {
-    path: 'passenger-edit/:id',
-    component: PassengerEdit,
+    path: 'booking',
+    loadChildren: () => import('./features/booking/booking.routes'), //.then(m => m.bookingRoutes),
   },
   {
     path: 'next-flights',

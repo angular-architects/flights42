@@ -1,0 +1,19 @@
+<div class="card">
+  <div class="card-body">
+    <ul class="nav nav-secondary">
+      <li>
+        <a [routerLink]="['./flight-search']">Flight</a>
+      </li>
+
+      &nbsp; | &nbsp;
+
+      <li>
+        <a [routerLink]="['./passenger-search']">Passenger</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="mt-40">
+  <router-outlet></router-outlet>
+</div>

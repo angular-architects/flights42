@@ -30,14 +30,14 @@ export class LuggageService {
         id: 2002,
         passengerName: 'Maria Garcia',
         weight: 18.2,
-        destination: 'Vienna',
+        destination: 'Wien',
         status: 'In Transit',
       },
       {
         id: 2003,
         passengerName: 'Hans Müller',
         weight: 25.0,
-        destination: 'Frankfurt',
+        destination: 'Graz',
         status: 'Delivered',
       },
     ];
