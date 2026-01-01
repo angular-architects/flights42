@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NextFlightsStore } from './next-flights-store';
-import { FlightCard } from '../booking/flight-card/flight-card';
+import { FlightCard } from '../../shared/flight-card/flight-card';
 import { RouterLink } from '@angular/router';
 
 @Component({

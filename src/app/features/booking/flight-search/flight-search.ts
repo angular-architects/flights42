@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, inject, linkedSignal } from
 import { FlightStore } from './flight-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
-import { FlightCard } from '../flight-card/flight-card';
+import { FlightCard } from '../../../shared/flight-card/flight-card';
 import { JsonPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
