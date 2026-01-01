@@ -1,0 +1,16 @@
+@let itemValue = item();
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="title">Luggage #{{ itemValue.id }}</h2>
+  </div>
+
+  <div class="card-body">
+    <p>Weight: {{ itemValue.weight }} kg</p>
+    <p>Destination: {{ itemValue.destination }}</p>
+    <p>Status: {{ itemValue.status }}</p>
+    <p>
+      <ng-content />
+    </p>
+  </div>
+</div>

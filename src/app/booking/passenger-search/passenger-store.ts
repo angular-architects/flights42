@@ -6,7 +6,7 @@ export class PassengerStore {
   private passengerService = inject(PassengerService);
 
   // Name
-  private readonly _name = signal('');
+  private readonly _name = signal('Smith');
   readonly name = this._name.asReadonly();
 
   // FirstName
