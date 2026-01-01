@@ -52,7 +52,8 @@ td {
 
 h1 {
   margin-top: 0;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  /* margin-bottom: 40px; */
 }
 
 h2.title {
@@ -411,23 +412,6 @@ input[type='button'] {
   background-color: moccasin;
 }
 
-html,
-body {
-  height: 100%;
-}
-body {
-  margin: 0;
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-}
-
-.mt-40 {
-  margin-top: 40px;
-}
-
-.mb-40 {
-  margin-bottom: 40px;
-}
-
 .active-tab {
   margin-bottom: 4px solid #3f51b5;
 }
@@ -435,4 +419,17 @@ body {
 .info {
   margin-left: 15px;
   margin-bottom: 0;
+}
+
+.mt-40 {
+  margin-top: 40px;
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
