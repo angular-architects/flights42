@@ -39,4 +39,8 @@ export class PassengerStore {
       [passengerId]: selected,
     }));
   }
+
+  reload(): void {
+    this.passengersResource.reload();
+  }
 }

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, linkedSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+  untracked,
+} from '@angular/core';
 import { FlightStore } from './flight-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
@@ -26,8 +34,45 @@ export class FlightSearch {
 
   protected readonly basket = this.store.basket;
 
+  protected readonly flightRoute = computed(() => this.from() + ' - ' + this.to());
+  // protected readonly flightRoute2 = computed(() => this.from() + ' - ' + untracked(() => this.to()));
+
   constructor() {
     this.showError();
+
+    effect(() => {
+      this.logStuff();
+    });
+
+    this.connectFilter();
+  }
+
+  private connectFilter() {
+    effect(() => {
+      const from = this.from();
+      const to = this.to();
+      untracked(() => {
+        this.store.updateFilter(from, to);
+      });
+    });
+  }
+
+  search(): void {
+    // this.store.updateFilter(this.from(), this.to());
+    this.store.reload();
+  }
+
+  updateBasket(flightId: number, selected: boolean): void {
+    this.store.updateBasket(flightId, selected);
+  }
+
+  delay(): void {
+    this.store.delay();
+  }
+
+  private logStuff() {
+    console.log('from', this.from());
+    console.log('to', this.to());
   }
 
   private showError() {
@@ -38,17 +83,5 @@ export class FlightSearch {
         this.snackBar.open(message, 'OK');
       }
     });
-  }
-
-  search(): void {
-    this.store.updateFilter(this.from(), this.to());
-  }
-
-  updateBasket(flightId: number, selected: boolean): void {
-    this.store.updateBasket(flightId, selected);
-  }
-
-  delay(): void {
-    this.store.delay();
   }
 }

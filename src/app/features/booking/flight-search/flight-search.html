@@ -10,6 +10,9 @@
     <input [(ngModel)]="to" id="to" name="to" />
   </div>
   <div>
+    {{ flightRoute() }}
+  </div>
+  <div>
     <button (click)="search()">Search</button>
     <button (click)="delay()">Delay</button>
   </div>

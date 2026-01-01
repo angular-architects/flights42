@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, inject, linkedSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  linkedSignal,
+  untracked,
+} from '@angular/core';
 import { PassengerStore } from './passenger-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +35,7 @@ export class PassengerSearch {
 
   constructor() {
     this.showError();
+    this.connectFilter();
   }
 
   private showError() {
@@ -40,8 +48,19 @@ export class PassengerSearch {
     });
   }
 
+  private connectFilter() {
+    effect(() => {
+      const name = this.name();
+      const firstName = this.firstName();
+      untracked(() => {
+        this.store.updateFilter(name, firstName);
+      });
+    });
+  }
+
   search(): void {
-    this.store.updateFilter(this.name(), this.firstName());
+    // this.store.updateFilter(this.name(), this.firstName());
+    this.store.reload();
   }
 
   updateBasket(passengerId: number, selected: boolean): void {
