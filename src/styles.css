@@ -196,6 +196,10 @@ form {
   margin-bottom: 40px;
 }
 
+.small-form {
+  max-width: 400px;
+}
+
 .form-group,
 form > div {
   margin-bottom: 1rem;

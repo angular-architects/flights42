@@ -13,12 +13,17 @@ export const routes: Routes = [
     component: Home,
   },
   {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+  },
+  {
     path: 'booking',
     loadChildren: () => import('./features/booking/booking.routes'),
   },
   {
     path: 'next-flights',
-    loadComponent: () => import('./features/next-flights/next-flights').then((m) => m.NextFlights),
+    loadChildren: () =>
+      import('./features/next-flights/next-flights.module').then((m) => m.NextFlightsModule),
   },
   {
     path: 'luggage',

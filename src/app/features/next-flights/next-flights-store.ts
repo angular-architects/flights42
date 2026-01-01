@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { TicketService } from '../../data/ticket-service';
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class NextFlightsStore {
   private ticketService = inject(TicketService);
 
