@@ -13,6 +13,9 @@
     <button (click)="search()">Search</button>
     <button (click)="delay()">Delay</button>
   </div>
+  @if (isLoading()) {
+    <div>Loading ...</div>
+  }
 </form>
 
 <div class="row">

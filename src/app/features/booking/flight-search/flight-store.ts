@@ -37,6 +37,7 @@ export class FlightStore {
   updateFilter(from: string, to: string): void {
     this._from.set(from);
     this._to.set(to);
+    this.flightsResource.reload();
   }
 
   updateBasket(flightId: number, selected: boolean): void {

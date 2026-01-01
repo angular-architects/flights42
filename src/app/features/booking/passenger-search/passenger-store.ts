@@ -30,6 +30,7 @@ export class PassengerStore {
   updateFilter(name: string, firstName: string): void {
     this._name.set(name);
     this._firstName.set(firstName);
+    this.passengersResource.reload();
   }
 
   updateBasket(passengerId: number, selected: boolean): void {
