@@ -4,7 +4,6 @@ import { Flight, initFlight } from './flight';
 import { ConfigService } from '../shared/config-service';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, Observable } from 'rxjs';
-import { FlightCriteria } from './flight-criteria';
 
 @Injectable({
   providedIn: 'root',
@@ -25,25 +24,33 @@ export class FlightService {
     return this.http.get<Flight[]>(url, { headers, params });
   }
 
-  createResource(criteria: Signal<FlightCriteria>) {
+  createResource(from: Signal<string>, to: Signal<string>) {
+    const isActive = () => from() && to();
+
     return httpResource<Flight[]>(
-      () => ({
-        url: `${this.configService.baseUrl}/flight`,
-        headers: {
-          Accept: 'application/json',
-        },
-        params: {
-          from: criteria().from,
-          to: criteria().to,
-        },
-      }),
+      () =>
+        !isActive()
+          ? undefined
+          : {
+              url: `${this.configService.baseUrl}/flight`,
+              headers: {
+                Accept: 'application/json',
+              },
+              params: {
+                from: from(),
+                to: to(),
+              },
+            },
       { defaultValue: [] },
     );
   }
 
-  createRxResource(criteria: Signal<FlightCriteria>) {
+  createRxResource(from: Signal<string>, to: Signal<string>) {
     return rxResource({
-      params: criteria,
+      params: () => ({
+        from: from(),
+        to: to(),
+      }),
       stream: (loaderParams) => {
         const c = loaderParams.params;
         return this.find(c.from, c.to);
@@ -52,9 +59,12 @@ export class FlightService {
     });
   }
 
-  createPromiseResource(criteria: Signal<FlightCriteria>) {
+  createPromiseResource(from: Signal<string>, to: Signal<string>) {
     return resource({
-      params: criteria,
+      params: () => ({
+        from: from(),
+        to: to(),
+      }),
       loader: (loaderParams) => {
         const c = loaderParams.params;
         return firstValueFrom(this.find(c.from, c.to));

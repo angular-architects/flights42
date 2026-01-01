@@ -337,9 +337,9 @@ label {
   color: #3f51b5;
 }
 
-.sidebar .nav a.active {
-  background-color: #3f51b5;
-  color: #ffffff;
+.active {
+  background-color: #e8eaf6;
+  color: #3f51b5;
 }
 
 .main-panel {
@@ -385,6 +385,10 @@ label {
 .nav-secondary a {
   text-decoration: none;
   color: #3f51b5;
+}
+
+.selected {
+  background-color: moccasin;
 }
 
 html,

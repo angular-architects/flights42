@@ -1,1 +1,57 @@
-<p>flight-search works!</p>
+<div class="header">
+  <h2 class="title">Flight Search</h2>
+</div>
+
+<form>
+  <div class="form-group">
+    <label for="from">From:</label>
+    <input [(ngModel)]="from" id="from" name="from" class="form-control" />
+  </div>
+  <div class="form-group">
+    <label for="to">To:</label>
+    <input [(ngModel)]="to" id="to" name="to" class="form-control" />
+  </div>
+  <div class="form-group">
+    <button (click)="search()" class="btn btn-default">Search</button>
+    <button (click)="delay()" class="btn btn-default">Delay</button>
+  </div>
+</form>
+
+<div class="row">
+  @for (f of flights(); track f.id) {
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <app-flight-card
+        [item]="f"
+        [selected]="basket()[f.id]"
+        (selectedChange)="updateBasket(f.id, $event)"
+      >
+        <button
+          [routerLink]="['/flight-edit', f.id, { showDetails: true }]"
+          [queryParams]="{ expertMode: true }"
+          queryParamsHandling="merge"
+          fragment="prices"
+          class="btn btn-default"
+        >
+          Edit
+        </button>
+
+        <p>There may be a delay!</p>
+      </app-flight-card>
+
+      <!--
+        Alternative with two way binding:
+
+        <app-flight-card
+          [item]="f"
+          [(selected)]="basket()[f.id]"
+        /> 
+      -->
+    </div>
+  }
+</div>
+
+<p>&nbsp;</p>
+
+<div>
+  <pre>{{ basket() | json }}</pre>
+</div>

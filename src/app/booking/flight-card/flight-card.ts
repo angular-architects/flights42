@@ -1,8 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, input, output } from '@angular/core';
+import { Flight } from '../../data/flight';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-flight-card',
-  imports: [],
+  imports: [DatePipe],
   templateUrl: './flight-card.html',
 })
-export class FlightCard {}
+export class FlightCard {
+  item = input.required<Flight>();
+  selected = input(false);
+  selectedChange = output<boolean>();
+
+  select() {
+    this.selectedChange.emit(true);
+  }
+
+  deselect() {
+    this.selectedChange.emit(false);
+  }
+}
