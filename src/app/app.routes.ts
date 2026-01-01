@@ -1,8 +1,5 @@
 import { Routes } from '@angular/router';
 import { Home } from './shell/home/home';
-import { NextFlights } from './features/next-flights/next-flights';
-import { Luggage } from './features/luggage/luggage';
-import { Checkin } from './features/checkin/checkin';
 import { About } from './shell/about/about';
 
 export const routes: Routes = [
@@ -17,19 +14,19 @@ export const routes: Routes = [
   },
   {
     path: 'booking',
-    loadChildren: () => import('./features/booking/booking.routes'), //.then(m => m.bookingRoutes),
+    loadChildren: () => import('./features/booking/booking.routes'),
   },
   {
     path: 'next-flights',
-    component: NextFlights,
+    loadComponent: () => import('./features/next-flights/next-flights').then((m) => m.NextFlights),
   },
   {
     path: 'luggage',
-    component: Luggage,
+    loadComponent: () => import('./features/luggage/luggage').then((m) => m.Luggage),
   },
   {
     path: 'checkin',
-    component: Checkin,
+    loadComponent: () => import('./features/checkin/checkin').then((m) => m.Checkin),
   },
   {
     path: 'about',
