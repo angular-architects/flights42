@@ -192,11 +192,15 @@ form {
   margin-bottom: 40px;
 }
 
-.form-group {
+.form-group,
+form > div {
   margin-bottom: 1rem;
 }
 
-.form-control {
+.form-control,
+input[type='text'],
+input[type='number'],
+input:not([type]) {
   width: 100%;
   padding: 0.5rem;
   font-size: 1rem;
@@ -210,7 +214,9 @@ label {
   margin-bottom: 0.5rem;
 }
 
-.btn {
+.btn,
+button,
+input[type='button'] {
   display: inline-block;
   padding: 0.5rem 1rem;
   font-size: 1rem;
@@ -224,7 +230,9 @@ label {
   margin-right: 5px;
 }
 
-.btn-default {
+.btn-default,
+button,
+input[type='button'] {
   background-color: #6c757d;
 }
 

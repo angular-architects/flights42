@@ -1,0 +1,36 @@
+<h2 class="title">Check-in</h2>
+
+<form style="max-width: 400px">
+  <div>
+    <label for="flightId">Flight ID</label>
+    <input />
+  </div>
+
+  <div class="form-group">
+    <label for="firstName">First Name</label>
+    <input />
+  </div>
+
+  <div class="form-group">
+    <label for="lastName">Last Name</label>
+    <input />
+  </div>
+
+  <div class="form-group">
+    <label for="email">Email Address</label>
+    <input />
+  </div>
+
+  <div class="form-group">
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" />
+        I accept the general conditions of carriage
+      </label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <button (click)="checkin()" type="submit">Check-in</button>
+  </div>
+</form>

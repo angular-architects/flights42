@@ -6,6 +6,7 @@ import { PassengerSearch } from './booking/passenger-search/passenger-search';
 import { PassengerEdit } from './booking/passenger-edit/passenger-edit';
 import { NextFlights } from './next-flights/next-flights';
 import { Luggage } from './luggage/luggage';
+import { Checkin } from './checkin/checkin';
 import { About } from './shell/about/about';
 
 export const routes: Routes = [
@@ -41,6 +42,10 @@ export const routes: Routes = [
   {
     path: 'luggage',
     component: Luggage,
+  },
+  {
+    path: 'checkin',
+    component: Checkin,
   },
   {
     path: 'about',
