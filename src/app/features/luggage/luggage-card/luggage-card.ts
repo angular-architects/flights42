@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { Luggage } from '../../data/luggage';
+import { Luggage } from '../../../data/luggage';
 
 @Component({
   selector: 'app-luggage-card',

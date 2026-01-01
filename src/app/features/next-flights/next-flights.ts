@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NextFlightsStore } from './next-flights-store';
 import { FlightCard } from '../booking/flight-card/flight-card';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-next-flights',
-  imports: [FlightCard],
+  imports: [FlightCard, RouterLink],
   templateUrl: './next-flights.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

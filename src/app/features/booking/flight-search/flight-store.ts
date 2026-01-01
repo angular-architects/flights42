@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { FlightService } from '../../data/flight-service';
-import { Flight } from '../../data/flight';
+import { FlightService } from '../../../data/flight-service';
+import { Flight } from '../../../data/flight';
 
 @Injectable({ providedIn: 'root' })
 export class FlightStore {

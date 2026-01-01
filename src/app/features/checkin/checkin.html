@@ -1,9 +1,9 @@
-<h2 class="title">Check-in</h2>
+<h1>Check-in</h1>
 
 <form style="max-width: 400px">
   <div>
-    <label for="flightId">Ticket ID</label>
-    <input />
+    <label for="flightId">Ticket Id</label>
+    <input [(ngModel)]="ticketId" name="ticketId" />
   </div>
 
   <div class="form-group">
@@ -30,7 +30,8 @@
     </div>
   </div>
 
-  <div class="form-group">
+  <div class="form-group" routerLink id="confirmation">
     <button (click)="checkin()" type="submit">Check-in</button>
+    <button (click)="navigateToNextFlights()">Next Flights</button>
   </div>
 </form>

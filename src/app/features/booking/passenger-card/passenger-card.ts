@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { Passenger } from '../../data/passenger';
+import { Passenger } from '../../../data/passenger';
 
 @Component({
   selector: 'app-passenger-card',

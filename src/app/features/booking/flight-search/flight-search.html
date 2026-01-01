@@ -25,27 +25,9 @@
         [selected]="basket()[f.id]"
         (selectedChange)="updateBasket(f.id, $event)"
       >
-        <button
-          [routerLink]="['/flight-edit', f.id, { showDetails: true }]"
-          [queryParams]="{ expertMode: true }"
-          queryParamsHandling="merge"
-          fragment="prices"
-          class="btn btn-default"
-        >
-          Edit
-        </button>
-
+        <button [routerLink]="['/flight-edit', f.id, { showDetails: true }]">Edit</button>
         <p>There may be a delay!</p>
       </app-flight-card>
-
-      <!--
-        Alternative with two way binding:
-
-        <app-flight-card
-          [item]="f"
-          [(selected)]="basket()[f.id]"
-        /> 
-      -->
     </div>
   }
 </div>

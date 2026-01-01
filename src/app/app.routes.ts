@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 import { Home } from './shell/home/home';
-import { FlightSearch } from './booking/flight-search/flight-search';
-import { FlightEdit } from './booking/flight-edit/flight-edit';
-import { PassengerSearch } from './booking/passenger-search/passenger-search';
-import { PassengerEdit } from './booking/passenger-edit/passenger-edit';
-import { NextFlights } from './next-flights/next-flights';
-import { Luggage } from './luggage/luggage';
-import { Checkin } from './checkin/checkin';
+import { FlightSearch } from './features/booking/flight-search/flight-search';
+import { FlightEdit } from './features/booking/flight-edit/flight-edit';
+import { PassengerSearch } from './features/booking/passenger-search/passenger-search';
+import { PassengerEdit } from './features/booking/passenger-edit/passenger-edit';
+import { NextFlights } from './features/next-flights/next-flights';
+import { Luggage } from './features/luggage/luggage';
+import { Checkin } from './features/checkin/checkin';
 import { About } from './shell/about/about';
 
 export const routes: Routes = [

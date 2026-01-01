@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { PassengerService } from '../../data/passenger-service';
+import { PassengerService } from '../../../data/passenger-service';
 
 @Injectable({ providedIn: 'root' })
 export class PassengerStore {
