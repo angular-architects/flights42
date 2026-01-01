@@ -24,7 +24,7 @@ export class FlightService {
     return this.http.get<Flight[]>(url, { headers, params });
   }
 
-  createResource(from: Signal<string>, to: Signal<string>) {
+  findResource(from: Signal<string>, to: Signal<string>) {
     const isActive = () => from() && to();
 
     return httpResource<Flight[]>(
@@ -45,7 +45,8 @@ export class FlightService {
     );
   }
 
-  createRxResource(from: Signal<string>, to: Signal<string>) {
+  // Alternative implementation using rxResource
+  findRxResource(from: Signal<string>, to: Signal<string>) {
     return rxResource({
       params: () => ({
         from: from(),
@@ -59,7 +60,8 @@ export class FlightService {
     });
   }
 
-  createPromiseResource(from: Signal<string>, to: Signal<string>) {
+  // Alternative implementation using a promise-based resourced
+  findPromiseResource(from: Signal<string>, to: Signal<string>) {
     return resource({
       params: () => ({
         from: from(),

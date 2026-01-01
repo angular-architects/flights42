@@ -23,7 +23,7 @@ export class FlightStore {
   readonly delayInMin = this._delay.asReadonly();
 
   // FlightResource
-  private readonly flightsResource = this.flightService.createResource(this.from, this.to);
+  private readonly flightsResource = this.flightService.findResource(this.from, this.to);
   readonly flights = this.flightsResource.value;
   readonly isLoading = this.flightsResource.isLoading;
   readonly error = this.flightsResource.error;

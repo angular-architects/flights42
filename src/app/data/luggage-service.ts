@@ -1,13 +1,10 @@
-import { inject, Injectable, resource } from '@angular/core';
+import { Injectable, resource } from '@angular/core';
 import { Luggage } from './luggage';
-import { ConfigService } from '../shared/config/simple-config-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LuggageService {
-  private configService = inject(ConfigService);
-
   findLuggage() {
     return resource({
       loader: async () => {

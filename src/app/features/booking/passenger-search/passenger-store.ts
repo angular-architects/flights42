@@ -18,7 +18,7 @@ export class PassengerStore {
   readonly basket = this._basket.asReadonly();
 
   // PassengerResource
-  private readonly passengersResource = this.passengerService.createResource(
+  private readonly passengersResource = this.passengerService.findResource(
     this.name,
     this.firstName,
   );

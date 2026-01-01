@@ -1,9 +1,8 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { inject, Injectable, resource, Signal } from '@angular/core';
+import { inject, Injectable, Signal } from '@angular/core';
 import { initPassenger, Passenger } from './passenger';
 import { ConfigService } from '../shared/config/simple-config-service';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +23,7 @@ export class PassengerService {
     return this.http.get<Passenger[]>(url, { headers, params });
   }
 
-  createResource(name: Signal<string>, firstName: Signal<string>) {
+  findResource(name: Signal<string>, firstName: Signal<string>) {
     const isActive = () => name() || firstName();
 
     return httpResource<Passenger[]>(
@@ -43,34 +42,6 @@ export class PassengerService {
             },
       { defaultValue: [] },
     );
-  }
-
-  createRxResource(name: Signal<string>, firstName: Signal<string>) {
-    return rxResource({
-      params: () => ({
-        name: name(),
-        firstName: firstName(),
-      }),
-      stream: (loaderParams) => {
-        const c = loaderParams.params;
-        return this.find(c.name, c.firstName);
-      },
-      defaultValue: [],
-    });
-  }
-
-  createPromiseResource(name: Signal<string>, firstName: Signal<string>) {
-    return resource({
-      params: () => ({
-        name: name(),
-        firstName: firstName(),
-      }),
-      loader: (loaderParams) => {
-        const c = loaderParams.params;
-        return firstValueFrom(this.find(c.name, c.firstName));
-      },
-      defaultValue: [],
-    });
   }
 
   findById(id: string): Observable<Passenger> {
