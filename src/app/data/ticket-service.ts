@@ -1,13 +1,10 @@
-import { inject, Injectable, resource } from '@angular/core';
+import { Injectable, resource } from '@angular/core';
 import { Flight } from './flight';
-import { ConfigService } from '../shared/config/simple-config-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TicketService {
-  private configService = inject(ConfigService);
-
   findTickets() {
     return resource({
       loader: async () => {
