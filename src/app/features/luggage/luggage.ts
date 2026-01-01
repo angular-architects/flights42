@@ -11,4 +11,9 @@ import { LuggageCard } from './luggage-card/luggage-card';
 export class Luggage {
   private store = inject(LuggageStore);
   protected readonly luggage = this.store.luggage;
+  protected readonly selected = this.store.selected;
+
+  updateSelected(luggageId: number, selected: boolean): void {
+    this.store.updateSelected(luggageId, selected);
+  }
 }

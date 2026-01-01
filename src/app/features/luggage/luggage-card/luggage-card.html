@@ -1,6 +1,6 @@
 @let itemValue = item();
 
-<div class="card">
+<div [class.selected]="selected()" class="card">
   <div class="card-header">
     <h2 class="title">Luggage #{{ itemValue.id }}</h2>
   </div>
@@ -10,6 +10,12 @@
     <p>Destination: {{ itemValue.destination | city: 'short' }}</p>
     <p>Status: {{ itemValue.status }}</p>
     <p>
+      @if (!selected()) {
+        <button (click)="select()">Select</button>
+      } @else {
+        <button (click)="deselect()">Remove</button>
+      }
+
       <ng-content />
     </p>
   </div>

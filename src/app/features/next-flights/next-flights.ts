@@ -11,4 +11,9 @@ import { NextFlightsStore } from './next-flights-store';
 export class NextFlights {
   private store = inject(NextFlightsStore);
   protected readonly tickets = this.store.tickets;
+  protected readonly selected = this.store.selected;
+
+  updateSelected(ticketId: number, selected: boolean): void {
+    this.store.updateSelected(ticketId, selected);
+  }
 }
