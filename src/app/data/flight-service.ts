@@ -1,7 +1,7 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Injectable, resource, Signal } from '@angular/core';
 import { Flight, initFlight } from './flight';
-import { ConfigService } from '../shared/config-service';
+import { ConfigService } from '../shared/config/simple-config-service';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, Observable } from 'rxjs';
 

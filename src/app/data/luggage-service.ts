@@ -1,6 +1,6 @@
 import { inject, Injectable, resource } from '@angular/core';
 import { Luggage } from './luggage';
-import { ConfigService } from '../shared/config-service';
+import { ConfigService } from '../shared/config/simple-config-service';
 
 @Injectable({
   providedIn: 'root',
