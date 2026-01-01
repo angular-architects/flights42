@@ -11,9 +11,9 @@
     <p>Status: {{ itemValue.passengerStatus }}</p>
     <p>
       @if (!selected()) {
-        <button (click)="select()" class="btn btn-default">Select</button>
+        <button (click)="select()">Select</button>
       } @else {
-        <button (click)="deselect()" class="btn btn-default">Remove</button>
+        <button (click)="deselect()">Remove</button>
       }
 
       <ng-content />

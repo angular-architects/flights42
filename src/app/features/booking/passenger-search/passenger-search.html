@@ -1,18 +1,16 @@
-<div class="header">
-  <h2 class="title">Passenger Search</h2>
-</div>
+<h1>Passenger Search</h1>
 
 <form>
-  <div class="form-group">
+  <div>
     <label for="name">Name:</label>
-    <input [(ngModel)]="name" id="name" name="name" class="form-control" />
+    <input [(ngModel)]="name" id="name" name="name" />
   </div>
-  <div class="form-group">
+  <div>
     <label for="firstName">First Name:</label>
-    <input [(ngModel)]="firstName" id="firstName" name="firstName" class="form-control" />
+    <input [(ngModel)]="firstName" id="firstName" name="firstName" />
   </div>
-  <div class="form-group">
-    <button (click)="search()" class="btn btn-default">Search</button>
+  <div>
+    <button (click)="search()">Search</button>
   </div>
 </form>
 
@@ -24,7 +22,7 @@
         [selected]="basket()[p.id]"
         (selectedChange)="updateBasket(p.id, $event)"
       >
-        <button [routerLink]="['/passenger-edit', p.id]" class="btn btn-default">Edit</button>
+        <button [routerLink]="['/passenger-edit', p.id]">Edit</button>
       </app-passenger-card>
     </div>
   }

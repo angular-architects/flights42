@@ -1,6 +1,4 @@
-<div class="header">
-  <h2 class="title">Next Flights</h2>
-</div>
+<h1>Next Flights</h1>
 
 <div class="row">
   @for (ticket of tickets(); track ticket.id) {
@@ -11,7 +9,6 @@
           [queryParams]="{ expertMode: true }"
           queryParamsHandling="merge"
           fragment="confirmation"
-          class="btn btn-default"
         >
           Check-in
         </button>

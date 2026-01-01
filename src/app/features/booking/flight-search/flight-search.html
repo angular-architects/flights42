@@ -1,19 +1,17 @@
-<div class="header">
-  <h1>Flight Search</h1>
-</div>
+<h1>Flight Search</h1>
 
 <form>
-  <div class="form-group">
+  <div>
     <label for="from">From:</label>
-    <input [(ngModel)]="from" id="from" name="from" class="form-control" />
+    <input [(ngModel)]="from" id="from" name="from" />
   </div>
-  <div class="form-group">
+  <div>
     <label for="to">To:</label>
-    <input [(ngModel)]="to" id="to" name="to" class="form-control" />
+    <input [(ngModel)]="to" id="to" name="to" />
   </div>
-  <div class="form-group">
-    <button (click)="search()" class="btn btn-default">Search</button>
-    <button (click)="delay()" class="btn btn-default">Delay</button>
+  <div>
+    <button (click)="search()">Search</button>
+    <button (click)="delay()">Delay</button>
   </div>
 </form>
 
