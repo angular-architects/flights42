@@ -1,10 +1,18 @@
-import { booleanAttribute, Component, inject, input, numberAttribute } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  numberAttribute,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-flight-edit',
   imports: [RouterLink],
   templateUrl: './flight-edit.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightEdit {
   private router = inject(Router);

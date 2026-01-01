@@ -1,4 +1,4 @@
-import { Component, effect, inject, linkedSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, linkedSignal } from '@angular/core';
 import { FlightStore } from './flight-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
   selector: 'app-flight-search',
   imports: [FormsModule, FlightCard, JsonPipe, RouterLink],
   templateUrl: './flight-search.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightSearch {
   private store = inject(FlightStore);

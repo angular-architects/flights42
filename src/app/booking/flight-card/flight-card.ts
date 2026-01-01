@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { Flight } from '../../data/flight';
 import { DatePipe } from '@angular/common';
 
@@ -6,6 +6,7 @@ import { DatePipe } from '@angular/common';
   selector: 'app-flight-card',
   imports: [DatePipe],
   templateUrl: './flight-card.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightCard {
   item = input.required<Flight>();

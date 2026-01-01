@@ -1,1 +1,37 @@
-<p>passenger-search works!</p>
+<div class="header">
+  <h2 class="title">Passenger Search</h2>
+</div>
+
+<form>
+  <div class="form-group">
+    <label for="name">Name:</label>
+    <input [(ngModel)]="name" id="name" name="name" class="form-control" />
+  </div>
+  <div class="form-group">
+    <label for="firstName">First Name:</label>
+    <input [(ngModel)]="firstName" id="firstName" name="firstName" class="form-control" />
+  </div>
+  <div class="form-group">
+    <button (click)="search()" class="btn btn-default">Search</button>
+  </div>
+</form>
+
+<div class="row">
+  @for (p of passengers(); track p.id) {
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <app-passenger-card
+        [item]="p"
+        [selected]="basket()[p.id]"
+        (selectedChange)="updateBasket(p.id, $event)"
+      >
+        <button [routerLink]="['/passenger-edit', p.id]" class="btn btn-default">Edit</button>
+      </app-passenger-card>
+    </div>
+  }
+</div>
+
+<p>&nbsp;</p>
+
+<div>
+  <pre>{{ basket() | json }}</pre>
+</div>

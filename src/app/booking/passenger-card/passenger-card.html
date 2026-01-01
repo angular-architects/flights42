@@ -1,1 +1,22 @@
-<p>passenger-card works!</p>
+@let itemValue = item();
+
+<div [class.selected]="selected()" class="card">
+  <div class="card-header">
+    <h2 class="title">{{ itemValue.firstName }} {{ itemValue.name }}</h2>
+  </div>
+
+  <div class="card-body">
+    <p>Passenger-No.: #{{ itemValue.id }}</p>
+    <p>Bonus Miles: {{ itemValue.bonusMiles }}</p>
+    <p>Status: {{ itemValue.passengerStatus }}</p>
+    <p>
+      @if (!selected()) {
+        <button (click)="select()" class="btn btn-default">Select</button>
+      } @else {
+        <button (click)="deselect()" class="btn btn-default">Remove</button>
+      }
+
+      <ng-content />
+    </p>
+  </div>
+</div>
