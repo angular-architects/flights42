@@ -4,7 +4,6 @@ export type CityFormat = 'long' | 'short';
 
 @Pipe({
   name: 'city',
-  standalone: true,
   pure: true,
 })
 export class CityPipe implements PipeTransform {
