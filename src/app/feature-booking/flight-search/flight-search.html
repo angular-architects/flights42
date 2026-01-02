@@ -1,0 +1,45 @@
+<h1>Flight Search</h1>
+
+<form>
+  <div>
+    <label for="from">From:</label>
+    <input [(ngModel)]="from" id="from" name="from" />
+  </div>
+  <div>
+    <label for="to">To:</label>
+    <input [(ngModel)]="to" id="to" name="to" />
+  </div>
+  <div>
+    {{ flightRoute() }}
+  </div>
+  <div>
+    <button (click)="search()">Search</button>
+    <button (click)="delay()">Delay</button>
+  </div>
+  @if (isLoading()) {
+    <div>Loading ...</div>
+  }
+</form>
+
+<div class="row">
+  @for (f of flights(); track f.id) {
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <app-flight-card
+        [item]="f"
+        [selected]="basket()[f.id]"
+        (selectedChange)="updateBasket(f.id, $event)"
+      >
+        <button [routerLink]="['../flight-edit', f.id, { showDetails: true }]">
+          Edit
+        </button>
+        <p>There may be a delay!</p>
+      </app-flight-card>
+    </div>
+  }
+</div>
+
+<p>&nbsp;</p>
+
+<div>
+  <pre>{{ basket() | json }}</pre>
+</div>

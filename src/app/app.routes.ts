@@ -14,24 +14,29 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+    loadComponent: () =>
+      import('./feature-dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
     path: 'booking',
-    loadChildren: () => import('./features/booking/booking.routes'),
+    loadChildren: () => import('./feature-booking/booking.routes'),
   },
   {
     path: 'next-flights',
     loadChildren: () =>
-      import('./features/next-flights/next-flights.module').then((m) => m.NextFlightsModule),
+      import('./feature-next-flights/next-flights.module').then(
+        (m) => m.NextFlightsModule,
+      ),
   },
   {
     path: 'luggage',
-    loadComponent: () => import('./features/luggage/luggage').then((m) => m.Luggage),
+    loadComponent: () =>
+      import('./feature-luggage/luggage').then((m) => m.Luggage),
   },
   {
     path: 'checkin',
-    loadComponent: () => import('./features/checkin/checkin').then((m) => m.Checkin),
+    loadComponent: () =>
+      import('./feature-checkin/checkin').then((m) => m.Checkin),
   },
   {
     path: 'about',
