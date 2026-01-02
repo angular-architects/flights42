@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,12 +7,12 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { FlightStore } from './flight-store';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
-import { FlightCard } from '../../shared/flight-card/flight-card';
-import { JsonPipe } from '@angular/common';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
+
+import { FlightCard } from '../../shared/flight-card/flight-card';
+import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',

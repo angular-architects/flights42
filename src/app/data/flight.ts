@@ -1,15 +1,14 @@
 import {
-  schema,
-  required,
-  minLength,
-  disabled,
-  applyWhenValue,
   apply,
   applyEach,
+  applyWhenValue,
+  disabled,
   min,
+  minLength,
+  required,
+  schema,
 } from '@angular/forms/signals';
-import { Aircraft, aircraftSchema, initAircraft } from './aircraft';
-import { Price, priceSchema } from './price';
+
 import {
   validateCityAsync,
   validateCityHttp,
@@ -17,6 +16,8 @@ import {
   validateRoundTrip,
   validateRoundTripTree,
 } from '../shared/flight-validators';
+import { Aircraft, aircraftSchema, initAircraft } from './aircraft';
+import { Price, priceSchema } from './price';
 
 export interface Flight {
   id: number;

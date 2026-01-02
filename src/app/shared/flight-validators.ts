@@ -1,16 +1,17 @@
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
-  SchemaPath,
   metadata,
+  SchemaPath,
   validate,
   validateAsync,
   validateHttp,
   validateTree,
 } from '@angular/forms/signals';
-import { Observable, of, delay, map } from 'rxjs';
-import { CITY2, CITY } from './flight-properties';
+import { delay, map, Observable, of } from 'rxjs';
+
 import { Flight } from '../data/flight';
 import { Price } from '../data/price';
+import { CITY, CITY2 } from './flight-properties';
 
 export function validateCity(path: SchemaPath<string>, allowed: string[]) {
   validate(path, (ctx) => {

@@ -5,17 +5,18 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { FlightDetailStore } from '../flight-edit/flight-detail-store';
 import { form, submit } from '@angular/forms/signals';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+
 import { Flight, flightSchema } from '../../data/flight';
 import { toLocalDateTimeString } from '../../shared/date-utils';
 import { extractError } from '../../shared/extract-error';
 import { ValidationErrorsPane } from '../../shared/validation-errors/validation-errors-pane';
+import { FlightDetailStore } from '../flight-edit/flight-detail-store';
 import { AircraftComponent } from './aircraft-form/aircraft-form';
 import { FlightComponent } from './flight-form/flight-form';
 import { PricesComponent } from './prices-form/prices-form';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-flight-edit',

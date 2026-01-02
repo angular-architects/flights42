@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,12 +8,12 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
-import { CheckinDialogComponent } from './checkin-dialog';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { compatForm } from '@angular/forms/signals/compat';
 import { Field, required } from '@angular/forms/signals';
-import { JsonPipe } from '@angular/common';
+import { compatForm } from '@angular/forms/signals/compat';
+import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
+import { CheckinDialogComponent } from './checkin-dialog';
 
 @Component({
   selector: 'app-checkin',

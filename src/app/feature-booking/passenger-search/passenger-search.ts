@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,12 +7,12 @@ import {
   linkedSignal,
   untracked,
 } from '@angular/core';
-import { PassengerStore } from './passenger-store';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
-import { PassengerCard } from '../passenger-card/passenger-card';
-import { JsonPipe } from '@angular/common';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
+
+import { PassengerCard } from '../passenger-card/passenger-card';
+import { PassengerStore } from './passenger-store';
 
 @Component({
   selector: 'app-passenger-search',

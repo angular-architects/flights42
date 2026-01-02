@@ -8,6 +8,7 @@ import {
   output,
   SimpleChanges,
 } from '@angular/core';
+
 import { Luggage } from '../../data/luggage';
 import { CityPipe } from '../../shared/city.pipe';
 

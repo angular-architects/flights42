@@ -1,8 +1,9 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Injectable, Signal } from '@angular/core';
-import { initPassenger, Passenger } from './passenger';
-import { ConfigService } from '../shared/simple-config-service';
 import { Observable } from 'rxjs';
+
+import { ConfigService } from '../shared/simple-config-service';
+import { initPassenger, Passenger } from './passenger';
 
 @Injectable({
   providedIn: 'root',

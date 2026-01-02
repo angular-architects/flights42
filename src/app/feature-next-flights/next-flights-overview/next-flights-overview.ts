@@ -1,5 +1,6 @@
 /* eslint-disable @angular-eslint/prefer-standalone */
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
 import { NextFlightsStore } from './next-flights-store';
 
 @Component({

@@ -1,4 +1,5 @@
 import { signal } from '@angular/core';
+
 import { delegatedSignal } from './delegated-signal';
 describe('delegated-signal', () => {
   it('reads from source and writes to sink', () => {

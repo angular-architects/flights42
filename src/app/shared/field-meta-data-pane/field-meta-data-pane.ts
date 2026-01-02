@@ -1,10 +1,11 @@
 import { Component, computed, input } from '@angular/core';
 import {
   FieldTree,
-  REQUIRED,
-  MIN_LENGTH,
   MAX_LENGTH,
+  MIN_LENGTH,
+  REQUIRED,
 } from '@angular/forms/signals';
+
 import { CITY, CITY2 } from '../flight-properties';
 
 @Component({

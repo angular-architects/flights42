@@ -1,4 +1,4 @@
-import { inject, ElementRef } from '@angular/core';
+import { ElementRef, inject } from '@angular/core';
 
 // Dirty Hack used to visualize the change detector
 export function injectBlink() {

@@ -4,6 +4,7 @@ import {
   input,
   model,
 } from '@angular/core';
+
 import { Passenger } from '../../data/passenger';
 
 @Component({

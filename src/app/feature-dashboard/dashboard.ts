@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+
 import { NextFlightsModule } from '../feature-next-flights/next-flights.module';
 
 @Component({

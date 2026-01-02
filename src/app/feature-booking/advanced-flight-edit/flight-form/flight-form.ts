@@ -1,9 +1,10 @@
 import { Component, input } from '@angular/core';
 import { Field, FieldTree } from '@angular/forms/signals';
-import { ValidationErrorsPane } from '../../../shared/validation-errors/validation-errors-pane';
+
+import { Flight } from '../../../data/flight';
 import { DelayStepperComponent } from '../../../shared/delay-stepper/delay-stepper.component';
 import { FieldMetaDataPane } from '../../../shared/field-meta-data-pane/field-meta-data-pane';
-import { Flight } from '../../../data/flight';
+import { ValidationErrorsPane } from '../../../shared/validation-errors/validation-errors-pane';
 
 @Component({
   selector: 'app-flight',

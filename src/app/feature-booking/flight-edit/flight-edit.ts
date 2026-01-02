@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,8 +6,6 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { FlightDetailStore } from './flight-detail-store';
 import {
   Field,
   form,
@@ -15,10 +14,12 @@ import {
   submit,
   validate,
 } from '@angular/forms/signals';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+
 import { Flight } from '../../data/flight';
 import { toLocalDateTimeString } from '../../shared/date-utils';
-import { JsonPipe } from '@angular/common';
 import { extractError } from '../../shared/extract-error';
+import { FlightDetailStore } from './flight-detail-store';
 
 @Component({
   selector: 'app-flight-edit',

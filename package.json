@@ -48,6 +48,7 @@
     "angular-eslint": "21.1.0",
     "commitlint": "^20.2.0",
     "eslint": "^9.39.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^9.1.7",
     "jsdom": "^27.1.0",
     "lint-staged": "^16.2.7",

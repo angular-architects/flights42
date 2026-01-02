@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { LuggageStore } from './luggage-store';
+
 import { LuggageCard } from '../luggage-card/luggage-card';
+import { LuggageStore } from './luggage-store';
 
 @Component({
   selector: 'app-luggage',

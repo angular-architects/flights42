@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,11 +6,11 @@ import {
   effect,
   inject,
 } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { FlightCard } from '../../shared/flight-card/flight-card';
-import { JsonPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { debounce, Field, form } from '@angular/forms/signals';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { RouterLink } from '@angular/router';
+
+import { FlightCard } from '../../shared/flight-card/flight-card';
 import { delegatedSignal } from '../../shared/signals/delegated-signal';
 import { FlightStore } from '../flight-search/flight-store';
 

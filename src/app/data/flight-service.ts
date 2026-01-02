@@ -1,10 +1,11 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Injectable, resource, Signal } from '@angular/core';
-import { Flight, initFlight } from './flight';
-import { ConfigService } from '../shared/simple-config-service';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, Observable } from 'rxjs';
+
+import { ConfigService } from '../shared/simple-config-service';
 import { initAircraft } from './aircraft';
+import { Flight, initFlight } from './flight';
 
 @Injectable({
   providedIn: 'root',

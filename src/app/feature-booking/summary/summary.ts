@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { SummaryStore } from './summary-store';
+
 import { FlightCard } from '../../shared/flight-card/flight-card';
 import { PassengerCard } from '../passenger-card/passenger-card';
+import { SummaryStore } from './summary-store';
 
 @Component({
   selector: 'app-summary',

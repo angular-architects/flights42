@@ -1,4 +1,5 @@
 import { apply, required, schema } from '@angular/forms/signals';
+
 import { Flight, flightSchema } from '../../data/flight';
 
 // Demonstrate how to combine a general schema

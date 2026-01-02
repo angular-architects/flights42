@@ -1,13 +1,14 @@
 import { Routes } from '@angular/router';
-import { BookingTabs } from './booking-tabs';
-import { FlightSearch } from './flight-search/flight-search';
-import { PassengerSearch } from './passenger-search/passenger-search';
-import { PassengerEdit } from './passenger-edit/passenger-edit';
-import { Summary } from './summary/summary';
-import { FlightEdit } from './flight-edit/flight-edit';
-import { ProtoFlightEdit } from './proto-flight-edit/proto-flight-edit';
+
 import { AdvancedFlightEdit } from './advanced-flight-edit/advanced-flight-edit';
+import { BookingTabs } from './booking-tabs';
+import { FlightEdit } from './flight-edit/flight-edit';
+import { FlightSearch } from './flight-search/flight-search';
+import { PassengerEdit } from './passenger-edit/passenger-edit';
+import { PassengerSearch } from './passenger-search/passenger-search';
+import { ProtoFlightEdit } from './proto-flight-edit/proto-flight-edit';
 import { ReactiveFlightSearch } from './reactive-flight-search/reactive-flight-search';
+import { Summary } from './summary/summary';
 
 export const bookingRoutes: Routes = [
   {

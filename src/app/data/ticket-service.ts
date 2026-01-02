@@ -1,4 +1,5 @@
 import { Injectable, resource } from '@angular/core';
+
 import { Flight } from './flight';
 
 @Injectable({

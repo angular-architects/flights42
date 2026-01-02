@@ -1,9 +1,10 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NextFlightsOverview } from './next-flights-overview/next-flights-overview';
-import { FlightCard } from '../shared/flight-card/flight-card';
-import { NextFlightsStore } from './next-flights-overview/next-flights-store';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+
+import { FlightCard } from '../shared/flight-card/flight-card';
+import { NextFlightsOverview } from './next-flights-overview/next-flights-overview';
+import { NextFlightsStore } from './next-flights-overview/next-flights-store';
 import { nextFlightRoutes } from './next-flights-routing.module';
 
 @NgModule({

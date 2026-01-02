@@ -1,7 +1,8 @@
 import { Component, input } from '@angular/core';
 import { Field, FieldTree } from '@angular/forms/signals';
-import { ValidationErrorsPane } from '../../../shared/validation-errors/validation-errors-pane';
+
 import { initPrice, Price } from '../../../data/price';
+import { ValidationErrorsPane } from '../../../shared/validation-errors/validation-errors-pane';
 
 @Component({
   selector: 'app-prices',

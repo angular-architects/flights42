@@ -1,8 +1,9 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { FlightService } from '../../data/flight-service';
-import { Flight } from '../../data/flight';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { catchError, finalize, tap, throwError, firstValueFrom } from 'rxjs';
+import { catchError, finalize, firstValueFrom, tap, throwError } from 'rxjs';
+
+import { Flight } from '../../data/flight';
+import { FlightService } from '../../data/flight-service';
 
 @Injectable({ providedIn: 'root' })
 export class FlightDetailStore {
