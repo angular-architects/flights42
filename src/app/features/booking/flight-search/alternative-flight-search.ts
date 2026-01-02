@@ -1,30 +1,44 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  linkedSignal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { FlightStore } from './flight-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { FormsModule } from '@angular/forms';
 import { FlightCard } from '../../../shared/flight-card/flight-card';
 import { JsonPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { debounce, Field, form } from '@angular/forms/signals';
+import { delegatedSignal } from '../../../shared/signals/delegated-signal';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormsModule, FlightCard, JsonPipe, RouterLink],
-  templateUrl: './flight-search.html',
+  imports: [Field, FlightCard, JsonPipe, RouterLink],
+  templateUrl: './alternative-flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FlightSearch {
+export class AlternativeFlightSearch {
   private store = inject(FlightStore);
   private snackBar = inject(MatSnackBar);
 
-  protected readonly from = linkedSignal(() => this.store.from());
-  protected readonly to = linkedSignal(() => this.store.to());
+  protected readonly from = this.store.from;
+  protected readonly to = this.store.to;
+
+  // protected readonly filter = linkedSignal(() => ({
+  //   from: this.from(),
+  //   to: this.to()
+  // }));
+
+  protected readonly filter = delegatedSignal(
+    () => ({
+      from: this.from(),
+      to: this.to(),
+    }),
+    (value) => {
+      this.store.updateFilter(value.from, value.to);
+    },
+  );
+
+  protected readonly filterForm = form(this.filter, (path) => {
+    debounce(path.from, 300);
+    debounce(path.to, 300);
+  });
 
   protected readonly flights = this.store.flightsWithDelays;
   protected readonly isLoading = this.store.isLoading;
@@ -34,7 +48,6 @@ export class FlightSearch {
   protected readonly basket = this.store.basket;
 
   protected readonly flightRoute = computed(() => this.from() + ' - ' + this.to());
-  // protected readonly flightRoute2 = computed(() => this.from() + ' - ' + untracked(() => this.to()));
 
   constructor() {
     this.showError();
@@ -45,7 +58,7 @@ export class FlightSearch {
   }
 
   search(): void {
-    this.store.updateFilter(this.from(), this.to());
+    // this.store.updateFilter(this.from(), this.to());
     this.store.reload();
   }
 
