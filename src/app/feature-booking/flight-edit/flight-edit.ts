@@ -5,7 +5,7 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FlightDetailStore } from './flight-detail-store';
 import {
   Field,
@@ -22,7 +22,7 @@ import { extractError } from '../../shared/extract-error';
 
 @Component({
   selector: 'app-flight-edit',
-  imports: [Field, JsonPipe],
+  imports: [Field, JsonPipe, RouterLink],
   templateUrl: './flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

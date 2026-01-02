@@ -6,14 +6,17 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { CheckinDialogComponent } from './checkin-dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { compatForm } from '@angular/forms/signals/compat';
+import { Field, required } from '@angular/forms/signals';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-checkin',
-  imports: [FormsModule, RouterLink],
+  imports: [Field, ReactiveFormsModule, RouterLink, JsonPipe],
   templateUrl: './checkin.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -21,6 +24,26 @@ export class Checkin {
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
+  private formBuilder = inject(FormBuilder);
+
+  protected readonly passengerGroup = this.formBuilder.group({
+    firstName: ['Jane'],
+    lastName: ['Doe'],
+    email: [
+      'me@here.com',
+      [Validators.required, Validators.minLength, Validators.email],
+    ],
+  });
+
+  protected readonly checkinFormModel = signal({
+    ticketId: '',
+    conditionsAccepted: false,
+    passenger: this.passengerGroup,
+  });
+
+  protected readonly checkinForm = compatForm(this.checkinFormModel, (path) => {
+    required(path.ticketId);
+  });
 
   protected readonly expertMode = input.required({
     transform: custonBooleanAttribute,
@@ -42,6 +65,10 @@ export class Checkin {
     });
 
     effect(() => {
+      const id = String(this.ticketId() ?? 123456);
+      this.checkinForm.ticketId().value.set(id);
+    });
+    effect(() => {
       console.log('expertMode', this.expertMode());
     });
   }
@@ -61,6 +88,11 @@ export class Checkin {
   }
 
   checkin(): void {
+    const { passenger, ...checkinForm } = this.checkinFormModel();
+
+    console.log('passenger', passenger.value);
+    console.log('checkinForm', checkinForm);
+
     this.dialog.open(CheckinDialogComponent, {
       width: '400px',
     });

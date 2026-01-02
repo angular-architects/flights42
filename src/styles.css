@@ -456,3 +456,9 @@ input.medium {
   padding: 5px;
   margin-top: 10px;
 }
+
+.validation-errors {
+  margin-top: 10px;
+  margin-bottom: 20px;
+  color: darkred;
+}

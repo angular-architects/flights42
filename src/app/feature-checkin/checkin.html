@@ -1,37 +1,52 @@
 <h1>Check-in</h1>
 
+@if (checkinForm().invalid()) {
+  <div class="validation-errors">Please correct the validation errors!</div>
+}
+
 <form class="small-form">
   <div>
     <label for="flightId">Ticket Id</label>
-    <input [(ngModel)]="ticketId" name="ticketId" />
+    <input [field]="checkinForm.ticketId" id="flightId" />
+    @if (checkinForm.ticketId().invalid()) {
+      <div>{{ checkinForm.ticketId().errorSummary() | json }}</div>
+    }
   </div>
 
-  <div>
-    <label for="firstName">First Name</label>
-    <input />
-  </div>
-
-  <div>
-    <label for="lastName">Last Name</label>
-    <input />
-  </div>
-
-  <div>
-    <label for="email">Email Address</label>
-    <input />
-  </div>
+  <ng-container [formGroup]="passengerGroup">
+    <div>
+      <label for="firstName">First Name</label>
+      <input formControlName="firstName" id="firstName" />
+    </div>
+    <div>
+      <label for="lastName">Last Name</label>
+      <input formControlName="lastName" id="lastName" />
+    </div>
+    <div>
+      <label for="email">Email Address</label>
+      <input formControlName="email" id="email" />
+      @if (passengerGroup.controls.email.invalid) {
+        <div>{{ passengerGroup.controls.email.errors | json }}</div>
+      }
+    </div>
+  </ng-container>
 
   <div>
     <div class="checkbox">
       <label>
-        <input type="checkbox" />
+        <input type="checkbox" [field]="checkinForm.conditionsAccepted" />
         I accept the general conditions of carriage
       </label>
+      @if (checkinForm.conditionsAccepted().invalid()) {
+        <div>{{ checkinForm.conditionsAccepted().errorSummary() | json }}</div>
+      }
     </div>
   </div>
 
   <div [routerLink]="[]" id="confirmation">
-    <button (click)="checkin()" type="submit">Check-in</button>
-    <button (click)="navigateToNextFlights()">Next Flights</button>
+    <button (click)="checkin()" type="button">Check-in</button>
+    <button (click)="navigateToNextFlights()" type="button">
+      Next Flights
+    </button>
   </div>
 </form>
