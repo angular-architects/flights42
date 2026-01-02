@@ -2,12 +2,11 @@ import { Component, computed, input } from '@angular/core';
 import { MinValidationError, ValidationError } from '@angular/forms/signals';
 
 @Component({
-  selector: 'app-validation-errors',
+  selector: 'app-validation-errors-pane',
   imports: [],
-  templateUrl: './validation-errors.component.html',
-  styleUrl: './validation-errors.component.css',
+  templateUrl: './validation-errors-pane.html',
 })
-export class ValidationErrorsComponent {
+export class ValidationErrorsPane {
   errors = input.required<ValidationError.WithField[]>();
   showFieldNames = input(false);
 

@@ -1,11 +1,11 @@
 import { Component, input } from '@angular/core';
 import { Field, FieldTree } from '@angular/forms/signals';
-import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { ValidationErrorsPane } from '../../../shared/validation-errors/validation-errors-pane';
 import { Aircraft } from '../../../data/aircraft';
 
 @Component({
   selector: 'app-aircraft',
-  imports: [Field, ValidationErrorsComponent],
+  imports: [Field, ValidationErrorsPane],
   templateUrl: './aircraft-form.html',
 })
 export class AircraftComponent {

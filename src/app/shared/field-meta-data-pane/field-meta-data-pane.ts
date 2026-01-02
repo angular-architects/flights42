@@ -8,12 +8,11 @@ import {
 import { CITY, CITY2 } from '../flight-properties';
 
 @Component({
-  selector: 'app-field-meta-data',
+  selector: 'app-field-meta-data-pane',
   imports: [],
-  templateUrl: './field-meta-data.component.html',
-  styleUrl: './field-meta-data.component.css',
+  templateUrl: './field-meta-data-pane.html',
 })
-export class FieldMetaDataComponent {
+export class FieldMetaDataPane {
   field = input.required<FieldTree<unknown>>();
 
   fieldState = computed(() => this.field()());

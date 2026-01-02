@@ -1,11 +1,11 @@
 import { Component, input } from '@angular/core';
 import { Field, FieldTree } from '@angular/forms/signals';
-import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { ValidationErrorsPane } from '../../../shared/validation-errors/validation-errors-pane';
 import { initPrice, Price } from '../../../data/price';
 
 @Component({
   selector: 'app-prices',
-  imports: [Field, ValidationErrorsComponent],
+  imports: [Field, ValidationErrorsPane],
   templateUrl: './prices-form.html',
 })
 export class PricesComponent {

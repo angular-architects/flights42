@@ -11,7 +11,7 @@ import { form, submit } from '@angular/forms/signals';
 import { Flight, flightSchema } from '../../data/flight';
 import { toLocalDateTimeString } from '../../shared/date-utils';
 import { extractError } from '../../shared/extract-error';
-import { ValidationErrorsComponent } from '../../shared/validation-errors/validation-errors.component';
+import { ValidationErrorsPane } from '../../shared/validation-errors/validation-errors-pane';
 import { AircraftComponent } from './aircraft-form/aircraft-form';
 import { FlightComponent } from './flight-form/flight-form';
 import { PricesComponent } from './prices-form/prices-form';
@@ -23,7 +23,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     AircraftComponent,
     PricesComponent,
     FlightComponent,
-    ValidationErrorsComponent,
+    ValidationErrorsPane,
   ],
   templateUrl: './advanced-flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

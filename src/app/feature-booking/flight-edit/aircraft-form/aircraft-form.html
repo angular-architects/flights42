@@ -6,9 +6,7 @@
   <div class="form-group">
     <label for="type">Type:</label>
     <input id="type" class="form-control" [field]="aircraftFrom.type" />
-    <app-validation-errors
-      [errors]="aircraftFrom.type().errors()"
-    ></app-validation-errors>
+    <app-validation-errors-pane [errors]="aircraftFrom.type().errors()" />
   </div>
   <div class="form-group">
     <label for="registration">Registration:</label>
@@ -17,8 +15,8 @@
       class="form-control"
       [field]="aircraftFrom.registration"
     />
-    <app-validation-errors
+    <app-validation-errors-pane
       [errors]="aircraftFrom.registration().errors()"
-    ></app-validation-errors>
+    />
   </div>
 </fieldset>

@@ -2,7 +2,7 @@
 
 <fieldset>
   <legend>Prices</legend>
-  <app-validation-errors [errors]="priceForms().errors()" />
+  <app-validation-errors-pane [errors]="priceForms().errors()" />
   <table class="datagrid">
     <tr>
       <th>Flight Class</th>
@@ -16,7 +16,7 @@
         </td>
         <td><input [field]="price.amount" type="number" class="small" /></td>
         <td class="error-col">
-          <app-validation-errors
+          <app-validation-errors-pane
             [errors]="price().errorSummary()"
             [showFieldNames]="true"
           />
