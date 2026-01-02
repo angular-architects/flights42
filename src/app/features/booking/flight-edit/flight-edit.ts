@@ -5,6 +5,7 @@ import { Field, form, minLength, required, submit, validate } from '@angular/for
 import { Flight } from '../../../data/flight';
 import { toLocalDateTimeString } from '../../../shared/date-utils';
 import { JsonPipe } from '@angular/common';
+import { extractError } from '../../../shared/extract-error';
 
 @Component({
   selector: 'app-flight-edit',
@@ -72,11 +73,4 @@ function normalizeFlight(flight: Flight): Flight {
     ...flight,
     date: toLocalDateTimeString(flight.date),
   };
-}
-
-function extractError(error: unknown) {
-  if (error && typeof error === 'object' && 'error' in error) {
-    return error.error;
-  }
-  return error;
 }
