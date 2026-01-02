@@ -1,11 +1,13 @@
 import { Routes } from '@angular/router';
 import { BookingTabs } from './booking-tabs';
 import { FlightSearch } from './flight-search/flight-search';
-import { FlightEdit } from './flight-edit/flight-edit';
+import { AdvancedFlightEdit } from './flight-edit/advanced-flight-edit';
 import { PassengerSearch } from './passenger-search/passenger-search';
 import { PassengerEdit } from './passenger-edit/passenger-edit';
 import { Summary } from './summary/summary';
 import { ReactiveFlightSearch } from './flight-search/reactive-flight-search';
+import { FlightEdit } from './flight-edit/flight-edit';
+import { ProtoFlightEdit } from './flight-edit/proto-flight-edit';
 
 export const bookingRoutes: Routes = [
   {
@@ -28,6 +30,14 @@ export const bookingRoutes: Routes = [
       {
         path: 'flight-edit/:id',
         component: FlightEdit,
+      },
+      {
+        path: 'proto-flight-edit/:id',
+        component: ProtoFlightEdit,
+      },
+      {
+        path: 'advanced-flight-edit/:id',
+        component: AdvancedFlightEdit,
       },
       {
         path: 'passenger-search',

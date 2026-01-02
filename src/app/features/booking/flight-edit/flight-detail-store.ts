@@ -18,7 +18,9 @@ export class FlightDetailStore {
   readonly isPending = this._isPending.asReadonly();
 
   // FlightResource
-  private readonly flightResource = this.flightService.findFlightResourceById(this.flightId);
+  private readonly flightResource = this.flightService.findResourceById(
+    this.flightId,
+  );
   readonly flight = this.flightResource.value;
   readonly isLoading = this.flightResource.isLoading;
   readonly error = this.flightResource.error;

@@ -1,0 +1,19 @@
+<h1>Flight Edit</h1>
+
+@if (flight().id !== 0) {
+  <app-validation-errors [errors]="flightForm().errors()" />
+  <form class="flight-form" novalidate>
+    <app-flight [flight]="flightForm"></app-flight>
+    <app-prices [prices]="flightForm.prices"></app-prices>
+    <app-aircraft [aircraft]="flightForm.aircraft"></app-aircraft>
+
+    <div class="mt-40">
+      <button [disabled]="disabled()" type="button" (click)="save()">
+        Save
+      </button>
+    </div>
+  </form>
+}
+@if (isPending()) {
+  <p>Saving ...</p>
+}

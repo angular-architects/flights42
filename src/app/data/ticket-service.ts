@@ -41,6 +41,6 @@ export class TicketService {
         date: dayAfterTomorrow.toISOString(),
         delayed: false,
       },
-    ];
+    ] as Flight[];
   }
 }

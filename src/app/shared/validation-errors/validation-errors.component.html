@@ -1,0 +1,7 @@
+@if (errorMessages().length > 0) {
+  <div class="validation-errors">
+    @for (message of errorMessages(); track message) {
+      <div>{{ message }}</div>
+    }
+  </div>
+}

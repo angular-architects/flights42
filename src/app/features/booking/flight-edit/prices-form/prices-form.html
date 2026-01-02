@@ -1,0 +1,30 @@
+@let priceForms = prices();
+
+<fieldset>
+  <legend>Prices</legend>
+  <app-validation-errors [errors]="priceForms().errors()" />
+  <table class="datagrid">
+    <tr>
+      <th>Flight Class</th>
+      <th>Amount</th>
+      <th></th>
+    </tr>
+    @for (price of priceForms; track $index) {
+      <tr>
+        <td>
+          <input [field]="price.flightClass" class="medium" />
+        </td>
+        <td><input [field]="price.amount" type="number" class="small" /></td>
+        <td class="error-col">
+          <app-validation-errors
+            [errors]="price().errorSummary()"
+            [showFieldNames]="true"
+          />
+        </td>
+      </tr>
+    }
+  </table>
+  <button (click)="addPrice()" type="button" class="btn btn-default ml3">
+    Add
+  </button>
+</fieldset>

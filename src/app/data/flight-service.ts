@@ -4,6 +4,7 @@ import { Flight, initFlight } from './flight';
 import { ConfigService } from '../shared/simple-config-service';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, Observable } from 'rxjs';
+import { initAircraft } from './aircraft';
 
 @Injectable({
   providedIn: 'root',
@@ -87,7 +88,7 @@ export class FlightService {
     return this.http.get<Flight>(url, { headers, params });
   }
 
-  findFlightResourceById(id: Signal<number>) {
+  findResourceById(id: Signal<number>) {
     return httpResource<Flight>(
       () => ({
         url: `${this.configService.baseUrl}/flight`,
@@ -98,7 +99,17 @@ export class FlightService {
           id: id(),
         },
       }),
-      { defaultValue: initFlight },
+      // TODO: Extend Service
+      {
+        defaultValue: initFlight,
+        parse: (raw) => {
+          const flight = raw as Flight;
+          flight.aircraft = initAircraft;
+          flight.prices = [];
+          flight.delay = 0;
+          return flight;
+        },
+      },
     );
   }
 

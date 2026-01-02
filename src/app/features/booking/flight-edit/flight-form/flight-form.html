@@ -1,0 +1,68 @@
+@let flightForm = flight();
+
+<fieldset>
+  <legend>Flight</legend>
+
+  <div class="form-group">
+    <label for="flight-id">ID</label>
+    <input
+      class="form-control"
+      [field]="flightForm.id"
+      type="number"
+      id="flight-id"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="flight-from">
+      From
+      <app-field-meta-data [field]="flightForm.from" />
+    </label>
+    <input class="form-control" [field]="flightForm.from" id="flight-from" />
+    <app-validation-errors [errors]="flightForm.from().errors()" />
+    @if (flightForm.from().pending()) {
+      <div>Waiting for Async Validation Result...</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="flight-to">
+      To
+      <app-field-meta-data [field]="flightForm.to" />
+    </label>
+    <input class="form-control" [field]="flightForm.to" id="flight-to" />
+  </div>
+
+  <div class="form-group">
+    <label for="flight-date">Date</label>
+    <div class="input-group">
+      <input
+        class="form-control"
+        [field]="flightForm.date"
+        id="flight-date"
+        type="datetime-local"
+      />
+    </div>
+  </div>
+
+  <div class="form-group form-check">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-check-input"
+        [field]="flightForm.delayed"
+        id="flight-delayed"
+      />
+      Delayed</label
+    >
+  </div>
+
+  <div class="form-group form-check">
+    <label for="delay">Delay</label>
+    <app-delay-stepper id="delay" [field]="flightForm.delay" />
+    <app-validation-errors [errors]="flightForm.delay().errors()" />
+    @for (reason of flightForm.delay().disabledReasons(); track $index) {
+      <p>Disabled because {{ reason.message }}</p>
+    }
+  </div>
+</fieldset>

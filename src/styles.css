@@ -6,12 +6,12 @@
   border-collapse: collapse;
 }
 
-.table > tr > th,
-.table > tr > th,
-.table > tr > th,
-.table > tr > td,
-.table > tr > td,
-.table > tr > td {
+table > tr > th,
+table > tr > th,
+table > tr > th,
+table > tr > td,
+table > tr > td,
+table > tr > td {
   padding: 8px;
   line-height: 1.42857143;
   vertical-align: top;
@@ -442,4 +442,17 @@ input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none; /* Chrome, Edge, Safari */
   margin: 0;
+}
+
+input.small {
+  width: 100px;
+}
+
+input.medium {
+  width: 200px;
+}
+
+.small button {
+  padding: 5px;
+  margin-top: 10px;
 }

@@ -1,50 +1,67 @@
-<div>{{ flightForm().errorSummary() | json }}</div>
+<h1>Flight Edit</h1>
 
-<form>
-  <div>
-    <label for="flight-id">ID</label>
-    <input [field]="flightForm.id" type="number" id="flight-id" />
-    <div>{{ flightForm.id().errors() | json }}</div>
-  </div>
-
-  <div>
-    <label for="flight-from"> From </label>
-    <input [field]="flightForm.from" id="flight-from" />
-    <div>{{ flightForm.from().errors() | json }}</div>
-  </div>
-
-  <div>
-    <label for="flight-to"> To </label>
-    <input [field]="flightForm.to" id="flight-to" />
-    <div>{{ flightForm.to().errors() | json }}</div>
-  </div>
-
-  <div>
-    <label for="flight-date">Date</label>
+@if (flight().id !== 0) {
+  @if (flightForm().invalid()) {
+    <div>{{ flightForm().errorSummary() | json }}</div>
+  }
+  <form>
     <div>
-      <input
-        class="form-control"
-        [field]="flightForm.date"
-        id="flight-date"
-        type="datetime-local"
-      />
+      <label for="flight-id">ID</label>
+      <input [field]="flightForm.id" type="number" id="flight-id" />
+      @if (flightForm.id().invalid()) {
+        <div>{{ flightForm.id().errors() | json }}</div>
+      }
     </div>
-    <div>{{ flightForm.date().errors() | json }}</div>
-  </div>
 
-  <div class="form-check">
-    <label class="form-check-label">
-      <input
-        type="checkbox"
-        class="form-check-input"
-        [field]="flightForm.delayed"
-        id="flight-delayed"
-      />
-      Delayed</label
-    >
-  </div>
+    <div>
+      <label for="flight-from"> From </label>
+      <input [field]="flightForm.from" id="flight-from" />
+      @if (flightForm.from().invalid()) {
+        <div>{{ flightForm.from().errors() | json }}</div>
+      }
+    </div>
 
-  <div class="mt-40">
-    <button [disabled]="disabled()" type="button" (click)="save()">Save</button>
-  </div>
-</form>
+    <div>
+      <label for="flight-to"> To </label>
+      <input [field]="flightForm.to" id="flight-to" />
+      @if (flightForm.to().invalid()) {
+        <div>{{ flightForm.to().errors() | json }}</div>
+      }
+    </div>
+
+    <div>
+      <label for="flight-date">Date</label>
+      <div>
+        <input
+          class="form-control"
+          [field]="flightForm.date"
+          id="flight-date"
+          type="datetime-local"
+        />
+      </div>
+      @if (flightForm.date().invalid()) {
+        <div>{{ flightForm.date().errors() | json }}</div>
+      }
+    </div>
+
+    <div class="form-check">
+      <label class="form-check-label">
+        <input
+          type="checkbox"
+          class="form-check-input"
+          [field]="flightForm.delayed"
+          id="flight-delayed"
+        />
+        Delayed</label
+      >
+    </div>
+
+    <div class="mt-40">
+      <button [disabled]="isDisabled()" type="button" (click)="save()">
+        Save
+      </button>
+    </div>
+  </form>
+} @else {
+  <p>Loading...</p>
+}

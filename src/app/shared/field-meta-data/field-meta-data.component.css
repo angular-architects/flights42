@@ -1,0 +1,9 @@
+.info {
+  margin-right: 5px;
+}
+
+.info-small {
+  font-size: smaller;
+  font-weight: normal;
+  /* color: darkgray; */
+}

@@ -7,56 +7,43 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FlightDetailStore } from './flight-detail-store';
-import {
-  Field,
-  form,
-  minLength,
-  required,
-  submit,
-  validate,
-} from '@angular/forms/signals';
-import { Flight } from '../../../data/flight';
+import { form, submit } from '@angular/forms/signals';
+import { Flight, flightSchema } from '../../../data/flight';
 import { toLocalDateTimeString } from '../../../shared/date-utils';
-import { JsonPipe } from '@angular/common';
 import { extractError } from '../../../shared/extract-error';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { AircraftComponent } from './aircraft-form/aircraft-form';
+import { FlightComponent } from './flight-form/flight-form';
+import { PricesComponent } from './prices-form/prices-form';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-flight-edit',
-  imports: [Field, JsonPipe],
-  templateUrl: './flight-edit.html',
+  imports: [
+    AircraftComponent,
+    PricesComponent,
+    FlightComponent,
+    ValidationErrorsComponent,
+  ],
+  templateUrl: './advanced-flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FlightEdit {
+export class AdvancedFlightEdit {
   private store = inject(FlightDetailStore);
   private route = inject(ActivatedRoute);
+  private snackBar = inject(MatSnackBar);
 
   protected readonly flight = linkedSignal(() =>
     normalizeFlight(this.store.flight()),
   );
   protected readonly isPending = this.store.isPending;
 
-  protected readonly flightForm = form(this.flight, (path) => {
-    required(path.from);
-    required(path.to);
-    required(path.date);
-    minLength(path.from, 3);
-
-    const allowed = ['Graz', 'Hamburg', 'Zürich'];
-    validate(path.from, (ctx) => {
-      const value = ctx.value();
-      if (allowed.includes(value)) {
-        return null;
-      }
-
-      return {
-        kind: 'city',
-        value,
-        allowed,
-      };
-    });
-  });
-
   protected readonly isDisabled = computed(
+    () => this.flightForm().invalid() || this.isPending(),
+  );
+  protected readonly flightForm = form(this.flight, flightSchema);
+
+  protected readonly disabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
   );
 
@@ -68,6 +55,11 @@ export class FlightEdit {
   }
 
   async save(): Promise<void> {
+    if (this.flightForm().invalid()) {
+      this.snackBar.open('Please correct the validation errors.', 'OK');
+      return;
+    }
+
     // this.store.updateFlight(this.flightForm().value());
 
     await submit(this.flightForm, async (form) => {
