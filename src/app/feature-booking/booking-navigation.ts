@@ -4,6 +4,6 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 @Component({
   selector: 'app-booking-tabs',
   imports: [RouterLink, RouterOutlet],
-  templateUrl: './booking-tabs.html',
+  templateUrl: './booking-navigation.html',
 })
-export class BookingTabs {}
+export class BookingNavigation {}

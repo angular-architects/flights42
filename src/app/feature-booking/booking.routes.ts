@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { AdvancedFlightEdit } from './advanced-flight-edit/advanced-flight-edit';
-import { BookingTabs } from './booking-tabs';
+import { BookingNavigation } from './booking-navigation';
 import { FlightEdit } from './flight-edit/flight-edit';
 import { FlightSearch } from './flight-search/flight-search';
 import { PassengerEdit } from './passenger-edit/passenger-edit';
@@ -13,7 +13,7 @@ import { Summary } from './summary/summary';
 export const bookingRoutes: Routes = [
   {
     path: '',
-    component: BookingTabs,
+    component: BookingNavigation,
     children: [
       {
         path: '',
