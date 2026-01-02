@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { Passenger } from '../../../data/passenger';
 
 @Component({
@@ -9,14 +9,13 @@ import { Passenger } from '../../../data/passenger';
 })
 export class PassengerCard {
   item = input.required<Passenger>();
-  selected = input(false);
-  selectedChange = output<boolean>();
+  selected = model(false);
 
   select() {
-    this.selectedChange.emit(true);
+    this.selected.set(true);
   }
 
   deselect() {
-    this.selectedChange.emit(false);
+    this.selected.set(false);
   }
 }
