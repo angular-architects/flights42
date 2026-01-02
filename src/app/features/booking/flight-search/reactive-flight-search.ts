@@ -10,10 +10,10 @@ import { delegatedSignal } from '../../../shared/signals/delegated-signal';
 @Component({
   selector: 'app-flight-search',
   imports: [Field, FlightCard, JsonPipe, RouterLink],
-  templateUrl: './alternative-flight-search.html',
+  templateUrl: './reactive-flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AlternativeFlightSearch {
+export class ReactiveFlightSearch {
   private store = inject(FlightStore);
   private snackBar = inject(MatSnackBar);
 

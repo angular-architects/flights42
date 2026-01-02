@@ -1,15 +1,12 @@
 import { signal } from '@angular/core';
 import { delegatedSignal } from './delegated-signal';
 describe('delegated-signal', () => {
-  it('...', () => {
+  it('reads from source and writes to sink', () => {
     const source = signal(0);
     const sink = signal(0);
 
-    const delegated = delegatedSignal({
-      source: source,
-      setter: (value) => {
-        sink.set(value);
-      },
+    const delegated = delegatedSignal(source, (value) => {
+      sink.set(value);
     });
 
     const readOnlyDelegated = delegated.asReadonly();

@@ -5,7 +5,7 @@ import { FlightEdit } from './flight-edit/flight-edit';
 import { PassengerSearch } from './passenger-search/passenger-search';
 import { PassengerEdit } from './passenger-edit/passenger-edit';
 import { Summary } from './summary/summary';
-import { AlternativeFlightSearch } from './flight-search/alternative-flight-search';
+import { ReactiveFlightSearch } from './flight-search/reactive-flight-search';
 
 export const bookingRoutes: Routes = [
   {
@@ -22,8 +22,8 @@ export const bookingRoutes: Routes = [
         component: FlightSearch,
       },
       {
-        path: 'alternative-flight-search',
-        component: AlternativeFlightSearch,
+        path: 'reactive-flight-search',
+        component: ReactiveFlightSearch,
       },
       {
         path: 'flight-edit/:id',
