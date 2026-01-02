@@ -1,6 +1,50 @@
-<h1>Flight Edit</h1>
+<div>{{ flightForm().errorSummary() | json }}</div>
 
-<p>Id: {{ id() }}</p>
-<p>ShowDetails: {{ showDetails() }}</p>
+<form>
+  <div>
+    <label for="flight-id">ID</label>
+    <input [field]="flightForm.id" type="number" id="flight-id" />
+    <div>{{ flightForm.id().errors() | json }}</div>
+  </div>
 
-<h2 id="prices" routerLink>Prices</h2>
+  <div>
+    <label for="flight-from"> From </label>
+    <input [field]="flightForm.from" id="flight-from" />
+    <div>{{ flightForm.from().errors() | json }}</div>
+  </div>
+
+  <div>
+    <label for="flight-to"> To </label>
+    <input [field]="flightForm.to" id="flight-to" />
+    <div>{{ flightForm.to().errors() | json }}</div>
+  </div>
+
+  <div>
+    <label for="flight-date">Date</label>
+    <div>
+      <input
+        class="form-control"
+        [field]="flightForm.date"
+        id="flight-date"
+        type="datetime-local"
+      />
+    </div>
+    <div>{{ flightForm.date().errors() | json }}</div>
+  </div>
+
+  <div class="form-check">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-check-input"
+        [field]="flightForm.delayed"
+        id="flight-delayed"
+      />
+      Delayed</label
+    >
+  </div>
+
+  <div class="mt-40">
+    <button [disabled]="disabled()" type="button" (click)="save()">Save</button>
+  </div>
+</form>
