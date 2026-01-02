@@ -5,10 +5,10 @@ import { NextFlightsStore } from './next-flights-store';
 @Component({
   selector: 'app-next-flights',
   standalone: false,
-  templateUrl: './next-flights.html',
+  templateUrl: './next-flights-overview.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NextFlights {
+export class NextFlightsOverview {
   private store = inject(NextFlightsStore);
   protected readonly tickets = this.store.tickets;
   protected readonly selected = this.store.selected;

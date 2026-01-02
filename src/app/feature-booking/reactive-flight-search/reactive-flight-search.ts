@@ -5,13 +5,13 @@ import {
   effect,
   inject,
 } from '@angular/core';
-import { FlightStore } from './flight-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlightCard } from '../../shared/flight-card/flight-card';
 import { JsonPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { debounce, Field, form } from '@angular/forms/signals';
 import { delegatedSignal } from '../../shared/signals/delegated-signal';
+import { FlightStore } from '../flight-search/flight-store';
 
 @Component({
   selector: 'app-flight-search',

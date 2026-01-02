@@ -1,16 +1,9 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { NextFlights } from './next-flights';
+import { Routes } from '@angular/router';
+import { NextFlightsOverview } from './next-flights-overview/next-flights-overview';
 
-const routes: Routes = [
+export const nextFlightRoutes: Routes = [
   {
     path: '',
-    component: NextFlights,
+    component: NextFlightsOverview,
   },
 ];
-
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-})
-export class NextFlightsRoutingModule {}

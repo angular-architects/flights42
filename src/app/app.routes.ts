@@ -19,7 +19,8 @@ export const routes: Routes = [
   },
   {
     path: 'booking',
-    loadChildren: () => import('./feature-booking/booking.routes'),
+    loadChildren: () =>
+      import('./feature-booking/booking.routes').then((m) => m.bookingRoutes),
   },
   {
     path: 'next-flights',
@@ -31,7 +32,9 @@ export const routes: Routes = [
   {
     path: 'luggage',
     loadComponent: () =>
-      import('./feature-luggage/luggage').then((m) => m.Luggage),
+      import('./feature-luggage/luggage-overview/luggage-overview').then(
+        (m) => m.LuggageOverview,
+      ),
   },
   {
     path: 'checkin',

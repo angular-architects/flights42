@@ -5,8 +5,8 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { FlightDetailStore } from './flight-detail-store';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FlightDetailStore } from '../flight-edit/flight-detail-store';
 import { form, submit } from '@angular/forms/signals';
 import { Flight, flightSchema } from '../../data/flight';
 import { toLocalDateTimeString } from '../../shared/date-utils';
@@ -24,6 +24,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     PricesComponent,
     FlightComponent,
     ValidationErrorsPane,
+    RouterLink,
   ],
   templateUrl: './advanced-flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

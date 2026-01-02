@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { LuggageService } from '../data/luggage-service';
+import { LuggageService } from '../../data/luggage-service';
 
 @Injectable({ providedIn: 'root' })
 export class LuggageStore {
