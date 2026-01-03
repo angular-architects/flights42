@@ -13,6 +13,8 @@ import { compatForm } from '@angular/forms/signals/compat';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { CheckinForm } from '../data/checkin-form';
+import { initPassengerForm, PassengerForm } from '../data/passenger-form';
 import { CheckinDialogComponent } from './checkin-dialog';
 
 @Component({
@@ -27,14 +29,12 @@ export class Checkin {
   private dialog = inject(MatDialog);
   private formBuilder = inject(FormBuilder);
 
-  protected readonly passengerGroup = this.formBuilder.group({
-    firstName: ['Jane'],
-    lastName: ['Doe'],
-    email: [
-      'me@here.com',
-      [Validators.required, Validators.minLength, Validators.email],
-    ],
-  });
+  protected readonly passengerGroup =
+    this.formBuilder.nonNullable.group<PassengerForm>({
+      firstName: 'Jane',
+      lastName: 'Doe',
+      email: 'me@here.com',
+    });
 
   protected readonly checkinFormModel = signal({
     ticketId: '',
@@ -53,6 +53,12 @@ export class Checkin {
   protected readonly ticketId = signal<number | undefined>(undefined);
 
   constructor() {
+    this.passengerGroup.controls.email.addValidators([
+      Validators.required,
+      Validators.minLength(3),
+      Validators.email,
+    ]);
+
     this.activatedRoute.paramMap.subscribe((paramMap) => {
       console.log('paramMap', paramMap);
       const ticketId = parseInt(paramMap.get('ticketId') ?? '0');
@@ -89,9 +95,16 @@ export class Checkin {
   }
 
   checkin(): void {
-    const { passenger, ...checkinForm } = this.checkinFormModel();
+    const { passenger, ...header } = this.checkinFormModel();
 
-    console.log('passenger', passenger.value);
+    const checkinForm: CheckinForm = {
+      ...header,
+      passenger: {
+        ...initPassengerForm,
+        ...passenger.value,
+      },
+    };
+
     console.log('checkinForm', checkinForm);
 
     this.dialog.open(CheckinDialogComponent, {
