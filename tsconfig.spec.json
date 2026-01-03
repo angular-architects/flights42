@@ -10,6 +10,6 @@
     "src/**/*.d.ts",
     "src/**/*.spec.ts",
     "src/app/shared/signals/delegated-signal.spec.ts",
-    "src/app/feature-booking/flight-search/flight-store.spec.ts"
+    "src/app/domains/ticketing/feature-booking/flight-search/flight-store.spec.ts"
   ]
 }

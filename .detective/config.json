@@ -1,0 +1,21 @@
+{
+  "scopes": [
+    "src/app/feature-booking",
+    "src/app/feature-checkin",
+    "src/app/feature-dashboard",
+    "src/app/feature-luggage",
+    "src/app/feature-next-flights",
+    "src/app/shared/flight-card"
+  ],
+  "groups": ["src/app/shared", "src/app"],
+  "entries": [],
+  "filter": {
+    "files": [],
+    "logs": []
+  },
+  "aliases": {},
+  "teams": {
+    "example-team-a": ["John Doe", "Jane Doe"],
+    "example-team-b": ["Max Muster", "Susi Sorglos"]
+  }
+}

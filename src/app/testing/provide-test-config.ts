@@ -1,6 +1,6 @@
 import { Provider } from '@angular/core';
 
-import { Config, ConfigService } from '../shared/config-service';
+import { Config, ConfigService } from '../shared/util-common/config-service';
 
 export function provideTestConfig(): Provider {
   const testConfig: Config = {

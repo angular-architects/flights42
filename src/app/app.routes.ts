@@ -16,31 +16,37 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('./feature-dashboard/dashboard').then((m) => m.Dashboard),
+      import('./domains/ticketing/feature-dashboard/dashboard').then(
+        (m) => m.Dashboard,
+      ),
   },
   {
     path: 'booking',
     loadChildren: () =>
-      import('./feature-booking/booking.routes').then((m) => m.bookingRoutes),
+      import('./domains/ticketing/feature-booking/booking.routes').then(
+        (m) => m.bookingRoutes,
+      ),
   },
   {
     path: 'next-flights',
     loadChildren: () =>
-      import('./feature-next-flights/next-flights.module').then(
+      import('./domains/ticketing/feature-next-flights/next-flights.module').then(
         (m) => m.NextFlightsModule,
       ),
   },
   {
     path: 'luggage',
     loadComponent: () =>
-      import('./feature-luggage/luggage-overview/luggage-overview').then(
+      import('./domains/luggage/feature-luggage/luggage-overview/luggage-overview').then(
         (m) => m.LuggageOverview,
       ),
   },
   {
     path: 'checkin',
     loadComponent: () =>
-      import('./feature-checkin/checkin').then((m) => m.Checkin),
+      import('./domains/checkin/feature-checkin/checkin').then(
+        (m) => m.Checkin,
+      ),
   },
   {
     path: 'about',
