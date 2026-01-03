@@ -7,7 +7,7 @@
 
   <div class="card-body">
     <p>Weight: {{ itemValue.weight }} kg</p>
-    <p>Destination: {{ itemValue.destination | city: 'short' }}</p>
+    <p>Destination: {{ itemValue.destination | appCity: 'short' }}</p>
     <p>Status: {{ itemValue.status }}</p>
     <p>
       @if (!selected()) {

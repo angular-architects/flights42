@@ -2,12 +2,16 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 export type CityFormat = 'long' | 'short';
 
+export interface CityPipeOptions {
+  format: CityFormat;
+}
+
 @Pipe({
-  name: 'appCity',
+  name: 'appAltCity',
   pure: true,
 })
-export class CityPipe implements PipeTransform {
-  transform(value: string, format?: CityFormat): string {
+export class AlternativeCityPipe implements PipeTransform {
+  transform(value: string, options: CityPipeOptions): string {
     let short, long;
 
     switch (value) {
@@ -27,7 +31,7 @@ export class CityPipe implements PipeTransform {
         short = long = value;
     }
 
-    if (format == 'short') return short;
+    if (options.format == 'short') return short;
     return long;
   }
 }

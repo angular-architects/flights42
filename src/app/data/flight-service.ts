@@ -3,7 +3,7 @@ import { inject, Injectable, resource, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, Observable } from 'rxjs';
 
-import { ConfigService } from '../shared/simple-config-service';
+import { ConfigService } from '../shared/config-service';
 import { initAircraft } from './aircraft';
 import { Flight, initFlight } from './flight';
 
@@ -27,22 +27,23 @@ export class FlightService {
   }
 
   findResource(from: Signal<string>, to: Signal<string>) {
-    const isActive = () => from() && to();
-
     return httpResource<Flight[]>(
-      () =>
-        !isActive()
-          ? undefined
-          : {
-              url: `${this.configService.baseUrl}/flight`,
-              headers: {
-                Accept: 'application/json',
-              },
-              params: {
-                from: from(),
-                to: to(),
-              },
-            },
+      () => {
+        if (!from() || !to()) {
+          return undefined;
+        }
+
+        return {
+          url: `${this.configService.baseUrl}/flight`,
+          headers: {
+            Accept: 'application/json',
+          },
+          params: {
+            from: from(),
+            to: to(),
+          },
+        };
+      },
       { defaultValue: [] },
     );
   }

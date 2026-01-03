@@ -2,7 +2,7 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Injectable, Signal } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ConfigService } from '../shared/simple-config-service';
+import { ConfigService } from '../shared/config-service';
 import { initPassenger, Passenger } from './passenger';
 
 @Injectable({
