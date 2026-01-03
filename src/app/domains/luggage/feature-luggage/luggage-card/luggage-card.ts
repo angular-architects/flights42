@@ -9,7 +9,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 
-import { CityPipe } from '../../../../domains/ticketing/utils/city.pipe';
+import { CityPipe } from '../../../ticketing/utils/city.pipe';
 import { Luggage } from '../../data/luggage';
 
 @Component({
