@@ -9,9 +9,9 @@ import { form, submit } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { ValidationErrorsPane } from '../../../../shared/ui-forms/validation-errors/validation-errors-pane';
-import { toLocalDateTimeString } from '../../../../shared/util-common/date-utils';
-import { extractError } from '../../../../shared/util-common/extract-error';
+import { ValidationErrorsPane } from '../../../shared/ui-forms/validation-errors/validation-errors-pane';
+import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
+import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { flightSchema } from '../../data/flight-schema';
 import { FlightDetailStore } from '../flight-edit/flight-detail-store';

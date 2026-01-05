@@ -16,8 +16,8 @@ import {
 } from '@angular/forms/signals';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { toLocalDateTimeString } from '../../../../shared/util-common/date-utils';
-import { extractError } from '../../../../shared/util-common/extract-error';
+import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
+import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { FlightDetailStore } from './flight-detail-store';
 

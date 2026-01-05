@@ -9,7 +9,7 @@ import {
 } from '@angular/forms/signals';
 import { delay, map, Observable, of } from 'rxjs';
 
-import { CITY, CITY2 } from '../../../shared/util-common/properties';
+import { CITY, CITY2 } from '../../shared/util-common/properties';
 import { Flight } from './flight';
 import { Price } from './price';
 

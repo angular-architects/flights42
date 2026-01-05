@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { Field, FieldTree } from '@angular/forms/signals';
 
-import { ValidationErrorsPane } from '../../../../../shared/ui-forms/validation-errors/validation-errors-pane';
+import { ValidationErrorsPane } from '../../../../shared/ui-forms/validation-errors/validation-errors-pane';
 import { Price } from '../../../data/price';
 import { initPrice } from '../../../data/price-schema';
 

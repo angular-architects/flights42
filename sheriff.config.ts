@@ -17,24 +17,12 @@ export const config: SheriffConfig = {
       api: ['domain:<domain>/api', 'type:api'],
     },
 
-    'src/app/shared': {
-      'feature-<name>': ['shared', 'type:feature'],
-      'ui-<name>': ['shared', 'type:ui'],
-      'data-<name>': ['shared', 'type:data'],
-      'util-<name>': ['shared', 'type:util'],
-
-      data: ['shared', 'type:data'],
-      ui: ['shared', 'type:ui'],
-      util: ['shared', 'type:util'],
-    },
-
     'src/app/testing': ['testing'],
   },
   depRules: {
     root: '*',
 
-    'domain:*': [sameTag, 'shared'],
-    shared: ['shared'],
+    'domain:*': [sameTag, 'domain:shared'],
 
     'type:feature': [
       'type:api',
@@ -48,8 +36,12 @@ export const config: SheriffConfig = {
 
     // API
     'type:api': ['type:feature', 'type:ui', 'type:data', 'type:util'],
-    'domain:ticketing/api': ['domain:ticketing', 'shared'],
-    'domain:checkin': ['domain:checkin', 'domain:ticketing/api', 'shared'],
+    'domain:ticketing/api': ['domain:ticketing', 'domain:shared'],
+    'domain:checkin': [
+      'domain:checkin',
+      'domain:ticketing/api',
+      'domain:shared',
+    ],
 
     testing: '*',
     '*': ['testing'],

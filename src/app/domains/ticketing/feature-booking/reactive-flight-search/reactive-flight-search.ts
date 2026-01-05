@@ -10,7 +10,7 @@ import { debounce, Field, form } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
-import { delegatedSignal } from '../../../../shared/util-common/delegated-signal';
+import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from '../flight-search/flight-store';
 

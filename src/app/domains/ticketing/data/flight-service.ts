@@ -3,7 +3,7 @@ import { inject, Injectable, resource, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, Observable } from 'rxjs';
 
-import { ConfigService } from '../../../shared/util-common/config-service';
+import { ConfigService } from '../../shared/util-common/config-service';
 import { initAircraft } from './aircraft';
 import { Flight, initFlight } from './flight';
 
