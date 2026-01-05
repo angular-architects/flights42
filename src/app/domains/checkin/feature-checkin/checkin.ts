@@ -13,13 +13,20 @@ import { compatForm } from '@angular/forms/signals/compat';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { NextFlightsModule } from '../../ticketing/api';
 import { CheckinForm } from '../data/checkin-form';
 import { initPassengerForm, PassengerForm } from '../data/passenger-form';
 import { CheckinDialogComponent } from './checkin-dialog';
 
 @Component({
   selector: 'app-checkin',
-  imports: [Field, ReactiveFormsModule, RouterLink, JsonPipe],
+  imports: [
+    Field,
+    ReactiveFormsModule,
+    RouterLink,
+    JsonPipe,
+    NextFlightsModule,
+  ],
   templateUrl: './checkin.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -28,6 +35,8 @@ export class Checkin {
   private activatedRoute = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
   private formBuilder = inject(FormBuilder);
+
+  protected readonly showNextFlights = signal(false);
 
   protected readonly passengerGroup =
     this.formBuilder.nonNullable.group<PassengerForm>({
@@ -47,7 +56,7 @@ export class Checkin {
   });
 
   protected readonly expertMode = input.required({
-    transform: custonBooleanAttribute,
+    transform: customBooleanAttribute,
   });
 
   protected readonly ticketId = signal<number | undefined>(undefined);
@@ -111,9 +120,13 @@ export class Checkin {
       width: '400px',
     });
   }
+
+  toggleNextFlights(): void {
+    this.showNextFlights.update((show) => !show);
+  }
 }
 
-function custonBooleanAttribute(value: unknown): boolean {
+function customBooleanAttribute(value: unknown): boolean {
   const valueAsString = String(value);
   return valueAsString === 'true' || valueAsString === '1';
 }

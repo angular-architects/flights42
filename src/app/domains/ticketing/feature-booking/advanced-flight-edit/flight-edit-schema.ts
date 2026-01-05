@@ -1,6 +1,7 @@
 import { apply, required, schema } from '@angular/forms/signals';
 
-import { Flight, flightSchema } from '../../data/flight';
+import { Flight } from '../../data/flight';
+import { flightSchema } from '../../data/flight-schema';
 
 // Demonstrate how to combine a general schema
 // with form-specific validators

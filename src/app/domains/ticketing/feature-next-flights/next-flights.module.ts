@@ -3,9 +3,9 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { FlightCard } from '../ui/flight-card/flight-card';
+import { nextFlightRoutes } from './next-flights.routes';
 import { NextFlightsOverview } from './next-flights-overview/next-flights-overview';
 import { NextFlightsStore } from './next-flights-overview/next-flights-store';
-import { nextFlightRoutes } from './next-flights-routing.module';
 
 @NgModule({
   imports: [CommonModule, RouterModule.forChild(nextFlightRoutes), FlightCard],

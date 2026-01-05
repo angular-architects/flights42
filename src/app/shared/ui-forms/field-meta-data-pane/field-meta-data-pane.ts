@@ -6,10 +6,7 @@ import {
   REQUIRED,
 } from '@angular/forms/signals';
 
-import {
-  CITY,
-  CITY2,
-} from '../../../domains/ticketing/utils/flight-properties';
+import { CITY, CITY2 } from '../../util-common/properties';
 
 @Component({
   selector: 'app-field-meta-data-pane',

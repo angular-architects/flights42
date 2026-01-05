@@ -15,6 +15,7 @@
     "*": "prettier --write --ignore-unknown"
   },
   "prettier": {
+    "bracketSameLine": true,
     "printWidth": 80,
     "singleQuote": true,
     "overrides": [
@@ -45,6 +46,8 @@
     "@angular/cli": "^21.0.4",
     "@angular/compiler-cli": "^21.0.0",
     "@commitlint/config-conventional": "^20.2.0",
+    "@softarc/eslint-plugin-sheriff": "^0.19.6",
+    "@softarc/sheriff-core": "^0.19.6",
     "@vitest/browser-playwright": "^4.0.16",
     "angular-eslint": "21.1.0",
     "commitlint": "^20.2.0",

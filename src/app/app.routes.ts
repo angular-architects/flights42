@@ -16,9 +16,7 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('./domains/ticketing/feature-dashboard/dashboard').then(
-        (m) => m.Dashboard,
-      ),
+      import('./shell/dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
     path: 'booking',

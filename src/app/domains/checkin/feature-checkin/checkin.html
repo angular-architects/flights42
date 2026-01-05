@@ -50,3 +50,16 @@
     </button>
   </div>
 </form>
+
+<p class="mb-20">
+  <a
+    (click)="toggleNextFlights()"
+    (keypress.enter)="toggleNextFlights()"
+    tabindex="0">
+    Toggle Next Flights
+  </a>
+</p>
+
+@if (showNextFlights()) {
+  <app-next-flights />
+}

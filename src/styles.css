@@ -462,3 +462,7 @@ input.medium {
   margin-bottom: 20px;
   color: darkred;
 }
+
+.mb-20 {
+  margin-bottom: 50px;
+}

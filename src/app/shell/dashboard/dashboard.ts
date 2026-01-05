@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 
-import { NextFlightsModule } from '../feature-next-flights/next-flights.module';
+import { NextFlightsModule } from '../../domains/ticketing/feature-next-flights/next-flights.module';
 
 @Component({
   selector: 'app-dashboard',

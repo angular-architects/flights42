@@ -6,14 +6,12 @@
       <app-flight-card
         [item]="ticket"
         [selected]="selected()[ticket.id]"
-        (selectedChange)="updateSelected(ticket.id, $event)"
-      >
+        (selectedChange)="updateSelected(ticket.id, $event)">
         <button
           [routerLink]="['/checkin', { ticketId: ticket.id }]"
           [queryParams]="{ expertMode: true }"
           queryParamsHandling="merge"
-          fragment="confirmation"
-        >
+          fragment="confirmation">
           Check-in
         </button>
       </app-flight-card>

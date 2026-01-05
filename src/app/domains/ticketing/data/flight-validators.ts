@@ -9,9 +9,9 @@ import {
 } from '@angular/forms/signals';
 import { delay, map, Observable, of } from 'rxjs';
 
-import { Flight } from '../data/flight';
-import { Price } from '../data/price';
-import { CITY, CITY2 } from './flight-properties';
+import { CITY, CITY2 } from '../../../shared/util-common/properties';
+import { Flight } from './flight';
+import { Price } from './price';
 
 export function validateCity(path: SchemaPath<string>, allowed: string[]) {
   validate(path, (ctx) => {
