@@ -38,6 +38,7 @@ export class ReactiveFlightSearch {
       to: this.to(),
     }),
     (value) => {
+      console.log('*** value', value);
       this.store.updateFilter(value.from, value.to);
     },
   );
