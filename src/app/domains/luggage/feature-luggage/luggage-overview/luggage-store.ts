@@ -1,4 +1,5 @@
 import { inject } from '@angular/core';
+import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import { mapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -84,4 +85,6 @@ export const LuggageStore = signalStore(
       }));
     },
   })),
+
+  withDevtools('luggage'),
 );

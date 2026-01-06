@@ -20,9 +20,8 @@
       <app-passenger-card
         [item]="p"
         [selected]="selected()[p.id]"
-        (selectedChange)="updateSelected(p.id, $event)"
-      >
-        <button [routerLink]="['/passenger-edit', p.id]">Edit</button>
+        (selectedChange)="updateSelected(p.id, $event)">
+        <button [routerLink]="['../passenger-edit', p.id]">Edit</button>
       </app-passenger-card>
     </div>
   }

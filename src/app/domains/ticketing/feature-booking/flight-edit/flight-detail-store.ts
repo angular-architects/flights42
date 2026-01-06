@@ -1,6 +1,10 @@
 import { inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { withMutations, withResource } from '@angular-architects/ngrx-toolkit';
+import {
+  withDevtools,
+  withMutations,
+  withResource,
+} from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
   signalMethod,
@@ -60,4 +64,6 @@ export const FlightDetailStore = signalStore(
       store._flightReload();
     },
   })),
+
+  withDevtools('flightDetail'),
 );

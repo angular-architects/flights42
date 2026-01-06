@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { withResource } from '@angular-architects/ngrx-toolkit';
+import { withDevtools, withResource } from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
   signalStore,
@@ -65,6 +65,8 @@ export const FlightStore = signalStore(
       }));
     },
   })),
+
+  withDevtools('flight'),
 );
 
 function toFlightsWithDelays(flights: Flight[], delay: number): Flight[] {

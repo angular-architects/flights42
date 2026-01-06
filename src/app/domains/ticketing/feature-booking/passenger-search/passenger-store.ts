@@ -1,4 +1,5 @@
 import { inject } from '@angular/core';
+import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
   signalStore,
@@ -68,4 +69,6 @@ export const PassengerStore = signalStore(
       },
     };
   }),
+
+  withDevtools('passenger'),
 );
