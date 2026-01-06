@@ -1,4 +1,5 @@
-import { Injectable, resource } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
 
 import { Luggage } from './luggage';
 
@@ -6,13 +7,8 @@ import { Luggage } from './luggage';
   providedIn: 'root',
 })
 export class LuggageService {
-  findLuggage() {
-    return resource({
-      loader: async () => {
-        return this.getLuggage();
-      },
-      defaultValue: [],
-    });
+  find(): Observable<Luggage[]> {
+    return of(this.getLuggage());
   }
 
   private getLuggage(): Luggage[] {
