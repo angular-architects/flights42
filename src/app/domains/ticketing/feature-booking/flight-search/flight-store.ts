@@ -1,65 +1,71 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
+import { withResource } from '@angular-architects/ngrx-toolkit';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
 
 import { Flight } from '../../data/flight';
 import { FlightService } from '../../data/flight-service';
 
-@Injectable({ providedIn: 'root' })
-export class FlightStore {
-  private flightService = inject(FlightService);
-
-  // From
-  private readonly _from = signal('Graz');
-  readonly from = this._from.asReadonly();
-
-  // To
-  private readonly _to = signal('Hamburg');
-  readonly to = this._to.asReadonly();
-
-  // Basket
-  private readonly _basket = signal<Record<number, boolean>>({});
-  readonly basket = this._basket.asReadonly();
-
-  // Delay
-  private readonly _delay = signal(0);
-  readonly delayInMin = this._delay.asReadonly();
-
-  // FlightResource
-  private readonly flightsResource = this.flightService.findResource(
-    this.from,
-    this.to,
-  );
-  readonly flights = this.flightsResource.value;
-  readonly isLoading = this.flightsResource.isLoading;
-  readonly error = this.flightsResource.error;
-  readonly loaded = computed(
-    () => this.flightsResource.status() === 'resolved',
-  );
-
-  // FlightsWithDelays
-  readonly flightsWithDelays = computed(() =>
-    toFlightsWithDelays(this.flights(), this.delayInMin()),
-  );
-
-  updateFilter(from: string, to: string): void {
-    this._from.set(from);
-    this._to.set(to);
-  }
-
-  updateBasket(flightId: number, selected: boolean): void {
-    this._basket.update((basket) => ({
-      ...basket,
-      [flightId]: selected,
-    }));
-  }
-
-  reload(): void {
-    this.flightsResource.reload();
-  }
-
-  delay(): void {
-    this._delay.update((delay) => delay + 15);
-  }
+export interface FlightFilter {
+  from: string;
+  to: string;
 }
+
+export const FlightStore = signalStore(
+  { providedIn: 'root' },
+
+  withState({
+    from: 'Graz',
+    to: 'Hamburg',
+    basket: {},
+    delayInMin: 0,
+  }),
+
+  withProps(() => ({
+    _flightService: inject(FlightService),
+  })),
+
+  withResource((store) => ({
+    flights: store._flightService.findResource(store.from, store.to),
+  })),
+
+  withComputed((store) => ({
+    flightsWithDelays: computed(() =>
+      toFlightsWithDelays(store.flightsValue(), store.delayInMin()),
+    ),
+  })),
+
+  withMethods((store) => ({
+    updateFilter(from: string, to: string): void {
+      patchState(store, { from, to });
+    },
+
+    updateBasket(flightId: number, selected: boolean): void {
+      patchState(store, (state) => ({
+        basket: {
+          ...state.basket,
+          [flightId]: selected,
+        },
+      }));
+    },
+
+    reload(): void {
+      store._flightsReload();
+    },
+
+    delay(): void {
+      patchState(store, (state) => ({
+        delayInMin: state.delayInMin + 15,
+      }));
+    },
+  })),
+);
 
 function toFlightsWithDelays(flights: Flight[], delay: number): Flight[] {
   if (flights.length === 0) {

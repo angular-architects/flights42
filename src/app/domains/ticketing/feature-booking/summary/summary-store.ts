@@ -10,7 +10,7 @@ export class SummaryStore {
 
   readonly selectedFlights = computed(() => {
     const basket = this.flightStore.basket();
-    const flights = this.flightStore.flights();
+    const flights = this.flightStore.flightsValue();
     return flights.filter((flight) => basket[flight.id]);
   });
 

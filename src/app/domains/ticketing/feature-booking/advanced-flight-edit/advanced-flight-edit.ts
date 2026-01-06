@@ -37,9 +37,9 @@ export class AdvancedFlightEdit {
   private snackBar = inject(MatSnackBar);
 
   protected readonly flight = linkedSignal(() =>
-    normalizeFlight(this.store.flight()),
+    normalizeFlight(this.store.flightValue()),
   );
-  protected readonly isPending = this.store.isPending;
+  protected readonly isPending = this.store.saveFlightIsPending;
 
   protected readonly isDisabled = computed(
     () => this.flightForm().invalid() || this.isPending(),

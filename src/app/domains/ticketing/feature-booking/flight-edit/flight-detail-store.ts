@@ -1,62 +1,63 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { catchError, finalize, firstValueFrom, tap, throwError } from 'rxjs';
+import { withMutations, withResource } from '@angular-architects/ngrx-toolkit';
+import {
+  patchState,
+  signalMethod,
+  signalStore,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
 
 import { Flight } from '../../data/flight';
 import { FlightService } from '../../data/flight-service';
 
-@Injectable({ providedIn: 'root' })
-export class FlightDetailStore {
-  private flightService = inject(FlightService);
-  private snackBar = inject(MatSnackBar);
+export const FlightDetailStore = signalStore(
+  { providedIn: 'root' },
 
-  // FlightId Filter
-  private readonly _flightId = signal<number>(0);
-  readonly flightId = this._flightId.asReadonly();
+  withState({
+    flightId: 0,
+  }),
 
-  // Pending state
-  private readonly _isPending = signal(false);
-  readonly isPending = this._isPending.asReadonly();
+  withProps(() => ({
+    _flightService: inject(FlightService),
+    _snackBar: inject(MatSnackBar),
+  })),
 
-  // FlightResource
-  private readonly flightResource = this.flightService.findResourceById(
-    this.flightId,
-  );
-  readonly flight = this.flightResource.value;
-  readonly isLoading = this.flightResource.isLoading;
-  readonly error = this.flightResource.error;
+  withResource((store) => ({
+    flight: store._flightService.findResourceById(store.flightId),
+  })),
 
-  setFlightId(id: number): void {
-    this._flightId.set(id);
-  }
+  withMutations((store) => ({
+    saveFlight: store._flightService.createSaveMutation({
+      onSuccess(flight: Flight) {
+        patchState(store, { flightValue: flight });
+        store._snackBar.open('Flight updated successfully', 'OK', {
+          duration: 3000,
+        });
+      },
+      onError(error: unknown) {
+        const message = 'Failed to update flight';
+        console.error(message, error);
+        store._snackBar.open(message, 'OK', {
+          duration: 5000,
+        });
+      },
+    }),
+  })),
 
-  saveFlight(flight: Flight): Promise<Flight> {
-    this._isPending.set(true);
+  withMethods((store) => ({
+    setFlightId(id: number): void {
+      patchState(store, { flightId: id });
+    },
 
-    return firstValueFrom(
-      this.flightService.update(flight).pipe(
-        tap((updatedFlight) => {
-          this.flightResource.set(updatedFlight);
-          this.snackBar.open('Flight updated successfully', 'OK', {
-            duration: 3000,
-          });
-        }),
-        catchError((err) => {
-          const message = 'Failed to update flight';
-          console.error(message, err);
-          this.snackBar.open(message, 'OK', {
-            duration: 5000,
-          });
-          return throwError(() => err);
-        }),
-        finalize(() => {
-          this._isPending.set(false);
-        }),
-      ),
-    );
-  }
+    connectFlightId: signalMethod<number>((id) => {
+      patchState(store, { flightId: id });
+    }),
 
-  reload(): void {
-    this.flightResource.reload();
-  }
-}
+    reload(): void {
+      store._flightReload();
+    },
+  })),
+);

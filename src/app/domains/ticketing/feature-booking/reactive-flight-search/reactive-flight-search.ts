@@ -38,7 +38,6 @@ export class ReactiveFlightSearch {
       to: this.to(),
     }),
     (value) => {
-      console.log('*** value', value);
       this.store.updateFilter(value.from, value.to);
     },
   );
@@ -49,9 +48,8 @@ export class ReactiveFlightSearch {
   });
 
   protected readonly flights = this.store.flightsWithDelays;
-  protected readonly isLoading = this.store.isLoading;
-  protected readonly error = this.store.error;
-  protected readonly loaded = this.store.loaded;
+  protected readonly isLoading = this.store.flightsIsLoading;
+  protected readonly error = this.store.flightsError;
 
   protected readonly basket = this.store.basket;
 

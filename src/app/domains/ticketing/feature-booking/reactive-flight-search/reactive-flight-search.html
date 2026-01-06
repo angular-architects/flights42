@@ -11,10 +11,15 @@
   </div>
   <div>Flight{{ flightRoute() }}</div>
   <div>
-    <button (click)="search()" [disabled]="filterForm().invalid()">
+    <button
+      type="button"
+      (click)="search()"
+      [disabled]="filterForm().invalid()">
       Search
     </button>
-    <button (click)="delay()" [disabled]="flights().length === 0">Delay</button>
+    <button type="button" (click)="delay()" [disabled]="flights().length === 0">
+      Delay
+    </button>
   </div>
   @if (isLoading()) {
     <div>Loading ...</div>

@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   inject,
+  input,
   linkedSignal,
 } from '@angular/core';
 import {
@@ -31,10 +32,12 @@ export class FlightEdit {
   private store = inject(FlightDetailStore);
   private route = inject(ActivatedRoute);
 
+  protected readonly id = input.required<number>();
+
   protected readonly flight = linkedSignal(() =>
-    normalizeFlight(this.store.flight()),
+    normalizeFlight(this.store.flightValue()),
   );
-  protected readonly isPending = this.store.isPending;
+  protected readonly isPending = this.store.saveFlightIsPending;
 
   protected readonly flightForm = form(this.flight, (path) => {
     required(path.from);
@@ -66,6 +69,9 @@ export class FlightEdit {
       const flightId = parseInt(paramsMap.get('id') ?? '0');
       this.store.setFlightId(flightId);
     });
+
+    // Alternative: signalMethod in Signal Store
+    // this.store.connectFlightId(this.id);
   }
 
   async save(): Promise<void> {

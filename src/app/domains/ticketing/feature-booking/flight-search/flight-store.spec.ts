@@ -10,7 +10,7 @@ import { runTasks } from '../../../../testing/run-tasks';
 import { FlightStore } from './flight-store';
 
 describe('flight-store', () => {
-  let store: FlightStore;
+  let store: InstanceType<typeof FlightStore>;
   let ctrl: HttpTestingController;
 
   beforeEach(async () => {
@@ -40,7 +40,7 @@ describe('flight-store', () => {
 
     await runTasks();
 
-    const flights = store.flights();
+    const flights = store.flightsValue();
     expect(flights.length).toBe(3);
 
     ctrl.verify();
@@ -52,7 +52,7 @@ describe('flight-store', () => {
     await runTasks();
 
     ctrl.verify();
-    const flights = store.flights();
+    const flights = store.flightsValue();
     expect(flights.length).toBe(0);
   });
 });
