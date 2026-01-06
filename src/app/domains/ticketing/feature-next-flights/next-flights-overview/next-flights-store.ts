@@ -1,24 +1,65 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
+import { withDevtools } from '@angular-architects/ngrx-toolkit';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
+import { setAllEntities, withEntities } from '@ngrx/signals/entities';
 
+import { Flight } from '../../data/flight';
 import { TicketService } from '../../data/ticket-service';
 
-@Injectable()
-export class NextFlightsStore {
-  private ticketService = inject(TicketService);
+export const NextFlightsStore = signalStore(
+  withState({
+    selected: {} as Record<number, boolean>,
+    isLoading: false,
+    error: null as string | null,
+  }),
 
-  private readonly ticketsResource = this.ticketService.findTickets();
-  readonly tickets = this.ticketsResource.value;
-  readonly isLoading = this.ticketsResource.isLoading;
-  readonly error = this.ticketsResource.error;
+  withEntities({ entity: type<Flight>(), collection: 'ticket' }),
 
-  // Selected
-  private readonly _selected = signal<Record<number, boolean>>({});
-  readonly selected = this._selected.asReadonly();
+  withProps(() => ({
+    _ticketService: inject(TicketService),
+  })),
 
-  updateSelected(ticketId: number, selected: boolean): void {
-    this._selected.update((current) => ({
-      ...current,
-      [ticketId]: selected,
-    }));
-  }
-}
+  withComputed(({ ticketEntities, selected }) => ({
+    selectedTickets: computed(() =>
+      ticketEntities().filter((ticket) => selected()[ticket.id]),
+    ),
+  })),
+
+  withMethods((store) => ({
+    load(): void {
+      patchState(store, { isLoading: true, error: null });
+
+      store._ticketService.find().subscribe({
+        next: (tickets) => {
+          patchState(store, setAllEntities(tickets, { collection: 'ticket' }));
+          patchState(store, { isLoading: false });
+        },
+        error: (error) => {
+          patchState(store, {
+            error: error.message || 'Error loading tickets',
+            isLoading: false,
+          });
+        },
+      });
+    },
+
+    updateSelected(ticketId: number, selected: boolean): void {
+      patchState(store, (state) => ({
+        selected: {
+          ...state.selected,
+          [ticketId]: selected,
+        },
+      }));
+    },
+  })),
+
+  withDevtools('nextFlights'),
+);

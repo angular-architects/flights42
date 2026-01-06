@@ -46,8 +46,12 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Keep state transformations pure and predictable
 - Do NOT use `mutate` on signals, use `update` or `set` instead
 
-- For NgRx Signal Store use the Resource and the Mutation API as described here:
-  https://www.angulararchitects.io/blog/full-cycle-reativity-in-angular-signal-forms-signal-store-resources-mutation-api/
+## NgRx Signal Store
+- Use NgRx Signal Store for State Management
+- If possible, put the store next to the consuming feature or component
+- Use `withProps` for injecting services
+- All Features (`withComputed`, `withMethods`, `withResource`, `withMutations`, etc.) get an expression-bodied arrow function (array function with *implicit* return) passed (e.g. `() => ({...})` and *not* `() => { return {...} }`)
+- For NgRx Signal Store use the Resource and the Mutation API as described here: https://www.angulararchitects.io/blog/full-cycle-reativity-in-angular-signal-forms-signal-store-resources-mutation-api/
 
 ## Templates
 

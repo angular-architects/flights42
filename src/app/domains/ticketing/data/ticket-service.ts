@@ -1,4 +1,5 @@
 import { Injectable, resource } from '@angular/core';
+import { Observable, of } from 'rxjs';
 
 import { Flight } from './flight';
 
@@ -13,6 +14,10 @@ export class TicketService {
       },
       defaultValue: [],
     });
+  }
+
+  find(): Observable<Flight[]> {
+    return of(this.getTickets());
   }
 
   private getTickets(): Flight[] {
