@@ -23,7 +23,7 @@ export const FlightStore = signalStore(
   withState({
     from: 'Graz',
     to: 'Hamburg',
-    basket: {},
+    basket: {} as Record<number, boolean>,
     delayInMin: 0,
   }),
 

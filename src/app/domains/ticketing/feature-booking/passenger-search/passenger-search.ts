@@ -2,10 +2,10 @@ import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   linkedSignal,
-  untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -30,13 +30,17 @@ export class PassengerSearch {
   protected readonly passengers = this.store.passengers;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
-  protected readonly loaded = this.store.loaded;
 
   protected readonly selected = this.store.selected;
 
+  protected readonly filter = computed(() => ({
+    name: this.name(),
+    firstName: this.firstName(),
+  }));
+
   constructor() {
     this.showError();
-    this.connectFilter();
+    this.store.updateFilter(this.filter);
   }
 
   private showError() {
@@ -49,19 +53,9 @@ export class PassengerSearch {
     });
   }
 
-  private connectFilter() {
-    effect(() => {
-      const name = this.name();
-      const firstName = this.firstName();
-      untracked(() => {
-        this.store.updateFilter(name, firstName);
-      });
-    });
-  }
-
   search(): void {
-    // this.store.updateFilter(this.name(), this.firstName());
-    this.store.reload();
+    this.store.updateFilter(this.filter());
+    // this.store.reload();
   }
 
   updateSelected(passengerId: number, selected: boolean): void {

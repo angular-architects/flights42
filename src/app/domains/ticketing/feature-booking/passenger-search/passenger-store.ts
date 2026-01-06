@@ -1,49 +1,71 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { inject } from '@angular/core';
+import {
+  patchState,
+  signalStore,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { catchError, of, pipe, switchMap, tap } from 'rxjs';
 
+import { Passenger } from '../../data/passenger';
 import { PassengerService } from '../../data/passenger-service';
 
-@Injectable({ providedIn: 'root' })
-export class PassengerStore {
-  private passengerService = inject(PassengerService);
-
-  // Name
-  private readonly _name = signal('Smith');
-  readonly name = this._name.asReadonly();
-
-  // FirstName
-  private readonly _firstName = signal('');
-  readonly firstName = this._firstName.asReadonly();
-
-  // Selected
-  private readonly _selected = signal<Record<number, boolean>>({});
-  readonly selected = this._selected.asReadonly();
-
-  // PassengerResource
-  private readonly passengersResource = this.passengerService.findResource(
-    this.name,
-    this.firstName,
-  );
-  readonly passengers = this.passengersResource.value;
-  readonly isLoading = this.passengersResource.isLoading;
-  readonly error = this.passengersResource.error;
-  readonly loaded = computed(
-    () => this.passengersResource.status() === 'resolved',
-  );
-
-  updateFilter(name: string, firstName: string): void {
-    this._name.set(name);
-    this._firstName.set(firstName);
-    this.passengersResource.reload();
-  }
-
-  updateSelected(passengerId: number, selected: boolean): void {
-    this._selected.update((current) => ({
-      ...current,
-      [passengerId]: selected,
-    }));
-  }
-
-  reload(): void {
-    this.passengersResource.reload();
-  }
+export interface PassengerFilter {
+  name: string;
+  firstName: string;
 }
+
+export const PassengerStore = signalStore(
+  { providedIn: 'root' },
+
+  withState({
+    name: 'Smith',
+    firstName: '',
+    selected: {} as Record<number, boolean>,
+    passengers: [] as Passenger[],
+    isLoading: false,
+    error: null as string | null,
+  }),
+
+  withProps(() => ({
+    _passengerService: inject(PassengerService),
+  })),
+
+  withMethods((store) => {
+    return {
+      updateFilter: rxMethod<PassengerFilter>(
+        pipe(
+          tap((filter) =>
+            patchState(store, {
+              name: filter.name,
+              firstName: filter.firstName,
+              isLoading: true,
+              error: null,
+            }),
+          ),
+          switchMap((filter) =>
+            store._passengerService.find(filter.name, filter.firstName).pipe(
+              catchError((error) => {
+                patchState(store, { error });
+                return of([]);
+              }),
+            ),
+          ),
+          tap((passengers) => {
+            patchState(store, { passengers, isLoading: false });
+          }),
+        ),
+      ),
+      updateSelected(passengerId: number, selected: boolean): void {
+        patchState(store, (state) => ({
+          selected: {
+            ...state.selected,
+            [passengerId]: selected,
+          },
+        }));
+      },
+    };
+  }),
+);
