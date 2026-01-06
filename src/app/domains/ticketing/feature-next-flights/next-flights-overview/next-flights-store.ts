@@ -21,15 +21,15 @@ export const NextFlightsStore = signalStore(
     error: null as string | null,
   }),
 
-  withEntities({ entity: type<Flight>(), collection: 'ticket' }),
+  withEntities({ entity: type<Flight>() }),
 
   withProps(() => ({
     _ticketService: inject(TicketService),
   })),
 
-  withComputed(({ ticketEntities, selected }) => ({
+  withComputed(({ entities, selected }) => ({
     selectedTickets: computed(() =>
-      ticketEntities().filter((ticket) => selected()[ticket.id]),
+      entities().filter((ticket) => selected()[ticket.id]),
     ),
   })),
 
@@ -39,7 +39,7 @@ export const NextFlightsStore = signalStore(
 
       store._ticketService.find().subscribe({
         next: (tickets) => {
-          patchState(store, setAllEntities(tickets, { collection: 'ticket' }));
+          patchState(store, setAllEntities(tickets));
           patchState(store, { isLoading: false });
         },
         error: (error) => {
