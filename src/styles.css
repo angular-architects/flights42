@@ -508,3 +508,8 @@ markdown p {
     opacity: 1;
   }
 }
+
+.buttons-side {
+  margin-left: 40px;
+  width: 100%;
+}

@@ -6,3 +6,7 @@ input {
 .chart {
   margin-left: -20px;
 }
+
+.ai-wait-indicator {
+  margin-left: 5px;
+}

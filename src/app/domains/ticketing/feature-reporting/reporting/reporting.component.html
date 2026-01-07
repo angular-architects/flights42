@@ -1,10 +1,17 @@
 <h1>Reporting</h1>
 
-<form (submit)="submit()">
-  <input
-    [(ngModel)]="message"
-    name="input"
-    placeholder="Describe your chart..." />
+<form>
+  <div>
+    <input
+      [(ngModel)]="message"
+      name="input"
+      placeholder="Describe your chart..." />
+  </div>
+  <div>
+    <button (click)="submit()">Generate</button>
+    <button type="button" (click)="useExamplePrompt(0)">Example #1</button>
+    <button type="button" (click)="useExamplePrompt(1)">Example #2</button>
+  </div>
 </form>
 
 @if (generator.isLoading()) {
