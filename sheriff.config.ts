@@ -3,7 +3,8 @@ import { sameTag, SheriffConfig } from '@softarc/sheriff-core';
 export const config: SheriffConfig = {
   enableBarrelLess: true,
   modules: {
-    '<domain>': {
+    'apps/<app>': ['type:app'],
+    'libs/<domain>': {
       'feature-<name>/src': ['domain:<domain>', 'type:feature'],
       'ui-<name>/src': ['domain:<domain>', 'type:ui'],
       'data-<name>/src': ['domain:<domain>', 'type:data'],
@@ -36,7 +37,18 @@ export const config: SheriffConfig = {
 
     'type:ai': ['type:feature', 'type:ui', 'type:data', 'type:util'],
 
+<<<<<<< HEAD
     'type:feature': ['type:ui', 'type:data', 'type:util'],
+=======
+    'type:app': ['type:feature', 'type:ui', 'type:data', 'type:util'],
+
+    'type:feature': [
+      /* API --> */ 'type:api',
+      'type:ui',
+      'type:data',
+      'type:util',
+    ],
+>>>>>>> c5f9ba5 (refactor: use apps and libs folder)
     'type:ui': ['type:data', 'type:util'],
     'type:data': ['type:util'],
     'type:util': [],

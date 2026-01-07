@@ -1,7 +1,7 @@
 {
   "name": "feature-manage",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "miles/feature-manage/src",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/miles/feature-manage/src",
   "prefix": "lib",
   "projectType": "library",
   "release": {
@@ -17,12 +17,12 @@
       "executor": "@nx/angular:package",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
-        "project": "miles/feature-manage/ng-package.json",
-        "tsConfig": "miles/feature-manage/tsconfig.lib.json"
+        "project": "libs/miles/feature-manage/ng-package.json",
+        "tsConfig": "libs/miles/feature-manage/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
-          "tsConfig": "miles/feature-manage/tsconfig.lib.prod.json"
+          "tsConfig": "libs/miles/feature-manage/tsconfig.lib.prod.json"
         },
         "development": {}
       },

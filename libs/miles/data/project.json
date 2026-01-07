@@ -1,7 +1,7 @@
 {
   "name": "data",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "miles/data/src",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/miles/data/src",
   "prefix": "lib",
   "projectType": "library",
   "release": {
@@ -17,12 +17,12 @@
       "executor": "@nx/angular:package",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
-        "project": "miles/data/ng-package.json",
-        "tsConfig": "miles/data/tsconfig.lib.json"
+        "project": "libs/miles/data/ng-package.json",
+        "tsConfig": "libs/miles/data/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
-          "tsConfig": "miles/data/tsconfig.lib.prod.json"
+          "tsConfig": "libs/miles/data/tsconfig.lib.prod.json"
         },
         "development": {}
       },
