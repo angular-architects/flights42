@@ -1,7 +1,7 @@
 {
-  "name": "miles-feature-next-level",
+  "name": "miles-ui-common",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/miles/feature-next-level/src",
+  "sourceRoot": "libs/miles/ui-common/src",
   "prefix": "lib",
   "projectType": "library",
   "release": {
@@ -11,18 +11,18 @@
       "fallbackCurrentVersionResolver": "disk"
     }
   },
-  "tags": ["domain:miles", "type:feature"],
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/angular:package",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
-        "project": "libs/miles/feature-next-level/ng-package.json",
-        "tsConfig": "libs/miles/feature-next-level/tsconfig.lib.json"
+        "project": "libs/miles/ui-common/ng-package.json",
+        "tsConfig": "libs/miles/ui-common/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
-          "tsConfig": "libs/miles/feature-next-level/tsconfig.lib.prod.json"
+          "tsConfig": "libs/miles/ui-common/tsconfig.lib.prod.json"
         },
         "development": {}
       },

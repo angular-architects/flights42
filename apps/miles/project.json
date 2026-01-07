@@ -4,7 +4,7 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "apps/miles/src",
-  "tags": [],
+  "tags": ["domain:miles", "type:app"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",

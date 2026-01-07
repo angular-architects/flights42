@@ -64,6 +64,51 @@ module.exports = defineConfig([
     },
   },
   {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    rules: {
+      '@nx/enforce-module-boundaries': [
+        'error',
+        {
+          depConstraints: [
+            {
+              sourceTag: 'domain:miles',
+              onlyDependOnLibsWithTags: ['domain:miles', 'domain:shared'],
+            },
+            {
+              sourceTag: 'domain:shared',
+              onlyDependOnLibsWithTags: ['domain:shared'],
+            },
+            {
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: [
+                'type:feature',
+                'type:ui',
+                'type:data',
+                'type:util',
+              ],
+            },
+            {
+              sourceTag: 'type:feature',
+              onlyDependOnLibsWithTags: ['type:ui', 'type:data', 'type:util'],
+            },
+            {
+              sourceTag: 'type:ui',
+              onlyDependOnLibsWithTags: ['type:data', 'type:util'],
+            },
+            {
+              sourceTag: 'type:data',
+              onlyDependOnLibsWithTags: ['type:util'],
+            },
+            {
+              sourceTag: 'type:util',
+              onlyDependOnLibsWithTags: [],
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.ts'],
     extends: [sheriff.configs.all],
   },

@@ -11,7 +11,7 @@
       "fallbackCurrentVersionResolver": "disk"
     }
   },
-  "tags": [],
+  "tags": ["domain:miles", "type:feature"],
   "targets": {
     "build": {
       "executor": "@nx/angular:package",

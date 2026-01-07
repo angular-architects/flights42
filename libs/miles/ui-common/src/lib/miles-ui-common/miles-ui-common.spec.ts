@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MilesFeatureNextLevel } from './miles-feature-next-level';
+import { MilesUiCommon } from './miles-ui-common';
 
-describe('MilesFeatureNextLevel', () => {
-  let component: MilesFeatureNextLevel;
-  let fixture: ComponentFixture<MilesFeatureNextLevel>;
+describe('MilesUiCommon', () => {
+  let component: MilesUiCommon;
+  let fixture: ComponentFixture<MilesUiCommon>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MilesFeatureNextLevel],
+      imports: [MilesUiCommon],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(MilesFeatureNextLevel);
+    fixture = TestBed.createComponent(MilesUiCommon);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

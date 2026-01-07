@@ -14,7 +14,8 @@
       "@flights42/miles-data": ["libs/miles/data/src/index.ts"],
       "@flights42/miles-feature-next-level": [
         "libs/miles/feature-next-level/src/index.ts"
-      ]
+      ],
+      "@flights42/miles-ui-common": ["libs/miles/ui-common/src/index.ts"]
     }
   }
 }
