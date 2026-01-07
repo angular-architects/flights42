@@ -11,6 +11,7 @@ import { PassengerSearch } from './feature-booking/passenger-search/passenger-se
 import { ProtoFlightEdit } from './feature-booking/proto-flight-edit/proto-flight-edit';
 import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/reactive-flight-search';
 import { Summary } from './feature-booking/summary/summary';
+import { ReportingComponent } from './feature-reporting/reporting/reporting.component';
 
 export const bookingRoutes: Routes = [
   {
@@ -58,6 +59,10 @@ export const bookingRoutes: Routes = [
         component: Summary,
       },
     ],
+  },
+  {
+    path: 'reporting',
+    component: ReportingComponent,
   },
 ];
 

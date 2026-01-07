@@ -1,0 +1,46 @@
+<h1>Reporting</h1>
+
+<form (submit)="submit()">
+  <input
+    [(ngModel)]="message"
+    name="input"
+    placeholder="Describe your chart..." />
+</form>
+
+@if (generator.isLoading()) {
+  <div class="ai-wait-indicator">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+} @else if (generator.hasValue() && generator.value()?.type === 'error') {
+  <div class="">Error: {{ generator.value()?.message }}</div>
+} @else if (generator.error()) {
+  <div class="">Error: {{ generator.error() | json }}</div>
+}
+@if (generator.hasValue()) {
+  <div class="mb-30">{{ generator.value()?.message }}</div>
+
+  <div class="chart">
+    <ngx-charts-bar-horizontal
+      [results]="data()"
+      [legend]="true"
+      [xAxis]="true"
+      [xAxisTickFormatting]="format"
+      [tooltipDisabled]="true" />
+  </div>
+  <button (click)="regenerate()" class="btn btn-default mt-20">
+    Regenerate
+  </button>
+
+  <button (click)="toggleDetails()" class="btn btn-default">Details</button>
+}
+@if (showDetails()) {
+  <div class="mt-20">
+    <h2>Data</h2>
+    <pre>{{ data() | json }}</pre>
+
+    <h2>Generated Code</h2>
+    <pre>{{ generator.value()?.code ?? 'no code generated' }}</pre>
+  </div>
+}

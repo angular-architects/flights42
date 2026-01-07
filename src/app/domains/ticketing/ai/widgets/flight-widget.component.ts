@@ -2,8 +2,8 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
-import { FlightInfo } from './flight-info';
 
 @Component({
   selector: 'app-flight-widget',

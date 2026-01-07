@@ -1,7 +1,7 @@
 import { exposeComponent } from '@hashbrownai/angular';
 import { s } from '@hashbrownai/core';
 
-import { FlightSchema } from './flight-info';
+import { FlightSchema } from '../../data/flight-info';
 import { FlightWidgetComponent } from './flight-widget.component';
 
 export const flightWidget = exposeComponent(FlightWidgetComponent, {

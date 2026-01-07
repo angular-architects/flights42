@@ -45,6 +45,7 @@
     "@hashbrownai/openai": "^0.4.1",
     "@ngrx/operators": "^21.0.1",
     "@ngrx/signals": "^21.0.1",
+    "@swimlane/ngx-charts": "^23.1.0",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "ngx-markdown": "^21.0.1",

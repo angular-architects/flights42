@@ -7,7 +7,7 @@ import {
   rxMutation,
   RxMutationOptions,
 } from '@angular-architects/ngrx-toolkit';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initAircraft } from './aircraft';
@@ -29,7 +29,9 @@ export class FlightService {
 
     const params = { from, to, urgent };
 
-    return this.http.get<Flight[]>(url, { headers, params });
+    return this.http
+      .get<Flight[]>(url, { headers, params })
+      .pipe(map((flights) => flights.map(initializeFlight)));
   }
 
   findResource(from: Signal<string>, to: Signal<string>) {
