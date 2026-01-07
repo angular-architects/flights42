@@ -1,5 +1,6 @@
 const nx = require('@nx/eslint-plugin');
 const baseConfig = require('../../eslint.config.js');
+const sheriff = require('@softarc/eslint-plugin-sheriff');
 
 module.exports = [
   ...baseConfig,
