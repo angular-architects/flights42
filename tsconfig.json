@@ -1,7 +1,4 @@
-/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
-/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
-  "compileOnSave": false,
   "compilerOptions": {
     "strict": true,
     "noImplicitOverride": true,
@@ -44,5 +41,6 @@
     {
       "path": "./projects/ui-common/tsconfig.spec.json"
     }
-  ]
+  ],
+  "extends": "./tsconfig.base.json"
 }

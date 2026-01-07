@@ -1,0 +1,15 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@flights42/miles-feature-manage": ["miles/feature-manage/src/index.ts"],
+      "@flights42/miles-data": ["miles/data/src/index.ts"]
+    }
+  }
+}
