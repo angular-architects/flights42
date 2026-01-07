@@ -1,16 +1,20 @@
-import { Signal } from '@angular/core';
+import { inject, Signal } from '@angular/core';
 import {
   createToolJavaScript,
   structuredCompletionResource,
 } from '@hashbrownai/angular';
 import { RuntimeRef, s } from '@hashbrownai/core';
 
+import { ConfigService } from '../../../shared/util-common/config-service';
+
 export function createChartResource(
   runtime: RuntimeRef,
   input: Signal<string | undefined>,
 ) {
+  const config = inject(ConfigService);
+
   return structuredCompletionResource({
-    model: 'gpt-5-chat-latest',
+    model: config.model,
     input,
     system: `
       You are Report42, an UI assistent that help passengers with creating and displaying
