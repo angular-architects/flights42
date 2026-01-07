@@ -3,14 +3,13 @@ import { sameTag, SheriffConfig } from '@softarc/sheriff-core';
 export const config: SheriffConfig = {
   enableBarrelLess: true,
   modules: {
-    'apps/<app>': ['type:app'],
     'libs/<domain>': {
       'feature-<name>/src': ['domain:<domain>', 'type:feature'],
       'ui-<name>/src': ['domain:<domain>', 'type:ui'],
       'data-<name>/src': ['domain:<domain>', 'type:data'],
       'util-<name>/src': ['domain:<domain>', 'type:util'],
 
-      'data/src': ['domain:<domain>', 'type:feature'],
+      'data/src': ['domain:<domain>', 'type:data'],
       'ui/src': ['domain:<domain>', 'type:ui'],
       'util/src': ['domain:<domain>', 'type:util'],
     },
@@ -37,18 +36,9 @@ export const config: SheriffConfig = {
 
     'type:ai': ['type:feature', 'type:ui', 'type:data', 'type:util'],
 
-<<<<<<< HEAD
     'type:feature': ['type:ui', 'type:data', 'type:util'],
-=======
     'type:app': ['type:feature', 'type:ui', 'type:data', 'type:util'],
 
-    'type:feature': [
-      /* API --> */ 'type:api',
-      'type:ui',
-      'type:data',
-      'type:util',
-    ],
->>>>>>> c5f9ba5 (refactor: use apps and libs folder)
     'type:ui': ['type:data', 'type:util'],
     'type:data': ['type:util'],
     'type:util': [],

@@ -1,5 +1,5 @@
 {
-  "name": "feature-manage",
+  "name": "miles-feature-manage",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/miles/feature-manage/src",
   "prefix": "lib",

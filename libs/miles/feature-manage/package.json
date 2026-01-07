@@ -2,8 +2,8 @@
   "name": "@flights42/miles-feature-manage",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^21.0.0",
-    "@angular/core": "^21.0.0"
+    "@angular/core": "^21.0.0",
+    "@flights42/miles-data": "0.0.1"
   },
   "sideEffects": false
 }

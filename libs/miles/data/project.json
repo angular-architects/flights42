@@ -1,5 +1,5 @@
 {
-  "name": "data",
+  "name": "miles-data",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/miles/data/src",
   "prefix": "lib",

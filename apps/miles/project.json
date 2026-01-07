@@ -1,5 +1,5 @@
 {
-  "name": "miles-app",
+  "name": "miles",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "app",
@@ -50,10 +50,10 @@
       "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {
-          "buildTarget": "miles-app:build:production"
+          "buildTarget": "miles:build:production"
         },
         "development": {
-          "buildTarget": "miles-app:build:development"
+          "buildTarget": "miles:build:development"
         }
       },
       "defaultConfiguration": "development"

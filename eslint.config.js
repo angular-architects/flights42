@@ -5,8 +5,12 @@ const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 const simpleImportSort = require('eslint-plugin-simple-import-sort');
 const sheriff = require('@softarc/eslint-plugin-sheriff');
+const nx = require('@nx/eslint-plugin');
 
 module.exports = defineConfig([
+  {
+    plugins: { '@nx': nx },
+  },
   {
     files: ['**/*.ts'],
     extends: [
