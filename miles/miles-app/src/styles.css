@@ -1,1 +1,6 @@
-/* You can add global styles to this file, and also import other style files */
+/* To simplify this example, we reference the styles of the main project */
+@import url(../../../src/styles.css);
+
+body {
+  padding: 20px;
+}

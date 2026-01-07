@@ -64,6 +64,7 @@
     "@angular/compiler-cli": "^21.0.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@nx/angular": "22.3.3",
+    "@nx/eslint-plugin": "^22.3.3",
     "@nx/js": "22.3.3",
     "@nx/web": "22.3.3",
     "@nx/workspace": "22.3.3",

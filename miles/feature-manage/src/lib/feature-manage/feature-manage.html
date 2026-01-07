@@ -1,1 +1,16 @@
-<p>FeatureManage works!</p>
+<h1>Your Bonus Miles</h1>
+
+<table>
+  <tr>
+    <th>Id</th>
+    <th>Flight Route</th>
+    <th>Mile Credits</th>
+  </tr>
+  @for (credit of milesResource.value(); track credit.id) {
+    <tr>
+      <td>{{ credit.id }}</td>
+      <td>{{ credit.flightRoute }}</td>
+      <td>{{ credit.amount }}</td>
+    </tr>
+  }
+</table>

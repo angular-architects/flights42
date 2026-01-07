@@ -1,1 +1,2 @@
-export * from './lib/data/data';
+export * from './lib/miles';
+export * from './lib/miles-service';

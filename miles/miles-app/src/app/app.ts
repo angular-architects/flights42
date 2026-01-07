@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { NxWelcome } from './nx-welcome';
+import { FeatureManage } from '@flights42/miles-feature-manage';
 
 @Component({
-  imports: [NxWelcome, RouterModule],
+  imports: [FeatureManage],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
