@@ -466,3 +466,45 @@ input.medium {
 .mb-20 {
   margin-bottom: 50px;
 }
+
+markdown p {
+  margin: 0px;
+  padding: 0;
+}
+
+.ai-wait-indicator {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: flex-end;
+}
+
+.ai-wait-indicator span {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #555;
+  display: inline-block;
+  transform: scale(0.7);
+  animation: ai-bounce 0.9s infinite ease-in-out;
+}
+
+.ai-wait-indicator span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.ai-wait-indicator span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes ai-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
