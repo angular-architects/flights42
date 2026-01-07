@@ -10,11 +10,14 @@ import {
   withState,
 } from '@ngrx/signals';
 import { setAllEntities, withEntities } from '@ngrx/signals/entities';
+import { catchError, finalize, firstValueFrom, tap, throwError } from 'rxjs';
 
 import { Flight } from '../../data/flight';
 import { TicketService } from '../../data/ticket-service';
 
 export const NextFlightsStore = signalStore(
+  { providedIn: 'root' },
+
   withState({
     selected: {} as Record<number, boolean>,
     isLoading: false,
@@ -34,21 +37,25 @@ export const NextFlightsStore = signalStore(
   })),
 
   withMethods((store) => ({
-    load(): void {
+    async load(): Promise<void> {
       patchState(store, { isLoading: true, error: null });
 
-      store._ticketService.find().subscribe({
-        next: (tickets) => {
-          patchState(store, setAllEntities(tickets));
-          patchState(store, { isLoading: false });
-        },
-        error: (error) => {
-          patchState(store, {
-            error: error.message || 'Error loading tickets',
-            isLoading: false,
-          });
-        },
-      });
+      await firstValueFrom(
+        store._ticketService.find().pipe(
+          tap((tickets) => {
+            patchState(store, setAllEntities(tickets));
+          }),
+          catchError((error) => {
+            patchState(store, {
+              error: error.message || 'Error loading tickets',
+            });
+            return throwError(() => error);
+          }),
+          finalize(() => {
+            patchState(store, { isLoading: false });
+          }),
+        ),
+      );
     },
 
     updateSelected(ticketId: number, selected: boolean): void {

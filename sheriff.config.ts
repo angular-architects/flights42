@@ -13,6 +13,9 @@ export const config: SheriffConfig = {
       ui: ['domain:<domain>', 'type:ui'],
       util: ['domain:<domain>', 'type:util'],
 
+      // AI
+      ai: ['domain:<domain>', 'type:ai'],
+
       // API
       api: ['domain:<domain>/api', 'type:api'],
     },
@@ -24,9 +27,17 @@ export const config: SheriffConfig = {
 
     'domain:*': [sameTag, 'domain:shared'],
 
+    'type:ai': [
+      /* API --> */ 'type:api',
+      'type:feature',
+      'type:ui',
+      'type:data',
+      'type:util',
+    ],
+
     'type:feature': [
-      'type:api',
-      /* <-- API */ 'type:ui',
+      /* API --> */ 'type:api',
+      'type:ui',
       'type:data',
       'type:util',
     ],

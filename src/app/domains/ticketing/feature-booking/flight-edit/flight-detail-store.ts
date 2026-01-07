@@ -60,6 +60,15 @@ export const FlightDetailStore = signalStore(
       patchState(store, { flightId: id });
     }),
 
+    updateLocalFlight(flight: Partial<Flight>): void {
+      patchState(store, (state) => ({
+        flightValue: {
+          ...state.flightValue,
+          ...flight,
+        },
+      }));
+    },
+
     reload(): void {
       store._flightReload();
     },

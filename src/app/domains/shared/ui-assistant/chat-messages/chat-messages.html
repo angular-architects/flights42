@@ -1,0 +1,47 @@
+<article class="msg assistant">
+  <div class="avatar">🤖</div>
+  <div>
+    <div class="bubble">Hi! How can I help you?</div>
+    <div class="meta"></div>
+  </div>
+</article>
+
+@for (message of messageModels(); track $index) {
+  <article class="msg assistant">
+    <div class="avatar">{{ message.icon }}</div>
+    <div>
+      <div class="bubble">
+        @if (message.role === 'assistant') {
+          <hb-render-message [message]="message" />
+        } @else {
+          <app-message [data]="message.contentString"></app-message>
+        }
+
+        @for (toolCall of message.toolCalls; track toolCall.toolCallId) {
+          <div [title]="toolCall.args | json">
+            Tool Call: {{ toolCall.name }}
+            <app-tool-status
+              class="ml-5"
+              [pending]="toolCall.status === 'pending'" />
+          </div>
+        }
+      </div>
+      <div class="meta"></div>
+    </div>
+  </article>
+}
+
+@if (showIndicator()) {
+  <article class="msg assistant">
+    <div class="avatar">🤖</div>
+    <div>
+      <div class="bubble">
+        <div class="ai-wait-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </article>
+}

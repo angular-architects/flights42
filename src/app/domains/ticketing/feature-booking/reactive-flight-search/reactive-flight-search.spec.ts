@@ -16,8 +16,6 @@ describe.only('reactive-flight-search', () => {
   let fixture: ComponentFixture<ReactiveFlightSearch>;
   let ctrl: HttpTestingController;
 
-  let flightStore: FlightStore;
-
   beforeEach(async () => {
     vi.useFakeTimers();
 
@@ -34,8 +32,6 @@ describe.only('reactive-flight-search', () => {
     component = fixture.componentInstance;
 
     ctrl = TestBed.inject(HttpTestingController);
-    flightStore = TestBed.inject(FlightStore);
-
     // Alternative for local services
     // flightStore = fixture.debugElement.injector.get(FlightStore);
 
@@ -56,6 +52,8 @@ describe.only('reactive-flight-search', () => {
   });
 
   it('searches for flights when from and to are given', async () => {
+    const flightStore = TestBed.inject(FlightStore);
+
     vi.spyOn(flightStore, 'updateFilter');
 
     await page.getByLabelText('From').fill('Paris');

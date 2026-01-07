@@ -19,9 +19,9 @@ export const routes: Routes = [
       import('./shell/dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
-    path: 'booking',
+    path: 'ticketing',
     loadChildren: () =>
-      import('./domains/ticketing/feature-booking/booking.routes').then(
+      import('./domains/ticketing/ticketing.routes').then(
         (m) => m.bookingRoutes,
       ),
   },

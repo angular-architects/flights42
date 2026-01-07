@@ -1,0 +1,233 @@
+:host {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #1a1d21;
+  --muted: #6a7480;
+  --accent: #1858ff;
+  --user: #2b5cff;
+  --assistant: #e9edff;
+  --border: rgba(0, 0, 0, 0.08);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Toggle button */
+:host ::ng-deep .ai-toggle {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+:host ::ng-deep .ai-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+}
+
+:host ::ng-deep .ai-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Backdrop */
+:host ::ng-deep .ai-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 999;
+}
+
+:host ::ng-deep .ai-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Panel */
+:host ::ng-deep .ai-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: var(--panel-w, 450px);
+  min-width: var(--panel-w, 450px);
+  max-width: var(--panel-w, 450px);
+  overflow: hidden;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 1001;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+:host ::ng-deep .ai-panel.open {
+  transform: translateX(0);
+  max-width: var(--panel-w, 420px);
+  width: 420px;
+}
+
+/* Header */
+:host ::ng-deep .ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+}
+
+:host ::ng-deep .ai-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+:host ::ng-deep .ai-title .status {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+:host ::ng-deep .ai-actions {
+  display: flex;
+  gap: 6px;
+}
+
+:host ::ng-deep .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+:host ::ng-deep .icon-btn:hover {
+  background: var(--surface-2);
+}
+
+/* Messages */
+:host ::ng-deep .ai-messages {
+  overflow-y: auto;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:host ::ng-deep .msg {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: start;
+  gap: 10px;
+}
+
+:host ::ng-deep .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+:host ::ng-deep .bubble {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: var(--assistant);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  max-width: 100%;
+  width: fit-content;
+}
+
+:host ::ng-deep .msg.user .bubble {
+  background: color-mix(in oklab, var(--user) 14%, var(--surface));
+  color: var(--text);
+}
+
+:host ::ng-deep .meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Composer */
+:host ::ng-deep .ai-composer {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+}
+
+:host ::ng-deep .composer-inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+:host ::ng-deep .composer-input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  resize: none;
+  min-height: 44px;
+  max-height: 160px;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+:host ::ng-deep .send-btn {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+:host ::ng-deep .send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep .msg > div {
+  min-width: 0 !important;
+}
+
+#ai-composer {
+  margin-bottom: 0px;
+}

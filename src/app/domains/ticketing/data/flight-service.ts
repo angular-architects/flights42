@@ -50,7 +50,13 @@ export class FlightService {
           },
         };
       },
-      { defaultValue: [] },
+      {
+        defaultValue: [],
+        parse: (raw) => {
+          const flights = raw as Flight[];
+          return flights.map((flight) => initializeFlight(flight));
+        },
+      },
     );
   }
 
@@ -111,11 +117,7 @@ export class FlightService {
       {
         defaultValue: initFlight,
         parse: (raw) => {
-          const flight = raw as Flight;
-          flight.aircraft = initAircraft;
-          flight.prices = [];
-          flight.delay = 0;
-          return flight;
+          return initializeFlight(raw);
         },
       },
     );
@@ -161,4 +163,11 @@ export class FlightService {
       }),
     });
   }
+}
+function initializeFlight(raw: unknown) {
+  const flight = raw as Flight;
+  flight.aircraft = initAircraft;
+  flight.prices = [];
+  flight.delay = flight.delayed ? 15 : 0;
+  return flight;
 }
