@@ -6,8 +6,14 @@
       <app-luggage-card
         [item]="item"
         [selected]="selected()[item.id]"
-        (selectedChange)="updateSelected(item.id, $event)"
-      >
+        (selectedChange)="updateSelected(item.id, $event)">
+        <p class="detail">Full Id: LUGGAGE-0815-4711-{{ item.id }}</p>
+
+        <span class="button">
+          <button>Add Insurance</button>
+        </span>
+
+        <div class="footer">Your luggage is in the best hands!</div>
       </app-luggage-card>
     </div>
   }

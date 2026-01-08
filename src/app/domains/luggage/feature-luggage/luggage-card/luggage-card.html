@@ -9,14 +9,21 @@
     <p>Weight: {{ itemValue.weight }} kg</p>
     <p>Destination: {{ itemValue.destination | appCity: 'short' }}</p>
     <p>Status: {{ itemValue.status }}</p>
+
+    <ng-content select=".detail" />
+
     <p>
       @if (!selected()) {
         <button (click)="select()">Select</button>
       } @else {
         <button (click)="deselect()">Remove</button>
       }
-
-      <ng-content />
+      <ng-content select=".button" />
+    </p>
+    <p>
+      <small>
+        <ng-content select=".footer">All rights reserved.</ng-content>
+      </small>
     </p>
   </div>
 </div>
