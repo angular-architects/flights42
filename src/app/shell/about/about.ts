@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+import { Tab } from '../../domains/shared/ui-common/injection-tabbed-pane/tab';
+import { TabbedPane } from '../../domains/shared/ui-common/injection-tabbed-pane/tabbed-pane';
+
 @Component({
   selector: 'app-about',
-  imports: [],
+  imports: [Tab, TabbedPane],
   templateUrl: './about.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
