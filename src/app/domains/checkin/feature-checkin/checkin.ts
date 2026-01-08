@@ -1,7 +1,6 @@
 import { JsonPipe } from '@angular/common';
 import {
   afterNextRender,
-  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   effect,
@@ -68,12 +67,28 @@ export class Checkin {
   protected readonly ticketId = signal<number | undefined>(undefined);
 
   constructor() {
-    this.passengerGroup.controls.email.addValidators([
-      Validators.required,
-      Validators.minLength(3),
-      Validators.email,
-    ]);
+    this.initValidators();
+    this.connectRouterParams();
+    this.initForm();
 
+    effect(() => {
+      console.log('expertMode', this.expertMode());
+    });
+  }
+
+  private initForm() {
+    effect(() => {
+      const id = String(this.ticketId() ?? 123456);
+      this.checkinForm.ticketId().value.set(id);
+    });
+
+    // Hint: effect would run too early
+    afterNextRender(() => {
+      this.focusFirstEmptyElement();
+    });
+  }
+
+  private connectRouterParams() {
     this.activatedRoute.paramMap.subscribe((paramMap) => {
       console.log('paramMap', paramMap);
       const ticketId = parseInt(paramMap.get('ticketId') ?? '0');
@@ -85,20 +100,14 @@ export class Checkin {
     this.activatedRoute.queryParamMap.subscribe((queryParamMap) => {
       console.log('queryParamMap', queryParamMap);
     });
+  }
 
-    effect(() => {
-      const id = String(this.ticketId() ?? 123456);
-      this.checkinForm.ticketId().value.set(id);
-    });
-
-    effect(() => {
-      console.log('expertMode', this.expertMode());
-    });
-
-    // Hint: effect would run too early
-    afterNextRender(() => {
-      this.focusFirstEmptyElement();
-    });
+  private initValidators() {
+    this.passengerGroup.controls.email.addValidators([
+      Validators.required,
+      Validators.minLength(3),
+      Validators.email,
+    ]);
   }
 
   private focusFirstEmptyElement() {
