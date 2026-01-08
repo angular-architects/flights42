@@ -513,3 +513,7 @@ markdown p {
   margin-left: 40px;
   width: 100%;
 }
+
+.danger-zone {
+  color: darkred;
+}

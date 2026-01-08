@@ -7,7 +7,7 @@
 <form class="small-form">
   <div>
     <label for="flightId">Ticket Id</label>
-    <input [field]="checkinForm.ticketId" id="flightId" />
+    <input #input [field]="checkinForm.ticketId" id="flightId" />
     @if (checkinForm.ticketId().invalid()) {
       <div>{{ checkinForm.ticketId().errorSummary() | json }}</div>
     }
@@ -16,15 +16,15 @@
   <ng-container [formGroup]="passengerGroup">
     <div>
       <label for="firstName">First Name</label>
-      <input formControlName="firstName" id="firstName" />
+      <input #input formControlName="firstName" id="firstName" />
     </div>
     <div>
       <label for="lastName">Last Name</label>
-      <input formControlName="lastName" id="lastName" />
+      <input #input formControlName="lastName" id="lastName" />
     </div>
     <div>
       <label for="email">Email Address</label>
-      <input formControlName="email" id="email" />
+      <input #input formControlName="email" id="email" />
       @if (passengerGroup.controls.email.invalid) {
         <div>{{ passengerGroup.controls.email.errors | json }}</div>
       }

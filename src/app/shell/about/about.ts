@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { Tab } from '../../domains/shared/ui-common/injection-tabbed-pane/tab';
-import { TabbedPane } from '../../domains/shared/ui-common/injection-tabbed-pane/tabbed-pane';
+import { Tab } from '../../domains/shared/ui-common/query-tabbed-pane/tab';
+import { TabbedPane } from '../../domains/shared/ui-common/query-tabbed-pane/tabbed-pane';
 
 @Component({
   selector: 'app-about',

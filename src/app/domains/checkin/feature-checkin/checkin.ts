@@ -1,11 +1,15 @@
 import { JsonPipe } from '@angular/common';
 import {
+  afterNextRender,
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   effect,
+  ElementRef,
   inject,
   input,
   signal,
+  viewChildren,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Field, required } from '@angular/forms/signals';
@@ -36,12 +40,14 @@ export class Checkin {
   private dialog = inject(MatDialog);
   private formBuilder = inject(FormBuilder);
 
+  protected readonly inputs = viewChildren<ElementRef>('input');
+
   protected readonly showNextFlights = signal(false);
 
   protected readonly passengerGroup =
     this.formBuilder.nonNullable.group<PassengerForm>({
-      firstName: 'Jane',
-      lastName: 'Doe',
+      firstName: '',
+      lastName: '',
       email: 'me@here.com',
     });
 
@@ -84,9 +90,24 @@ export class Checkin {
       const id = String(this.ticketId() ?? 123456);
       this.checkinForm.ticketId().value.set(id);
     });
+
     effect(() => {
       console.log('expertMode', this.expertMode());
     });
+
+    // Hint: effect would run too early
+    afterNextRender(() => {
+      this.focusFirstEmptyElement();
+    });
+  }
+
+  private focusFirstEmptyElement() {
+    for (const element of this.inputs()) {
+      if (!element.nativeElement.value) {
+        element.nativeElement.focus();
+        break;
+      }
+    }
   }
 
   navigateToNextFlights(): void {

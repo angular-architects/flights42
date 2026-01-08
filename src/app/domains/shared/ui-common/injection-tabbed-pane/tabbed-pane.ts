@@ -1,4 +1,4 @@
-import { Component, computed, effect, model, signal } from '@angular/core';
+import { Component, computed, model, signal } from '@angular/core';
 
 import { Tab } from './tab';
 
@@ -10,10 +10,7 @@ import { Tab } from './tab';
     <div class="pane">
       <div class="tabs-header" role="group">
         @for (tab of tabs(); track tab) {
-          <button
-            class="tab-button"
-            [class.active]="tab === currentTab()"
-            (click)="activate($index)">
+          <button class="tab-button" (click)="activate($index)">
             {{ tab.title() }}
           </button>
         }
@@ -76,13 +73,6 @@ export class TabbedPane {
   protected readonly tabs = signal<Tab[]>([]);
 
   readonly currentTab = computed(() => this.tabs()[this.current()]);
-
-  constructor() {
-    effect(() => {
-      const tabs = this.tabs();
-      console.log(tabs);
-    });
-  }
 
   registerTab(tab: Tab): void {
     this.tabs.update((tabs) => [...tabs, tab]);
