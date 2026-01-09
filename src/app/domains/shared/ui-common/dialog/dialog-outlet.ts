@@ -1,9 +1,16 @@
 import { NgComponentOutlet } from '@angular/common';
-import { Component, computed, inject, Injector, signal } from '@angular/core';
+import {
+  Component,
+  DestroyableInjector,
+  inject,
+  Injector,
+  Type,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { DialogInfo } from './dialog-info';
 import { DialogService } from './dialog.service';
 import { DIALOG_DATA } from './dialog.token';
+import { DialogEvent } from './dialog-event';
 
 @Component({
   selector: 'app-dialog-outlet',
@@ -15,28 +22,33 @@ export class DialogOutlet {
   private readonly dialogService = inject(DialogService);
   private readonly parentInjector = inject(Injector);
 
-  private readonly dialogInfo = signal<DialogInfo>({
-    component: null,
-    data: null,
-  });
+  protected component: Type<unknown> | null = null;
+  protected injector: DestroyableInjector | null = null;
 
   constructor() {
-    this.dialogService.dialogInfo$.subscribe((info) => {
-      this.dialogInfo.set(info);
-    });
+    this.dialogService.dialogEvents$
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        this.processEvent(event);
+      });
   }
 
-  protected readonly comp = computed(() => this.dialogInfo().component);
-
-  protected readonly injector = computed(() => {
-    const info = this.dialogInfo();
-    if (!info.component) {
-      return null;
+  private processEvent(event: DialogEvent): void {
+    if (this.injector) {
+      this.injector.destroy();
+      this.injector = null;
     }
 
-    return Injector.create({
-      providers: [{ provide: DIALOG_DATA, useValue: info.data }],
+    if (!event.component) {
+      this.component = null;
+      return;
+    }
+
+    this.component = event.component;
+
+    this.injector = Injector.create({
+      providers: [{ provide: DIALOG_DATA, useValue: event.data }],
       parent: this.parentInjector,
     });
-  });
+  }
 }

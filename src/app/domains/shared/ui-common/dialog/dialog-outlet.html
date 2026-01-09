@@ -1,8 +1,8 @@
-@if (comp() && injector()) {
+@if (component && injector) {
   <div class="container">
     <div class="background"></div>
     <div class="dialog">
-      <ng-container *ngComponentOutlet="comp()!; injector: injector()!" />
+      <ng-container *ngComponentOutlet="component; injector: injector" />
     </div>
   </div>
 }

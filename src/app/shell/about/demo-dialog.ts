@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 
-import { DialogService } from './dialog.service';
-import { DIALOG_DATA } from './dialog.token';
+import { DialogService } from '../../domains/shared/ui-common/dialog/dialog.service';
+import { DIALOG_DATA } from '../../domains/shared/ui-common/dialog/dialog.token';
 
 @Component({
   selector: 'app-demo-dialog',
