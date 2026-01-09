@@ -104,11 +104,13 @@ function buildColumnInfo<T>(
 
   for (const field of fields) {
     const propName = field.propName();
+    const title = field.title();
+
     if (sortState.column === propName) {
       const arrow = sortState.direction === 'asc' ? '↑' : '↓';
-      result[propName as PropertyKey] = `${String(propName)} ${arrow}`;
+      result[propName as PropertyKey] = `${String(title)} ${arrow}`;
     } else {
-      result[propName as PropertyKey] = `${String(propName)}  `;
+      result[propName as PropertyKey] = `${String(title)}  `;
     }
   }
 
