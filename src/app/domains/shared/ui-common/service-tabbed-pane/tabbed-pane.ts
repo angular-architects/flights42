@@ -5,6 +5,7 @@ import { TabRegistry } from './tab-registry';
 @Component({
   selector: 'app-tabbed-pane',
   standalone: true,
+  providers: [TabRegistry],
   imports: [],
   template: `
     <div class="pane">

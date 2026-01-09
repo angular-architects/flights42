@@ -1,8 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
+import { DataTable } from '../../domains/shared/ui-common/advanced-data-table/advanced-data-table';
 import { ClickWithWarningDirective } from '../../domains/shared/ui-common/click-with-warning.directive';
-import { DataTableComponent } from '../../domains/shared/ui-common/data-table/data-table';
 import { TableFieldDirective } from '../../domains/shared/ui-common/data-table/table-field.directive';
 import { Tab } from '../../domains/shared/ui-common/service-tabbed-pane/tab';
 import { TabbedPane } from '../../domains/shared/ui-common/service-tabbed-pane/tabbed-pane';
@@ -16,9 +16,9 @@ import { Flight } from '../../domains/ticketing/data/flight';
     TabbedPane,
     ClickWithWarningDirective,
     TooltipDirective,
-    DataTableComponent,
     TableFieldDirective,
     DatePipe,
+    DataTable,
   ],
   templateUrl: './about.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

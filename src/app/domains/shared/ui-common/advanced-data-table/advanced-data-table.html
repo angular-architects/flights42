@@ -1,0 +1,45 @@
+<table class="table">
+  <tr>
+    @for (f of fields(); track f) {
+      <th (click)="sort(f.propName())">
+        {{ colInfo()[f.propName()] }}
+      </th>
+    }
+  </tr>
+
+  @for (row of pagedData(); track $index) {
+    <tr [class.empty-row]="!row">
+      @for (f of fields(); track f) {
+        <td>
+          @if (row) {
+            <ng-container
+              *ngTemplateOutlet="
+                f.templateRef;
+                context: { $implicit: row[f.propName()] }
+              "></ng-container>
+          } @else {
+            &nbsp;
+          }
+        </td>
+      }
+    </tr>
+  }
+</table>
+
+<div class="pagination">
+  <button
+    (click)="previousPage()"
+    [disabled]="currentPage() === 0"
+    class="btn btn-default">
+    ←
+  </button>
+  <span class="page-info">
+    Page {{ currentPage() + 1 }} of {{ totalPages() }}
+  </span>
+  <button
+    (click)="nextPage()"
+    [disabled]="currentPage() >= totalPages() - 1"
+    class="btn btn-default">
+    →
+  </button>
+</div>

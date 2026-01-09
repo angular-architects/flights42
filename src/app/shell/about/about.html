@@ -38,10 +38,14 @@
 
 <!-- DataTable Demo -->
 <app-data-table [data]="flights()">
-  <div *appTableField="let data; as: 'id'">{{ data }}</div>
-  <div *appTableField="let data; as: 'from'">{{ data }}</div>
-  <div *appTableField="let data; as: 'to'">{{ data }}</div>
-  <div *appTableField="let data; as: 'date'">
+  <div *appTableField="let data; provide: 'id'; title: 'Flight Id'">
+    {{ data }}
+  </div>
+  <div *appTableField="let data; provide: 'from'; title: 'From'">
+    {{ data }}
+  </div>
+  <div *appTableField="let data; provide: 'to'; title: 'To'">{{ data }}</div>
+  <div *appTableField="let data; provide: 'date'; title: 'Departure Date'">
     {{ data | date: 'dd.MM.yyyy HH:mm' }}
   </div>
 </app-data-table>

@@ -1,0 +1,23 @@
+.table {
+  table-layout: fixed;
+}
+
+th {
+  cursor: pointer;
+}
+
+tr.empty-row {
+  opacity: 0.3;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.page-info {
+  padding: 0 10px;
+}

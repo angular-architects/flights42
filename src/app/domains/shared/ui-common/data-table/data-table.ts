@@ -12,7 +12,7 @@ import { TableFieldDirective } from './table-field.directive';
       <tr>
         @for (f of fields(); track f) {
           <th>
-            {{ f.propName() }}
+            {{ f.title() }}
           </th>
         }
       </tr>
@@ -33,7 +33,7 @@ import { TableFieldDirective } from './table-field.directive';
     </table>
   `,
 })
-export class DataTableComponent<T extends object> {
+export class DataTable<T extends object> {
   readonly data = input<T[]>([]);
   protected readonly fields =
     contentChildren<TableFieldDirective<T>>(TableFieldDirective);

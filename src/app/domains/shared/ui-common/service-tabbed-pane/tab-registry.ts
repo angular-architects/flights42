@@ -4,7 +4,9 @@ export interface TabInfo {
   title: Signal<string>;
 }
 
-@Injectable({ providedIn: 'root' })
+// No { providedIn: 'root' }!
+// This service is provided in the tabbed-pane
+@Injectable()
 export class TabRegistry {
   private readonly _current = signal(0);
   private readonly _tabs = signal<TabInfo[]>([]);
