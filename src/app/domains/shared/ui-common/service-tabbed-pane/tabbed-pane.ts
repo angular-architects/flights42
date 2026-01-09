@@ -1,6 +1,6 @@
-import { Component, computed, model, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
-import { Tab } from './tab';
+import { TabRegistry } from './tab-registry';
 
 @Component({
   selector: 'app-tabbed-pane',
@@ -72,16 +72,11 @@ import { Tab } from './tab';
   `,
 })
 export class TabbedPane {
-  protected readonly current = model(0);
-  protected readonly tabs = signal<Tab[]>([]);
-
-  readonly currentTab = computed(() => this.tabs()[this.current()]);
-
-  registerTab(tab: Tab): void {
-    this.tabs.update((tabs) => [...tabs, tab]);
-  }
+  protected readonly registry = inject(TabRegistry);
+  protected readonly tabs = this.registry.tabs;
+  protected readonly currentTab = this.registry.currentTab;
 
   activate(tabIndex: number): void {
-    this.current.set(tabIndex);
+    this.registry.activate(tabIndex);
   }
 }
