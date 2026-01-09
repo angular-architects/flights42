@@ -34,7 +34,7 @@ export class TooltipDirective {
   constructor() {
     afterRenderEffect(() => {
       const template = this.template();
-      if (!template || this.viewRef) {
+      if (!template) {
         return;
       }
       this.initToolTip(template);
@@ -42,6 +42,10 @@ export class TooltipDirective {
   }
 
   initToolTip(template: TemplateRef<TooltipContext>): void {
+    if (this.viewRef) {
+      this.viewRef.destroy();
+    }
+
     this.viewRef = this.viewContainer.createEmbeddedView(template, {
       $implicit: 'Tooltip!',
       text: 'Important Information!',

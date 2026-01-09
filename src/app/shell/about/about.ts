@@ -6,6 +6,7 @@ import { ClickWithWarningDirective } from '../../domains/shared/ui-common/click-
 import { TableFieldDirective } from '../../domains/shared/ui-common/data-table/table-field.directive';
 import { Tab } from '../../domains/shared/ui-common/service-tabbed-pane/tab';
 import { TabbedPane } from '../../domains/shared/ui-common/service-tabbed-pane/tabbed-pane';
+import { SimpleTooltipDirective } from '../../domains/shared/ui-common/simple-tooltip.directive';
 import { TooltipDirective } from '../../domains/shared/ui-common/tooltip.directive';
 import { Flight } from '../../domains/ticketing/data/flight';
 
@@ -16,6 +17,7 @@ import { Flight } from '../../domains/ticketing/data/flight';
     TabbedPane,
     ClickWithWarningDirective,
     TooltipDirective,
+    SimpleTooltipDirective,
     TableFieldDirective,
     DatePipe,
     DataTable,
