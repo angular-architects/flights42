@@ -1,25 +1,47 @@
 <h1>About</h1>
 
 <app-tabbed-pane>
-  <app-tab title="Tab 1"> Hello </app-tab>
-  <app-tab title="Tab 2"> I'm the second tab </app-tab>
-  <app-tab title="Tab 3"> I'm the third one </app-tab>
+  <app-tab title="No Delayed flights">
+    <p>No cancelled flights!</p>
+  </app-tab>
+  <app-tab title="More Info">
+    <p>Everything is running smoothly!</p>
+  </app-tab>
 </app-tabbed-pane>
 
-<!-- 
-<app-tabbed-pane>
-  <app-tab #tab title="Tab 1"> Hello </app-tab>
-  <app-tab #tab title="Tab 2"> I'm the second tab </app-tab>
-  <app-tab #tab title="Tab 3"> I'm the third one </app-tab>
-</app-tabbed-pane>
--->
+<br /><br />
 
-<!-- 
-<app-tabbed-pane>
-  <app-tab title="Tab 1"> Hello </app-tab>
-  <app-tab title="Tab 2"> I'm the second tab </app-tab>
-  <div class="danger-zone">
-    <app-tab title="Tab 3"> I'm the third one </app-tab>
+<!-- ClickWithWarningDirective Demo -->
+<button (appClickWithWarning)="deleteAll()" #cww="clickWithWarning">
+  Delete All!
+</button>
+
+<br /><br />
+
+<button (click)="cww.handleClick(true)">
+  Delete without asking questions!
+</button>
+
+<br /><br />
+
+<!-- TooltipDirective Demo -->
+<input [appTooltip]="tmpl" />
+
+<ng-template #tmpl let-title let-body="text">
+  <h4>{{ title }}</h4>
+  <p>
+    {{ body }}
+  </p>
+</ng-template>
+
+<br /><br />
+
+<!-- DataTable Demo -->
+<app-data-table [data]="flights()">
+  <div *appTableField="let data; as: 'id'">{{ data }}</div>
+  <div *appTableField="let data; as: 'from'">{{ data }}</div>
+  <div *appTableField="let data; as: 'to'">{{ data }}</div>
+  <div *appTableField="let data; as: 'date'">
+    {{ data | date: 'dd.MM.yyyy HH:mm' }}
   </div>
-</app-tabbed-pane>
--->
+</app-data-table>

@@ -1,0 +1,40 @@
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
+import { Component, contentChildren, input } from '@angular/core';
+
+// import { TemplateOutletDirective } from '../custom-template-outlet.directive';
+import { TableFieldDirective } from './table-field.directive';
+
+@Component({
+  selector: 'app-data-table',
+  imports: [CommonModule, NgTemplateOutlet],
+  template: `
+    <table class="table">
+      <tr>
+        @for (f of fields(); track f) {
+          <th>
+            {{ f.propName() }}
+          </th>
+        }
+      </tr>
+
+      @for (row of data(); track row) {
+        <tr>
+          @for (f of fields(); track f) {
+            <td>
+              <ng-container
+                *ngTemplateOutlet="
+                  f.templateRef;
+                  context: { $implicit: row[f.propName()] }
+                "></ng-container>
+            </td>
+          }
+        </tr>
+      }
+    </table>
+  `,
+})
+export class DataTableComponent<T extends object> {
+  readonly data = input<T[]>([]);
+  protected readonly fields =
+    contentChildren<TableFieldDirective<T>>(TableFieldDirective);
+}
