@@ -517,3 +517,45 @@ markdown p {
 .danger-zone {
   color: darkred;
 }
+
+.tooltip {
+  position: fixed;
+  background: #fff;
+  color: #000;
+  border: 1px solid #000;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.tooltip::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  border-width: 7px 7px 0 7px;
+  border-style: solid;
+  border-color: #000 transparent transparent transparent;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0 6px;
+  border-style: solid;
+  border-color: #fff transparent transparent transparent;
+}
+
+.tooltip h4 {
+  margin-top: 0;
+}
+
+.tooltip :last-child {
+  margin-bottom: 0;
+}

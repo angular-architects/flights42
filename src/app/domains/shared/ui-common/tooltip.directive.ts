@@ -1,6 +1,7 @@
 import {
+  afterRenderEffect,
   Directive,
-  effect,
+  ElementRef,
   EmbeddedViewRef,
   inject,
   input,
@@ -8,7 +9,6 @@ import {
   ViewContainerRef,
 } from '@angular/core';
 
-// Context Information to be passed to the template
 interface TooltipContext {
   $implicit: string;
   text: string;
@@ -24,6 +24,7 @@ interface TooltipContext {
 export class TooltipDirective {
   private readonly viewContainer = inject(ViewContainerRef);
   private viewRef: EmbeddedViewRef<TooltipContext> | undefined;
+  private host = inject(ElementRef<HTMLElement>);
 
   readonly template = input<TemplateRef<TooltipContext> | undefined>(
     undefined,
@@ -31,17 +32,33 @@ export class TooltipDirective {
   );
 
   constructor() {
-    effect(() => {
-      const tmpl = this.template();
-      if (!tmpl || this.viewRef) {
+    afterRenderEffect(() => {
+      const template = this.template();
+      if (!template || this.viewRef) {
         return;
       }
-      this.viewRef = this.viewContainer.createEmbeddedView(tmpl, {
-        $implicit: 'Tooltip!',
-        text: 'Important Information!',
-      });
+      this.initToolTip(template);
+    });
+  }
 
-      this.setHidden(true);
+  initToolTip(template: TemplateRef<TooltipContext>): void {
+    this.viewRef = this.viewContainer.createEmbeddedView(template, {
+      $implicit: 'Tooltip!',
+      text: 'Important Information!',
+    });
+
+    this.applyStyles();
+  }
+
+  applyStyles(): void {
+    this.viewRef?.rootNodes.forEach((nativeElement) => {
+      nativeElement.className = 'tooltip';
+
+      const r = this.host.nativeElement.getBoundingClientRect();
+      nativeElement.style.left = `${r.left + r.width / 2}px`;
+      nativeElement.style.top = `${r.top - 8}px`;
+      nativeElement.style.transform = 'translate(-50%, -100%)';
+      nativeElement.hidden = true;
     });
   }
 

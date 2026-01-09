@@ -9,29 +9,34 @@
   </app-tab>
 </app-tabbed-pane>
 
-<br /><br />
+<p>&nbsp;</p>
 
-<!-- ClickWithWarningDirective Demo -->
 <button (appClickWithWarning)="deleteAll()" #cww="clickWithWarning">
   Delete All!
 </button>
 
-<br /><br />
-
+<!-- 
 <button (click)="cww.handleClick(true)">
   Delete without asking questions!
-</button>
+</button> 
+-->
 
-<br /><br />
+<p>&nbsp;</p>
 
-<!-- TooltipDirective Demo -->
-<input [appTooltip]="tmpl" />
+<div>
+  <input
+    [appTooltip]="tmpl"
+    placeholder="Passenger Name"
+    style="max-width: 200px" />
+</div>
 
 <ng-template #tmpl let-title let-body="text">
-  <h4>{{ title }}</h4>
-  <p>
-    {{ body }}
-  </p>
+  <div class="tooltip">
+    <h4>{{ title }}</h4>
+    <p>
+      {{ body }}
+    </p>
+  </div>
 </ng-template>
 
 <br /><br />
