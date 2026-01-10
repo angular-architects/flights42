@@ -12,7 +12,6 @@ import { ActivatedRoute } from '@angular/router';
 
 import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { extractError } from '../../../shared/util-common/extract-error';
-import { Passenger } from '../../data/passenger';
 import { passengerSchema } from '../../data/passenger-schema';
 import { PassengerDetailStore } from './passenger-detail-store';
 

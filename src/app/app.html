@@ -12,3 +12,9 @@
 
 <app-assistant-chat />
 <!-- <app-dialog-outlet></app-dialog-outlet> -->
+
+@if (isLoading()) {
+  <div class="loading-backdrop" aria-busy="true" aria-live="polite">
+    <div class="spinner" role="status" aria-label="Loading"></div>
+  </div>
+}
