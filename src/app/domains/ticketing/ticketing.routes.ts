@@ -14,6 +14,7 @@ import { ProtoFlightEdit } from './feature-booking/proto-flight-edit/proto-fligh
 import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/reactive-flight-search';
 import { Summary } from './feature-booking/summary/summary';
 import { ReportingComponent } from './feature-reporting/reporting/reporting.component';
+import { passengerResolver } from './feature-booking/passenger-edit/passenger-resolver';
 
 export const bookingRoutes: Routes = [
   {
@@ -57,6 +58,9 @@ export const bookingRoutes: Routes = [
       {
         path: 'passenger-edit/:id',
         component: PassengerEdit,
+        resolve: {
+          passenger: passengerResolver,
+        },
       },
       {
         path: 'summary',

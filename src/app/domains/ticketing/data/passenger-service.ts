@@ -1,5 +1,9 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Injectable, Signal } from '@angular/core';
+import {
+  httpMutation,
+  HttpMutationOptions,
+} from '@angular-architects/ngrx-toolkit';
 import { Observable } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -90,5 +94,21 @@ export class PassengerService {
     };
 
     return this.http.put<Passenger>(url, passenger, { headers });
+  }
+
+  createSaveMutation(
+    options: Partial<HttpMutationOptions<Passenger, Passenger>>,
+  ) {
+    return httpMutation({
+      ...options,
+      request: (passenger: Passenger) => ({
+        url: `${this.configService.baseUrl}/passenger/${passenger.id}`,
+        method: 'PUT',
+        body: passenger,
+        headers: {
+          Accept: 'application/json',
+        },
+      }),
+    });
   }
 }
