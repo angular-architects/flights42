@@ -12,6 +12,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { extractError } from '../../../shared/util-common/extract-error';
+import { initPassenger } from '../../data/passenger';
 import { passengerSchema } from '../../data/passenger-schema';
 import { PassengerDetailStore } from './passenger-detail-store';
 
@@ -27,16 +28,16 @@ export class PassengerEdit implements FormComponent {
 
   protected readonly id = input.required<number>();
 
-  protected readonly passenger = linkedSignal(() =>
-    this.store.passengerValue(),
-  );
+  protected readonly passenger = linkedSignal(() => {
+    return this.store.passengerError()
+      ? initPassenger
+      : this.store.passengerValue();
+  });
 
   // protected readonly passenger = input.required<Passenger>();
 
-  protected readonly localPassenger = linkedSignal(() => this.passenger());
-
   protected readonly isPending = this.store.savePassengerIsPending;
-  protected readonly passengerForm = form(this.localPassenger, passengerSchema);
+  protected readonly passengerForm = form(this.passenger, passengerSchema);
 
   protected readonly isDisabled = computed(
     () => this.passengerForm().invalid() || this.isPending(),

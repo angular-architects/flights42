@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { inject, provideEnvironmentInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { authGuard } from '../shared/util-auth/auth.guard';
@@ -8,6 +8,7 @@ import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advan
 import { BookingNavigation } from './feature-booking/booking-navigation';
 import { FlightEdit } from './feature-booking/flight-edit/flight-edit';
 import { FlightSearch } from './feature-booking/flight-search/flight-search';
+// import { FlightStore } from './feature-booking/flight-search/flight-store';
 import { PassengerEdit } from './feature-booking/passenger-edit/passenger-edit';
 import { passengerResolver } from './feature-booking/passenger-edit/passenger-resolver';
 import { PassengerSearch } from './feature-booking/passenger-search/passenger-search';
@@ -20,6 +21,12 @@ export const bookingRoutes: Routes = [
   {
     path: 'booking',
     component: BookingNavigation,
+    providers: [
+      // FlightStore,
+      provideEnvironmentInitializer(() => {
+        console.log('init bookingRoutes');
+      }),
+    ],
     resolve: {
       ai: configAi,
     },

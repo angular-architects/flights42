@@ -1,3 +1,4 @@
 {
-  "baseUrl": "https://demo.angulararchitects.io/api"
+  "baseUrl": "https://demo.angulararchitects.io/api",
+  "model": "gpt-5-chat-latest"
 }
