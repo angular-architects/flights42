@@ -24,7 +24,7 @@ export class SimpleTooltipDirective {
   constructor() {
     afterRenderEffect(() => {
       const text = this.tooltipText();
-      this.ensureTooltip();
+      this.initTooltip();
       this.updateText(text);
     });
 
@@ -35,32 +35,29 @@ export class SimpleTooltipDirective {
 
   setHidden(hidden: boolean): void {
     if (this.tooltipElement) {
+      if (!hidden) {
+        this.updatePosition(this.tooltipElement);
+      }
       this.tooltipElement.hidden = hidden;
     }
   }
 
-  private ensureTooltip(): void {
+  private initTooltip(): void {
     if (this.tooltipElement) {
       return;
     }
 
     this.tooltipElement = document.createElement('div');
-    this.applyStyles();
+    this.tooltipElement.className = 'tooltip';
+    this.tooltipElement.hidden = true;
     document.body.appendChild(this.tooltipElement);
   }
 
-  private applyStyles() {
-    if (!this.tooltipElement) {
-      return;
-    }
-
-    this.tooltipElement.className = 'tooltip';
-
+  private updatePosition(tooltipElement: HTMLElement) {
     const rect = this.host.nativeElement.getBoundingClientRect();
-    this.tooltipElement.style.left = `${rect.left + rect.width / 2}px`;
-    this.tooltipElement.style.top = `${rect.top - 8}px`;
-    this.tooltipElement.style.transform = 'translate(-50%, -100%)';
-    this.tooltipElement.hidden = true;
+    tooltipElement.style.left = `${rect.left + rect.width / 2}px`;
+    tooltipElement.style.top = `${rect.top - 8}px`;
+    tooltipElement.style.transform = 'translate(-50%, -100%)';
   }
 
   private updateText(tooltipText: string): void {

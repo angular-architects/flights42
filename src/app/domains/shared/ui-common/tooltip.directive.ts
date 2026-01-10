@@ -64,24 +64,25 @@ export class TooltipDirective {
       text: 'Important Information!',
     });
 
-    this.applyStyles();
-  }
-
-  applyStyles(): void {
     this.viewRef?.rootNodes.forEach((nativeElement) => {
       nativeElement.className = 'tooltip';
-
-      const r = this.host.nativeElement.getBoundingClientRect();
-      nativeElement.style.left = `${r.left + r.width / 2}px`;
-      nativeElement.style.top = `${r.top - 8}px`;
-      nativeElement.style.transform = 'translate(-50%, -100%)';
       nativeElement.hidden = true;
     });
   }
 
   setHidden(hidden: boolean): void {
     this.viewRef?.rootNodes.forEach((nativeElement) => {
+      if (!hidden) {
+        this.updatePosition(nativeElement);
+      }
       nativeElement.hidden = hidden;
     });
+  }
+
+  private updatePosition(toolTipElement: HTMLElement) {
+    const r = this.host.nativeElement.getBoundingClientRect();
+    toolTipElement.style.left = `${r.left + r.width / 2}px`;
+    toolTipElement.style.top = `${r.top - 8}px`;
+    toolTipElement.style.transform = 'translate(-50%, -100%)';
   }
 }
