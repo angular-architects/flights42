@@ -14,6 +14,12 @@ import { Component, inject } from '@angular/core';
       </div>
     </div>
   `,
+  styles: `
+    .card-body {
+      padding: 0 10px;
+      margin-bottom: 15px;
+    }
+  `,
 })
 export class ConfirmComponent {
   protected readonly message = inject(DIALOG_DATA) as string;

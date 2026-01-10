@@ -18,6 +18,7 @@ import {
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
+import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { FlightDetailStore } from './flight-detail-store';
@@ -28,7 +29,7 @@ import { FlightDetailStore } from './flight-detail-store';
   templateUrl: './flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FlightEdit {
+export class FlightEdit implements FormComponent {
   private store = inject(FlightDetailStore);
   private route = inject(ActivatedRoute);
 
@@ -72,6 +73,10 @@ export class FlightEdit {
 
     // Alternative: signalMethod in Signal Store
     // this.store.connectFlightId(this.id);
+  }
+
+  isDirty(): boolean {
+    return this.flightForm().dirty();
   }
 
   async save(): Promise<void> {

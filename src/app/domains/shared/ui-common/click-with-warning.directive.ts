@@ -1,7 +1,7 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { Directive, inject, input, output } from '@angular/core';
 
-import { ConfirmComponent } from './confirm/confirm';
+import { ConfirmComponent } from '../util-common/confirm';
 
 @Directive({
   selector: '[appClickWithWarning]',
