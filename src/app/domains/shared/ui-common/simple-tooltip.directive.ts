@@ -1,5 +1,6 @@
 import {
   afterRenderEffect,
+  DestroyRef,
   Directive,
   ElementRef,
   inject,
@@ -16,6 +17,7 @@ import {
 export class SimpleTooltipDirective {
   private readonly host = inject(ElementRef<HTMLElement>);
   private tooltipElement: HTMLElement | null = null;
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly tooltipText = input.required<string>({ alias: 'appSimpleTooltip' });
 
@@ -24,6 +26,10 @@ export class SimpleTooltipDirective {
       const text = this.tooltipText();
       this.ensureTooltip();
       this.updateText(text);
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.removeTooltip();
     });
   }
 
@@ -60,6 +66,13 @@ export class SimpleTooltipDirective {
   private updateText(tooltipText: string): void {
     if (this.tooltipElement) {
       this.tooltipElement.textContent = tooltipText;
+    }
+  }
+
+  private removeTooltip() {
+    if (this.tooltipElement && this.tooltipElement.parentNode) {
+      this.tooltipElement.parentNode.removeChild(this.tooltipElement);
+      this.tooltipElement = null;
     }
   }
 }

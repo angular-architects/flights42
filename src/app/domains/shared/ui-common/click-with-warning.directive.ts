@@ -7,7 +7,7 @@ import { ConfirmComponent } from './confirm/confirm';
   selector: '[appClickWithWarning]',
   exportAs: 'clickWithWarning',
   host: {
-    '[class]': '"btn btn-danger"',
+    class: 'btn btn-danger',
     '(click)': 'handleClick($event.shiftKey)',
   },
 })

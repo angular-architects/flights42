@@ -1,5 +1,6 @@
 import {
   afterRenderEffect,
+  DestroyRef,
   Directive,
   ElementRef,
   EmbeddedViewRef,
@@ -25,6 +26,7 @@ export class TooltipDirective {
   private readonly viewContainer = inject(ViewContainerRef);
   private viewRef: EmbeddedViewRef<TooltipContext> | undefined;
   private host = inject(ElementRef<HTMLElement>);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly template = input<TemplateRef<TooltipContext> | undefined>(
     undefined,
@@ -37,11 +39,22 @@ export class TooltipDirective {
       if (!template) {
         return;
       }
-      this.initToolTip(template);
+      this.initTooltip(template);
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.removeTooltip();
     });
   }
 
-  initToolTip(template: TemplateRef<TooltipContext>): void {
+  private removeTooltip() {
+    if (this.viewRef) {
+      this.viewRef.destroy();
+      this.viewRef = undefined;
+    }
+  }
+
+  initTooltip(template: TemplateRef<TooltipContext>): void {
     if (this.viewRef) {
       this.viewRef.destroy();
     }
