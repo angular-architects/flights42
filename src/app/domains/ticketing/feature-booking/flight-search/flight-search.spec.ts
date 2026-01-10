@@ -17,8 +17,6 @@ describe('flight-search', () => {
   let fixture: ComponentFixture<FlightSearch>;
   let ctrl: HttpTestingController;
 
-  let flightStore: FlightStore;
-
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [FlightSearch],
@@ -33,10 +31,6 @@ describe('flight-search', () => {
     component = fixture.componentInstance;
 
     ctrl = TestBed.inject(HttpTestingController);
-    flightStore = TestBed.inject(FlightStore);
-
-    // Alternative for local services
-    // flightStore = fixture.debugElement.injector.get(FlightStore);
 
     // Await initial data loading
     await runTasks();
@@ -75,6 +69,10 @@ describe('flight-search', () => {
   });
 
   it('searches for flights when from and to are given', async () => {
+    const flightStore = TestBed.inject(FlightStore);
+    // Alternative for local services
+    // flightStore = fixture.debugElement.injector.get(FlightStore);
+
     vi.spyOn(flightStore, 'updateFilter');
 
     await page.getByLabelText('From').fill('Paris');

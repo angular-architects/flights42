@@ -8,6 +8,7 @@ import {
 export function provideTestConfig(): Provider {
   const testConfig: Config = {
     baseUrl: '',
+    model: '',
   };
   return {
     provide: ConfigService,

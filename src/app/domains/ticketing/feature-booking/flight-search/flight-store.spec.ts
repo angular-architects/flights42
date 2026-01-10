@@ -10,23 +10,24 @@ import { runTasks } from '../../../../testing/run-tasks';
 import { FlightStore } from './flight-store';
 
 describe('flight-store', () => {
-  let store: InstanceType<typeof FlightStore>;
   let ctrl: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       providers: [FlightStore, provideHttpClientTesting(), provideTestConfig()],
     });
-    store = TestBed.inject(FlightStore);
     ctrl = TestBed.inject(HttpTestingController);
   });
 
   it('has no selected flights initially', () => {
-    const keys = Object.keys(store.basket);
+    const store = TestBed.inject(FlightStore);
+    const keys = Object.keys(store.basket());
     expect(keys.length).toBe(0);
   });
 
   it('loads flights when from and to given', async () => {
+    const store = TestBed.inject(FlightStore);
+
     store.updateFilter('Paris', 'London');
     await runTasks();
 
@@ -47,6 +48,7 @@ describe('flight-store', () => {
   });
 
   it('does not load flights when from and to are not given', async () => {
+    const store = TestBed.inject(FlightStore);
     store.updateFilter('', '');
 
     await runTasks();

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 export interface Config {
   readonly baseUrl: string;
+  readonly model: string;
 }
 
 @Injectable({
