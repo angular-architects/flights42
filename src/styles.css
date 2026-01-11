@@ -614,3 +614,60 @@ markdown p {
 .selectable {
   cursor: pointer;
 }
+
+.upselling {
+  border: 1px solid black;
+  padding: 20px;
+  margin-bottom: 40px;
+  margin-top: 40px;
+  background-color: white;
+  border-radius: 5px;
+}
+
+.upselling h1 {
+  margin-bottom: 40px;
+}
+
+.upselling p {
+  margin-bottom: 0px;
+}
+
+.ghost {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.ghost span {
+  height: 10px;
+  width: 100%;
+  border-radius: 6px;
+
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
+  background-size: 400% 100%;
+
+  animation: ghost-shimmer 1.6s ease-in-out infinite;
+}
+
+.ghost span:nth-child(2) {
+  width: 85%;
+}
+.ghost span:nth-child(3) {
+  width: 70%;
+}
+
+@keyframes ghost-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost span {
+    animation: none;
+  }
+}

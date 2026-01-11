@@ -12,11 +12,24 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
 import { FlightCard } from '../../ui/flight-card/flight-card';
+import { CarPane } from '../upselling/car-pane';
+import { HotelPane } from '../upselling/hotel-pane';
+import { Placeholder } from '../upselling/placeholder';
+import { TentPane } from '../upselling/tent-pane';
 import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormsModule, FlightCard, JsonPipe, RouterLink],
+  imports: [
+    FormsModule,
+    FlightCard,
+    JsonPipe,
+    RouterLink,
+    CarPane,
+    TentPane,
+    HotelPane,
+    Placeholder,
+  ],
   templateUrl: './flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

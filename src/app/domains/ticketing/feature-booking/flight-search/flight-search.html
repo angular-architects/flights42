@@ -26,17 +26,14 @@
 <div class="row">
   @for (f of flights(); track f.id) {
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      @defer (hydrate on interaction) {
-        <app-flight-card
-          [item]="f"
-          [selected]="basket()[f.id]"
-          (selectedChange)="updateBasket(f.id, $event)">
-          <button
-            [routerLink]="['../flight-edit', f.id, { showDetails: true }]">
-            Edit
-          </button>
-        </app-flight-card>
-      }
+      <app-flight-card
+        [item]="f"
+        [selected]="basket()[f.id]"
+        (selectedChange)="updateBasket(f.id, $event)">
+        <button [routerLink]="['../flight-edit', f.id, { showDetails: true }]">
+          Edit
+        </button>
+      </app-flight-card>
     </div>
   }
 </div>
@@ -46,3 +43,21 @@
 <div>
   <pre>{{ basket() | json }}</pre>
 </div>
+
+@defer (on hover; hydrate on hover) {
+  <app-car-pane />
+} @placeholder {
+  <app-placeholder />
+}
+
+@defer (on hover; hydrate on hover) {
+  <app-hotel-pane />
+} @placeholder {
+  <app-placeholder />
+}
+
+@defer (on hover; hydrate on hover) {
+  <app-tent-pane />
+} @placeholder {
+  <app-placeholder />
+}
