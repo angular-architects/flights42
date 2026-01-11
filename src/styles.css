@@ -1,3 +1,4 @@
+table,
 .table {
   width: 100%;
   max-width: 100%;
@@ -608,4 +609,8 @@ markdown p {
   to {
     transform: rotate(360deg);
   }
+}
+
+.selectable {
+  cursor: pointer;
 }
