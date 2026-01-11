@@ -7,6 +7,49 @@
   "nxJsonPlugins": [],
   "fileMap": {
     "projectFileMap": {
+      "ui-common": [
+        {
+          "file": "projects/ui-common/README.md",
+          "hash": "3730462883165103063"
+        },
+        {
+          "file": "projects/ui-common/eslint.config.js",
+          "hash": "17527626280481953720"
+        },
+        {
+          "file": "projects/ui-common/ng-package.json",
+          "hash": "17716158778195391622"
+        },
+        {
+          "file": "projects/ui-common/package.json",
+          "hash": "486259915063614393",
+          "deps": ["npm:@angular/common", "npm:@angular/core", "npm:tslib"]
+        },
+        {
+          "file": "projects/ui-common/src/lib/user-panel.ts",
+          "hash": "17853132731868418887"
+        },
+        {
+          "file": "projects/ui-common/src/lib/user-service.ts",
+          "hash": "11302352297937446986"
+        },
+        {
+          "file": "projects/ui-common/src/public-api.ts",
+          "hash": "8545832407914000719"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.lib.json",
+          "hash": "1133477222801413517"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.lib.prod.json",
+          "hash": "17517552510542404852"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.spec.json",
+          "hash": "10777994083665899510"
+        }
+      ],
       "flights42": [
         {
           "file": ".cursor/rules/cursor.mdc",
@@ -114,7 +157,7 @@
         },
         {
           "file": "src/app/app.ts",
-          "hash": "9378983641928610681"
+          "hash": "17922982886932974370"
         },
         {
           "file": "src/app/domains/checkin/data/checkin-info.ts",
@@ -657,12 +700,68 @@
           "hash": "11688478043478795097"
         },
         {
-          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search/flight-search.html",
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-01/flight-search.html",
           "hash": "6911252562455437640"
         },
         {
-          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search/flight-search.ts",
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-01/flight-search.ts",
           "hash": "11130963570938307773"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-02/flight-search.html",
+          "hash": "17823875235811317668"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-02/flight-search.ts",
+          "hash": "6743345983365788536"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-03/flight-search.html",
+          "hash": "12038682357228521325"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-03/flight-search.ts",
+          "hash": "1238789549646551982"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-04/flight-search.html",
+          "hash": "3083422434511042656"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-04/flight-search.ts",
+          "hash": "7594140266549247795"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-05/flight-search.html",
+          "hash": "2387359789110425233"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-05/flight-search.ts",
+          "hash": "18160836400474679328"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-06/flight-search.html",
+          "hash": "11218026259032500632"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-06/flight-search.ts",
+          "hash": "4166144362421782550"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-07/flight-search.html",
+          "hash": "8900955089758257727"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-07/flight-search.ts",
+          "hash": "6731455032705071679"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-08/flight-search.html",
+          "hash": "15336982273486127978"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-search-08/flight-search.ts",
+          "hash": "11951292790862576351"
         },
         {
           "file": "src/app/domains/ticketing/feature-booking/reactive-flight-search/reactive-flight-search.html",
@@ -876,49 +975,6 @@
         },
         {
           "file": "projects/miles/tsconfig.spec.json",
-          "hash": "10777994083665899510"
-        }
-      ],
-      "ui-common": [
-        {
-          "file": "projects/ui-common/README.md",
-          "hash": "3730462883165103063"
-        },
-        {
-          "file": "projects/ui-common/eslint.config.js",
-          "hash": "17527626280481953720"
-        },
-        {
-          "file": "projects/ui-common/ng-package.json",
-          "hash": "17716158778195391622"
-        },
-        {
-          "file": "projects/ui-common/package.json",
-          "hash": "486259915063614393",
-          "deps": ["npm:@angular/common", "npm:@angular/core", "npm:tslib"]
-        },
-        {
-          "file": "projects/ui-common/src/lib/user-panel.ts",
-          "hash": "17853132731868418887"
-        },
-        {
-          "file": "projects/ui-common/src/lib/user-service.ts",
-          "hash": "11302352297937446986"
-        },
-        {
-          "file": "projects/ui-common/src/public-api.ts",
-          "hash": "8545832407914000719"
-        },
-        {
-          "file": "projects/ui-common/tsconfig.lib.json",
-          "hash": "1133477222801413517"
-        },
-        {
-          "file": "projects/ui-common/tsconfig.lib.prod.json",
-          "hash": "17517552510542404852"
-        },
-        {
-          "file": "projects/ui-common/tsconfig.spec.json",
           "hash": "10777994083665899510"
         }
       ]

@@ -12,7 +12,7 @@ import {
   Router,
 } from '@angular/router';
 
-import { FlightSearch } from './domains/ticketing/feature-booking/proto-flight-search-08/flight-search';
+import { FlightSearch } from './domains/ticketing/feature-booking/proto-flight-search-09/flight-search';
 import { Navbar } from './shell/navbar/navbar';
 import { Sidebar } from './shell/sidebar/sidebar';
 
