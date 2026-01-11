@@ -9,8 +9,7 @@
       class="form-control"
       [field]="flightForm.id"
       type="number"
-      id="flight-id"
-    />
+      id="flight-id" />
   </div>
 
   <div class="form-group">
@@ -31,6 +30,7 @@
       <app-field-meta-data-pane [field]="flightForm.to" />
     </label>
     <input class="form-control" [field]="flightForm.to" id="flight-to" />
+    <app-validation-errors-pane [errors]="flightForm.to().errors()" />
   </div>
 
   <div class="form-group">
@@ -40,8 +40,7 @@
         class="form-control"
         [field]="flightForm.date"
         id="flight-date"
-        type="datetime-local"
-      />
+        type="datetime-local" />
     </div>
   </div>
 
@@ -51,8 +50,7 @@
         type="checkbox"
         class="form-check-input"
         [field]="flightForm.delayed"
-        id="flight-delayed"
-      />
+        id="flight-delayed" />
       Delayed</label
     >
   </div>

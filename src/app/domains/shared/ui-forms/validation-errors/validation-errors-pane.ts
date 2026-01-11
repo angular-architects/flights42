@@ -39,7 +39,6 @@ function toMessage(error: ValidationError): string {
     case 'roundtrip_tree':
       return 'Roundtrips are not supported!';
     case 'min':
-      console.log(error);
       return `Minimum amount: ${(error as MinValidationError).min}`;
     default:
       return error.kind ?? 'Validation Error';

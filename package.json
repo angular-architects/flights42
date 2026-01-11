@@ -50,7 +50,8 @@
     "express": "^5.2.1",
     "ngx-markdown": "^21.0.1",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@angular/build": "^21.0.4",

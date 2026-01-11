@@ -1,5 +1,9 @@
 <h1>Flight Edit</h1>
 
+<!-- <p>
+  {{ flightForm().errorSummary() | json }}
+</p> -->
+
 @if (flight().id !== 0) {
   <app-validation-errors-pane [errors]="flightForm().errors()" />
   <form class="flight-form" novalidate>
