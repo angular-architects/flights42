@@ -1,0 +1,46 @@
+<h1>Flight Search</h1>
+
+<form>
+  <div>
+    <label for="from">From:</label>
+    <input [(ngModel)]="from" id="from" aria-label="from" name="from" />
+  </div>
+  <div>
+    <label for="to">To:</label>
+    <input [(ngModel)]="to" id="to" aria-label="to" name="to" />
+  </div>
+  <div>
+    {{ flightRoute() }}
+  </div>
+  <div>
+    <button (click)="search()" [disabled]="!from() || !to()">Search</button>
+  </div>
+</form>
+
+@if (!error()) {
+  <div class="row">
+    @for (f of flights(); track f.id) {
+      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <app-flight-card
+          [item]="f"
+          [selected]="basket()[f.id]"
+          (selectedChange)="updateBasket(f.id, $event)">
+        </app-flight-card>
+      </div>
+    }
+  </div>
+}
+
+@if (error()) {
+  <div>Error: {{ error() | json }}</div>
+}
+
+@if (isLoading()) {
+  <div>Loading...</div>
+}
+
+<p>&nbsp;</p>
+
+<div>
+  <pre>{{ basket() | json }}</pre>
+</div>
