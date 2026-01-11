@@ -5,12 +5,12 @@ import { PassengerCard } from '../passenger-card/passenger-card';
 import { SummaryStore } from './summary-store';
 
 @Component({
-  selector: 'app-summary',
+  selector: 'app-summary-page',
   imports: [FlightCard, PassengerCard],
-  templateUrl: './summary.html',
+  templateUrl: './summary-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Summary {
+export class SummaryPage {
   private readonly store = inject(SummaryStore);
 
   protected readonly selectedFlights = this.store.selectedFlights;

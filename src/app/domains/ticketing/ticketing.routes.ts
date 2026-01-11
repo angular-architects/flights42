@@ -14,8 +14,8 @@ import { passengerResolver } from './feature-booking/passenger-edit/passenger-re
 import { PassengerSearch } from './feature-booking/passenger-search/passenger-search';
 import { ProtoFlightEdit } from './feature-booking/proto-flight-edit/proto-flight-edit';
 import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/reactive-flight-search';
-import { Summary } from './feature-booking/summary/summary';
-import { ReportingPage } from './feature-reporting/reporting/reporting-page';
+import { SummaryPage } from './feature-booking/summary-page/summary-page';
+import { ReportingPage } from './feature-reporting/reporting-page/reporting-page';
 
 export const bookingRoutes: Routes = [
   {
@@ -71,7 +71,7 @@ export const bookingRoutes: Routes = [
       },
       {
         path: 'summary',
-        component: Summary,
+        component: SummaryPage,
       },
     ],
   },
