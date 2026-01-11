@@ -167,6 +167,7 @@ export class FlightClient {
     });
   }
 }
+
 function initializeFlight(raw: unknown) {
   const flight = raw as Flight;
   flight.aircraft = initialAircraft;
