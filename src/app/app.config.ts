@@ -4,6 +4,10 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+import {
+  provideClientHydration,
+  withEventReplay,
+} from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHashbrown } from '@hashbrownai/angular';
@@ -29,6 +33,7 @@ export const appConfig: ApplicationConfig = {
       ],
     }),
     provideMarkdown(),
-    provideAnimations(), // For chart.js
+    provideAnimations(),
+    provideClientHydration(withEventReplay()), // For chart.js
   ],
 };
