@@ -12,6 +12,7 @@ import {
   Router,
   RouterOutlet,
 } from '@angular/router';
+import { UserService } from '@flights42/ui-common';
 
 import { AssistantChat } from './domains/shared/ui-assistant/assistant-chat/assistant-chat';
 import { Navbar } from './shell/navbar/navbar';
@@ -25,12 +26,15 @@ import { Sidebar } from './shell/sidebar/sidebar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  private readonly router = inject(Router);
+  private router = inject(Router);
+  private userService = inject(UserService);
 
   private readonly title = signal('flights42');
   protected readonly isLoading = signal(false);
 
   constructor() {
+    this.userService.userName.set('Max Muster');
+
     this.router.events.subscribe((events) => {
       if (events instanceof NavigationStart) {
         this.isLoading.set(true);

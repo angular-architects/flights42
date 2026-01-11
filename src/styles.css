@@ -361,7 +361,7 @@ input[type='button'] {
 .sidebar .nav a {
   text-decoration: none;
   display: block;
-  padding: 0.75rem 1.5rem;
+  padding: 0.25rem 1.5rem;
   font-size: 1rem;
   color: #333333;
   border-radius: 4px;

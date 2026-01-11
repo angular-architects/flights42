@@ -33,7 +33,7 @@ import { DemoDialog } from './demo-dialog';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class About {
-  private readonly dialogService = inject(DialogService);
+  private dialogService = inject(DialogService);
 
   protected readonly flights = signal<Flight[]>([
     {

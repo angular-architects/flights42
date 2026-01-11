@@ -34,3 +34,5 @@ import { UserPanel } from '@flights42/ui-common';
   `,
 })
 export class MilesOverview {}
+
+export default MilesOverview;
