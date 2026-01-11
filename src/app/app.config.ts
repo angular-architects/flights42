@@ -10,6 +10,11 @@ import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
+import {
+  BrowserLanguageService,
+  LanguageService,
+  provideLanguageService,
+} from './domains/shared/util-common/language';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -28,5 +33,8 @@ export const appConfig: ApplicationConfig = {
       ],
     }),
     provideMarkdown(),
+    { provide: LanguageService, useClass: BrowserLanguageService },
+    provideLanguageService('browser'),
+    // provideLanguageService2('browser')
   ],
 };
