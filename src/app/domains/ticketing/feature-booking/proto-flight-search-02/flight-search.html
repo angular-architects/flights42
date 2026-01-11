@@ -1,0 +1,48 @@
+<h1>Flight Search</h1>
+
+<form>
+  <div>
+    <label for="from">From:</label>
+    <input [(ngModel)]="from" id="from" aria-label="from" name="from" />
+  </div>
+  <div>
+    <label for="to">To:</label>
+    <input [(ngModel)]="to" id="to" aria-label="to" name="to" />
+  </div>
+  <div>
+    <button (click)="search()" [disabled]="!from() || !to()">Search</button>
+  </div>
+</form>
+
+@if (flights().length > 0) {
+  <table>
+    <tr>
+      <th>Id</th>
+      <th>From</th>
+      <th>To</th>
+      <th>Date</th>
+      <th>Delayed</th>
+    </tr>
+    @for (flight of flights(); track flight.id) {
+      <tr
+        [class.selected]="selectedFlight() === flight"
+        [style.color]="flight.delayed ? 'darkred' : 'black'"
+        (click)="select(flight)"
+        class="selectable">
+        <td>{{ flight.id }}</td>
+        <td>{{ flight.from }}</td>
+        <td>{{ flight.to }}</td>
+        <td>{{ flight.date | date }}</td>
+        <td>
+          {{ flight.delayed }}
+        </td>
+      </tr>
+    }
+  </table>
+}
+
+<p>&nbsp;</p>
+
+<div>
+  <pre>{{ selectedFlight() | json }}</pre>
+</div>
