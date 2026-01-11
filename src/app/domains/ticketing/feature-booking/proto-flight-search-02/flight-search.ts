@@ -23,6 +23,7 @@ export class FlightSearch {
   protected readonly to = signal('Hamburg');
 
   protected readonly flights = signal<Flight[]>([]);
+  protected readonly error = signal<Error | null>(null);
   protected readonly selectedFlight = signal<Flight | null>(null);
 
   protected search(): void {
@@ -36,12 +37,15 @@ export class FlightSearch {
       accept: 'application/json',
     };
 
+    this.error.set(null);
+
     this.http.get<Flight[]>(url, { params, headers }).subscribe({
       next: (flights) => {
         this.flights.set(flights);
       },
-      error: (error) => {
+      error: (error: Error) => {
         console.error('error loading flights', error);
+        this.error.set(error);
       },
     });
   }

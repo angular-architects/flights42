@@ -14,7 +14,7 @@
   </div>
 </form>
 
-@if (flights().length > 0) {
+@if (!error() && flights().length > 0) {
   <table>
     <tr>
       <th>Id</th>
@@ -43,6 +43,10 @@
 
 @if (error()) {
   <div>Error: {{ error() | json }}</div>
+}
+
+@if (isLoading()) {
+  <div>Loading...</div>
 }
 
 <p>&nbsp;</p>
