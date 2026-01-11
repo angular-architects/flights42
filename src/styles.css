@@ -210,11 +210,27 @@ form > div {
 input[type='text'],
 input[type='number'],
 input:not([type]) {
+  box-sizing: border-box;
   width: 100%;
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+select {
+  padding: 0.5rem;
+  padding-right: 2.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 12px;
 }
 
 label {
@@ -435,12 +451,12 @@ body {
 }
 
 input[type='number'] {
-  -moz-appearance: textfield; /* Firefox */
+  -moz-appearance: textfield;
 }
 
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
-  -webkit-appearance: none; /* Chrome, Edge, Safari */
+  -webkit-appearance: none;
   margin: 0;
 }
 
@@ -575,7 +591,6 @@ markdown p {
   justify-content: center;
 }
 
-/* Spinner */
 .spinner {
   width: 48px;
   height: 48px;
