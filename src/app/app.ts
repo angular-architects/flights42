@@ -10,16 +10,15 @@ import {
   NavigationError,
   NavigationStart,
   Router,
-  RouterOutlet,
 } from '@angular/router';
 
-import { AssistantChat } from './domains/shared/ui-assistant/assistant-chat/assistant-chat';
+import { FlightSearch } from './domains/ticketing/feature-booking/proto-flight-search/flight-search';
 import { Navbar } from './shell/navbar/navbar';
 import { Sidebar } from './shell/sidebar/sidebar';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Sidebar, AssistantChat],
+  imports: [Navbar, Sidebar, FlightSearch],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

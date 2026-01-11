@@ -167,8 +167,10 @@ export class FlightClient {
     });
   }
 }
+
 function initializeFlight(raw: unknown) {
-  const flight = raw as Flight;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const flight = raw as any;
   flight.aircraft = initAircraft;
   flight.prices = [];
   flight.delay = flight.delayed ? 15 : 0;

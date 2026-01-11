@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 table,
 .table {
+=======
+table {
+>>>>>>> df8db02 (feat: add proto flight search)
   width: 100%;
   max-width: 100%;
   margin-bottom: 20px;
@@ -609,6 +613,10 @@ markdown p {
   to {
     transform: rotate(360deg);
   }
+}
+
+A {
+  cursor: pointer;
 }
 
 .selectable {

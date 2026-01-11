@@ -1,0 +1,921 @@
+{
+  "version": "6.0",
+  "nxVersion": "22.3.3",
+  "pathMappings": {
+    "@flights42/ui-common": ["./projects/ui-common/src/public-api.ts"]
+  },
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "projectFileMap": {
+      "miles": [
+        {
+          "file": "projects/miles/eslint.config.js",
+          "hash": "5267519655198884963"
+        },
+        {
+          "file": "projects/miles/public/favicon.ico",
+          "hash": "3988961587069885523"
+        },
+        {
+          "file": "projects/miles/src/app/app.config.ts",
+          "hash": "171900698880923948"
+        },
+        {
+          "file": "projects/miles/src/app/app.routes.ts",
+          "hash": "13253328442092174957"
+        },
+        {
+          "file": "projects/miles/src/app/app.ts",
+          "hash": "3375643947270759687"
+        },
+        {
+          "file": "projects/miles/src/app/miles-overview.ts",
+          "hash": "16090019062569678378"
+        },
+        {
+          "file": "projects/miles/src/app/next-leve-page.ts",
+          "hash": "5649087190554011798"
+        },
+        {
+          "file": "projects/miles/src/index.html",
+          "hash": "2081959793370673656"
+        },
+        {
+          "file": "projects/miles/src/main.ts",
+          "hash": "1851190477704634470"
+        },
+        {
+          "file": "projects/miles/src/styles.css",
+          "hash": "529678770858229438"
+        },
+        {
+          "file": "projects/miles/tsconfig.app.json",
+          "hash": "4392164896217937559"
+        },
+        {
+          "file": "projects/miles/tsconfig.spec.json",
+          "hash": "10777994083665899510"
+        }
+      ],
+      "flights42": [
+        {
+          "file": ".cursor/rules/cursor.mdc",
+          "hash": "6169013833525011714"
+        },
+        {
+          "file": ".detective/config.json",
+          "hash": "2193092925336536046"
+        },
+        {
+          "file": ".editorconfig",
+          "hash": "4165385352547808172"
+        },
+        {
+          "file": ".gitignore",
+          "hash": "8735202651818384803"
+        },
+        {
+          "file": ".husky/commit-msg",
+          "hash": "3206400572671257283"
+        },
+        {
+          "file": ".husky/pre-commit",
+          "hash": "7590073215689033748"
+        },
+        {
+          "file": ".vscode/extensions.json",
+          "hash": "5331566439708925252"
+        },
+        {
+          "file": ".vscode/launch.json",
+          "hash": "17038929134016848735"
+        },
+        {
+          "file": ".vscode/settings.json",
+          "hash": "2974832844447316614"
+        },
+        {
+          "file": ".vscode/tasks.json",
+          "hash": "1370608409982315224"
+        },
+        {
+          "file": "README.md",
+          "hash": "4498810866200669898"
+        },
+        {
+          "file": "angular.json",
+          "hash": "3172920361216256811"
+        },
+        {
+          "file": "commitlint.config.cjs",
+          "hash": "13840799604877199437"
+        },
+        {
+          "file": "eslint.config.js",
+          "hash": "439626509312330458"
+        },
+        {
+          "file": "package-lock.json",
+          "hash": "7885195559508958433"
+        },
+        {
+          "file": "package.json",
+          "hash": "14301578658371522597"
+        },
+        {
+          "file": "public/config.json",
+          "hash": "16026935668036127491"
+        },
+        {
+          "file": "public/favicon.ico",
+          "hash": "3988961587069885523"
+        },
+        {
+          "file": "server-google.ts",
+          "hash": "3361476142189454897"
+        },
+        {
+          "file": "server-openai.ts",
+          "hash": "5332393566167122507"
+        },
+        {
+          "file": "sheriff.config.simple.ts",
+          "hash": "17427662010727789541"
+        },
+        {
+          "file": "sheriff.config.ts",
+          "hash": "13398645965822386260"
+        },
+        {
+          "file": "src/app/app.config.ts",
+          "hash": "3452581831068609155"
+        },
+        {
+          "file": "src/app/app.css",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "src/app/app.html",
+          "hash": "18278784853790389122"
+        },
+        {
+          "file": "src/app/app.routes.ts",
+          "hash": "2477283112490208695"
+        },
+        {
+          "file": "src/app/app.ts",
+          "hash": "13157455717448648295"
+        },
+        {
+          "file": "src/app/domains/checkin/data/checkin-info.ts",
+          "hash": "1819059396696580438"
+        },
+        {
+          "file": "src/app/domains/checkin/data/passenger-info.ts",
+          "hash": "11916975452503927110"
+        },
+        {
+          "file": "src/app/domains/checkin/feature-checkin/checkin-dialog.ts",
+          "hash": "8141504080442036014"
+        },
+        {
+          "file": "src/app/domains/checkin/feature-checkin/checkin-page.html",
+          "hash": "11206891091300716765"
+        },
+        {
+          "file": "src/app/domains/checkin/feature-checkin/checkin-page.ts",
+          "hash": "17879576917313281593"
+        },
+        {
+          "file": "src/app/domains/luggage/data/luggage-client.ts",
+          "hash": "15050905114368530793"
+        },
+        {
+          "file": "src/app/domains/luggage/data/luggage.ts",
+          "hash": "12838033222745315468"
+        },
+        {
+          "file": "src/app/domains/luggage/feature-luggage/luggage-card/luggage-card.html",
+          "hash": "7754506599167525453"
+        },
+        {
+          "file": "src/app/domains/luggage/feature-luggage/luggage-card/luggage-card.ts",
+          "hash": "17573888009587147791"
+        },
+        {
+          "file": "src/app/domains/luggage/feature-luggage/luggage-overview/luggage-overview.html",
+          "hash": "8927242887836668470"
+        },
+        {
+          "file": "src/app/domains/luggage/feature-luggage/luggage-overview/luggage-overview.ts",
+          "hash": "2580681954037562155"
+        },
+        {
+          "file": "src/app/domains/luggage/feature-luggage/luggage-overview/luggage-store.ts",
+          "hash": "8924881230441992265"
+        },
+        {
+          "file": "src/app/domains/luggage/feature-luggage/luggage-overview/simple-luggage-store.ts",
+          "hash": "4805513931254605691"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/assistant-chat/assistant-chat.css",
+          "hash": "3719932466068677229"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/assistant-chat/assistant-chat.html",
+          "hash": "5022753322591426255"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/assistant-chat/assistant-chat.ts",
+          "hash": "9705117064058064586"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/chat-messages/chat-messages.css",
+          "hash": "7076962614273796642"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/chat-messages/chat-messages.html",
+          "hash": "5958450750925113197"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/chat-messages/chat-messages.ts",
+          "hash": "6693712232559947869"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/chat-registry.ts",
+          "hash": "7957301582498989527"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/message-widget.ts",
+          "hash": "4006382679037259481"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/message.ts",
+          "hash": "11116122161854111535"
+        },
+        {
+          "file": "src/app/domains/shared/ui-assistant/tool-status.ts",
+          "hash": "1180566098428400650"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/advanced-data-table/advanced-data-table.css",
+          "hash": "13486813025378078187"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/advanced-data-table/advanced-data-table.html",
+          "hash": "13702004493696746429"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/advanced-data-table/advanced-data-table.ts",
+          "hash": "6148215970654671837"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/alternative-city.pipe.ts",
+          "hash": "4558712267921549320"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/city.pipe.ts",
+          "hash": "1493134128244470091"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/click-with-warning.directive.ts",
+          "hash": "10068369141866803008"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/custom-template-outlet.directive.ts",
+          "hash": "9146064930058150477"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/data-table/data-table.ts",
+          "hash": "4554298501438618802"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/data-table/table-field.directive.ts",
+          "hash": "12111115730201284823"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/delay-stepper/delay-stepper.css",
+          "hash": "12886819890292825570"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/delay-stepper/delay-stepper.html",
+          "hash": "10280219372229891822"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/delay-stepper/delay-stepper.ts",
+          "hash": "11340353694925541582"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog-event.ts",
+          "hash": "361209786805847648"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog-info.ts",
+          "hash": "361209786805847648"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog-outlet-service.ts",
+          "hash": "16751637696394589771"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog-outlet.css",
+          "hash": "5660772658265241186"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog-outlet.html",
+          "hash": "5380680022681611879"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog-outlet.ts",
+          "hash": "5358168836769789220"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog.service.ts",
+          "hash": "2056320822399315541"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/dialog/dialog.token.ts",
+          "hash": "17875904465549762097"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/injection-tabbed-pane/tab.ts",
+          "hash": "4371899583198475039"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/injection-tabbed-pane/tabbed-pane.ts",
+          "hash": "5612575456067547568"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/query-tabbed-pane/tab.ts",
+          "hash": "15331908676352325543"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/query-tabbed-pane/tabbed-pane.ts",
+          "hash": "16178559924800251327"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/service-tabbed-pane/tab-registry.ts",
+          "hash": "2429711905215232368"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/service-tabbed-pane/tab.ts",
+          "hash": "15553770352341887846"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/service-tabbed-pane/tabbed-pane.ts",
+          "hash": "16813265286901234364"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/simple-tooltip.directive.ts",
+          "hash": "15022207504433870174"
+        },
+        {
+          "file": "src/app/domains/shared/ui-common/tooltip.directive.ts",
+          "hash": "42763719449106054"
+        },
+        {
+          "file": "src/app/domains/shared/ui-federation/wrapper.component.css",
+          "hash": "13027103444035360129"
+        },
+        {
+          "file": "src/app/domains/shared/ui-federation/wrapper.component.html",
+          "hash": "10416525026193577673"
+        },
+        {
+          "file": "src/app/domains/shared/ui-federation/wrapper.component.ts",
+          "hash": "2193884080665949296"
+        },
+        {
+          "file": "src/app/domains/shared/ui-forms/field-meta-data-pane/field-meta-data-pane.css",
+          "hash": "3136830513786379238"
+        },
+        {
+          "file": "src/app/domains/shared/ui-forms/field-meta-data-pane/field-meta-data-pane.html",
+          "hash": "12710122228002779454"
+        },
+        {
+          "file": "src/app/domains/shared/ui-forms/field-meta-data-pane/field-meta-data-pane.ts",
+          "hash": "14187783409550462490"
+        },
+        {
+          "file": "src/app/domains/shared/ui-forms/validation-errors/validation-errors-pane.css",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "src/app/domains/shared/ui-forms/validation-errors/validation-errors-pane.html",
+          "hash": "13967593889458504906"
+        },
+        {
+          "file": "src/app/domains/shared/ui-forms/validation-errors/validation-errors-pane.ts",
+          "hash": "13730217248587989984"
+        },
+        {
+          "file": "src/app/domains/shared/util-auth/auth.guard.ts",
+          "hash": "10025073548978673705"
+        },
+        {
+          "file": "src/app/domains/shared/util-auth/auth.interceptor.ts",
+          "hash": "9047627130009945772"
+        },
+        {
+          "file": "src/app/domains/shared/util-auth/auth.service.ts",
+          "hash": "8997903580334105759"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/application-error-handler.ts",
+          "hash": "2073880314350706705"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/config-service.ts",
+          "hash": "2580196147566875922"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/confirm.ts",
+          "hash": "808311207707386113"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/date-utils.ts",
+          "hash": "1925576533697680582"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/delegated-signal.ts",
+          "hash": "5440889339474463009"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/exit.guard.ts",
+          "hash": "14679925792890536646"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/extract-error.ts",
+          "hash": "4463613002260469329"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/inject-blink.ts",
+          "hash": "5023311118735009391"
+        },
+        {
+          "file": "src/app/domains/shared/util-common/properties.ts",
+          "hash": "14727716433030079476"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/system-prompt.ts",
+          "hash": "10277268260541312366"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/ticketing-chat-service.ts",
+          "hash": "8083466900011901078"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/display-flight-detail.tool.ts",
+          "hash": "18069573029963800564"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/find-flights.tool.ts",
+          "hash": "11036612494771411162"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/get-booked-flights.tool.ts",
+          "hash": "8763729779134501348"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/get-current-basket.tool.ts",
+          "hash": "3360350083544764216"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/get-current-flight.tool.ts",
+          "hash": "364736042094392342"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/get-current-route.tool.ts",
+          "hash": "17606306354234265335"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/get-loaded-flights.tool.ts",
+          "hash": "858266381801195343"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/show-booked-flights.tool.ts",
+          "hash": "453436023461973804"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/toggle-flight-selection.tool.ts",
+          "hash": "4461018020199379758"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/tools/update-flight.tool.ts",
+          "hash": "14310556306068307830"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/widgets/flight-widget.component.ts",
+          "hash": "6975832679140234291"
+        },
+        {
+          "file": "src/app/domains/ticketing/ai/widgets/flight-widget.ts",
+          "hash": "79285063636956564"
+        },
+        {
+          "file": "src/app/domains/ticketing/api/index.ts",
+          "hash": "15179504345780792446"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/aircraft-schema.ts",
+          "hash": "12390464621916773154"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/aircraft.ts",
+          "hash": "2832211314581038513"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/flight-client.ts",
+          "hash": "3078316270844891616"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/flight-info.ts",
+          "hash": "6728295134303292770"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/flight-schema.ts",
+          "hash": "11951452172351351427"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/flight-validators.ts",
+          "hash": "7935411625250354747"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/flight-zod-schema.ts",
+          "hash": "5439241215437269746"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/flight.ts",
+          "hash": "14868663104661756760"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/passenger-client.ts",
+          "hash": "249678247185778596"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/passenger-schema.ts",
+          "hash": "4317027069808554361"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/passenger.ts",
+          "hash": "5599666650868094868"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/price-schema.ts",
+          "hash": "6012013179607489211"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/price.ts",
+          "hash": "13892742830716443422"
+        },
+        {
+          "file": "src/app/domains/ticketing/data/ticket-client.ts",
+          "hash": "13880088169941789889"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/advanced-flight-edit.html",
+          "hash": "6249153907121387757"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/advanced-flight-edit.ts",
+          "hash": "11120213104123864535"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/aircraft-form/aircraft-form.html",
+          "hash": "12684803442519009848"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/aircraft-form/aircraft-form.ts",
+          "hash": "5401391739152316450"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/flight-edit-schema.ts",
+          "hash": "10973852958782857919"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/flight-form/flight-form.html",
+          "hash": "16807218210048523627"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/flight-form/flight-form.ts",
+          "hash": "6215016666342706300"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/prices-form/prices-form.html",
+          "hash": "11480295915484368663"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/advanced-flight-edit/prices-form/prices-form.ts",
+          "hash": "4337539427620157607"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/booking-navigation.html",
+          "hash": "14835555744761935370"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/booking-navigation.ts",
+          "hash": "7371594201293395239"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-edit/flight-detail-store.ts",
+          "hash": "2082723965572603103"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-edit/flight-edit.html",
+          "hash": "13532945176330806014"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-edit/flight-edit.ts",
+          "hash": "4794634246011474914"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-edit/simple-flight-detail-store.ts",
+          "hash": "4602856574212715617"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-search/flight-search.html",
+          "hash": "16401905056658983871"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-search/flight-search.spec.ts",
+          "hash": "9961837280694724189"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-search/flight-search.ts",
+          "hash": "3862232915367923407"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-search/flight-store-simple.ts",
+          "hash": "2513687122325323446"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-search/flight-store.spec.ts",
+          "hash": "17321311864017622714"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/flight-search/flight-store.ts",
+          "hash": "756127218262532424"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-card/passenger-card.html",
+          "hash": "9648626612949165876"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-card/passenger-card.ts",
+          "hash": "15260631754551683391"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-edit/passenger-detail-store.ts",
+          "hash": "15121443265799125414"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-edit/passenger-edit.html",
+          "hash": "14732681668802169332"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-edit/passenger-edit.ts",
+          "hash": "5840042390366702450"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-edit/passenger-resolver.ts",
+          "hash": "15659924156436233667"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-search/passenger-search.html",
+          "hash": "14583638435008645282"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-search/passenger-search.ts",
+          "hash": "297820998881793853"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-search/passenger-store.ts",
+          "hash": "2276927946679709673"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/passenger-search/simple-passenger-store.ts",
+          "hash": "9091116880480928934"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-edit/proto-flight-edit.html",
+          "hash": "12129517777736155802"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/proto-flight-edit/proto-flight-edit.ts",
+          "hash": "11688478043478795097"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/reactive-flight-search/reactive-flight-search.html",
+          "hash": "1391812969394507838"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/reactive-flight-search/reactive-flight-search.spec.ts",
+          "hash": "10298798804343585023"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/reactive-flight-search/reactive-flight-search.ts",
+          "hash": "6234732798939755268"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/summary-page/summary-page.html",
+          "hash": "7725313908046817023"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/summary-page/summary-page.ts",
+          "hash": "6265494470353400342"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-booking/summary-page/summary-store.ts",
+          "hash": "11004690866029054776"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-next-flights/next-flights-overview/next-flights-overview.html",
+          "hash": "16667488325077642662"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-next-flights/next-flights-overview/next-flights-overview.ts",
+          "hash": "7507011513663961420"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-next-flights/next-flights-overview/next-flights-store.ts",
+          "hash": "15001874217139812426"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-next-flights/next-flights-overview/normalized-store.ts",
+          "hash": "8807219845725922998"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-next-flights/next-flights-overview/simple-next-flights-store.ts",
+          "hash": "6142507146587740598"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-next-flights/next-flights.module.ts",
+          "hash": "13093660767789128491"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-next-flights/next-flights.routes.ts",
+          "hash": "1499487629570741159"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-reporting/ai/cart-runtime.ts",
+          "hash": "13938985376491430299"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-reporting/ai/chart-resource.ts",
+          "hash": "6201287880153598430"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-reporting/reporting-page/example-prompts.ts",
+          "hash": "9319293632382371222"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-reporting/reporting-page/reporting-page.css",
+          "hash": "10004000525445299409"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-reporting/reporting-page/reporting-page.html",
+          "hash": "1741288003056377359"
+        },
+        {
+          "file": "src/app/domains/ticketing/feature-reporting/reporting-page/reporting-page.ts",
+          "hash": "8991809657278576815"
+        },
+        {
+          "file": "src/app/domains/ticketing/ticketing.routes.ts",
+          "hash": "6595821189268541280"
+        },
+        {
+          "file": "src/app/domains/ticketing/ui/flight-card/flight-card.html",
+          "hash": "15579860019079626673"
+        },
+        {
+          "file": "src/app/domains/ticketing/ui/flight-card/flight-card.ts",
+          "hash": "4786004106655980982"
+        },
+        {
+          "file": "src/app/shell/about/about.html",
+          "hash": "17085525284253283962"
+        },
+        {
+          "file": "src/app/shell/about/about.ts",
+          "hash": "17811287960697484142"
+        },
+        {
+          "file": "src/app/shell/about/demo-dialog.ts",
+          "hash": "17013154650347331530"
+        },
+        {
+          "file": "src/app/shell/dashboard/dashboard.ts",
+          "hash": "8685594916623763744"
+        },
+        {
+          "file": "src/app/shell/home/home.ts",
+          "hash": "3858424218702271075"
+        },
+        {
+          "file": "src/app/shell/navbar/navbar.html",
+          "hash": "16771679363621358475"
+        },
+        {
+          "file": "src/app/shell/navbar/navbar.ts",
+          "hash": "10084073508598474583"
+        },
+        {
+          "file": "src/app/shell/sidebar/sidebar.html",
+          "hash": "9244466445619622329"
+        },
+        {
+          "file": "src/app/shell/sidebar/sidebar.ts",
+          "hash": "6269877616671153617"
+        },
+        {
+          "file": "src/app/testing/create-test-flight.ts",
+          "hash": "3609872650644501613"
+        },
+        {
+          "file": "src/app/testing/provide-test-config.ts",
+          "hash": "754551100172002117"
+        },
+        {
+          "file": "src/app/testing/run-tasks.ts",
+          "hash": "6392426779804992110"
+        },
+        {
+          "file": "src/index.html",
+          "hash": "3287223808340481009"
+        },
+        {
+          "file": "src/main.ts",
+          "hash": "1851190477704634470"
+        },
+        {
+          "file": "src/material-theme.scss",
+          "hash": "18058414467104993129"
+        },
+        {
+          "file": "src/styles.css",
+          "hash": "962361297569293925"
+        },
+        {
+          "file": "tsconfig.app.json",
+          "hash": "10831407004770398043"
+        },
+        {
+          "file": "tsconfig.json",
+          "hash": "17532750454972281944"
+        },
+        {
+          "file": "tsconfig.spec.json",
+          "hash": "163394592492922013"
+        }
+      ],
+      "ui-common": [
+        {
+          "file": "projects/ui-common/README.md",
+          "hash": "3730462883165103063"
+        },
+        {
+          "file": "projects/ui-common/eslint.config.js",
+          "hash": "17527626280481953720"
+        },
+        {
+          "file": "projects/ui-common/ng-package.json",
+          "hash": "17716158778195391622"
+        },
+        {
+          "file": "projects/ui-common/package.json",
+          "hash": "486259915063614393",
+          "deps": ["npm:@angular/common", "npm:@angular/core", "npm:tslib"]
+        },
+        {
+          "file": "projects/ui-common/src/lib/user-panel.ts",
+          "hash": "17853132731868418887"
+        },
+        {
+          "file": "projects/ui-common/src/lib/user-service.ts",
+          "hash": "11302352297937446986"
+        },
+        {
+          "file": "projects/ui-common/src/public-api.ts",
+          "hash": "8545832407914000719"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.lib.json",
+          "hash": "1133477222801413517"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.lib.prod.json",
+          "hash": "17517552510542404852"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.spec.json",
+          "hash": "10777994083665899510"
+        }
+      ]
+    },
+    "nonProjectFiles": []
+  },
+  "externalNodesHash": "16132705444147312402"
+}
