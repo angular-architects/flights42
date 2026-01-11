@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "flights42": {
+    "flights": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -70,10 +70,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "flights42:build:production"
+              "buildTarget": "flights:build:production"
             },
             "development": {
-              "buildTarget": "flights42:build:development"
+              "buildTarget": "flights:build:development"
             }
           },
           "defaultConfiguration": "development"
