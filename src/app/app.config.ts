@@ -17,6 +17,10 @@ import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
+import {
+  ClientLanguageDetector,
+  LanguageDetector,
+} from './domains/shared/util-common/language';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -39,5 +43,6 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     // ^^^For chart.js
     provideClientHydration(withIncrementalHydration(), withEventReplay()),
+    { provide: LanguageDetector, useClass: ClientLanguageDetector },
   ],
 };
