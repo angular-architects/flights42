@@ -7,10 +7,10 @@ import { MinValidationError, ValidationError } from '@angular/forms/signals';
   templateUrl: './validation-errors-pane.html',
 })
 export class ValidationErrorsPane {
-  errors = input.required<ValidationError.WithField[]>();
-  showFieldNames = input(false);
+  readonly errors = input.required<ValidationError.WithField[]>();
+  readonly showFieldNames = input(false);
 
-  errorMessages = computed(() =>
+  protected readonly errorMessages = computed(() =>
     toErrorMessages(this.errors(), this.showFieldNames()),
   );
 }

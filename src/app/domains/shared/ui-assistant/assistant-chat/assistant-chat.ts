@@ -17,20 +17,21 @@ import { ChatRegistry } from '../chat-registry';
   selector: 'app-assistant-chat',
   standalone: true,
   imports: [FormsModule, ChatMessages],
-  templateUrl: './assistant-chat.component.html',
-  styleUrls: ['./assistant-chat.component.css'],
+  templateUrl: './assistant-chat.html',
+  styleUrls: ['./assistant-chat.css'],
 })
-export class AssistantChatComponent {
-  chatRegistry = inject(ChatRegistry);
+export class AssistantChat {
+  private chatRegistry = inject(ChatRegistry);
 
-  composerInput = viewChild<ElementRef<HTMLInputElement>>('composerInput');
-  messagesContainer =
+  private composerInput =
+    viewChild<ElementRef<HTMLInputElement>>('composerInput');
+  private messagesContainer =
     viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
 
-  panelVisible = signal(false);
-  message = signal('');
+  protected readonly panelVisible = signal(false);
+  protected readonly message = signal('');
 
-  chat: UiChatResourceRef<Chat.AnyTool> | null = null;
+  protected chat: UiChatResourceRef<Chat.AnyTool> | null = null;
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
@@ -51,12 +52,12 @@ export class AssistantChatComponent {
     });
   }
 
-  toggle() {
+  protected toggle() {
     this.panelVisible.update((visible) => !visible);
     this.composerInput()?.nativeElement.focus();
   }
 
-  submit() {
+  protected submit() {
     const message = this.message();
     this.message.set('');
     this.chat?.sendMessage({ role: 'user', content: message });

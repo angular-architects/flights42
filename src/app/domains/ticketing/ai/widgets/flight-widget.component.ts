@@ -43,15 +43,15 @@ import { FlightStore } from '../../feature-booking/flight-search/flight-store';
     }
   `,
 })
-export class FlightWidgetComponent {
+export class FlightWidget {
   router = inject(Router);
   store = inject(FlightStore);
 
   flight = input.required<FlightInfo>();
   status = input<'booked' | 'other'>('other');
 
-  isBooked = computed(() => this.status() === 'booked');
-  isSelected = computed(() => this.store.basket()[this.flight().id]);
+  readonly isBooked = computed(() => this.status() === 'booked');
+  readonly isSelected = computed(() => this.store.basket()[this.flight().id]);
 
   checkIn(): void {
     this.router.navigate(['/checkin', { ticketId: this.flight().id }]);

@@ -12,11 +12,11 @@ import { NormalizedStore } from './normalized-store';
   providers: [NextFlightsStore],
 })
 export class NextFlightsOverview {
-  private store = inject(NextFlightsStore);
+  private readonly store = inject(NextFlightsStore);
   protected readonly tickets = this.store.entities;
   protected readonly selected = this.store.selected;
 
-  protected readonly normalizedStore = inject(NormalizedStore);
+  private readonly normalizedStore = inject(NormalizedStore);
 
   constructor() {
     this.store.load();
@@ -31,7 +31,7 @@ export class NextFlightsOverview {
     );
   }
 
-  updateSelected(ticketId: number, selected: boolean): void {
+  protected updateSelected(ticketId: number, selected: boolean): void {
     this.store.updateSelected(ticketId, selected);
   }
 }

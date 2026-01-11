@@ -21,8 +21,8 @@ import { FlightStore } from '../flight-search/flight-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReactiveFlightSearch {
-  private store = inject(FlightStore);
-  private snackBar = inject(MatSnackBar);
+  private readonly store = inject(FlightStore);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly from = this.store.from;
   protected readonly to = this.store.to;
@@ -65,16 +65,16 @@ export class ReactiveFlightSearch {
     });
   }
 
-  search(): void {
+  protected search(): void {
     // this.store.updateFilter(this.from(), this.to());
     this.store.reload();
   }
 
-  updateBasket(flightId: number, selected: boolean): void {
+  protected updateBasket(flightId: number, selected: boolean): void {
     this.store.updateBasket(flightId, selected);
   }
 
-  delay(): void {
+  protected delay(): void {
     this.store.delay();
   }
 

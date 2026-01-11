@@ -17,9 +17,9 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckinDialogComponent {
-  private dialogRef = inject(MatDialogRef<CheckinDialogComponent>);
+  private readonly dialogRef = inject(MatDialogRef<CheckinDialogComponent>);
 
-  close(): void {
+  protected close(): void {
     this.dialogRef.close();
   }
 }

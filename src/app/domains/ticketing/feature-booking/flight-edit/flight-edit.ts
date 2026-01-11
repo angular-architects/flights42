@@ -30,8 +30,8 @@ import { FlightDetailStore } from './flight-detail-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightEdit implements FormComponent {
-  private store = inject(FlightDetailStore);
-  private route = inject(ActivatedRoute);
+  private readonly store = inject(FlightDetailStore);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly id = input.required<number>();
 
@@ -79,7 +79,7 @@ export class FlightEdit implements FormComponent {
     return this.flightForm().dirty();
   }
 
-  async save(): Promise<void> {
+  protected async save(): Promise<void> {
     // this.store.updateFlight(this.flightForm().value());
 
     await submit(this.flightForm, async (form) => {

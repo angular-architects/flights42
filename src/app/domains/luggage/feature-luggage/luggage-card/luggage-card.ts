@@ -19,9 +19,9 @@ import { Luggage } from '../../data/luggage';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LuggageCard implements OnInit, OnChanges, OnDestroy {
-  item = input.required<Luggage>();
-  selected = input(false);
-  selectedChange = output<boolean>();
+  readonly item = input.required<Luggage>();
+  readonly selected = input(false);
+  readonly selectedChange = output<boolean>();
 
   ngOnInit(): void {
     console.log('OnInit', this.item());
@@ -35,11 +35,11 @@ export class LuggageCard implements OnInit, OnChanges, OnDestroy {
     console.log('OnDestroy', this.item());
   }
 
-  select() {
+  protected select() {
     this.selectedChange.emit(true);
   }
 
-  deselect() {
+  protected deselect() {
     this.selectedChange.emit(false);
   }
 }

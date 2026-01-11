@@ -21,8 +21,8 @@ import { PassengerStore } from './passenger-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PassengerSearch {
-  private store = inject(PassengerStore);
-  private snackBar = inject(MatSnackBar);
+  private readonly store = inject(PassengerStore);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly name = linkedSignal(() => this.store.name());
   protected readonly firstName = linkedSignal(() => this.store.firstName());
@@ -53,12 +53,12 @@ export class PassengerSearch {
     });
   }
 
-  search(): void {
+  protected search(): void {
     this.store.updateFilter(this.filter());
     // this.store.reload();
   }
 
-  updateSelected(passengerId: number, selected: boolean): void {
+  protected updateSelected(passengerId: number, selected: boolean): void {
     this.store.updateSelected(passengerId, selected);
   }
 }

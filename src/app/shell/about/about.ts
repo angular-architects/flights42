@@ -68,11 +68,11 @@ export class About {
     },
   ]);
 
-  deleteAll(): void {
+  protected deleteAll(): void {
     console.debug('delete ...');
   }
 
-  showDialog(): void {
+  protected showDialog(): void {
     this.dialogService.show(DemoDialog, 'Hello from About Component!');
   }
 }

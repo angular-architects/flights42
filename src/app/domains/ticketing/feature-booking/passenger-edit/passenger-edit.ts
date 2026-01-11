@@ -23,8 +23,8 @@ import { PassengerDetailStore } from './passenger-detail-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PassengerEdit implements FormComponent {
-  private store = inject(PassengerDetailStore);
-  private route = inject(ActivatedRoute);
+  private readonly store = inject(PassengerDetailStore);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly id = input.required<number>();
 
@@ -58,7 +58,7 @@ export class PassengerEdit implements FormComponent {
     return this.passengerForm().dirty();
   }
 
-  async save(): Promise<void> {
+  protected async save(): Promise<void> {
     await submit(this.passengerForm, async (form) => {
       try {
         await this.store.savePassenger(form().value());

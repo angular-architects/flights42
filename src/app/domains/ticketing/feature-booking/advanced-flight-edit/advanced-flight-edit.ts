@@ -32,9 +32,9 @@ import { PricesComponent } from './prices-form/prices-form';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdvancedFlightEdit {
-  private store = inject(FlightDetailStore);
-  private route = inject(ActivatedRoute);
-  private snackBar = inject(MatSnackBar);
+  private readonly store = inject(FlightDetailStore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly flight = linkedSignal(() =>
     normalizeFlight(this.store.flightValue()),
@@ -57,7 +57,7 @@ export class AdvancedFlightEdit {
     });
   }
 
-  async save(): Promise<void> {
+  protected async save(): Promise<void> {
     if (this.flightForm().invalid()) {
       this.snackBar.open('Please correct the validation errors.', 'OK');
       return;

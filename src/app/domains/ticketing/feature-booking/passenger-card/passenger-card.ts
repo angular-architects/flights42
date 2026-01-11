@@ -14,14 +14,14 @@ import { Passenger } from '../../data/passenger';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PassengerCard {
-  item = input.required<Passenger>();
-  selected = model(false);
+  readonly item = input.required<Passenger>();
+  readonly selected = model(false);
 
-  select() {
+  protected select() {
     this.selected.set(true);
   }
 
-  deselect() {
+  protected deselect() {
     this.selected.set(false);
   }
 }

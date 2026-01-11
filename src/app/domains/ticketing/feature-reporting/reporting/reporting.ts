@@ -10,36 +10,36 @@ import { examplePrompts } from './example-prompts';
 @Component({
   selector: 'app-reporting',
   imports: [NgxChartsModule, FormsModule, JsonPipe],
-  templateUrl: './reporting.component.html',
-  styleUrl: './reporting.component.css',
+  templateUrl: './reporting.html',
+  styleUrl: './reporting.css',
 })
-export class ReportingComponent {
-  data = signal<DataItem[]>([]);
+export class Reporting {
+  protected readonly data = signal<DataItem[]>([]);
 
-  showDetails = signal(false);
-  message = signal('');
-  input = signal<string | undefined>(undefined);
+  protected readonly showDetails = signal(false);
+  protected readonly message = signal('');
+  protected readonly input = signal<string | undefined>(undefined);
 
-  runtime = createChartingRuntime(this.data);
-  generator = createChartResource(this.runtime, this.input);
+  protected readonly runtime = createChartingRuntime(this.data);
+  protected readonly generator = createChartResource(this.runtime, this.input);
 
-  submit(): void {
+  protected submit(): void {
     this.input.set(this.message());
   }
 
-  format(value: number) {
+  protected format(value: number) {
     return Number.isInteger(value) ? value.toString() : '';
   }
 
-  toggleDetails(): void {
+  protected toggleDetails(): void {
     this.showDetails.update((value) => !value);
   }
 
-  regenerate(): void {
+  protected regenerate(): void {
     this.generator.reload();
   }
 
-  useExamplePrompt(index: number): void {
+  protected useExamplePrompt(index: number): void {
     const prompt = examplePrompts[index];
     this.message.set(prompt);
     this.submit();

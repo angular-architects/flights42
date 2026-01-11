@@ -34,12 +34,12 @@ import { CheckinDialogComponent } from './checkin-dialog';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Checkin {
-  private router = inject(Router);
-  private activatedRoute = inject(ActivatedRoute);
-  private dialog = inject(MatDialog);
-  private formBuilder = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
+  private readonly formBuilder = inject(FormBuilder);
 
-  protected readonly inputs = viewChildren<ElementRef>('input');
+  private readonly inputs = viewChildren<ElementRef>('input');
 
   protected readonly showNextFlights = signal(false);
 
@@ -64,7 +64,7 @@ export class Checkin {
     transform: customBooleanAttribute,
   });
 
-  protected readonly ticketId = signal<number | undefined>(undefined);
+  private readonly ticketId = signal<number | undefined>(undefined);
 
   constructor() {
     this.initValidators();
@@ -119,7 +119,7 @@ export class Checkin {
     }
   }
 
-  navigateToNextFlights(): void {
+  protected navigateToNextFlights(): void {
     this.router.navigate(['/next-flights'], {
       queryParams: {
         success: true,
@@ -133,7 +133,7 @@ export class Checkin {
     // this.router.navigateByUrl('/flight-search');
   }
 
-  checkin(): void {
+  protected checkin(): void {
     const { passenger, ...header } = this.checkinFormModel();
 
     const checkinForm: CheckinForm = {
@@ -151,7 +151,7 @@ export class Checkin {
     });
   }
 
-  toggleNextFlights(): void {
+  protected toggleNextFlights(): void {
     this.showNextFlights.update((show) => !show);
   }
 }

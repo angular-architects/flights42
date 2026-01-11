@@ -11,8 +11,8 @@ import { luggageEvents, LuggageStore } from './luggage-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LuggageOverview {
-  private store = inject(LuggageStore);
-  private dispatcher = inject(Dispatcher);
+  private readonly store = inject(LuggageStore);
+  private readonly dispatcher = inject(Dispatcher);
 
   protected readonly luggage = this.store.luggage;
   protected readonly selected = this.store.selected;
@@ -21,7 +21,7 @@ export class LuggageOverview {
     this.dispatcher.dispatch(luggageEvents.loadLuggage());
   }
 
-  updateSelected(luggageId: number, selected: boolean): void {
+  protected updateSelected(luggageId: number, selected: boolean): void {
     this.store.updateSelected(luggageId, selected);
   }
 }

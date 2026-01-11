@@ -4,8 +4,8 @@ import { s } from '@hashbrownai/core';
 import { DataItem } from '@swimlane/ngx-charts';
 import { firstValueFrom } from 'rxjs';
 
-import { FlightSchema } from '../../data/flight-info';
 import { FlightClient } from '../../data/flight-client';
+import { FlightSchema } from '../../data/flight-info';
 
 export function createChartingRuntime(data: WritableSignal<DataItem[]>) {
   return createRuntime({

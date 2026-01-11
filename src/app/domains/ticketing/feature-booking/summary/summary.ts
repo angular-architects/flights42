@@ -11,16 +11,19 @@ import { SummaryStore } from './summary-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Summary {
-  private store = inject(SummaryStore);
+  private readonly store = inject(SummaryStore);
 
   protected readonly selectedFlights = this.store.selectedFlights;
   protected readonly selectedPassengers = this.store.selectedPassengers;
 
-  updateFlightSelection(flightId: number, selected: boolean): void {
+  protected updateFlightSelection(flightId: number, selected: boolean): void {
     this.store.updateFlightSelection(flightId, selected);
   }
 
-  updatePassengerSelection(passengerId: number, selected: boolean): void {
+  protected updatePassengerSelection(
+    passengerId: number,
+    selected: boolean,
+  ): void {
     this.store.updatePassengerSelection(passengerId, selected);
   }
 }

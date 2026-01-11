@@ -13,21 +13,21 @@ import {
   RouterOutlet,
 } from '@angular/router';
 
-import { AssistantChatComponent } from './domains/shared/ui-assistant/assistant-chat/assistant-chat.component';
+import { AssistantChat } from './domains/shared/ui-assistant/assistant-chat/assistant-chat';
 import { Navbar } from './shell/navbar/navbar';
 import { Sidebar } from './shell/sidebar/sidebar';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Sidebar, AssistantChatComponent],
+  imports: [RouterOutlet, Navbar, Sidebar, AssistantChat],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  private router = inject(Router);
+  private readonly router = inject(Router);
 
-  protected readonly title = signal('flights42');
+  private readonly title = signal('flights42');
   protected readonly isLoading = signal(false);
 
   constructor() {

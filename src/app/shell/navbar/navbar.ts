@@ -9,7 +9,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 export class Navbar {
   private sidebarVisible = false;
 
-  sidebarToggle() {
+  protected sidebarToggle() {
     const body = document.getElementsByTagName('body')[0];
 
     if (this.sidebarVisible == false) {

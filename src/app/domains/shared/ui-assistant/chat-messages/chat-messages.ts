@@ -24,19 +24,19 @@ import { ToolStatusComponent } from '../tool-status';
   styleUrls: ['./chat-messages.css'],
 })
 export class ChatMessages {
-  messages = input.required<UiChatMessage[]>();
-  pending = input<boolean>(false);
-  showIndicator = computed(
+  readonly messages = input.required<UiChatMessage[]>();
+  readonly pending = input<boolean>(false);
+  protected readonly showIndicator = computed(
     () => this.pending() && this.messages().at(-1)?.role !== 'assistant',
   );
 
-  icons = {
+  protected readonly icons = {
     user: '💬',
     assistant: '🤖',
     error: '⚡️',
   };
 
-  messageModels = computed(() =>
+  protected readonly messageModels = computed(() =>
     this.messages().map((message) => ({
       ...message,
       // content: String(message.content),

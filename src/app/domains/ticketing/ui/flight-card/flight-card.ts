@@ -15,15 +15,15 @@ import { Flight } from '../../data/flight';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightCard {
-  item = input.required<Flight>();
-  selected = input(false);
-  selectedChange = output<boolean>();
+  readonly item = input.required<Flight>();
+  readonly selected = input(false);
+  readonly selectedChange = output<boolean>();
 
-  select() {
+  protected select() {
     this.selectedChange.emit(true);
   }
 
-  deselect() {
+  protected deselect() {
     this.selectedChange.emit(false);
   }
 }
