@@ -42,8 +42,8 @@ export const routes: Routes = [
   {
     path: 'checkin',
     loadComponent: () =>
-      import('./domains/checkin/feature-checkin/checkin').then(
-        (m) => m.Checkin,
+      import('./domains/checkin/feature-checkin/checkin-page').then(
+        (m) => m.CheckinPage,
       ),
   },
   {

@@ -1,10 +1,10 @@
-export interface PassengerForm {
+export interface PassengerInfo {
   firstName: string;
   lastName: string;
   email: string;
 }
 
-export const initPassengerForm: PassengerForm = {
+export const initPassengerInfo: PassengerInfo = {
   firstName: '',
   lastName: '',
   email: '',

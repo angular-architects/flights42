@@ -8,12 +8,12 @@ import { createChartResource } from '../ai/chart-resource';
 import { examplePrompts } from './example-prompts';
 
 @Component({
-  selector: 'app-reporting',
+  selector: 'app-reporting-page',
   imports: [NgxChartsModule, FormsModule, JsonPipe],
-  templateUrl: './reporting.html',
-  styleUrl: './reporting.css',
+  templateUrl: './reporting-page.html',
+  styleUrl: './reporting-page.css',
 })
-export class Reporting {
+export class ReportingPage {
   protected readonly data = signal<DataItem[]>([]);
 
   protected readonly showDetails = signal(false);

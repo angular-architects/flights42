@@ -17,12 +17,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NextFlightsModule } from '../../ticketing/api';
-import { CheckinForm } from '../data/checkin-form';
-import { initPassengerForm, PassengerForm } from '../data/passenger-form';
+import { CheckinInfo } from '../data/checkin-info';
+import { initPassengerInfo, PassengerInfo } from '../data/passenger-info';
 import { CheckinDialogComponent } from './checkin-dialog';
 
 @Component({
-  selector: 'app-checkin',
+  selector: 'app-checkin-page',
   imports: [
     Field,
     ReactiveFormsModule,
@@ -30,10 +30,10 @@ import { CheckinDialogComponent } from './checkin-dialog';
     JsonPipe,
     NextFlightsModule,
   ],
-  templateUrl: './checkin.html',
+  templateUrl: './checkin-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Checkin {
+export class CheckinPage {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
@@ -44,7 +44,7 @@ export class Checkin {
   protected readonly showNextFlights = signal(false);
 
   protected readonly passengerGroup =
-    this.formBuilder.nonNullable.group<PassengerForm>({
+    this.formBuilder.nonNullable.group<PassengerInfo>({
       firstName: '',
       lastName: '',
       email: 'me@here.com',
@@ -136,15 +136,15 @@ export class Checkin {
   protected checkin(): void {
     const { passenger, ...header } = this.checkinFormModel();
 
-    const checkinForm: CheckinForm = {
+    const checkinInfo: CheckinInfo = {
       ...header,
       passenger: {
-        ...initPassengerForm,
+        ...initPassengerInfo,
         ...passenger.value,
       },
     };
 
-    console.log('checkinForm', checkinForm);
+    console.log('checkinInfo', checkinInfo);
 
     this.dialog.open(CheckinDialogComponent, {
       width: '400px',
