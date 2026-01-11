@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
+import { UserPanel } from '@flights42/ui-common';
 
 @Component({
   selector: 'app-miles',
-  imports: [],
+  imports: [UserPanel],
   template: `
     <h1>Your Bonus Miles</h1>
+
+    <lib-user-panel />
 
     <table>
       <tr>

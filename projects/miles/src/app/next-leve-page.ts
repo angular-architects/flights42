@@ -5,7 +5,6 @@ import { Component } from '@angular/core';
   imports: [],
   template: `
     <h1>Next Level</h1>
-
     <p>Remaining Miles: 37000</p>
   `,
 })
