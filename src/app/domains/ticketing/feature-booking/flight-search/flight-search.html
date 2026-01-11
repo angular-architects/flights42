@@ -13,8 +13,10 @@
     {{ flightRoute() }}
   </div>
   <div>
-    <button (click)="search()" [disabled]="!from() || !to()">Search</button>
-    <button (click)="delay()">Delay</button>
+    <button type="button" (click)="search()" [disabled]="!from() || !to()">
+      Search
+    </button>
+    <button type="button" (click)="delay()">Delay</button>
   </div>
   @if (isLoading()) {
     <div>Loading ...</div>
@@ -24,14 +26,17 @@
 <div class="row">
   @for (f of flights(); track f.id) {
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <app-flight-card
-        [item]="f"
-        [selected]="basket()[f.id]"
-        (selectedChange)="updateBasket(f.id, $event)">
-        <button [routerLink]="['../flight-edit', f.id, { showDetails: true }]">
-          Edit
-        </button>
-      </app-flight-card>
+      @defer (hydrate on interaction) {
+        <app-flight-card
+          [item]="f"
+          [selected]="basket()[f.id]"
+          (selectedChange)="updateBasket(f.id, $event)">
+          <button
+            [routerLink]="['../flight-edit', f.id, { showDetails: true }]">
+            Edit
+          </button>
+        </app-flight-card>
+      }
     </div>
   }
 </div>

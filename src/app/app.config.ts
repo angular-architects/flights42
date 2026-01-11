@@ -1,3 +1,4 @@
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import {
   ApplicationConfig,
   inject,
@@ -7,6 +8,7 @@ import {
 import {
   provideClientHydration,
   withEventReplay,
+  withIncrementalHydration,
 } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
@@ -21,6 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideAppInitializer(() => inject(ConfigService).load()),
     // provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch()),
     provideRouter(routes, withComponentInputBinding()),
     provideHashbrown({
       baseUrl: 'http://localhost:3000/api/chat',
@@ -34,6 +37,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideMarkdown(),
     provideAnimations(),
-    provideClientHydration(withEventReplay()), // For chart.js
+    // ^^^For chart.js
+    provideClientHydration(withIncrementalHydration(), withEventReplay()),
   ],
 };
