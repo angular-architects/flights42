@@ -3,11 +3,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, finalize, firstValueFrom, tap, throwError } from 'rxjs';
 
 import { Flight } from '../../data/flight';
-import { FlightService } from '../../data/flight-service';
+import { FlightClient } from '../../data/flight-client';
 
 @Injectable({ providedIn: 'root' })
 export class SimpleFlightDetailStore {
-  private flightService = inject(FlightService);
+  private flightClient = inject(FlightClient);
   private snackBar = inject(MatSnackBar);
 
   // FlightId Filter
@@ -19,7 +19,7 @@ export class SimpleFlightDetailStore {
   readonly isPending = this._isPending.asReadonly();
 
   // FlightResource
-  private readonly flightResource = this.flightService.findResourceById(
+  private readonly flightResource = this.flightClient.findResourceById(
     this.flightId,
   );
   readonly flight = this.flightResource.value;
@@ -34,7 +34,7 @@ export class SimpleFlightDetailStore {
     this._isPending.set(true);
 
     return firstValueFrom(
-      this.flightService.update(flight).pipe(
+      this.flightClient.update(flight).pipe(
         tap((updatedFlight) => {
           this.flightResource.set(updatedFlight);
           this.snackBar.open('Flight updated successfully', 'OK', {

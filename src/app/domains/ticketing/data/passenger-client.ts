@@ -12,7 +12,7 @@ import { initPassenger, Passenger } from './passenger';
 @Injectable({
   providedIn: 'root',
 })
-export class PassengerService {
+export class PassengerClient {
   private http = inject(HttpClient);
   private configService = inject(ConfigService);
 

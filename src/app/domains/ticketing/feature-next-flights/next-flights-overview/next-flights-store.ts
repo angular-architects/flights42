@@ -13,7 +13,7 @@ import { setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { catchError, finalize, firstValueFrom, tap, throwError } from 'rxjs';
 
 import { Flight } from '../../data/flight';
-import { TicketService } from '../../data/ticket-service';
+import { TicketClient } from '../../data/ticket-client';
 
 export const NextFlightsStore = signalStore(
   { providedIn: 'root' },
@@ -27,7 +27,7 @@ export const NextFlightsStore = signalStore(
   withEntities({ entity: type<Flight>() }),
 
   withProps(() => ({
-    _ticketService: inject(TicketService),
+    _ticketClient: inject(TicketClient),
   })),
 
   withComputed(({ entities, selected }) => ({
@@ -41,7 +41,7 @@ export const NextFlightsStore = signalStore(
       patchState(store, { isLoading: true, error: null });
 
       await firstValueFrom(
-        store._ticketService.find().pipe(
+        store._ticketClient.find().pipe(
           tap((tickets) => {
             patchState(store, setAllEntities(tickets));
           }),

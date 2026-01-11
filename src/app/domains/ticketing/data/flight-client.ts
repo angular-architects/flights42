@@ -16,7 +16,7 @@ import { Flight, initFlight } from './flight';
 @Injectable({
   providedIn: 'root',
 })
-export class FlightService {
+export class FlightClient {
   private http = inject(HttpClient);
   private configService = inject(ConfigService);
 

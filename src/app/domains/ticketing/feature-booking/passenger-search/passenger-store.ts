@@ -11,7 +11,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, of, pipe, switchMap, tap } from 'rxjs';
 
 import { Passenger } from '../../data/passenger';
-import { PassengerService } from '../../data/passenger-service';
+import { PassengerClient } from '../../data/passenger-client';
 
 export interface PassengerFilter {
   name: string;
@@ -31,7 +31,7 @@ export const PassengerStore = signalStore(
   }),
 
   withProps(() => ({
-    _passengerService: inject(PassengerService),
+    _passengerClient: inject(PassengerClient),
   })),
 
   withMethods((store) => {
@@ -47,7 +47,7 @@ export const PassengerStore = signalStore(
             }),
           ),
           switchMap((filter) =>
-            store._passengerService.find(filter.name, filter.firstName).pipe(
+            store._passengerClient.find(filter.name, filter.firstName).pipe(
               catchError((error) => {
                 patchState(store, { error });
                 return of([]);

@@ -10,7 +10,7 @@ import {
 } from '@ngrx/signals';
 
 import { Flight } from '../../data/flight';
-import { FlightService } from '../../data/flight-service';
+import { FlightClient } from '../../data/flight-client';
 
 export interface FlightFilter {
   from: string;
@@ -28,11 +28,11 @@ export const FlightStore = signalStore(
   }),
 
   withProps(() => ({
-    _flightService: inject(FlightService),
+    _flightClient: inject(FlightClient),
   })),
 
   withResource((store) => ({
-    flights: store._flightService.findResource(store.from, store.to),
+    flights: store._flightClient.findResource(store.from, store.to),
   })),
 
   withComputed((store) => ({

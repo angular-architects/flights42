@@ -15,7 +15,7 @@ import {
 } from '@ngrx/signals';
 
 import { Flight } from '../../data/flight';
-import { FlightService } from '../../data/flight-service';
+import { FlightClient } from '../../data/flight-client';
 
 export const FlightDetailStore = signalStore(
   { providedIn: 'root' },
@@ -25,16 +25,16 @@ export const FlightDetailStore = signalStore(
   }),
 
   withProps(() => ({
-    _flightService: inject(FlightService),
+    _flightClient: inject(FlightClient),
     _snackBar: inject(MatSnackBar),
   })),
 
   withResource((store) => ({
-    flight: store._flightService.findResourceById(store.flightId),
+    flight: store._flightClient.findResourceById(store.flightId),
   })),
 
   withMutations((store) => ({
-    saveFlight: store._flightService.createSaveMutation({
+    saveFlight: store._flightClient.createSaveMutation({
       onSuccess(flight: Flight) {
         patchState(store, { flightValue: flight });
         store._snackBar.open('Flight updated successfully', 'OK', {

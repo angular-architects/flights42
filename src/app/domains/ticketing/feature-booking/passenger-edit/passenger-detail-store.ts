@@ -15,7 +15,7 @@ import {
 } from '@ngrx/signals';
 
 import { Passenger } from '../../data/passenger';
-import { PassengerService } from '../../data/passenger-service';
+import { PassengerClient } from '../../data/passenger-client';
 
 export const PassengerDetailStore = signalStore(
   { providedIn: 'root' },
@@ -25,18 +25,18 @@ export const PassengerDetailStore = signalStore(
   }),
 
   withProps(() => ({
-    _passengerService: inject(PassengerService),
+    _passengerClient: inject(PassengerClient),
     _snackBar: inject(MatSnackBar),
   })),
 
   withResource((store) => ({
-    passenger: store._passengerService.findPassengerResourceById(
+    passenger: store._passengerClient.findPassengerResourceById(
       store.passengerId,
     ),
   })),
 
   withMutations((store) => ({
-    savePassenger: store._passengerService.createSaveMutation({
+    savePassenger: store._passengerClient.createSaveMutation({
       onSuccess(passenger: Passenger) {
         patchState(store, { passengerValue: passenger });
         store._snackBar.open('Passenger updated successfully', 'OK', {

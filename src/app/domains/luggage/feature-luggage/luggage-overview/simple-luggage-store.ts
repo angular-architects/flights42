@@ -1,12 +1,12 @@
 import { inject, Injectable, signal } from '@angular/core';
 
-import { LuggageService } from '../../data/luggage-service';
+import { LuggageClient } from '../../data/luggage-client';
 
 @Injectable()
 export class SimpleLuggageStore {
-  private luggageService = inject(LuggageService);
+  private luggageClient = inject(LuggageClient);
 
-  private readonly luggageResource = this.luggageService.findLuggage();
+  private readonly luggageResource = this.luggageClient.findLuggage();
   readonly luggage = this.luggageResource.value;
   readonly isLoading = this.luggageResource.isLoading;
   readonly error = this.luggageResource.error;

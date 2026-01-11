@@ -1,10 +1,10 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
-import { PassengerService } from '../../data/passenger-service';
+import { PassengerClient } from '../../data/passenger-client';
 
 @Injectable({ providedIn: 'root' })
 export class SimplePassengerStore {
-  private passengerService = inject(PassengerService);
+  private passengerClient = inject(PassengerClient);
 
   // Name
   private readonly _name = signal('Smith');
@@ -19,7 +19,7 @@ export class SimplePassengerStore {
   readonly selected = this._selected.asReadonly();
 
   // PassengerResource
-  private readonly passengersResource = this.passengerService.findResource(
+  private readonly passengersResource = this.passengerClient.findResource(
     this.name,
     this.firstName,
   );

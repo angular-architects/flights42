@@ -5,7 +5,7 @@ import { DataItem } from '@swimlane/ngx-charts';
 import { firstValueFrom } from 'rxjs';
 
 import { FlightSchema } from '../../data/flight-info';
-import { FlightService } from '../../data/flight-service';
+import { FlightClient } from '../../data/flight-client';
 
 export function createChartingRuntime(data: WritableSignal<DataItem[]>) {
   return createRuntime({
@@ -24,8 +24,8 @@ export function createChartingRuntime(data: WritableSignal<DataItem[]>) {
         }),
         result: s.array(`loaded flights`, FlightSchema),
         handler: async (input) => {
-          const flightService = inject(FlightService);
-          const result = flightService.find(input.from, input.to);
+          const flightClient = inject(FlightClient);
+          const result = flightClient.find(input.from, input.to);
           return await firstValueFrom(result);
         },
       }),

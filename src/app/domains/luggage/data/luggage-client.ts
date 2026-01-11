@@ -6,7 +6,7 @@ import { Luggage } from './luggage';
 @Injectable({
   providedIn: 'root',
 })
-export class LuggageService {
+export class LuggageClient {
   find(): Observable<Luggage[]> {
     return of(this.getLuggage());
   }

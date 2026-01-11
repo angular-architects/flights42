@@ -6,7 +6,7 @@ import { Flight } from './flight';
 @Injectable({
   providedIn: 'root',
 })
-export class TicketService {
+export class TicketClient {
   findTickets() {
     return resource({
       loader: async () => {

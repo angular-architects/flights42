@@ -19,7 +19,7 @@ import {
 import { switchMap } from 'rxjs';
 
 import { Luggage } from '../../data/luggage';
-import { LuggageService } from '../../data/luggage-service';
+import { LuggageClient } from '../../data/luggage-client';
 
 export const luggageEvents = eventGroup({
   source: 'Luggage Store',
@@ -41,7 +41,7 @@ export const LuggageStore = signalStore(
   }),
 
   withProps(() => ({
-    _luggageService: inject(LuggageService),
+    _luggageClient: inject(LuggageClient),
     _events: inject(Events),
   })),
 
@@ -63,7 +63,7 @@ export const LuggageStore = signalStore(
   withEventHandlers((store) => ({
     loadLuggage$: store._events.on(luggageEvents.loadLuggage).pipe(
       switchMap(() =>
-        store._luggageService.find().pipe(
+        store._luggageClient.find().pipe(
           mapResponse({
             next: (luggage: Luggage[]) =>
               luggageEvents.loadLuggageSuccess({ luggage }),

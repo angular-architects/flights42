@@ -1,11 +1,11 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { Flight } from '../../data/flight';
-import { FlightService } from '../../data/flight-service';
+import { FlightClient } from '../../data/flight-client';
 
 @Injectable({ providedIn: 'root' })
 export class SimpleFlightStore {
-  private flightService = inject(FlightService);
+  private flightClient = inject(FlightClient);
 
   // From
   private readonly _from = signal('Graz');
@@ -24,7 +24,7 @@ export class SimpleFlightStore {
   readonly delayInMin = this._delay.asReadonly();
 
   // FlightResource
-  private readonly flightsResource = this.flightService.findResource(
+  private readonly flightsResource = this.flightClient.findResource(
     this.from,
     this.to,
   );

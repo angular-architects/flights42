@@ -1,12 +1,12 @@
 import { inject, Injectable, signal } from '@angular/core';
 
-import { TicketService } from '../../data/ticket-service';
+import { TicketClient } from '../../data/ticket-client';
 
 @Injectable()
 export class SimpleNextFlightsStore {
-  private ticketService = inject(TicketService);
+  private ticketClient = inject(TicketClient);
 
-  private readonly ticketsResource = this.ticketService.findTickets();
+  private readonly ticketsResource = this.ticketClient.findTickets();
   readonly tickets = this.ticketsResource.value;
   readonly isLoading = this.ticketsResource.isLoading;
   readonly error = this.ticketsResource.error;
