@@ -11,7 +11,7 @@ import {
   viewChildren,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Field, required } from '@angular/forms/signals';
+import { FormField, required } from '@angular/forms/signals';
 import { compatForm } from '@angular/forms/signals/compat';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -24,7 +24,7 @@ import { CheckinDialogComponent } from './checkin-dialog';
 @Component({
   selector: 'app-checkin-page',
   imports: [
-    Field,
+    FormField,
     ReactiveFormsModule,
     RouterLink,
     JsonPipe,

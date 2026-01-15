@@ -7,7 +7,7 @@ import {
   input,
   linkedSignal,
 } from '@angular/core';
-import { Field, form, submit } from '@angular/forms/signals';
+import { form, FormField, submit } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 
 import { FormComponent } from '../../../shared/util-common/exit.guard';
@@ -18,7 +18,7 @@ import { PassengerDetailStore } from './passenger-detail-store';
 
 @Component({
   selector: 'app-passenger-edit',
-  imports: [Field, JsonPipe],
+  imports: [FormField, JsonPipe],
   templateUrl: './passenger-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

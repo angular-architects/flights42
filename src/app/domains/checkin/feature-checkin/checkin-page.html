@@ -7,7 +7,7 @@
 <form class="small-form">
   <div>
     <label for="flightId">Ticket Id</label>
-    <input #input [field]="checkinForm.ticketId" id="flightId" />
+    <input #input [formField]="checkinForm.ticketId" id="flightId" />
     @if (checkinForm.ticketId().invalid()) {
       <div>{{ checkinForm.ticketId().errorSummary() | json }}</div>
     }
@@ -34,7 +34,7 @@
   <div>
     <div class="checkbox">
       <label>
-        <input type="checkbox" [field]="checkinForm.conditionsAccepted" />
+        <input type="checkbox" [formField]="checkinForm.conditionsAccepted" />
         I accept the general conditions of carriage
       </label>
       @if (checkinForm.conditionsAccepted().invalid()) {

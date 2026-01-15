@@ -7,7 +7,7 @@
   <form>
     <div>
       <label for="passenger-id">ID</label>
-      <input [field]="passengerForm.id" type="number" id="passenger-id" />
+      <input [formField]="passengerForm.id" type="number" id="passenger-id" />
       @if (passengerForm.id().invalid()) {
         <div>{{ passengerForm.id().errors() | json }}</div>
       }
@@ -15,7 +15,7 @@
 
     <div>
       <label for="passenger-name">Name</label>
-      <input [field]="passengerForm.name" id="passenger-name" />
+      <input [formField]="passengerForm.name" id="passenger-name" />
       @if (passengerForm.name().invalid()) {
         <div>{{ passengerForm.name().errors() | json }}</div>
       }
@@ -23,7 +23,7 @@
 
     <div>
       <label for="passenger-firstName">First Name</label>
-      <input [field]="passengerForm.firstName" id="passenger-firstName" />
+      <input [formField]="passengerForm.firstName" id="passenger-firstName" />
       @if (passengerForm.firstName().invalid()) {
         <div>{{ passengerForm.firstName().errors() | json }}</div>
       }
@@ -32,7 +32,7 @@
     <div>
       <label for="passenger-bonusMiles">Bonus Miles</label>
       <input
-        [field]="passengerForm.bonusMiles"
+        [formField]="passengerForm.bonusMiles"
         type="number"
         id="passenger-bonusMiles" />
       @if (passengerForm.bonusMiles().invalid()) {
@@ -42,7 +42,7 @@
 
     <div>
       <label for="passenger-status">Passenger Status</label>
-      <select [field]="passengerForm.passengerStatus" id="passenger-status">
+      <select [formField]="passengerForm.passengerStatus" id="passenger-status">
         <option value="A">Status A</option>
         <option value="B">Status B</option>
         <option value="C">Status C</option>

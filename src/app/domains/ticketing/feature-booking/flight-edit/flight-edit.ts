@@ -8,8 +8,8 @@ import {
   linkedSignal,
 } from '@angular/core';
 import {
-  Field,
   form,
+  FormField,
   minLength,
   required,
   submit,
@@ -25,7 +25,7 @@ import { FlightDetailStore } from './flight-detail-store';
 
 @Component({
   selector: 'app-flight-edit',
-  imports: [Field, JsonPipe, RouterLink],
+  imports: [FormField, JsonPipe, RouterLink],
   templateUrl: './flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

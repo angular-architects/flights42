@@ -7,7 +7,7 @@
   <form>
     <div>
       <label for="flight-id">ID</label>
-      <input [field]="flightForm.id" type="number" id="flight-id" />
+      <input [formField]="flightForm.id" type="number" id="flight-id" />
       @if (flightForm.id().invalid()) {
         <div>{{ flightForm.id().errors() | json }}</div>
       }
@@ -15,7 +15,7 @@
 
     <div>
       <label for="flight-from"> From </label>
-      <input [field]="flightForm.from" id="flight-from" />
+      <input [formField]="flightForm.from" id="flight-from" />
       @if (flightForm.from().invalid()) {
         <div>{{ flightForm.from().errors() | json }}</div>
       }
@@ -23,7 +23,7 @@
 
     <div>
       <label for="flight-to"> To </label>
-      <input [field]="flightForm.to" id="flight-to" />
+      <input [formField]="flightForm.to" id="flight-to" />
       @if (flightForm.to().invalid()) {
         <div>{{ flightForm.to().errors() | json }}</div>
       }
@@ -34,10 +34,9 @@
       <div>
         <input
           class="form-control"
-          [field]="flightForm.date"
+          [formField]="flightForm.date"
           id="flight-date"
-          type="datetime-local"
-        />
+          type="datetime-local" />
       </div>
       @if (flightForm.date().invalid()) {
         <div>{{ flightForm.date().errors() | json }}</div>
@@ -49,9 +48,8 @@
         <input
           type="checkbox"
           class="form-check-input"
-          [field]="flightForm.delayed"
-          id="flight-delayed"
-        />
+          [formField]="flightForm.delayed"
+          id="flight-delayed" />
         Delayed</label
       >
     </div>

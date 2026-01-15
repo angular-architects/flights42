@@ -3,11 +3,11 @@
 <form>
   <div>
     <label for="from">From:</label>
-    <input [field]="filterForm.from" aria-label="from" id="from" />
+    <input [formField]="filterForm.from" aria-label="from" id="from" />
   </div>
   <div>
     <label for="to">To:</label>
-    <input [field]="filterForm.to" aria-label="to" id="to" />
+    <input [formField]="filterForm.to" aria-label="to" id="to" />
   </div>
   <div>{{ flightRoute() }}</div>
   <div>

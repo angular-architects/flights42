@@ -7,7 +7,7 @@
     <label for="flight-id">ID</label>
     <input
       class="form-control"
-      [field]="flightForm.id"
+      [formField]="flightForm.id"
       type="number"
       id="flight-id" />
   </div>
@@ -17,7 +17,10 @@
       From
       <app-field-meta-data-pane [field]="flightForm.from" />
     </label>
-    <input class="form-control" [field]="flightForm.from" id="flight-from" />
+    <input
+      class="form-control"
+      [formField]="flightForm.from"
+      id="flight-from" />
     <app-validation-errors-pane [errors]="flightForm.from().errors()" />
     @if (flightForm.from().pending()) {
       <div>Waiting for Async Validation Result...</div>
@@ -29,7 +32,7 @@
       To
       <app-field-meta-data-pane [field]="flightForm.to" />
     </label>
-    <input class="form-control" [field]="flightForm.to" id="flight-to" />
+    <input class="form-control" [formField]="flightForm.to" id="flight-to" />
     <app-validation-errors-pane [errors]="flightForm.to().errors()" />
   </div>
 
@@ -38,7 +41,7 @@
     <div class="input-group">
       <input
         class="form-control"
-        [field]="flightForm.date"
+        [formField]="flightForm.date"
         id="flight-date"
         type="datetime-local" />
     </div>
@@ -49,7 +52,7 @@
       <input
         type="checkbox"
         class="form-check-input"
-        [field]="flightForm.delayed"
+        [formField]="flightForm.delayed"
         id="flight-delayed" />
       Delayed</label
     >
@@ -57,7 +60,7 @@
 
   <div class="form-group form-check">
     <label for="delay">Delay</label>
-    <app-delay-stepper id="delay" [field]="flightForm.delay" />
+    <app-delay-stepper id="delay" [formField]="flightForm.delay" />
     <app-validation-errors-pane [errors]="flightForm.delay().errors()" />
     @for (reason of flightForm.delay().disabledReasons(); track $index) {
       <p>Disabled because {{ reason.message }}</p>

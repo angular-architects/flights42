@@ -6,7 +6,7 @@ import {
   effect,
   inject,
 } from '@angular/core';
-import { debounce, Field, form } from '@angular/forms/signals';
+import { debounce, form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
@@ -16,7 +16,7 @@ import { FlightStore } from '../flight-search/flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [Field, FlightCard, JsonPipe, RouterLink],
+  imports: [FormField, FlightCard, JsonPipe, RouterLink],
   templateUrl: './reactive-flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
