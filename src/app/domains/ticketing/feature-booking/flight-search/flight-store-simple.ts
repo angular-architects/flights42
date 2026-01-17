@@ -45,6 +45,14 @@ export class SimpleFlightStore {
     this._to.set(to);
   }
 
+  updateFrom(from: string): void {
+    this._from.set(from);
+  }
+
+  updateTo(to: string): void {
+    this._to.set(to);
+  }
+
   updateBasket(flightId: number, selected: boolean): void {
     this._basket.update((basket) => ({
       ...basket,
