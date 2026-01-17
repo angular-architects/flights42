@@ -49,6 +49,14 @@ export const FlightStore = signalStore(
       patchState(store, { from, to });
     },
 
+    updateFrom(from: string): void {
+      patchState(store, { from });
+    },
+
+    updateTo(to: string): void {
+      patchState(store, { to });
+    },
+
     updateBasket(flightId: number, selected: boolean): void {
       patchState(store, (state) => ({
         basket: {
