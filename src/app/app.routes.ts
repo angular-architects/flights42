@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { FlightSearch } from './domains/ticketing/feature-booking/flight-search/flight-search';
+import { PassengerSearch } from './domains/ticketing/feature-booking/passenger-search/passenger-search';
 import { About } from './shell/about/about';
 import { Home } from './shell/home/home';
 
@@ -14,37 +16,12 @@ export const routes: Routes = [
     component: Home,
   },
   {
-    path: 'dashboard',
-    loadComponent: () =>
-      import('./shell/dashboard/dashboard').then((m) => m.Dashboard),
+    path: 'flight-search',
+    component: FlightSearch,
   },
   {
-    path: 'ticketing',
-    loadChildren: () =>
-      import('./domains/ticketing/ticketing.routes').then(
-        (m) => m.bookingRoutes,
-      ),
-  },
-  {
-    path: 'next-flights',
-    loadChildren: () =>
-      import('./domains/ticketing/feature-next-flights/next-flights.module').then(
-        (m) => m.NextFlightsModule,
-      ),
-  },
-  {
-    path: 'luggage',
-    loadComponent: () =>
-      import('./domains/luggage/feature-luggage/luggage-overview/luggage-overview').then(
-        (m) => m.LuggageOverview,
-      ),
-  },
-  {
-    path: 'checkin',
-    loadComponent: () =>
-      import('./domains/checkin/feature-checkin/checkin-page').then(
-        (m) => m.CheckinPage,
-      ),
+    path: 'passenger-search',
+    component: PassengerSearch,
   },
   {
     path: 'about',
