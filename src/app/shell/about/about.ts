@@ -76,3 +76,5 @@ export class About {
     this.dialogService.show(DemoDialog, 'Hello from About Component!');
   }
 }
+
+export default About;
