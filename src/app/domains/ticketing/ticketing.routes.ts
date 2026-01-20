@@ -17,7 +17,7 @@ import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/r
 import { SummaryPage } from './feature-booking/summary-page/summary-page';
 import { ReportingPage } from './feature-reporting/reporting-page/reporting-page';
 
-export const bookingRoutes: Routes = [
+export const ticketingRoutes: Routes = [
   {
     path: 'booking',
     component: BookingNavigation,
@@ -81,7 +81,7 @@ export const bookingRoutes: Routes = [
   },
 ];
 
-export default bookingRoutes;
+export default ticketingRoutes;
 
 function configAi() {
   inject(TicketingChatService).init();

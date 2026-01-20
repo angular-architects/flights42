@@ -48,6 +48,7 @@ export class FlightEdit implements FormComponent {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly id = input.required<number>();
+  protected readonly showDetails = signal(false);
 
   protected readonly flight = linkedSignal(() =>
     normalizeFlight(this.store.flightValue()),
@@ -70,6 +71,9 @@ export class FlightEdit implements FormComponent {
     this.route.paramMap.subscribe((paramsMap) => {
       const flightId = parseInt(paramsMap.get('id') ?? '0');
       this.store.setFlightId(flightId);
+
+      const showDetails = paramsMap.get('showDetails') === 'true';
+      this.showDetails.set(showDetails);
     });
 
     // Alternative: signalMethod in Signal Store
