@@ -2,6 +2,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import {
   metadata,
   SchemaPath,
+  SchemaPathTree,
   validate,
   validateAsync,
   validateHttp,
@@ -28,10 +29,31 @@ export function validateCity(path: SchemaPath<string>, allowed: string[]) {
   });
 }
 
-export function validateRoundTrip(schema: SchemaPath<Flight>) {
+export function validateRoundTrip(schema: SchemaPathTree<Flight>) {
   validate(schema, (ctx) => {
     const from = ctx.fieldTree.from().value();
     const to = ctx.fieldTree.to().value();
+
+    // Alternative:
+    // const from = ctx.valueOf(schema.from);
+    // const to = ctx.valueOf(schema.to);
+
+    if (from === to) {
+      return {
+        kind: 'roundtrip',
+        from,
+        to,
+      };
+    }
+    return null;
+  });
+}
+
+export function validateRoundTrip2(schema: SchemaPathTree<Flight>) {
+  // Now, we are validating the 'from' field only
+  validate(schema.from, (ctx) => {
+    const from = ctx.value();
+    const to = ctx.valueOf(schema.to);
 
     if (from === to) {
       return {

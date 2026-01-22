@@ -100,6 +100,10 @@ export class CheckinPage {
     this.activatedRoute.queryParamMap.subscribe((queryParamMap) => {
       console.log('queryParamMap', queryParamMap);
     });
+
+    this.activatedRoute.fragment.subscribe((fragment) => {
+      console.log('fragment', fragment);
+    });
   }
 
   private initValidators() {

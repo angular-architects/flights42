@@ -31,7 +31,7 @@ export const flightSchema = schema<Flight>((path) => {
 
   validateStandardSchema(path, FlightZodSchema);
 
-  //disabled(path.delay, (ctx) => !ctx.valueOf(path.delayed));
+  // disabled(path.delay, (ctx) => !ctx.valueOf(path.delayed));
   disabled(path.delay, (ctx) =>
     !ctx.valueOf(path.delayed) ? 'not delayed' : false,
   );

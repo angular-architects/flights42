@@ -1,20 +1,20 @@
-@let aircraftFrom = aircraft();
+@let aircraftForm = aircraft();
 
 <fieldset>
   <legend>Aircraft</legend>
 
   <div class="form-group">
     <label for="type">Type:</label>
-    <input id="type" class="form-control" [formField]="aircraftFrom.type" />
-    <app-validation-errors-pane [errors]="aircraftFrom.type().errors()" />
+    <input id="type" class="form-control" [formField]="aircraftForm.type" />
+    <app-validation-errors-pane [errors]="aircraftForm.type().errors()" />
   </div>
   <div class="form-group">
     <label for="registration">Registration:</label>
     <input
       id="registration"
       class="form-control"
-      [formField]="aircraftFrom.registration" />
+      [formField]="aircraftForm.registration" />
     <app-validation-errors-pane
-      [errors]="aircraftFrom.registration().errors()" />
+      [errors]="aircraftForm.registration().errors()" />
   </div>
 </fieldset>

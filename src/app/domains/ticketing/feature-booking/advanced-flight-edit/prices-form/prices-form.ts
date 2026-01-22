@@ -11,7 +11,7 @@ import { initPrice } from '../../../data/price-schema';
   templateUrl: './prices-form.html',
 })
 export class PricesComponent {
-  prices = input.required<FieldTree<Price[]>>();
+  readonly prices = input.required<FieldTree<Price[]>>();
 
   addPrice(): void {
     const pricesForms = this.prices();
