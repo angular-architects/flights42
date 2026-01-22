@@ -15,16 +15,16 @@ import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { flightSchema } from '../../data/flight-schema';
 import { FlightDetailStore } from '../flight-edit/flight-detail-store';
-import { AircraftComponent } from './aircraft-form/aircraft-form';
-import { FlightComponent } from './flight-form/flight-form';
-import { PricesComponent } from './prices-form/prices-form';
+import { AircraftForm } from './aircraft-form/aircraft-form';
+import { FlightForm } from './flight-form/flight-form';
+import { PricesForm } from './prices-form/prices-form';
 
 @Component({
   selector: 'app-flight-edit',
   imports: [
-    AircraftComponent,
-    PricesComponent,
-    FlightComponent,
+    AircraftForm,
+    PricesForm,
+    FlightForm,
     ValidationErrorsPane,
     RouterLink,
   ],

@@ -9,6 +9,6 @@ import { Aircraft } from '../../../data/aircraft';
   imports: [FormField, ValidationErrorsPane],
   templateUrl: './aircraft-form.html',
 })
-export class AircraftComponent {
+export class AircraftForm {
   aircraft = input.required<FieldTree<Aircraft>>();
 }

@@ -11,6 +11,6 @@ import { Flight } from '../../../data/flight';
   imports: [FormField, ValidationErrorsPane, DelayStepper, FieldMetaDataPane],
   templateUrl: './flight-form.html',
 })
-export class FlightComponent {
+export class FlightForm {
   flight = input.required<FieldTree<Flight, string | number>>();
 }

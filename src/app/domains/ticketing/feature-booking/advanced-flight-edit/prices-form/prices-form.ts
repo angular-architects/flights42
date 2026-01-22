@@ -10,7 +10,7 @@ import { initPrice } from '../../../data/price-schema';
   imports: [FormField, ValidationErrorsPane],
   templateUrl: './prices-form.html',
 })
-export class PricesComponent {
+export class PricesForm {
   readonly prices = input.required<FieldTree<Price[]>>();
 
   addPrice(): void {
