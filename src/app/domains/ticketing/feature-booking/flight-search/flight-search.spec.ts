@@ -101,6 +101,7 @@ describe('flight-search', () => {
     });
 
     expect(headings.length).toBe(3);
+
     expect(flightStore.updateFilter).toBeCalled();
     expect(flightStore.updateFilter).toBeCalledTimes(1);
     expect(flightStore.updateFilter).toBeCalledWith('Paris', 'London');
