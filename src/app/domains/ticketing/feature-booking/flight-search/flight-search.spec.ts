@@ -8,7 +8,6 @@ import { page } from 'vitest/browser';
 
 import { createTestFlight } from '../../../../testing/create-test-flight';
 import { provideTestConfig } from '../../../../testing/provide-test-config';
-import { runTasks } from '../../../../testing/run-tasks';
 import { FlightSearch } from './flight-search';
 import { FlightStore } from './flight-store';
 
@@ -33,11 +32,17 @@ describe('flight-search', () => {
     ctrl = TestBed.inject(HttpTestingController);
 
     // Await initial data loading
-    await runTasks();
-    const request = ctrl.expectOne('/flight?from=Graz&to=Hamburg');
+    const request = await vi.waitFor(
+      () => ctrl.expectOne('/flight?from=Graz&to=Hamburg'),
+      { interval: 50, timeout: 1000 },
+    );
     request.flush([]);
 
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    ctrl.verify();
   });
 
   it('can be created', () => {
@@ -84,9 +89,9 @@ describe('flight-search', () => {
 
     button.click();
 
-    await runTasks();
-
-    const request = ctrl.expectOne('/flight?from=Paris&to=London');
+    const request = await vi.waitFor(() =>
+      ctrl.expectOne('/flight?from=Paris&to=London'),
+    );
 
     request.flush([
       createTestFlight(1),
