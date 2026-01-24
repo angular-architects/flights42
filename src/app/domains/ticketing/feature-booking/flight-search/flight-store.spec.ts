@@ -6,7 +6,6 @@ import { TestBed } from '@angular/core/testing';
 
 import { createTestFlight } from '../../../../testing/create-test-flight';
 import { provideTestConfig } from '../../../../testing/provide-test-config';
-import { runTasks } from '../../../../testing/run-tasks';
 import { FlightStore } from './flight-store';
 
 describe('flight-store', () => {
@@ -29,9 +28,11 @@ describe('flight-store', () => {
     const store = TestBed.inject(FlightStore);
 
     store.updateFilter('Paris', 'London');
-    await runTasks();
 
-    const request = ctrl.expectOne('/flight?from=Paris&to=London');
+    const request = await vi.waitFor(
+      () => ctrl.expectOne('/flight?from=Paris&to=London'),
+      { interval: 0 },
+    );
 
     request.flush([
       createTestFlight(1),
@@ -39,10 +40,10 @@ describe('flight-store', () => {
       createTestFlight(3),
     ]);
 
-    await runTasks();
-
-    const flights = store.flightsValue();
-    expect(flights.length).toBe(3);
+    await vi.waitFor(() => {
+      const flights = store.flightsValue();
+      expect(flights.length).toBe(3);
+    });
 
     ctrl.verify();
   });
@@ -51,9 +52,9 @@ describe('flight-store', () => {
     const store = TestBed.inject(FlightStore);
     store.updateFilter('', '');
 
-    await runTasks();
-
+    expect(store.flightsStatus()).not.toBe('loading');
     ctrl.verify();
+
     const flights = store.flightsValue();
     expect(flights.length).toBe(0);
   });
