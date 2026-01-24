@@ -10,6 +10,7 @@ import { debounce, form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
+import { appSettings } from '../../../shared/util-common/app-settings';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from '../flight-search/flight-store';
@@ -43,8 +44,8 @@ export class ReactiveFlightSearch {
   );
 
   protected readonly filterForm = form(this.filter, (path) => {
-    debounce(path.from, 300);
-    debounce(path.to, 300);
+    debounce(path.from, appSettings.debounceTimeMs);
+    debounce(path.to, appSettings.debounceTimeMs);
   });
 
   protected readonly flights = this.store.flightsWithDelays;
