@@ -52,7 +52,7 @@ describe('flight-store', () => {
     const store = TestBed.inject(FlightStore);
     store.updateFilter('', '');
 
-    expect(store.flightsStatus()).not.toBe('loading');
+    expect(store.flightsIsLoading()).toBeFalsy();
     ctrl.verify();
 
     const flights = store.flightsValue();
