@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   linkedSignal,
 } from '@angular/core';
@@ -54,6 +55,10 @@ export class AdvancedFlightEdit {
     this.route.paramMap.subscribe((paramsMap) => {
       const flightId = parseInt(paramsMap.get('id') ?? '0');
       this.store.setFlightId(flightId);
+    });
+
+    effect(() => {
+      console.log('Flight:', this.flight());
     });
   }
 

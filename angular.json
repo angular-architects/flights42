@@ -85,6 +85,7 @@
           },
           "configurations": {
             "ci": {
+              "watch": false,
               "browsers": ["ChromiumHeadless"]
             }
           }
