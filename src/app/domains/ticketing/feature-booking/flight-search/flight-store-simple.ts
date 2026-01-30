@@ -29,8 +29,8 @@ export class SimpleFlightStore {
     this.to,
   );
   readonly flights = this.flightsResource.value;
-  readonly isLoading = this.flightsResource.isLoading;
-  readonly error = this.flightsResource.error;
+  readonly flightsIsLoading = this.flightsResource.isLoading;
+  readonly flightsError = this.flightsResource.error;
   readonly loaded = computed(
     () => this.flightsResource.status() === 'resolved',
   );
