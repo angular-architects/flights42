@@ -2,7 +2,8 @@ import { DatePipe, JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { Flight, initFlight } from '../../data/flight';
+import { initAircraft } from '../../data/aircraft';
+import { Flight } from '../../data/flight';
 
 @Component({
   selector: 'app-flight-search',
@@ -22,26 +23,34 @@ export class FlightSearch {
 
     this.flights.set([
       {
-        ...initFlight,
         id: 1,
         from: this.from(),
         to: this.to(),
         date,
+        delayed: false,
+        delay: 0,
+        aircraft: { ...initAircraft },
+        prices: [],
       },
       {
-        ...initFlight,
         id: 2,
         from: this.from(),
         to: this.to(),
         date,
-        delayed: true,
+        delayed: false,
+        delay: 0,
+        aircraft: { ...initAircraft },
+        prices: [],
       },
       {
-        ...initFlight,
         id: 3,
         from: this.from(),
         to: this.to(),
         date,
+        delayed: false,
+        delay: 0,
+        aircraft: { ...initAircraft },
+        prices: [],
       },
     ]);
   }
