@@ -7,7 +7,7 @@ import {
   rxMutation,
   RxMutationOptions,
 } from '@angular-architects/ngrx-toolkit';
-import { firstValueFrom, map, Observable } from 'rxjs';
+import { firstValueFrom, map, Observable, Subject, takeUntil } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initialAircraft } from './aircraft';
@@ -91,6 +91,21 @@ export class FlightClient {
       },
       defaultValue: [],
     });
+  }
+
+  findPromise(
+    from: string,
+    to: string,
+    abortSignal?: AbortSignal,
+  ): Promise<Flight[]> {
+    const aborted = new Subject<void>();
+
+    abortSignal?.addEventListener('abort', () => {
+      aborted.next();
+    });
+
+    const flightsObservable = this.find(from, to).pipe(takeUntil(aborted));
+    return firstValueFrom(flightsObservable);
   }
 
   findById(id: string): Observable<Flight> {
