@@ -38,8 +38,6 @@ describe('reactive-flight-search', () => {
       { interval: 0 },
     );
     request.flush([]);
-
-    await fixture.whenStable();
   });
 
   it('can be created', () => {
@@ -65,13 +63,11 @@ describe('reactive-flight-search', () => {
       createTestFlight(3),
     ]);
 
-    await fixture.whenStable();
-
     const headings = page.getByRole('heading', {
       name: 'Paris - London',
     });
 
-    expect(headings.length).toBe(3);
+    await expect.element(headings).toHaveLength(3);
     expect(flightStore.updateFilter).toBeCalled();
     expect(flightStore.updateFilter).toBeCalledTimes(3);
     expect(flightStore.updateFilter).toBeCalledWith('Paris', 'London');

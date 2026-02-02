@@ -4,7 +4,7 @@ import {
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { createTestFlight } from '../../../../testing/create-test-flight';
 import { provideTestConfig } from '../../../../testing/provide-test-config';
@@ -37,8 +37,6 @@ describe('flight-search', () => {
       { interval: 50, timeout: 1000 },
     );
     request.flush([]);
-
-    await fixture.whenStable();
   });
 
   afterEach(() => {
@@ -53,24 +51,21 @@ describe('flight-search', () => {
     await page.getByLabelText('From').fill('');
     await page.getByLabelText('To').fill('');
 
-    const button = page
-      .getByRole('button', { name: 'Search' })
-      .element() as HTMLButtonElement;
-    const disabled = button.disabled;
+    const button = page.getByRole('button', { name: 'Search' });
 
-    expect(disabled).toBeTruthy();
+    await expect.element(button).toBeDisabled();
   });
 
   it('enables search button when from and to are given', async () => {
     await page.getByLabelText('From').fill('Paris');
     await page.getByLabelText('To').fill('London');
 
-    const button = page
-      .getByRole('button', { name: 'Search' })
-      .element() as HTMLButtonElement;
-    const disabled = button.disabled;
+    const button = page.getByRole('button', { name: 'Search' });
 
-    expect(disabled).toBeFalsy();
+    await expect.element(button).toBeEnabled();
+
+    // Alternative
+    await expect.element(button).not.toBeDisabled();
   });
 
   it('searches for flights when from and to are given', async () => {
@@ -83,11 +78,9 @@ describe('flight-search', () => {
     await page.getByLabelText('From').fill('Paris');
     await page.getByLabelText('To').fill('London');
 
-    const button = page
-      .getByRole('button', { name: 'Search' })
-      .element() as HTMLButtonElement;
+    const button = page.getByRole('button', { name: 'Search' });
 
-    button.click();
+    await userEvent.click(button);
 
     const request = await vi.waitFor(() =>
       ctrl.expectOne('/flight?from=Paris&to=London'),
@@ -99,13 +92,11 @@ describe('flight-search', () => {
       createTestFlight(3),
     ]);
 
-    await fixture.whenStable();
-
     const headings = page.getByRole('heading', {
       name: 'Paris - London',
     });
 
-    expect(headings.length).toBe(3);
+    await expect.element(headings).toHaveLength(3);
 
     expect(flightStore.updateFilter).toBeCalled();
     expect(flightStore.updateFilter).toBeCalledTimes(1);

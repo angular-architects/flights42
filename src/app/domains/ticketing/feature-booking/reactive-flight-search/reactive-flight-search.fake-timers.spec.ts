@@ -39,8 +39,6 @@ describe('reactive-flight-search with fake timers', () => {
     request.flush([]);
 
     await vi.runAllTimersAsync();
-
-    await fixture.whenStable();
   });
 
   afterEach(() => {
@@ -57,8 +55,9 @@ describe('reactive-flight-search with fake timers', () => {
     vi.spyOn(flightStore, 'updateFilter');
 
     await page.getByLabelText('From').fill('Paris');
-    await page.getByLabelText('To').fill('London');
+    await vi.runAllTimersAsync();
 
+    await page.getByLabelText('To').fill('London');
     await vi.runAllTimersAsync();
 
     const request = ctrl.expectOne('/flight?from=Paris&to=London');
@@ -71,15 +70,13 @@ describe('reactive-flight-search with fake timers', () => {
 
     await vi.runAllTimersAsync();
 
-    await fixture.whenStable();
-
     const headings = page.getByRole('heading', {
       name: 'Paris - London',
     });
 
-    expect(headings.length).toBe(3);
+    await expect.element(headings).toHaveLength(3);
     expect(flightStore.updateFilter).toBeCalled();
-    expect(flightStore.updateFilter).toBeCalledTimes(2);
+    expect(flightStore.updateFilter).toBeCalledTimes(3);
     expect(flightStore.updateFilter).toBeCalledWith('Paris', 'London');
   });
 });
