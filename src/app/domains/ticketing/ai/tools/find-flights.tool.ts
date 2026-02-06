@@ -1,7 +1,6 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { createTool } from '@hashbrownai/angular';
-import { s } from '@hashbrownai/core';
 
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
@@ -13,15 +12,12 @@ export const findFlightsTool = createTool({
   Remarks:
   - For the search parameters, airport codes are NOT used but the city name. First letter in upper case.
   `,
-  schema: s.object('search parameters for flights', {
-    from: s.string('airport of departure'),
-    to: s.string('airport of destination'),
-  }),
+  // TODO: Add schema for parameter object with a from and to property
   handler: async (input) => {
     const store = inject(FlightStore);
     const router = inject(Router);
 
-    store.updateFilter(input.from, input.to);
+    // TODO: Use store to search for flights
 
     router.navigate(['/ticketing/booking/flight-search']);
   },
