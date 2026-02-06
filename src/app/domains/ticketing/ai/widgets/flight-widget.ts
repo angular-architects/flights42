@@ -7,10 +7,8 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { exposeComponent } from '@hashbrownai/angular';
-import { s } from '@hashbrownai/core';
 
-import { FlightInfo, FlightSchema } from '../../data/flight-info';
+import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
 @Component({
@@ -110,11 +108,7 @@ export class FlightWidget {
   }
 }
 
-export const flightWidget = exposeComponent(FlightWidget, {
-  name: 'flightWidget',
-  description: 'Displays information about a flight',
-  input: {
-    flight: FlightSchema,
-    status: s.enumeration('Status of the flight', ['booked', 'other']),
-  },
-});
+// TODO: Create and export a flightWidget
+//  Hints
+//    - export const flightWidget = exposeComponent(...);
+//    - describe the flight input with the flightSchema from flight-info.ts

@@ -114,7 +114,6 @@ export class FlightClient {
           id: id(),
         },
       }),
-      // TODO: Extend Service
       {
         defaultValue: initialFlight,
         parse: (raw) => {
