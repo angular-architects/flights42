@@ -2,19 +2,24 @@
 
 <form>
   <div>
-    <label for="from">From Airport:</label>
-    <input [(ngModel)]="from" id="from" aria-label="from" name="from" />
+    <label for="from">From:</label>
+    <input [formField]="filterForm.from" id="from" aria-label="from" />
   </div>
   <div>
     <label for="to">To:</label>
-    <input [(ngModel)]="to" id="to" aria-label="to" name="to" />
+    <input [formField]="filterForm.to" id="to" aria-label="to" />
   </div>
   <div>
     {{ flightRoute() }}
   </div>
   <div>
-    <button (click)="search()" [disabled]="!from() || !to()">Search</button>
-    <button (click)="delay()">Delay</button>
+    <button
+      type="button"
+      (click)="search()"
+      [disabled]="!filter().from || !filter().to">
+      Search
+    </button>
+    <button type="button" (click)="delay()">Delay</button>
   </div>
   @if (isLoading()) {
     <div>Loading ...</div>

@@ -7,7 +7,7 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
@@ -16,7 +16,7 @@ import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormsModule, FlightCard, JsonPipe, RouterLink],
+  imports: [FormField, FlightCard, JsonPipe, RouterLink],
   templateUrl: './flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -24,8 +24,12 @@ export class FlightSearch {
   private readonly store = inject(FlightStore);
   private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly from = linkedSignal(() => this.store.from());
-  protected readonly to = linkedSignal(() => this.store.to());
+  protected readonly filter = linkedSignal(() => ({
+    from: this.store.from(),
+    to: this.store.to(),
+  }));
+
+  protected readonly filterForm = form(this.filter);
 
   protected readonly flights = this.store.flightsWithDelays;
   protected readonly isLoading = this.store.flightsIsLoading;
@@ -34,9 +38,8 @@ export class FlightSearch {
   protected readonly basket = this.store.basket;
 
   protected readonly flightRoute = computed(
-    () => this.from() + ' - ' + this.to(),
+    () => this.filter().from + ' - ' + this.filter().to,
   );
-  // protected readonly flightRoute2 = computed(() => this.from() + ' - ' + untracked(() => this.to()));
 
   constructor() {
     this.showError();
@@ -47,7 +50,7 @@ export class FlightSearch {
   }
 
   protected search(): void {
-    this.store.updateFilter(this.from(), this.to());
+    this.store.updateFilter(this.filter().from, this.filter().to);
     this.store.reload();
   }
 
@@ -60,14 +63,13 @@ export class FlightSearch {
   }
 
   private logStuff() {
-    console.log('from', this.from());
-    console.log('to', this.to());
+    console.log('filter', this.filter());
   }
 
   private showError() {
     effect(() => {
       const error = this.error();
-      if (error || this.to() === 'error') {
+      if (error || this.filter().to === 'error') {
         const message = 'Error loading flights: ' + error;
         this.snackBar.open(message, 'OK');
       }
