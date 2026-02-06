@@ -5,7 +5,7 @@ import { exposeComponent } from '@hashbrownai/angular';
 import { s } from '@hashbrownai/core';
 
 import { FlightInfo, FlightSchema } from '../../data/flight-info';
-import { FlightStore } from '../../feature-booking/flight-search/flight-store';
+import { SimpleFlightStore } from '../../feature-booking/flight-search/simple-flight-store';
 
 @Component({
   selector: 'app-flight-widget',
@@ -84,7 +84,7 @@ import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 })
 export class FlightWidget {
   private router = inject(Router);
-  private store = inject(FlightStore);
+  private store = inject(SimpleFlightStore);
 
   protected readonly flight = input.required<FlightInfo>();
   protected readonly status = input<'booked' | 'other'>('other');

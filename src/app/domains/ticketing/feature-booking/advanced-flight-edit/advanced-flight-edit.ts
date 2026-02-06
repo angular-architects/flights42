@@ -14,7 +14,7 @@ import { ValidationErrorsPane } from '../../../shared/ui-forms/validation-errors
 import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { flightSchema } from '../../data/flight-schema';
-import { FlightDetailStore } from '../flight-edit/flight-detail-store';
+import { SimpleFlightDetailStore } from '../flight-edit/simple-flight-detail-store';
 import { AircraftForm } from './aircraft-form/aircraft-form';
 import { FlightForm } from './flight-form/flight-form';
 import { PricesForm } from './prices-form/prices-form';
@@ -33,12 +33,14 @@ import { PricesForm } from './prices-form/prices-form';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdvancedFlightEdit {
-  private readonly store = inject(FlightDetailStore);
+  private readonly store = inject(SimpleFlightDetailStore);
   private readonly route = inject(ActivatedRoute);
   private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly flight = linkedSignal(() => this.store.flightValue());
-  protected readonly isPending = this.store.saveFlightIsPending;
+  protected readonly flight = linkedSignal(() =>
+    (this.store.flight()),
+  );
+  protected readonly isPending = this.store.isPending;
 
   protected readonly isDisabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
