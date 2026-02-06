@@ -1,55 +1,43 @@
 <h1>Flight Edit</h1>
 
 @if (flight().id !== 0) {
-  @if (flightForm().invalid()) {
-    <div>{{ flightForm().errorSummary() | json }}</div>
-  }
+  <!-- 
+    TODO: If flightForm is invalid, display its errorSummary 
+      with the JSON pipe 
+  -->
+
   <form>
+    <!-- 
+      TODO: For each field 
+        - databind to flightForm via formField directive
+        - display the errors object with the JSON pipe if unvalid
+    -->
+
     <div>
       <label for="flight-id">ID</label>
-      <input [formField]="flightForm.id" type="number" id="flight-id" />
-      @if (flightForm.id().invalid()) {
-        <div>{{ flightForm.id().errors() | json }}</div>
-      }
+      <input type="number" id="flight-id" />
     </div>
 
     <div>
       <label for="flight-from"> From </label>
-      <input [formField]="flightForm.from" id="flight-from" />
-      @if (flightForm.from().invalid()) {
-        <div>{{ flightForm.from().errors() | json }}</div>
-      }
+      <input id="flight-from" />
     </div>
 
     <div>
       <label for="flight-to"> To </label>
-      <input [formField]="flightForm.to" id="flight-to" />
-      @if (flightForm.to().invalid()) {
-        <div>{{ flightForm.to().errors() | json }}</div>
-      }
+      <input id="flight-to" />
     </div>
 
     <div>
       <label for="flight-date">Date</label>
       <div>
-        <input
-          class="form-control"
-          [formField]="flightForm.date"
-          id="flight-date"
-          type="datetime-local" />
+        <input class="form-control" id="flight-date" type="datetime-local" />
       </div>
-      @if (flightForm.date().invalid()) {
-        <div>{{ flightForm.date().errors() | json }}</div>
-      }
     </div>
 
     <div class="form-check">
       <label class="form-check-label">
-        <input
-          type="checkbox"
-          class="form-check-input"
-          [formField]="flightForm.delayed"
-          id="flight-delayed" />
+        <input type="checkbox" class="form-check-input" id="flight-delayed" />
         Delayed</label
       >
     </div>

@@ -1,26 +1,6 @@
-import {
-  apply,
-  applyEach,
-  applyWhenValue,
-  disabled,
-  min,
-  minLength,
-  required,
-  schema,
-  validateStandardSchema,
-} from '@angular/forms/signals';
+import { min, minLength, required, schema } from '@angular/forms/signals';
 
-import { aircraftSchema } from './aircraft-schema';
 import { Flight } from './flight';
-import {
-  validateCityAsync,
-  validateCityHttp,
-  validateDuplicatePrices,
-  validateRoundTrip,
-  validateRoundTripTree,
-} from './flight-validators';
-import { FlightZodSchema } from './flight-zod-schema';
-import { priceSchema } from './price-schema';
 
 export const flightSchema = schema<Flight>((path) => {
   required(path.from);
@@ -29,25 +9,17 @@ export const flightSchema = schema<Flight>((path) => {
 
   minLength(path.from, 3);
 
-  validateStandardSchema(path, FlightZodSchema);
+  // TODO: Apply custom validator for flights
 
-  // disabled(path.delay, (ctx) => !ctx.valueOf(path.delayed));
-  disabled(path.delay, (ctx) =>
-    !ctx.valueOf(path.delayed) ? 'not delayed' : false,
-  );
+  // TODO: Apply custom round trip validator
 
-  applyWhenValue(path, (flight) => flight.delayed, delayedFlight);
+  // TODO: Disable delay if delayed is not true
 
-  validateDuplicatePrices(path.prices);
+  // TODO: Apply delayedFlightSchema if flight is delayed
 
-  validateCityAsync(path.from);
-  validateCityHttp(path.to);
+  // TODO: Apply aircraftSchema to aircraft property
 
-  validateRoundTrip(path);
-  validateRoundTripTree(path);
-
-  apply(path.aircraft, aircraftSchema);
-  applyEach(path.prices, priceSchema);
+  // TODO: Apply priceSchema to each entry in prices array
 });
 
 export const delayedFlight = schema<Flight>((path) => {
