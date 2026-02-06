@@ -25,7 +25,7 @@ import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
 import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
-import { FlightDetailStore } from './flight-detail-store';
+import { SimpleFlightDetailStore } from './simple-flight-detail-store';
 
 const flightSchema = schema<Flight>((path) => {
   required(path.from);
@@ -44,22 +44,37 @@ const flightSchema = schema<Flight>((path) => {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightEdit implements FormComponent {
-  private readonly store = inject(FlightDetailStore);
+  private readonly store = inject(SimpleFlightDetailStore);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly id = input.required<number>();
 
   protected readonly flight = linkedSignal(() =>
-    normalizeFlight(this.store.flightValue()),
+    normalizeFlight(this.store.flight()),
   );
-  protected readonly isPending = this.store.saveFlightIsPending;
+  protected readonly isPending = this.store.isPending;
 
   protected readonly strict = signal(false);
 
-  protected readonly flightForm = form(this.flight, flightSchema, {
-    submission: {
-      action: async (form) => this.save(form),
-    },
+  protected readonly flightForm = form(this.flight, (path) => {
+    required(path.from);
+    required(path.to);
+    required(path.date);
+    minLength(path.from, 3);
+
+    const allowed = ['Graz', 'Hamburg', 'Zürich'];
+    validate(path.from, (ctx) => {
+      const value = ctx.value();
+      if (allowed.includes(value)) {
+        return null;
+      }
+
+      return {
+        kind: 'city',
+        value,
+        allowed,
+      };
+    });
   });
 
   protected readonly isDisabled = computed(
