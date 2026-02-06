@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
 import { appSettings } from '../../../shared/util-common/app-settings';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { FlightCard } from '../../ui/flight-card/flight-card';
-import { FlightStore } from '../flight-search/flight-store';
+import { SimpleFlightStore } from '../flight-search/simple-flight-store';
 
 @Component({
   selector: 'app-flight-search',
@@ -22,7 +22,7 @@ import { FlightStore } from '../flight-search/flight-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReactiveFlightSearch {
-  private readonly store = inject(FlightStore);
+  private readonly store = inject(SimpleFlightStore);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly from = this.store.from;

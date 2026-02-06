@@ -40,8 +40,9 @@ export class PassengerSearch {
   protected readonly filterForm = form(this.filter);
 
   constructor() {
-    this.store.updateFilter(this.filter);
     this.showError();
+
+    // TODO: Call updateFilter to connect the filter to the rxMethod
   }
 
   private showError() {
@@ -55,8 +56,7 @@ export class PassengerSearch {
   }
 
   protected search(): void {
-    this.store.updateFilter(this.filter());
-    // this.store.reload();
+    // TODO: Call updateFilter to reload data with the _current_ parameters
   }
 
   protected updateSelected(passengerId: number, selected: boolean): void {

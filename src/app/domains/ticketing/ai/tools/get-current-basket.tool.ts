@@ -9,8 +9,9 @@ export const getCurrentBasket = createTool({
     Returns all selected flights (flights in the basket) as an object
     mapping flightIds to a boolean (true: selected, false: deselected)
   `,
-  handler: () => {
+  handler: async () => {
     const store = inject(FlightStore);
-    return Promise.resolve(store.flightsValue());
+
+    // DISABLED: Return basket
   },
 });
