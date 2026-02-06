@@ -13,7 +13,8 @@ export const getBookedFlights = createTool({
   `,
   handler: async () => {
     const service = inject(NextFlightsStore);
-    await service.load();
-    return service.entities();
+
+    // TODO: Load booked flights (don't forget the `await` statement)
+    // TODO: Return booked flights
   },
 });
