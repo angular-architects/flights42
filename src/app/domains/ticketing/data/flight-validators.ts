@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   metadata,
@@ -170,3 +171,6 @@ export function validateDuplicatePrices(path: SchemaPathTree<Price[]>) {
     return null;
   });
 }
+=======
+// TODO: Implement your custom validators here
+>>>>>>> 9881929 (feat: prepare signal forms starter)

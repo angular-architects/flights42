@@ -1,14 +1,11 @@
 import { inject, provideEnvironmentInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 
-import { authGuard } from '../shared/util-auth/auth.guard';
-import { exitGuard } from '../shared/util-common/exit.guard';
 import { TicketingChatService } from './ai/ticketing-chat-service';
 import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advanced-flight-edit';
 import { BookingNavigation } from './feature-booking/booking-navigation';
 import { FlightEdit } from './feature-booking/flight-edit/flight-edit';
 import { FlightSearch } from './feature-booking/flight-search/flight-search';
-// import { FlightStore } from './feature-booking/flight-search/flight-store';
 import { PassengerEdit } from './feature-booking/passenger-edit/passenger-edit';
 import { passengerResolver } from './feature-booking/passenger-edit/passenger-resolver';
 import { PassengerSearch } from './feature-booking/passenger-search/passenger-search';
@@ -22,7 +19,6 @@ export const bookingRoutes: Routes = [
     path: 'booking',
     component: BookingNavigation,
     providers: [
-      // FlightStore,
       provideEnvironmentInitializer(() => {
         console.log('init bookingRoutes');
       }),
@@ -47,8 +43,6 @@ export const bookingRoutes: Routes = [
       {
         path: 'flight-edit/:id',
         component: FlightEdit,
-        canActivate: [authGuard],
-        canDeactivate: [exitGuard],
       },
       {
         path: 'proto-flight-edit/:id',

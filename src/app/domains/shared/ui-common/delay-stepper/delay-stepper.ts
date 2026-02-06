@@ -14,23 +14,13 @@ import { FormValueControl, ValidationError } from '@angular/forms/signals';
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delay-stepper.css',
 })
-export class DelayStepper implements FormValueControl<number> {
-  readonly value = model(0);
-
-  readonly disabled = input(false);
-  readonly errors = input<readonly ValidationError.WithOptionalFieldTree[]>([]);
-
-  constructor() {
-    effect(() => {
-      console.log('DelayStepper, errors', this.errors());
-    });
-  }
-
+// TODO: Implement the interface FormValueControl<number>
+export class DelayStepper {
   protected inc(): void {
-    this.value.update((v) => v + 15);
+    // TODO: Implement method
   }
 
   protected dec(): void {
-    this.value.update((v) => Math.max(v - 15, 0));
+    // TODO: Implement method
   }
 }
