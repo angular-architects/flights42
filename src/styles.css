@@ -614,3 +614,7 @@ markdown p {
 .selectable {
   cursor: pointer;
 }
+
+.chart-wrapper {
+  height: 50vh;
+}

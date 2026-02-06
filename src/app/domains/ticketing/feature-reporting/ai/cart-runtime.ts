@@ -1,11 +1,11 @@
 import { inject, WritableSignal } from '@angular/core';
 import { createRuntime, createRuntimeFunction } from '@hashbrownai/angular';
 import { s } from '@hashbrownai/core';
-import { DataItem } from '@swimlane/ngx-charts';
 import { firstValueFrom } from 'rxjs';
 
 import { FlightClient } from '../../data/flight-client';
 import { FlightSchema } from '../../data/flight-info';
+import { DataItem } from '../chart/data-item';
 
 export function createChartingRuntime(data: WritableSignal<DataItem[]>) {
   return createRuntime({

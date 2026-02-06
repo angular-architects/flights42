@@ -43,7 +43,7 @@ export class TicketClient {
       {
         id: 1003,
         from: 'Frankfurt',
-        to: 'Munich',
+        to: 'Paris',
         date: dayAfterTomorrow.toISOString(),
         delayed: false,
       },

@@ -16,6 +16,6 @@ export const toggleFlightSelection = createTool({
   handler: (input) => {
     const store = inject(FlightStore);
     store.updateBasket(input.flightId, input.selected);
-    return Promise.resolve();
+    return Promise.resolve(true);
   },
 });

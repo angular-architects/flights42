@@ -29,9 +29,12 @@ export const FlightDetailStore = signalStore(
     _snackBar: inject(MatSnackBar),
   })),
 
-  withResource((store) => ({
-    flight: store._flightClient.findResourceById(store.flightId),
-  })),
+  withResource(
+    (store) => ({
+      flight: store._flightClient.findResourceById(store.flightId),
+    }),
+    { errorHandling: 'previous value' },
+  ),
 
   withMutations((store) => ({
     saveFlight: store._flightClient.createSaveMutation({

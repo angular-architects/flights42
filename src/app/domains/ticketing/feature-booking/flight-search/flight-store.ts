@@ -31,9 +31,12 @@ export const FlightStore = signalStore(
     _flightClient: inject(FlightClient),
   })),
 
-  withResource((store) => ({
-    flights: store._flightClient.findResource(store.from, store.to),
-  })),
+  withResource(
+    (store) => ({
+      flights: store._flightClient.findResource(store.from, store.to),
+    }),
+    { errorHandling: 'previous value' },
+  ),
 
   withComputed((store) => ({
     flightsWithDelays: computed(() =>

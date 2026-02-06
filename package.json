@@ -46,6 +46,8 @@
     "@hashbrownai/openai": "^0.4.1",
     "@ngrx/operators": "^21.0.1",
     "@ngrx/signals": "^21.0.1",
+    "@softarc/native-federation-runtime": "^3.5.1",
+    "chart.js": "^4.5.1",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "marked": "^17.0.1",

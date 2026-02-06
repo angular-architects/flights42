@@ -28,14 +28,10 @@
 @if (generator.hasValue()) {
   <div class="mb-30">{{ generator.value()?.message }}</div>
 
-  <div class="chart">
-    <ngx-charts-bar-horizontal
-      [results]="data()"
-      [legend]="true"
-      [xAxis]="true"
-      [xAxisTickFormatting]="format"
-      [tooltipDisabled]="true" />
+  <div class="chart-wrapper">
+    <canvas #chart></canvas>
   </div>
+
   <button (click)="regenerate()" class="btn btn-default mt-20">
     Regenerate
   </button>

@@ -29,11 +29,14 @@ export const PassengerDetailStore = signalStore(
     _snackBar: inject(MatSnackBar),
   })),
 
-  withResource((store) => ({
-    passenger: store._passengerClient.findPassengerResourceById(
-      store.passengerId,
-    ),
-  })),
+  withResource(
+    (store) => ({
+      passenger: store._passengerClient.findPassengerResourceById(
+        store.passengerId,
+      ),
+    }),
+    { errorHandling: 'previous value' },
+  ),
 
   withMutations((store) => ({
     savePassenger: store._passengerClient.createSaveMutation({
