@@ -32,19 +32,11 @@ export function createChartingRuntime(data: WritableSignal<DataItem[]>) {
       createRuntimeFunction({
         name: 'generateChart',
         description: `Generates a chart`,
-        args: s.object(`Chart description`, {
-          data: s.array(
-            `name/value pairs to display in chart`,
-            s.object(`a single name/value pair to display in the chart`, {
-              name: s.string(`name`),
-              value: s.number(`the value to display`),
-            }),
-          ),
-        }),
-        handler: (input) => {
-          console.log('generateChart', input);
-          data.set(input.data);
-          return Promise.resolve();
+        // TODO: Add args describing the key/value pairs for
+        //  the data signal
+        handler: async (input) => {
+          // TODO: Put the received key/value pairs into the
+          //  passed data array
         },
       }),
     ],
