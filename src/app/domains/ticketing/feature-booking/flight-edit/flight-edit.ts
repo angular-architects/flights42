@@ -21,7 +21,7 @@ import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
 import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
-import { FlightDetailStore } from './flight-detail-store';
+import { SimpleFlightDetailStore } from './simple-flight-detail-store';
 
 @Component({
   selector: 'app-flight-edit',
@@ -30,15 +30,15 @@ import { FlightDetailStore } from './flight-detail-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightEdit implements FormComponent {
-  private readonly store = inject(FlightDetailStore);
+  private readonly store = inject(SimpleFlightDetailStore);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly id = input.required<number>();
 
   protected readonly flight = linkedSignal(() =>
-    normalizeFlight(this.store.flightValue()),
+    normalizeFlight(this.store.flight()),
   );
-  protected readonly isPending = this.store.saveFlightIsPending;
+  protected readonly isPending = this.store.isPending;
 
   protected readonly flightForm = form(this.flight, (path) => {
     required(path.from);

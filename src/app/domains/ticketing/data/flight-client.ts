@@ -1,12 +1,7 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Injectable, resource, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import {
-  httpMutation,
-  HttpMutationOptions,
-  rxMutation,
-  RxMutationOptions,
-} from '@angular-architects/ngrx-toolkit';
+import { HttpMutationOptions } from '@angular-architects/ngrx-toolkit';
 import { firstValueFrom, map, Observable } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -146,27 +141,11 @@ export class FlightClient {
     return this.http.put<Flight>(url, flight, { headers });
   }
 
-  createSaveNxMutation(options: Partial<RxMutationOptions<Flight, Flight>>) {
-    return rxMutation({
-      ...options,
-      operation: (flight: Flight) => this.update(flight),
-    });
-  }
-
   createSaveMutation(options: Partial<HttpMutationOptions<Flight, Flight>>) {
-    return httpMutation({
-      ...options,
-      request: (flight: Flight) => ({
-        url: `${this.configService.baseUrl}/flight/${flight.id}`,
-        method: 'PUT',
-        body: flight,
-        headers: {
-          Accept: 'application/json',
-        },
-      }),
-    });
+    // TODO: Create and return mutation
   }
 }
+
 function initializeFlight(raw: unknown) {
   const flight = raw as Flight;
   flight.aircraft = initAircraft;

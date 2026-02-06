@@ -12,7 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
 import { FlightCard } from '../../ui/flight-card/flight-card';
-import { FlightStore } from './flight-store';
+import { SimpleFlightStore } from './simple-flight-store';
 
 @Component({
   selector: 'app-flight-search',
@@ -21,7 +21,7 @@ import { FlightStore } from './flight-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightSearch {
-  private readonly store = inject(FlightStore);
+  private readonly store = inject(SimpleFlightStore);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly filter = linkedSignal(() => ({

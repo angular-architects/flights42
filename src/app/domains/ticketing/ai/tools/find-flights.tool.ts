@@ -21,7 +21,7 @@ export const findFlightsTool = createTool({
     const store = inject(FlightStore);
     const router = inject(Router);
 
-    store.updateFilter(input.from, input.to);
+    // TODO: Update filter in store
 
     router.navigate(['/ticketing/booking/flight-search']);
   },

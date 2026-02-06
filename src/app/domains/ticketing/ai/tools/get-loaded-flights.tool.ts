@@ -16,10 +16,9 @@ export const getLoadedFlights = createTool({
     - The returned flights are **not** booked. 
       If displayed with the flightWidget, use status: 'other' (!)
   `,
-  handler: () => {
+  handler: async () => {
     const store = inject(FlightStore);
-    console.log('getLoadedFlights', store.flightsValue());
 
-    return Promise.resolve(store.flightsValue());
+    // TODO: return all loaded flights
   },
 });
