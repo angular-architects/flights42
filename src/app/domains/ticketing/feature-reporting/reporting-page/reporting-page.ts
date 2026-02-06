@@ -4,7 +4,6 @@ import {
   Component,
   ElementRef,
   signal,
-  untracked,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -23,8 +22,6 @@ import { examplePrompts } from './example-prompts';
   styleUrl: './reporting-page.css',
 })
 export class ReportingPage {
-  private chart?: Chart;
-
   readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('chart');
 
   protected readonly data = signal<DataItem[]>([]);
@@ -38,34 +35,18 @@ export class ReportingPage {
 
   constructor() {
     afterRenderEffect(() => {
-      this.initChart();
-    });
-
-    afterRenderEffect(() => {
       const data = this.data();
-      if (this.chart) {
-        this.updateChart(data);
+      const canvasElm = this.canvas();
+      const canvas = canvasElm?.nativeElement;
+
+      if (canvas) {
+        this.renderChart(data, canvas);
       }
     });
   }
 
-  private updateChart(data: DataItem[]) {
-    if (!this.chart) {
-      return;
-    }
-    this.chart.data.labels = data.map((item) => item.name);
-    this.chart.data.datasets[0].data = data.map((item) => item.value);
-    this.chart.update();
-  }
-
-  private initChart() {
-    const ctx = this.canvas();
-
-    if (!ctx) {
-      return;
-    }
-
-    this.chart = new Chart(ctx.nativeElement, {
+  private renderChart(data: DataItem[], canvas: HTMLCanvasElement) {
+    const chart = new Chart(canvas, {
       type: 'bar',
       options: {
         responsive: true,
@@ -77,20 +58,16 @@ export class ReportingPage {
         },
       },
       data: {
-        labels: [],
+        labels: data.map((item) => item.name),
         datasets: [
           {
             backgroundColor: CHART_COLORS,
-            data: [],
+            data: data.map((item) => item.value),
           },
         ],
       },
     });
-
-    untracked(() => {
-      const data = this.data();
-      this.updateChart(data);
-    });
+    chart.render();
   }
 
   protected submit(): void {
