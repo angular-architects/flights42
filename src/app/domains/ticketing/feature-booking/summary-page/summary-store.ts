@@ -1,16 +1,16 @@
 import { computed, inject, Injectable } from '@angular/core';
 
-import { FlightStore } from '../flight-search/flight-store';
+import { SimpleFlightStore } from '../flight-search/simple-flight-store';
 import { PassengerStore } from '../passenger-search/passenger-store';
 
 @Injectable({ providedIn: 'root' })
 export class SummaryStore {
-  private flightStore = inject(FlightStore);
+  private flightStore = inject(SimpleFlightStore);
   private passengerStore = inject(PassengerStore);
 
   readonly selectedFlights = computed(() => {
     const basket = this.flightStore.basket();
-    const flights = this.flightStore.flightsValue();
+    const flights = this.flightStore.flights();
     return flights.filter((flight) => basket[flight.id]);
   });
 

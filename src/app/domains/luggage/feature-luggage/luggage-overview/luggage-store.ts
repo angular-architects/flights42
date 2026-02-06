@@ -1,34 +1,18 @@
 import { inject } from '@angular/core';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
-import { mapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
-  type,
   withMethods,
   withProps,
   withState,
 } from '@ngrx/signals';
-import { eventGroup } from '@ngrx/signals/events';
-import {
-  Events,
-  on,
-  withEventHandlers,
-  withReducer,
-} from '@ngrx/signals/events';
-import { switchMap } from 'rxjs';
+import { Events } from '@ngrx/signals/events';
 
 import { Luggage } from '../../data/luggage';
 import { LuggageClient } from '../../data/luggage-client';
 
-export const luggageEvents = eventGroup({
-  source: 'Luggage Store',
-  events: {
-    loadLuggage: type<void>(),
-    loadLuggageSuccess: type<{ luggage: Luggage[] }>(),
-    loadLuggageError: type<{ error: string }>(),
-  },
-});
+// TODO: Create event group
 
 export const LuggageStore = signalStore(
   { providedIn: 'root' },
@@ -45,35 +29,9 @@ export const LuggageStore = signalStore(
     _events: inject(Events),
   })),
 
-  withReducer(
-    on(luggageEvents.loadLuggage, () => ({
-      isLoading: true,
-      error: null,
-    })),
-    on(luggageEvents.loadLuggageSuccess, ({ payload }) => ({
-      luggage: payload.luggage,
-      isLoading: false,
-    })),
-    on(luggageEvents.loadLuggageError, ({ payload }) => ({
-      error: payload.error,
-      isLoading: false,
-    })),
-  ),
+  // TODO: Add withReducers
 
-  withEventHandlers((store) => ({
-    loadLuggage$: store._events.on(luggageEvents.loadLuggage).pipe(
-      switchMap(() =>
-        store._luggageClient.find().pipe(
-          mapResponse({
-            next: (luggage: Luggage[]) =>
-              luggageEvents.loadLuggageSuccess({ luggage }),
-            error: (error: unknown) =>
-              luggageEvents.loadLuggageError({ error: String(error) }),
-          }),
-        ),
-      ),
-    ),
-  })),
+  // TODO: Add withEventHandlers
 
   withMethods((store) => ({
     updateSelected(luggageId: number, selected: boolean): void {

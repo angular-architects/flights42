@@ -6,13 +6,17 @@ const angular = require('angular-eslint');
 const simpleImportSort = require('eslint-plugin-simple-import-sort');
 const sheriff = require('@softarc/eslint-plugin-sheriff');
 
+//
+//  Some rules are deactivated for the labs
+//
+
 module.exports = defineConfig([
   {
     files: ['**/*.ts'],
     extends: [
-      eslint.configs.recommended,
-      tseslint.configs.recommended,
-      tseslint.configs.stylistic,
+      // eslint.configs.recommended,
+      // tseslint.configs.recommended,
+      // tseslint.configs.stylistic,
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
@@ -34,7 +38,7 @@ module.exports = defineConfig([
         },
       ],
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'off',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -50,15 +54,15 @@ module.exports = defineConfig([
     ],
     rules: {},
   },
-  {
-    plugins: {
-      'simple-import-sort': simpleImportSort,
-    },
-    rules: {
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
-    },
-  },
+  // {
+  //   plugins: {
+  //     'simple-import-sort': simpleImportSort,
+  //   },
+  //   rules: {
+  //     'simple-import-sort/imports': 'error',
+  //     'simple-import-sort/exports': 'error',
+  //   },
+  // },
   {
     files: ['**/*.ts'],
     extends: [sheriff.configs.all],
