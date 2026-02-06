@@ -4,7 +4,6 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -33,6 +32,5 @@ export const appConfig: ApplicationConfig = {
       ],
     }),
     provideMarkdown(),
-    provideAnimations(), // For chart.js
   ],
 };
