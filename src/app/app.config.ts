@@ -20,12 +20,7 @@ export const appConfig: ApplicationConfig = {
     provideHashbrown({
       baseUrl: 'http://localhost:3000/api/chat',
       emulateStructuredOutput: true,
-      middleware: [
-        (request) => {
-          console.log('[Hashbrown Request]', request);
-          return request;
-        },
-      ],
+      // TODO: Add middleware for tracing
     }),
     provideMarkdown(),
   ],
