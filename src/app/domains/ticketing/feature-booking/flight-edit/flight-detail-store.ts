@@ -1,10 +1,6 @@
 import { inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {
-  withDevtools,
-  withMutations,
-  withResource,
-} from '@angular-architects/ngrx-toolkit';
+import { withDevtools, withResource } from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
   signalMethod,
@@ -36,22 +32,7 @@ export const FlightDetailStore = signalStore(
     { errorHandling: 'previous value' },
   ),
 
-  withMutations((store) => ({
-    saveFlight: store._flightClient.createSaveMutation({
-      onSuccess() {
-        store._snackBar.open('Flight updated successfully', 'OK', {
-          duration: 3000,
-        });
-      },
-      onError(error: unknown) {
-        const message = 'Failed to update flight';
-        console.error(message, error);
-        store._snackBar.open(message, 'OK', {
-          duration: 5000,
-        });
-      },
-    }),
-  })),
+  // TODO: Add withMutations
 
   withMethods((store) => ({
     setFlightId(id: number): void {

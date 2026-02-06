@@ -1,16 +1,4 @@
-import { computed, inject } from '@angular/core';
-import { withDevtools, withResource } from '@angular-architects/ngrx-toolkit';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withProps,
-  withState,
-} from '@ngrx/signals';
-
-import { Flight } from '../../data/flight';
-import { FlightClient } from '../../data/flight-client';
+import { signalStore, withState } from '@ngrx/signals';
 
 export interface FlightFilter {
   from: string;
@@ -21,57 +9,22 @@ export const FlightStore = signalStore(
   { providedIn: 'root' },
 
   withState({
-    from: 'Graz',
-    to: 'Hamburg',
-    basket: {} as Record<number, boolean>,
-    delayInMin: 0,
+    // TODO: Define state: from, to, basket, delayInMin
   }),
 
-  withProps(() => ({
-    _flightClient: inject(FlightClient),
-  })),
+  // TODO: Add withProps for injecting the FlightClient
 
-  withResource(
-    (store) => ({
-      flights: store._flightClient.findResource(store.from, store.to),
-    }),
-    { errorHandling: 'previous value' },
-  ),
+  // TODO: Add withResource; get the resource from the FlightClient
 
-  withComputed((store) => ({
-    flightsWithDelays: computed(() =>
-      toFlightsWithDelays(store.flightsValue(), store.delayInMin()),
-    ),
-  })),
+  // TODO: Add withComponent to compute flightsWithDelays
 
-  withMethods((store) => ({
-    updateFilter(from: string, to: string): void {
-      patchState(store, { from, to });
-    },
+  // TODO: Add withMethods: updateFilter, updateBasket, reload, delay
 
-    updateBasket(flightId: number, selected: boolean): void {
-      patchState(store, (state) => ({
-        basket: {
-          ...state.basket,
-          [flightId]: selected,
-        },
-      }));
-    },
-
-    reload(): void {
-      store._flightsReload();
-    },
-
-    delay(): void {
-      patchState(store, (state) => ({
-        delayInMin: state.delayInMin + 15,
-      }));
-    },
-  })),
-
-  withDevtools('flight'),
+  // TODO: Add withDevtools
 );
 
+// TODO: Call this function in your delay method
+/*
 function toFlightsWithDelays(flights: Flight[], delay: number): Flight[] {
   if (flights.length === 0) {
     return [];
@@ -86,3 +39,4 @@ function toFlightsWithDelays(flights: Flight[], delay: number): Flight[] {
 
   return [newFlight, ...flights.slice(1)];
 }
+*/
