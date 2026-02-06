@@ -1,8 +1,5 @@
 import { inject, Signal } from '@angular/core';
-import {
-  createToolJavaScript,
-  structuredCompletionResource,
-} from '@hashbrownai/angular';
+import { structuredCompletionResource } from '@hashbrownai/angular';
 import { RuntimeRef, s } from '@hashbrownai/core';
 
 import { ConfigService } from '../../../shared/util-common/config-service';
@@ -59,9 +56,8 @@ export function createChartResource(
       code: s.string(`the generated JavaScript code`),
     }),
     tools: [
-      createToolJavaScript({
-        runtime,
-      }),
+      // TODO: Register the passed JavaScript runtime as a tool
+      //  Hint: wrap the runtime using createToolJavaScript({ ... })
     ],
   });
 }
