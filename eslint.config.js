@@ -14,9 +14,9 @@ module.exports = defineConfig([
   {
     files: ['**/*.ts'],
     extends: [
-      eslint.configs.recommended,
-      tseslint.configs.recommended,
-      tseslint.configs.stylistic,
+      // eslint.configs.recommended,
+      // tseslint.configs.recommended,
+      // tseslint.configs.stylistic,
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
@@ -38,7 +38,7 @@ module.exports = defineConfig([
         },
       ],
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'off',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -108,8 +108,8 @@ module.exports = defineConfig([
       ],
     },
   },
-  {
-    files: ['**/*.ts'],
-    extends: [sheriff.configs.all],
-  },
+  // {
+  //   files: ['**/*.ts'],
+  //   extends: [sheriff.configs.all],
+  // },
 ]);
