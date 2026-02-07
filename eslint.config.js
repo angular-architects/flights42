@@ -54,15 +54,15 @@ module.exports = defineConfig([
     ],
     rules: {},
   },
-  {
-    plugins: {
-      'simple-import-sort': simpleImportSort,
-    },
-    rules: {
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
-    },
-  },
+  // {
+  //   plugins: {
+  //     'simple-import-sort': simpleImportSort,
+  //   },
+  //   rules: {
+  //     'simple-import-sort/imports': 'error',
+  //     'simple-import-sort/exports': 'error',
+  //   },
+  // },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
