@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { MilesService } from '@flights42/miles-data';
-import { AuthService } from '@flights42/shared/util-auth';
+import { AuthService } from '@flights42/shared-util-auth';
 
 @Component({
   selector: 'lib-feature-manage',
