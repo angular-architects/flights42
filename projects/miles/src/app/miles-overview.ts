@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { UserPanel } from '@flights42/ui-common';
+import { AuthService } from '@flights42/util-auth';
 
 @Component({
   selector: 'app-miles',
@@ -33,4 +34,14 @@ import { UserPanel } from '@flights42/ui-common';
     </table>
   `,
 })
-export class MilesOverview {}
+export class MilesOverview {
+  private readonly authService = inject(AuthService);
+
+  constructor() {
+    this.authService.userName.subscribe((userName) => {
+      console.log('userName', userName ? userName : 'unknown');
+    });
+  }
+}
+
+export default MilesOverview;
