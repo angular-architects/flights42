@@ -61,6 +61,7 @@
     "@angular/cli": "^21.1.0",
     "@angular/compiler-cli": "^21.1.0",
     "@commitlint/config-conventional": "^20.2.0",
+    "@softarc/detective": "^2.0.2",
     "@softarc/eslint-plugin-sheriff": "^0.19.6",
     "@softarc/sheriff-core": "^0.19.6",
     "@types/cors": "^2.8.19",
