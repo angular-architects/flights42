@@ -4,12 +4,7 @@ const {
 } = require('@angular-architects/native-federation/config');
 
 module.exports = withNativeFederation({
-  name: 'miles',
-
-  exposes: {
-    './Routes': './projects/miles/src/app/app.routes.ts',
-    './Miles': './projects/miles/src/app/miles-overview.ts',
-  },
+  name: 'flights',
 
   shared: {
     ...shareAll({

@@ -1,0 +1,4 @@
+{
+  "miles": "http://localhost:4201/remoteEntry.json",
+  "svelte-app": "https://kind-grass-08faefd03.4.azurestaticapps.net/remoteEntry.json"
+}

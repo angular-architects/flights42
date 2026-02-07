@@ -1,10 +1,14 @@
 import { DatePipe } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   inject,
   signal,
+  viewChild,
+  ViewContainerRef,
 } from '@angular/core';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 
 import { DataTable } from '../../domains/shared/ui-common/advanced-data-table/advanced-data-table';
 import { ClickWithWarning } from '../../domains/shared/ui-common/click-with-warning';
@@ -34,6 +38,19 @@ import { DemoDialog } from './demo-dialog';
 })
 export class About {
   private readonly dialogService = inject(DialogService);
+
+  protected readonly vcRef = viewChild('vcRef', { read: ViewContainerRef });
+
+  constructor() {
+    afterNextRender(() => {
+      const ref = this.vcRef();
+      if (ref) {
+        loadRemoteModule('miles', './Miles').then((esm) => {
+          ref.createComponent(esm.default);
+        });
+      }
+    });
+  }
 
   protected readonly flights = signal<Flight[]>([
     {
