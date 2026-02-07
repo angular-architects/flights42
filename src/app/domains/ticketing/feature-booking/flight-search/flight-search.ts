@@ -15,6 +15,8 @@ import { RouterLink } from '@angular/router';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from './flight-store';
 
+// import { CheckinService } from '../../../luggage/data/luggage-client';
+
 @Component({
   selector: 'app-flight-search',
   imports: [FormField, FlightCard, JsonPipe, RouterLink],
