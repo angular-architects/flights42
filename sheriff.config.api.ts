@@ -13,7 +13,11 @@ export const config: SheriffConfig = {
       ui: ['domain:<domain>', 'type:ui'],
       util: ['domain:<domain>', 'type:util'],
 
+      // AI
       ai: ['domain:<domain>', 'type:ai'],
+
+      // API
+      api: ['domain:<domain>/api', 'type:api'],
     },
 
     'src/app/testing': ['testing'],
@@ -23,12 +27,32 @@ export const config: SheriffConfig = {
 
     'domain:*': [sameTag, 'domain:shared'],
 
-    'type:ai': ['type:feature', 'type:ui', 'type:data', 'type:util'],
+    'type:ai': [
+      /* API --> */ 'type:api',
+      'type:feature',
+      'type:ui',
+      'type:data',
+      'type:util',
+    ],
 
-    'type:feature': ['type:ui', 'type:data', 'type:util'],
+    'type:feature': [
+      /* API --> */ 'type:api',
+      'type:ui',
+      'type:data',
+      'type:util',
+    ],
     'type:ui': ['type:data', 'type:util'],
     'type:data': ['type:util'],
     'type:util': [],
+
+    // API
+    'type:api': ['type:feature', 'type:ui', 'type:data', 'type:util'],
+    'domain:ticketing/api': ['domain:ticketing', 'domain:shared'],
+    'domain:checkin': [
+      'domain:checkin',
+      'domain:ticketing/api',
+      'domain:shared',
+    ],
 
     testing: '*',
     '*': ['testing'],

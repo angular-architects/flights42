@@ -16,7 +16,7 @@ import { compatForm } from '@angular/forms/signals/compat';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { NextFlightsModule } from '../../ticketing/api';
+// import { NextFlightsModule } from '../../ticketing/api';
 import { CheckinInfo } from '../data/checkin-info';
 import { initPassengerInfo, PassengerInfo } from '../data/passenger-info';
 import { CheckinDialogComponent } from './checkin-dialog';
@@ -28,7 +28,7 @@ import { CheckinDialogComponent } from './checkin-dialog';
     ReactiveFormsModule,
     RouterLink,
     JsonPipe,
-    NextFlightsModule,
+    // NextFlightsModule,
   ],
   templateUrl: './checkin-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

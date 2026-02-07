@@ -1,13 +1,23 @@
 {
   "scopes": [
-    "src/app/feature-booking",
-    "src/app/feature-checkin",
-    "src/app/feature-dashboard",
-    "src/app/feature-luggage",
-    "src/app/feature-next-flights",
-    "src/app/shared/flight-card"
+    "src/app/domains/shared",
+    "src/app/domains/luggage/data",
+    "src/app/domains/luggage/feature-luggage",
+    "src/app/domains/ticketing/ai",
+    "src/app/domains/ticketing/api",
+    "src/app/domains/ticketing/data",
+    "src/app/domains/ticketing/feature-booking",
+    "src/app/domains/ticketing/feature-next-flights",
+    "src/app/domains/ticketing/feature-reporting",
+    "src/app/domains/ticketing/ui"
   ],
-  "groups": ["src/app/shared", "src/app"],
+  "groups": [
+    "src/app/domains/luggage",
+    "src/app/domains/ticketing",
+    "src/app/domains",
+    "src/app",
+    "src"
+  ],
   "entries": [],
   "filter": {
     "files": [],
