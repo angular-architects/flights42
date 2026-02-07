@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Luggage, LuggageClient } from '@flights42/luggage-domain';
-import { MilesService } from '@flights42/miles-data';
+// import { MilesService } from '@flights42/miles-data';
 
 @Component({
   selector: 'lib-luggage-feature-checkin',
