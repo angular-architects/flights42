@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -29,50 +30,14 @@ import { DemoDialog } from './demo-dialog';
     DatePipe,
     DataTable,
   ],
+=======
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+
+@Component({
+  selector: 'app-about',
+  imports: [],
+>>>>>>> 8f53c36 (feat: clean up about component)
   templateUrl: './about.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class About {
-  private readonly dialogService = inject(DialogService);
-
-  protected readonly flights = signal<Flight[]>([
-    {
-      id: 1,
-      from: 'Hamburg',
-      to: 'Berlin',
-      date: '2025-02-01T17:00+01:00',
-      delayed: false,
-      delay: 0,
-      aircraft: { type: 'A320', registration: 'D-AIUA' },
-      prices: [],
-    },
-    {
-      id: 2,
-      from: 'Hamburg',
-      to: 'Frankfurt',
-      date: '2025-02-01T17:30+01:00',
-      delayed: false,
-      delay: 0,
-      aircraft: { type: 'B737', registration: 'D-ABKA' },
-      prices: [],
-    },
-    {
-      id: 3,
-      from: 'Hamburg',
-      to: 'Mallorca',
-      date: '2025-02-01T17:45+01:00',
-      delayed: false,
-      delay: 0,
-      aircraft: { type: 'A321', registration: 'D-AISN' },
-      prices: [],
-    },
-  ]);
-
-  protected deleteAll(): void {
-    console.debug('delete ...');
-  }
-
-  protected showDialog(): void {
-    this.dialogService.show(DemoDialog, 'Hello from About Component!');
-  }
-}
+export class About {}
