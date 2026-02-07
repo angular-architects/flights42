@@ -1,0 +1,10 @@
+<h1>Luggage</h1>
+
+<table>
+  @for (item of luggage; track item.id) {
+    <tr>
+      <td>{{ item.id }}</td>
+      <td>{{ item.description }}</td>
+    </tr>
+  }
+</table>

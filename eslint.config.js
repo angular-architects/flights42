@@ -14,6 +14,10 @@ module.exports = defineConfig([
   {
     files: ['**/*.ts'],
     extends: [
+      //
+      // Some linting rules are disabled for the labs to
+      // keep the focus on the learning goals.
+      //
       // eslint.configs.recommended,
       // tseslint.configs.recommended,
       // tseslint.configs.stylistic,
@@ -54,15 +58,15 @@ module.exports = defineConfig([
     ],
     rules: {},
   },
-  {
-    plugins: {
-      'simple-import-sort': simpleImportSort,
-    },
-    rules: {
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
-    },
-  },
+  // {
+  //   plugins: {
+  //     'simple-import-sort': simpleImportSort,
+  //   },
+  //   rules: {
+  //     'simple-import-sort/imports': 'error',
+  //     'simple-import-sort/exports': 'error',
+  //   },
+  // },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
@@ -77,6 +81,10 @@ module.exports = defineConfig([
             {
               sourceTag: 'domain:shared',
               onlyDependOnLibsWithTags: ['domain:shared'],
+            },
+            {
+              sourceTag: 'domain:luggage',
+              onlyDependOnLibsWithTags: ['domain:luggage', 'domain:shared'],
             },
             {
               sourceTag: 'type:app',

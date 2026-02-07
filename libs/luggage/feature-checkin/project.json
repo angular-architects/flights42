@@ -1,0 +1,32 @@
+{
+  "name": "luggage-feature-checkin",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/luggage/feature-checkin/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["domain:luggage", "type:feature"],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "libs/luggage/feature-checkin/ng-package.json",
+        "tsConfig": "libs/luggage/feature-checkin/tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/luggage/feature-checkin/tsconfig.lib.prod.json"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/angular:unit-test",
+      "options": {}
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

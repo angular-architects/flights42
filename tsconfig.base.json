@@ -16,7 +16,11 @@
         "libs/miles/feature-next-level/src/index.ts"
       ],
       "@flights42/miles-ui-common": ["libs/miles/ui-common/src/index.ts"],
-      "@flights42/shared-util-auth": ["libs/shared/util-auth/src/index.ts"]
+      "@flights42/shared-util-auth": ["libs/shared/util-auth/src/index.ts"],
+      "@flights42/luggage-domain": ["libs/luggage/domain/src/index.ts"],
+      "@flights42/luggage-feature-checkin": [
+        "libs/luggage/feature-checkin/src/index.ts"
+      ]
     }
   }
 }
