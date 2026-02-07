@@ -15,7 +15,8 @@
       "@flights42/miles-feature-next-level": [
         "libs/miles/feature-next-level/src/index.ts"
       ],
-      "@flights42/miles-ui-common": ["libs/miles/ui-common/src/index.ts"]
+      "@flights42/miles-ui-common": ["libs/miles/ui-common/src/index.ts"],
+      "@flights42/shared/util-auth": ["libs/shared/util-auth/src/index.ts"]
     }
   }
 }

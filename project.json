@@ -20,6 +20,7 @@
   },
   "sourceRoot": "src",
   "prefix": "app",
+  "tags": ["type:app"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",

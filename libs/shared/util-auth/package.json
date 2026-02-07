@@ -1,0 +1,9 @@
+{
+  "name": "@flight-demo/shared/util-auth",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "^21.1.0",
+    "@angular/core": "^21.1.0"
+  },
+  "sideEffects": false
+}
