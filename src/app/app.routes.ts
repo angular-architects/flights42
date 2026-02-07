@@ -33,13 +33,6 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'luggage',
-    loadComponent: () =>
-      import('./domains/luggage/feature-luggage/luggage-overview/luggage-overview').then(
-        (m) => m.LuggageOverview,
-      ),
-  },
-  {
     path: 'checkin',
     loadComponent: () =>
       import('./domains/checkin/feature-checkin/checkin-page').then(
