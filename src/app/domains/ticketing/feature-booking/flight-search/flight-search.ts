@@ -5,15 +5,17 @@ import {
   computed,
   effect,
   inject,
-  linkedSignal,
+  signal,
 } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
+import { debounce, form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
 // import { LuggageClient } from '../../../luggage/data/luggage-client';
+import { appSettings } from '../../../shared/util-common/app-settings';
+import { Flight } from '../../data/flight';
+import { FlightClient } from '../../data/flight-client';
 import { FlightCard } from '../../ui/flight-card/flight-card';
-import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
@@ -22,26 +24,37 @@ import { FlightStore } from './flight-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightSearch {
-  private readonly store = inject(FlightStore);
-  private readonly snackBar = inject(MatSnackBar);
+  private snackBar = inject(MatSnackBar);
+  private flightClient = inject(FlightClient);
 
-  protected readonly filter = linkedSignal(() => ({
-    from: this.store.from(),
-    to: this.store.to(),
-  }));
+  protected readonly filter = signal({
+    from: 'Graz',
+    to: 'Hamburg',
+  });
 
-  protected readonly filterForm = form(this.filter);
+  protected readonly filterForm = form(this.filter, (path) => {
+    debounce(path.from, appSettings.debounceTimeMs);
+    debounce(path.to, appSettings.debounceTimeMs);
+  });
+  protected readonly delayInMin = signal(0);
 
-  protected readonly flights = this.store.flightsWithDelays;
+  protected readonly flightsResource = this.flightClient.findResource(
+    this.filterForm.from().value,
+    this.filterForm.to().value,
+  );
 
-  protected readonly rawFlights = this.store.flightsValue;
-  protected readonly isLoading = this.store.flightsIsLoading;
-  protected readonly error = this.store.flightsError;
+  protected readonly flights = this.flightsResource.value;
+  protected readonly isLoading = this.flightsResource.isLoading;
+  protected readonly error = this.flightsResource.error;
 
-  protected readonly basket = this.store.basket;
+  protected readonly basket = signal<Record<number, boolean>>({});
 
   protected readonly flightRoute = computed(
     () => this.filter().from + ' - ' + this.filter().to,
+  );
+
+  protected readonly flightsWithDelay = computed(() =>
+    toFlightsWithDelays(this.flights(), this.delayInMin()),
   );
 
   constructor() {
@@ -55,30 +68,40 @@ export class FlightSearch {
 
     effect(() => {
       this.logFilter();
-
-      // this.myService.deleteEntireInternet();
-      //  userId(), loading()
     });
   }
 
   private logFilter() {
-    console.log('Filter: ', this.filter());
+    console.log('filter', this.filter());
   }
 
   protected search(): void {
-    this.store.updateFilter(this.filter().from, this.filter().to);
-    this.store.reload();
+    this.flightsResource.reload();
   }
 
   protected updateBasket(flightId: number, selected: boolean): void {
-    this.store.updateBasket(flightId, selected);
+    this.basket.update((basket) => ({
+      ...basket,
+      [flightId]: selected,
+    }));
   }
 
   protected delay(): void {
-    this.store.delay();
+    this.delayInMin.update((delay) => delay + 15);
+  }
+}
+
+function toFlightsWithDelays(flights: Flight[], delay: number): Flight[] {
+  if (flights.length === 0) {
+    return [];
   }
 
-  private logStuff() {
-    console.log('filter', this.filter());
-  }
+  const ONE_MINUTE = 1000 * 60;
+  const oldFlights = flights;
+  const oldFlight = oldFlights[0];
+  const oldDate = new Date(oldFlight.date);
+  const newDate = new Date(oldDate.getTime() + delay * ONE_MINUTE);
+  const newFlight = { ...oldFlight, date: newDate.toISOString() };
+
+  return [newFlight, ...flights.slice(1)];
 }
