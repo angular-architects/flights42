@@ -1,13 +1,12 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { inject, Injectable, resource, Signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { inject, Injectable, Signal } from '@angular/core';
 import {
   httpMutation,
   HttpMutationOptions,
   rxMutation,
   RxMutationOptions,
 } from '@angular-architects/ngrx-toolkit';
-import { firstValueFrom, map, Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initAircraft } from './aircraft';
@@ -35,57 +34,7 @@ export class FlightClient {
   }
 
   findResource(from: Signal<string>, to: Signal<string>) {
-    return httpResource<Flight[]>(
-      () => {
-        if (!from() || !to()) {
-          return undefined;
-        }
-
-        return {
-          url: `${this.configService.baseUrl}/flight`,
-          headers: {
-            Accept: 'application/json',
-          },
-          params: {
-            from: from(),
-            to: to(),
-          },
-        };
-      },
-      {
-        defaultValue: [],
-      },
-    );
-  }
-
-  // Alternative implementation using rxResource
-  findRxResource(from: Signal<string>, to: Signal<string>) {
-    return rxResource({
-      params: () => ({
-        from: from(),
-        to: to(),
-      }),
-      stream: (loaderParams) => {
-        const c = loaderParams.params;
-        return this.find(c.from, c.to);
-      },
-      defaultValue: [],
-    });
-  }
-
-  // Alternative implementation using a promise-based resourced
-  findPromiseResource(from: Signal<string>, to: Signal<string>) {
-    return resource({
-      params: () => ({
-        from: from(),
-        to: to(),
-      }),
-      loader: (loaderParams) => {
-        const c = loaderParams.params;
-        return firstValueFrom(this.find(c.from, c.to));
-      },
-      defaultValue: [],
-    });
+    // TODO: create and return httpResource
   }
 
   findById(id: string): Observable<Flight> {
@@ -111,7 +60,6 @@ export class FlightClient {
           id: id(),
         },
       }),
-      // TODO: Extend Service
       {
         defaultValue: initFlight,
         parse: (raw) => {
