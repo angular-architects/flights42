@@ -54,11 +54,6 @@ export class FlightClient {
       },
       {
         defaultValue: [],
-        // parse: (raw) => FlightZodSchema.array().parse(raw) as Flight[]
-        parse: (raw) => {
-          const flights = raw as Flight[];
-          return flights.map((flight) => initializeFlight(flight));
-        },
       },
     );
   }
