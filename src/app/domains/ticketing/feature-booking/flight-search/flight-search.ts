@@ -58,21 +58,6 @@ export class FlightSearch {
   );
 
   constructor() {
-    effect(() => {
-      const error = this.error();
-      if (error || this.filter().to === 'error') {
-        const message = 'Error loading flights: ' + error;
-        this.snackBar.open(message, 'OK');
-      }
-    });
-
-    effect(() => {
-      this.logFilter();
-    });
-  }
-
-  private logFilter() {
-    console.log('filter', this.filter());
   }
 
   protected search(): void {
