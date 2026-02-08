@@ -2,9 +2,7 @@
   <div class="card-body">
     <ul class="nav nav-secondary">
       <li>
-        <a
-          [routerLink]="['./flight-search']"
-          [class.active]="flightSearchActive()"
+        <a [routerLink]="['./flight-search']" routerLinkActive="active"
           >Flight</a
         >
       </li>
@@ -12,18 +10,8 @@
       &nbsp; | &nbsp;
 
       <li>
-        <a
-          [routerLink]="['./passenger-search']"
-          [class.active]="passengerSearchActive()"
+        <a [routerLink]="['./passenger-search']" routerLinkActive="active"
           >Passenger</a
-        >
-      </li>
-
-      &nbsp; | &nbsp;
-
-      <li>
-        <a [routerLink]="['./summary']" [class.active]="summaryActive()"
-          >Summary</a
         >
       </li>
     </ul>
