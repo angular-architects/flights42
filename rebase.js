@@ -10,7 +10,7 @@ const tasks = [
   { branch: 'ENT-signal-forms-starter', base: 'FULL' },
   { branch: 'ENT-signal-store-starter', base: 'FULL' },
   { branch: 'ENT-signals-solution', base: 'FULL' },
-  { branch: 'ENT-signal-starter', base: 'ENT-signals-solution' },
+  { branch: 'ENT-signals-starter', base: 'ENT-signals-solution' },
 ];
 
 function run(cmd) {
