@@ -9,8 +9,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Chart } from 'chart.js/auto';
 
-import { createChartingRuntime } from '../ai/cart-runtime';
 import { createChartResource } from '../ai/chart-resource';
+import { createChartingRuntime } from '../ai/chart-runtime';
 import { CHART_COLORS } from '../chart/chart-colors';
 import { DataItem } from '../chart/data-item';
 import { examplePrompts } from './example-prompts';
