@@ -19,7 +19,6 @@ export class LuggageOverview {
 
   constructor() {
     // TODO: dispatch event to load luggage
-    // this.dispatcher.dispatch(luggageEvents.loadLuggage());
   }
 
   protected updateSelected(luggageId: number, selected: boolean): void {
