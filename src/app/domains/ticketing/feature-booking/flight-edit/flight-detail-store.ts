@@ -38,8 +38,7 @@ export const FlightDetailStore = signalStore(
 
   withMutations((store) => ({
     saveFlight: store._flightClient.createSaveMutation({
-      onSuccess(flight: Flight) {
-        patchState(store, { flightValue: flight });
+      onSuccess() {
         store._snackBar.open('Flight updated successfully', 'OK', {
           duration: 3000,
         });
