@@ -6,36 +6,14 @@ import {
   inject,
   input,
   linkedSignal,
-  signal,
 } from '@angular/core';
-import {
-  FieldTree,
-  form,
-  FormField,
-  FormRoot,
-  minLength,
-  required,
-  schema,
-  SchemaPath,
-  validate,
-} from '@angular/forms/signals';
+import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
 import { FormComponent } from '../../../shared/util-common/exit.guard';
-import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { SimpleFlightDetailStore } from './simple-flight-detail-store';
-
-const flightSchema = schema<Flight>((path) => {
-  required(path.from);
-  required(path.to);
-  required(path.date);
-  minLength(path.from, 3);
-
-  const allowed = ['Graz', 'Hamburg', 'Zürich'];
-  validateAirport(path.from, allowed);
-});
 
 @Component({
   selector: 'app-flight-edit',
@@ -54,28 +32,7 @@ export class FlightEdit implements FormComponent {
   );
   protected readonly isPending = this.store.isPending;
 
-  protected readonly strict = signal(false);
-
-  protected readonly flightForm = form(this.flight, (path) => {
-    required(path.from);
-    required(path.to);
-    required(path.date);
-    minLength(path.from, 3);
-
-    const allowed = ['Graz', 'Hamburg', 'Zürich'];
-    validate(path.from, (ctx) => {
-      const value = ctx.value();
-      if (allowed.includes(value)) {
-        return null;
-      }
-
-      return {
-        kind: 'city',
-        value,
-        allowed,
-      };
-    });
-  });
+  protected readonly flightForm = form(this.flight);
 
   protected readonly isDisabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
@@ -95,36 +52,10 @@ export class FlightEdit implements FormComponent {
     return this.flightForm().dirty();
   }
 
-  protected async save(form: FieldTree<Flight>) {
-    try {
-      await this.store.saveFlight(form().value());
-      return null;
-    } catch (error) {
-      return {
-        kind: 'processing_error',
-        error: extractError(error),
-      };
-    }
+  protected async save(): Promise<void> {
+    await this.store.saveFlight(this.flight());
   }
 
-  protected toggleStrict(): void {
-    this.strict.update((s) => !s);
-  }
-}
-
-function validateAirport(path: SchemaPath<string>, allowed: string[]) {
-  validate(path, (ctx) => {
-    const value = ctx.value();
-    if (allowed.includes(value)) {
-      return null;
-    }
-
-    return {
-      kind: 'city',
-      value,
-      allowed,
-    };
-  });
 }
 
 function normalizeFlight(flight: Flight): Flight {
