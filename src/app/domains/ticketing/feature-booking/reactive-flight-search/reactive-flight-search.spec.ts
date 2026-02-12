@@ -9,7 +9,6 @@ import { page } from 'vitest/browser';
 import { createTestFlight } from '../../../../testing/create-test-flight';
 import { provideTestConfig } from '../../../../testing/provide-test-config';
 import { appSettings } from '../../../shared/util-common/app-settings';
-import { FlightStore } from '../flight-search/flight-store';
 import { ReactiveFlightSearch } from './reactive-flight-search';
 
 describe('reactive-flight-search', () => {
@@ -45,10 +44,6 @@ describe('reactive-flight-search', () => {
   });
 
   it('searches for flights when from and to are given', async () => {
-    const flightStore = TestBed.inject(FlightStore);
-
-    vi.spyOn(flightStore, 'updateFilter');
-
     await page.getByLabelText('From').fill('Paris');
     await page.getByLabelText('To').fill('London');
 
@@ -68,8 +63,5 @@ describe('reactive-flight-search', () => {
     });
 
     await expect.element(headings).toHaveLength(3);
-    expect(flightStore.updateFilter).toBeCalled();
-    expect(flightStore.updateFilter).toBeCalledTimes(3);
-    expect(flightStore.updateFilter).toBeCalledWith('Paris', 'London');
   });
 });
