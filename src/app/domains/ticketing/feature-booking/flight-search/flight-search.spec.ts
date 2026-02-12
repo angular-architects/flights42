@@ -48,17 +48,22 @@ describe('flight-search', () => {
   });
 
   it('disables search button when from and to are not given', async () => {
-    await page.getByLabelText('From').fill('');
-    await page.getByLabelText('To').fill('');
+    await userEvent.fill(page.getByLabelText('From'), '');
+    await userEvent.fill(page.getByLabelText('To'), '');
+
+    // await page.getByLabelText('From').fill('');
+    // await page.getByLabelText('To').fill('');
 
     const button = page.getByRole('button', { name: 'Search' });
-
     await expect.element(button).toBeDisabled();
   });
 
   it('enables search button when from and to are given', async () => {
-    await page.getByLabelText('From').fill('Paris');
-    await page.getByLabelText('To').fill('London');
+    await userEvent.fill(page.getByLabelText('From'), 'Paris');
+    await userEvent.fill(page.getByLabelText('To'), 'London');
+
+    // await page.getByLabelText('From').fill('Paris');
+    // await page.getByLabelText('To').fill('London');
 
     const button = page.getByRole('button', { name: 'Search' });
 
@@ -75,8 +80,11 @@ describe('flight-search', () => {
 
     vi.spyOn(flightStore, 'updateFilter');
 
-    await page.getByLabelText('From').fill('Paris');
-    await page.getByLabelText('To').fill('London');
+    // await page.getByLabelText('From').fill('Paris');
+    // await page.getByLabelText('To').fill('London');
+
+    await userEvent.fill(page.getByLabelText('From'), 'Paris');
+    await userEvent.fill(page.getByLabelText('To'), 'London');
 
     const button = page.getByRole('button', { name: 'Search' });
 
