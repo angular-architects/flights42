@@ -28,7 +28,7 @@ export class PassengerSearch {
   protected readonly firstName = linkedSignal(() => this.store.firstName());
 
   protected readonly passengers = this.store.passengers;
-  protected readonly isLoading = this.store.isLoading;
+  protected readonly isLoading = this.store.loading;
   protected readonly error = this.store.error;
 
   protected readonly selected = this.store.selected;

@@ -10,6 +10,12 @@ import {
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, of, pipe, switchMap, tap } from 'rxjs';
 
+import {
+  setError,
+  setLoaded,
+  setLoading,
+  withCallState,
+} from '../../../shared/util-common/call-state.feature';
 import { Passenger } from '../../data/passenger';
 import { PassengerClient } from '../../data/passenger-client';
 
@@ -26,9 +32,9 @@ export const PassengerStore = signalStore(
     firstName: '',
     selected: {} as Record<number, boolean>,
     passengers: [] as Passenger[],
-    isLoading: false,
-    error: null as string | null,
   }),
+
+  withCallState(),
 
   withProps(() => ({
     _passengerClient: inject(PassengerClient),
@@ -42,20 +48,21 @@ export const PassengerStore = signalStore(
             patchState(store, {
               name: filter.name,
               firstName: filter.firstName,
-              isLoading: true,
-              error: null,
+              ...setLoading(),
             }),
           ),
           switchMap((filter) =>
             store._passengerClient.find(filter.name, filter.firstName).pipe(
-              catchError((error) => {
-                patchState(store, { error });
+              catchError((error: unknown) => {
+                const message =
+                  error instanceof Error ? error.message : String(error);
+                patchState(store, setError(message));
                 return of([]);
               }),
             ),
           ),
           tap((passengers) => {
-            patchState(store, { passengers, isLoading: false });
+            patchState(store, { passengers, ...setLoaded() });
           }),
         ),
       ),
