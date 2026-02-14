@@ -18,10 +18,10 @@ export const initWrapperConfig: WrapperConfig = {
   selector: 'app-wrapper',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './wrapper.component.html',
-  styleUrls: ['./wrapper.component.css'],
+  templateUrl: './wrapper.html',
+  styleUrls: ['./wrapper.css'],
 })
-export class WrapperComponent implements OnInit {
+export class Wrapper implements OnInit {
   elm = inject(ElementRef);
 
   // The router now assignes routing parameters
