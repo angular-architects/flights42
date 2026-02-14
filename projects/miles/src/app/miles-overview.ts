@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserPanel } from '@flights42/ui-common';
 import { AuthService } from '@flights42/util-auth';
 
@@ -38,9 +39,11 @@ export class MilesOverview {
   private readonly authService = inject(AuthService);
 
   constructor() {
-    this.authService.userName.subscribe((userName) => {
-      console.log('userName', userName ? userName : 'unknown');
-    });
+    this.authService.userName
+      .pipe(takeUntilDestroyed())
+      .subscribe((userName) => {
+        console.log('userName', userName ? userName : 'unknown');
+      });
   }
 }
 
