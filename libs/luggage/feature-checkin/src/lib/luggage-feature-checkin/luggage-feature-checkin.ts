@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Luggage, LuggageClient } from '@flights42/luggage-domain';
 // import { MilesService } from '@flights42/miles-data';
@@ -12,11 +12,11 @@ import { Luggage, LuggageClient } from '@flights42/luggage-domain';
 })
 export class LuggageFeatureCheckin implements OnInit {
   private luggageClient = inject(LuggageClient);
-  luggage: Luggage[] = [];
+  luggage = signal<Luggage[]>([]);
 
   ngOnInit(): void {
     this.luggageClient.load().subscribe((luggage) => {
-      this.luggage = luggage;
+      this.luggage.set(luggage);
     });
   }
 }
