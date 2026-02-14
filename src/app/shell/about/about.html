@@ -1,6 +1,6 @@
 <h1>About</h1>
 
-<app-tabbed-pane>
+<app-tabbed-pane #pane>
   <app-tab title="No Delayed flights">
     <p>No cancelled flights!</p>
   </app-tab>
@@ -11,11 +11,15 @@
 
 <p>&nbsp;</p>
 
+<button (click)="pane.activate(1)">Activate 2nd tab</button>
+
+&nbsp;
+
 <button (appClickWithWarning)="deleteAll()" #cww="clickWithWarning">
   Delete All!
 </button>
 
-<p>&nbsp;</p>
+&nbsp;
 
 <button (click)="showDialog()" class="btn btn-default">Show Dialog</button>
 

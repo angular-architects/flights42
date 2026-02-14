@@ -11,7 +11,7 @@ import { ConfirmComponent } from '../util-common/confirm';
     '(click)': 'handleClick($event.shiftKey)',
   },
 })
-export class ClickWithWarningDirective {
+export class ClickWithWarning {
   private readonly dialog = inject(Dialog);
 
   readonly warning = input('Are you sure?');

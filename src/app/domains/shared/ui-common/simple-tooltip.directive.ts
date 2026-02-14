@@ -14,7 +14,7 @@ import {
     '(mouseout)': 'setHidden(true)',
   },
 })
-export class SimpleTooltipDirective {
+export class SimpleTooltip {
   private readonly host = inject(ElementRef<HTMLElement>);
   private tooltipElement: HTMLElement | null = null;
   private readonly destroyRef = inject(DestroyRef);

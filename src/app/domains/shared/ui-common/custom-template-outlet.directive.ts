@@ -10,7 +10,7 @@ import {
 @Directive({
   selector: '[appCustomTemplateOutlet]',
 })
-export class CustomTemplateOutletDirective<T extends object> {
+export class CustomTemplateOutlet<T extends object> {
   readonly template = input<TemplateRef<unknown> | undefined>(undefined, {
     alias: 'appCustomTemplateOutlet',
   });

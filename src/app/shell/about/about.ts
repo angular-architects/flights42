@@ -7,13 +7,13 @@ import {
 } from '@angular/core';
 
 import { DataTable } from '../../domains/shared/ui-common/advanced-data-table/advanced-data-table';
-import { ClickWithWarningDirective } from '../../domains/shared/ui-common/click-with-warning.directive';
-import { TableFieldDirective } from '../../domains/shared/ui-common/data-table/table-field.directive';
+import { ClickWithWarning } from '../../domains/shared/ui-common/click-with-warning.directive';
+import { TableField } from '../../domains/shared/ui-common/data-table/table-field.directive';
 import { DialogService } from '../../domains/shared/ui-common/dialog/dialog.service';
 import { Tab } from '../../domains/shared/ui-common/service-tabbed-pane/tab';
 import { TabbedPane } from '../../domains/shared/ui-common/service-tabbed-pane/tabbed-pane';
-import { SimpleTooltipDirective } from '../../domains/shared/ui-common/simple-tooltip.directive';
-import { TooltipDirective } from '../../domains/shared/ui-common/tooltip.directive';
+import { SimpleTooltip } from '../../domains/shared/ui-common/simple-tooltip.directive';
+import { Tooltip } from '../../domains/shared/ui-common/tooltip.directive';
 import { Flight } from '../../domains/ticketing/data/flight';
 import { DemoDialog } from './demo-dialog';
 
@@ -22,10 +22,10 @@ import { DemoDialog } from './demo-dialog';
   imports: [
     Tab,
     TabbedPane,
-    ClickWithWarningDirective,
-    TooltipDirective,
-    SimpleTooltipDirective,
-    TableFieldDirective,
+    ClickWithWarning,
+    Tooltip,
+    SimpleTooltip,
+    TableField,
     DatePipe,
     DataTable,
   ],

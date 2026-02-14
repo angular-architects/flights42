@@ -3,7 +3,7 @@ import { Directive, inject, input, TemplateRef } from '@angular/core';
 @Directive({
   selector: '[appTableField]',
 })
-export class TableFieldDirective<T> {
+export class TableField<T> {
   readonly propName = input.required<keyof T>({
     // eslint-disable-next-line @angular-eslint/no-input-rename
     alias: 'appTableFieldProvide',

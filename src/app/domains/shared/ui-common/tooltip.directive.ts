@@ -22,7 +22,7 @@ interface TooltipContext {
     '(mouseout)': 'setHidden(true)',
   },
 })
-export class TooltipDirective {
+export class Tooltip {
   private readonly viewContainer = inject(ViewContainerRef);
   private viewRef: EmbeddedViewRef<TooltipContext> | undefined;
   private host = inject(ElementRef<HTMLElement>);

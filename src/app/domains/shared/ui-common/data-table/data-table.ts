@@ -1,8 +1,8 @@
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { Component, contentChildren, input } from '@angular/core';
 
-// import { TemplateOutletDirective } from '../custom-template-outlet.directive';
-import { TableFieldDirective } from './table-field.directive';
+// import { CustomTemplateOutlet } from '../custom-template-outlet.directive';
+import { TableField } from './table-field.directive';
 
 @Component({
   selector: 'app-data-table',
@@ -35,6 +35,5 @@ import { TableFieldDirective } from './table-field.directive';
 })
 export class DataTable<T extends object> {
   readonly data = input<T[]>([]);
-  protected readonly fields =
-    contentChildren<TableFieldDirective<T>>(TableFieldDirective);
+  protected readonly fields = contentChildren<TableField<T>>(TableField);
 }

@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 
-import { TableFieldDirective } from '../data-table/table-field.directive';
+import { TableField } from '../data-table/table-field.directive';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -26,8 +26,7 @@ export class DataTable<T extends object> {
   readonly data = input<T[]>([]);
   readonly pageSize = input<number>(2);
 
-  protected readonly fields =
-    contentChildren<TableFieldDirective<T>>(TableFieldDirective);
+  protected readonly fields = contentChildren<TableField<T>>(TableField);
 
   protected readonly sortState = signal<SortState<T>>({
     column: 'id' as keyof T,
@@ -97,7 +96,7 @@ function sortData<T extends object>(data: T[], sortState: SortState<T>): T[] {
 }
 
 function buildColumnInfo<T>(
-  fields: readonly TableFieldDirective<T>[],
+  fields: readonly TableField<T>[],
   sortState: SortState<T>,
 ): Record<PropertyKey, string> {
   const result: Record<PropertyKey, string> = {};
