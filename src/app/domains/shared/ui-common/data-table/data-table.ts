@@ -1,8 +1,8 @@
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { Component, contentChildren, input } from '@angular/core';
 
-// import { CustomTemplateOutlet } from '../custom-template-outlet.directive';
-import { TableField } from './table-field.directive';
+// import { CustomTemplateOutlet } from '../custom-template-outlet';
+import { TableField } from './table-field';
 
 @Component({
   selector: 'app-data-table',

@@ -7,99 +7,6 @@
   "nxJsonPlugins": [],
   "fileMap": {
     "projectFileMap": {
-      "miles": [
-        {
-          "file": "projects/miles/eslint.config.js",
-          "hash": "5267519655198884963"
-        },
-        {
-          "file": "projects/miles/public/favicon.ico",
-          "hash": "3988961587069885523"
-        },
-        {
-          "file": "projects/miles/src/app/app.config.ts",
-          "hash": "171900698880923948"
-        },
-        {
-          "file": "projects/miles/src/app/app.routes.ts",
-          "hash": "13253328442092174957"
-        },
-        {
-          "file": "projects/miles/src/app/app.ts",
-          "hash": "3375643947270759687"
-        },
-        {
-          "file": "projects/miles/src/app/miles-overview.ts",
-          "hash": "16090019062569678378"
-        },
-        {
-          "file": "projects/miles/src/app/next-leve-page.ts",
-          "hash": "5649087190554011798"
-        },
-        {
-          "file": "projects/miles/src/index.html",
-          "hash": "2081959793370673656"
-        },
-        {
-          "file": "projects/miles/src/main.ts",
-          "hash": "1851190477704634470"
-        },
-        {
-          "file": "projects/miles/src/styles.css",
-          "hash": "529678770858229438"
-        },
-        {
-          "file": "projects/miles/tsconfig.app.json",
-          "hash": "4392164896217937559"
-        },
-        {
-          "file": "projects/miles/tsconfig.spec.json",
-          "hash": "10777994083665899510"
-        }
-      ],
-      "ui-common": [
-        {
-          "file": "projects/ui-common/README.md",
-          "hash": "3730462883165103063"
-        },
-        {
-          "file": "projects/ui-common/eslint.config.js",
-          "hash": "17527626280481953720"
-        },
-        {
-          "file": "projects/ui-common/ng-package.json",
-          "hash": "17716158778195391622"
-        },
-        {
-          "file": "projects/ui-common/package.json",
-          "hash": "486259915063614393",
-          "deps": ["npm:@angular/common", "npm:@angular/core", "npm:tslib"]
-        },
-        {
-          "file": "projects/ui-common/src/lib/user-panel.ts",
-          "hash": "17853132731868418887"
-        },
-        {
-          "file": "projects/ui-common/src/lib/user-service.ts",
-          "hash": "11302352297937446986"
-        },
-        {
-          "file": "projects/ui-common/src/public-api.ts",
-          "hash": "8545832407914000719"
-        },
-        {
-          "file": "projects/ui-common/tsconfig.lib.json",
-          "hash": "1133477222801413517"
-        },
-        {
-          "file": "projects/ui-common/tsconfig.lib.prod.json",
-          "hash": "17517552510542404852"
-        },
-        {
-          "file": "projects/ui-common/tsconfig.spec.json",
-          "hash": "10777994083665899510"
-        }
-      ],
       "flights": [
         {
           "file": ".cursor/rules/cursor.mdc",
@@ -315,7 +222,7 @@
         },
         {
           "file": "src/app/domains/shared/ui-common/advanced-data-table/advanced-data-table.ts",
-          "hash": "12661444795158474578"
+          "hash": "3925323760994798123"
         },
         {
           "file": "src/app/domains/shared/ui-common/alternative-city.pipe.ts",
@@ -326,19 +233,19 @@
           "hash": "1493134128244470091"
         },
         {
-          "file": "src/app/domains/shared/ui-common/click-with-warning.directive.ts",
+          "file": "src/app/domains/shared/ui-common/click-with-warning.ts",
           "hash": "4432565495920319661"
         },
         {
-          "file": "src/app/domains/shared/ui-common/custom-template-outlet.directive.ts",
+          "file": "src/app/domains/shared/ui-common/custom-template-outlet.ts",
           "hash": "15991933827529505379"
         },
         {
           "file": "src/app/domains/shared/ui-common/data-table/data-table.ts",
-          "hash": "1197001615500942314"
+          "hash": "14383350271319210489"
         },
         {
-          "file": "src/app/domains/shared/ui-common/data-table/table-field.directive.ts",
+          "file": "src/app/domains/shared/ui-common/data-table/table-field.ts",
           "hash": "3085807120488652056"
         },
         {
@@ -414,11 +321,11 @@
           "hash": "16813265286901234364"
         },
         {
-          "file": "src/app/domains/shared/ui-common/simple-tooltip.directive.ts",
+          "file": "src/app/domains/shared/ui-common/simple-tooltip.ts",
           "hash": "18234784262288964121"
         },
         {
-          "file": "src/app/domains/shared/ui-common/tooltip.directive.ts",
+          "file": "src/app/domains/shared/ui-common/tooltip.ts",
           "hash": "14737321400292191302"
         },
         {
@@ -871,7 +778,7 @@
         },
         {
           "file": "src/app/shell/about/about.ts",
-          "hash": "1881835832383804590"
+          "hash": "585888448612853044"
         },
         {
           "file": "src/app/shell/about/demo-dialog.ts",
@@ -940,6 +847,99 @@
         {
           "file": "tsconfig.spec.json",
           "hash": "163394592492922013"
+        }
+      ],
+      "ui-common": [
+        {
+          "file": "projects/ui-common/README.md",
+          "hash": "3730462883165103063"
+        },
+        {
+          "file": "projects/ui-common/eslint.config.js",
+          "hash": "17527626280481953720"
+        },
+        {
+          "file": "projects/ui-common/ng-package.json",
+          "hash": "17716158778195391622"
+        },
+        {
+          "file": "projects/ui-common/package.json",
+          "hash": "486259915063614393",
+          "deps": ["npm:@angular/common", "npm:@angular/core", "npm:tslib"]
+        },
+        {
+          "file": "projects/ui-common/src/lib/user-panel.ts",
+          "hash": "17853132731868418887"
+        },
+        {
+          "file": "projects/ui-common/src/lib/user-service.ts",
+          "hash": "11302352297937446986"
+        },
+        {
+          "file": "projects/ui-common/src/public-api.ts",
+          "hash": "8545832407914000719"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.lib.json",
+          "hash": "1133477222801413517"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.lib.prod.json",
+          "hash": "17517552510542404852"
+        },
+        {
+          "file": "projects/ui-common/tsconfig.spec.json",
+          "hash": "10777994083665899510"
+        }
+      ],
+      "miles": [
+        {
+          "file": "projects/miles/eslint.config.js",
+          "hash": "5267519655198884963"
+        },
+        {
+          "file": "projects/miles/public/favicon.ico",
+          "hash": "3988961587069885523"
+        },
+        {
+          "file": "projects/miles/src/app/app.config.ts",
+          "hash": "171900698880923948"
+        },
+        {
+          "file": "projects/miles/src/app/app.routes.ts",
+          "hash": "13253328442092174957"
+        },
+        {
+          "file": "projects/miles/src/app/app.ts",
+          "hash": "3375643947270759687"
+        },
+        {
+          "file": "projects/miles/src/app/miles-overview.ts",
+          "hash": "16090019062569678378"
+        },
+        {
+          "file": "projects/miles/src/app/next-leve-page.ts",
+          "hash": "5649087190554011798"
+        },
+        {
+          "file": "projects/miles/src/index.html",
+          "hash": "2081959793370673656"
+        },
+        {
+          "file": "projects/miles/src/main.ts",
+          "hash": "1851190477704634470"
+        },
+        {
+          "file": "projects/miles/src/styles.css",
+          "hash": "529678770858229438"
+        },
+        {
+          "file": "projects/miles/tsconfig.app.json",
+          "hash": "4392164896217937559"
+        },
+        {
+          "file": "projects/miles/tsconfig.spec.json",
+          "hash": "10777994083665899510"
         }
       ]
     },

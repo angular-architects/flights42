@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 
-import { TableField } from '../data-table/table-field.directive';
+import { TableField } from '../data-table/table-field';
 
 type SortDirection = 'asc' | 'desc';
 
