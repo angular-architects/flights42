@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, inject, Input, OnInit } from '@angular/core';
+import { Component, effect, ElementRef, inject, input } from '@angular/core';
 import { loadRemoteModule } from '@softarc/native-federation-runtime';
 
 export interface WrapperConfig {
@@ -21,8 +21,8 @@ export const initWrapperConfig: WrapperConfig = {
   templateUrl: './wrapper.html',
   styleUrls: ['./wrapper.css'],
 })
-export class Wrapper implements OnInit {
-  elm = inject(ElementRef);
+export class Wrapper {
+  private elm = inject(ElementRef);
 
   // The router now assignes routing parameters
   // (query string, matrix paraters, the passed data object)
@@ -30,13 +30,15 @@ export class Wrapper implements OnInit {
   //       withComponentInputBinding()
   // needs to be added when bootstrapping the application
   // (see bootstrap.ts)
-  @Input() config = initWrapperConfig;
+  config = input(initWrapperConfig);
 
-  async ngOnInit() {
-    const { exposedModule, remoteName, elementName } = this.config;
+  constructor() {
+    effect(async () => {
+      const { exposedModule, remoteName, elementName } = this.config();
 
-    await loadRemoteModule(remoteName, exposedModule);
-    const root = document.createElement(elementName);
-    this.elm.nativeElement.appendChild(root);
+      await loadRemoteModule(remoteName, exposedModule);
+      const root = document.createElement(elementName);
+      this.elm.nativeElement.appendChild(root);
+    });
   }
 }
