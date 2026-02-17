@@ -1,5 +1,5 @@
 {
-  "name": "@flight-demo/shared/util-auth",
+  "name": "@flights42/shared-util-auth",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/core": "^21.1.0"
