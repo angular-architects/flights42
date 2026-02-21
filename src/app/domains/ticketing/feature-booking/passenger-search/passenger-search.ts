@@ -23,8 +23,8 @@ export class PassengerSearch {
   private readonly store = inject(PassengerStore);
   private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly name = linkedSignal(() => this.store.name());
-  protected readonly firstName = linkedSignal(() => this.store.firstName());
+  protected readonly name = this.store.name;
+  protected readonly firstName = this.store.firstName;
 
   protected readonly passengers = this.store.passengers;
   protected readonly isLoading = this.store.loading;
