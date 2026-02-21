@@ -3,11 +3,11 @@
 <form>
   <div>
     <label for="name">Name:</label>
-    <input [(ngModel)]="name" id="name" name="name" />
+    <input [formField]="filterForm.name" id="name" />
   </div>
   <div>
     <label for="firstName">First Name:</label>
-    <input [(ngModel)]="firstName" id="firstName" name="firstName" />
+    <input [formField]="filterForm.firstName" id="firstName" />
   </div>
   <div>
     <button (click)="search()">Search</button>

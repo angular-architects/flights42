@@ -2,12 +2,11 @@ import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   effect,
   inject,
   linkedSignal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
@@ -16,7 +15,7 @@ import { PassengerStore } from './passenger-store';
 
 @Component({
   selector: 'app-passenger-search',
-  imports: [FormsModule, PassengerCard, JsonPipe, RouterLink],
+  imports: [FormField, PassengerCard, JsonPipe, RouterLink],
   templateUrl: './passenger-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -33,10 +32,12 @@ export class PassengerSearch {
 
   protected readonly selected = this.store.selected;
 
-  protected readonly filter = computed(() => ({
+  protected readonly filter = linkedSignal(() => ({
     name: this.name(),
     firstName: this.firstName(),
   }));
+
+  protected readonly filterForm = form(this.filter);
 
   constructor() {
     this.showError();
