@@ -1,4 +1,4 @@
-import { CommonModule, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, contentChildren, input } from '@angular/core';
 
 // import { CustomTemplateOutlet } from '../custom-template-outlet';
@@ -6,7 +6,7 @@ import { TableField } from './table-field';
 
 @Component({
   selector: 'app-data-table',
-  imports: [CommonModule, NgTemplateOutlet],
+  imports: [NgTemplateOutlet],
   template: `
     <table class="table">
       <tr>

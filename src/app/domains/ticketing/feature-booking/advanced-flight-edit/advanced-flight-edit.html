@@ -6,6 +6,7 @@
 
 @if (flight().id !== 0) {
   <app-validation-errors-pane [errors]="flightForm().errors()" />
+
   <form class="flight-form" novalidate>
     <app-flight [flight]="flightForm"></app-flight>
     <app-prices [prices]="flightForm.prices"></app-prices>

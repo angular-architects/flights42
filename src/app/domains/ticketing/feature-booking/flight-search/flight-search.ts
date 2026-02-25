@@ -32,6 +32,8 @@ export class FlightSearch {
   protected readonly filterForm = form(this.filter);
 
   protected readonly flights = this.store.flightsWithDelays;
+
+  protected readonly rawFlights = this.store.flightsValue;
   protected readonly isLoading = this.store.flightsIsLoading;
   protected readonly error = this.store.flightsError;
 
@@ -42,11 +44,24 @@ export class FlightSearch {
   );
 
   constructor() {
-    this.showError();
+    effect(() => {
+      const error = this.error();
+      if (error || this.filter().to === 'error') {
+        const message = 'Error loading flights: ' + error;
+        this.snackBar.open(message, 'OK');
+      }
+    });
 
     effect(() => {
-      this.logStuff();
+      this.logFilter();
+
+      // this.myService.deleteEntireInternet();
+      //  userId(), loading()
     });
+  }
+
+  private logFilter() {
+    console.log('Filter: ', this.filter());
   }
 
   protected search(): void {
@@ -64,15 +79,5 @@ export class FlightSearch {
 
   private logStuff() {
     console.log('filter', this.filter());
-  }
-
-  private showError() {
-    effect(() => {
-      const error = this.error();
-      if (error || this.filter().to === 'error') {
-        const message = 'Error loading flights: ' + error;
-        this.snackBar.open(message, 'OK');
-      }
-    });
   }
 }
