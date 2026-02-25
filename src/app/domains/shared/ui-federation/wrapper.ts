@@ -16,7 +16,6 @@ export const initWrapperConfig: WrapperConfig = {
 
 @Component({
   selector: 'app-wrapper',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './wrapper.html',
   styleUrls: ['./wrapper.css'],

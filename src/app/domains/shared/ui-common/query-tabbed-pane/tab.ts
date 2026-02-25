@@ -4,7 +4,6 @@ import { TabbedPane } from './tabbed-pane';
 
 @Component({
   selector: 'app-tab',
-  standalone: true,
   imports: [],
   template: `
     @if (visible()) {

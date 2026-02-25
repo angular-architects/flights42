@@ -15,7 +15,6 @@ import { ChatRegistry } from '../chat-registry';
 
 @Component({
   selector: 'app-assistant-chat',
-  standalone: true,
   imports: [FormsModule, ChatMessages],
   templateUrl: './assistant-chat.html',
   styleUrls: ['./assistant-chat.css'],

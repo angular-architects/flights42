@@ -4,7 +4,6 @@ import { TabInfo, TabRegistry } from './tab-registry';
 
 @Component({
   selector: 'app-tab',
-  standalone: true,
   imports: [],
   template: `
     @if (visible()) {

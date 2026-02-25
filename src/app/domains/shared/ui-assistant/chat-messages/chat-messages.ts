@@ -10,7 +10,6 @@ import { ToolStatusComponent } from '../tool-status';
 
 @Component({
   selector: 'app-chat-messages',
-  standalone: true,
   imports: [
     MatIconModule,
     MatButtonModule,
