@@ -4,6 +4,7 @@ import {
   DestroyableInjector,
   inject,
   Injector,
+  signal,
   Type,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -22,8 +23,8 @@ export class DialogOutlet {
   private readonly dialogService = inject(DialogService);
   private readonly parentInjector = inject(Injector);
 
-  protected component: Type<unknown> | null = null;
-  protected injector: DestroyableInjector | null = null;
+  protected component = signal<Type<unknown> | null>(null);
+  protected injector = signal<DestroyableInjector | null>(null);
 
   constructor() {
     this.dialogService.dialogEvents$
@@ -34,21 +35,23 @@ export class DialogOutlet {
   }
 
   private processEvent(event: DialogEvent): void {
-    if (this.injector) {
-      this.injector.destroy();
-      this.injector = null;
+    const injector = this.injector();
+    if (injector) {
+      injector.destroy();
+      this.injector.set(null);
     }
 
     if (!event.component) {
-      this.component = null;
+      this.component.set(null);
       return;
     }
 
-    this.component = event.component;
+    this.component.set(event.component);
 
-    this.injector = Injector.create({
+    const newInjector = Injector.create({
       providers: [{ provide: DIALOG_DATA, useValue: event.data }],
       parent: this.parentInjector,
     });
+    this.injector.set(newInjector);
   }
 }

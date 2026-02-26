@@ -1,8 +1,12 @@
-@if (component && injector) {
+@let componentInstance = component();
+@let injectorInstance = injector();
+
+@if (componentInstance && injectorInstance) {
   <div class="container">
     <div class="background"></div>
     <div class="dialog">
-      <ng-container *ngComponentOutlet="component; injector: injector" />
+      <ng-container
+        *ngComponentOutlet="componentInstance; injector: injectorInstance" />
     </div>
   </div>
 }
