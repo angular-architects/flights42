@@ -34,7 +34,7 @@ export class FlightSearch {
 
   protected readonly flights = this.store.flightsWithDelays;
 
-  protected readonly rawFlights = this.store.flightsValue;
+  protected readonly rawFlights = this.store.flights;
   protected readonly isLoading = this.store.flightsIsLoading;
   protected readonly error = this.store.flightsError;
 
