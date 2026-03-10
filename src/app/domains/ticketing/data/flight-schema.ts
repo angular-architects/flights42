@@ -7,7 +7,6 @@ import {
   minLength,
   required,
   schema,
-  validateStandardSchema,
 } from '@angular/forms/signals';
 
 import { aircraftSchema } from './aircraft-schema';
@@ -19,7 +18,6 @@ import {
   validateRoundTrip,
   validateRoundTripTree,
 } from './flight-validators';
-import { FlightZodSchema } from './flight-zod-schema';
 import { priceSchema } from './price-schema';
 
 export const flightSchema = schema<Flight>((path) => {
@@ -29,7 +27,7 @@ export const flightSchema = schema<Flight>((path) => {
 
   minLength(path.from, 3);
 
-  validateStandardSchema(path, FlightZodSchema);
+  // validateStandardSchema(path, FlightZodSchema);
 
   // disabled(path.delay, (ctx) => !ctx.valueOf(path.delayed));
   disabled(path.delay, (ctx) =>
@@ -54,3 +52,17 @@ export const delayedFlight = schema<Flight>((path) => {
   required(path.delay);
   min(path.delay, 15);
 });
+
+// Dynamic Zod-Schema
+// const strict = signal(false);
+
+// validateStandardSchema(
+//   path,
+//   computed(() => {
+//     if (strict()) {
+//       return StrictFlightZodSchema;
+//     } else {
+//       return FlightZodSchema;
+//     }
+//   }),
+// );
