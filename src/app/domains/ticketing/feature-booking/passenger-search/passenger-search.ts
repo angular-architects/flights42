@@ -40,8 +40,8 @@ export class PassengerSearch {
   protected readonly filterForm = form(this.filter);
 
   constructor() {
-    this.showError();
     this.store.updateFilter(this.filter);
+    this.showError();
   }
 
   private showError() {

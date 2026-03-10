@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
+import { withPreviousValue } from '../../../shared/util-common/with-previous-value';
 import { PassengerClient } from '../../data/passenger-client';
 
 @Injectable({ providedIn: 'root' })
@@ -19,10 +20,14 @@ export class SimplePassengerStore {
   readonly selected = this._selected.asReadonly();
 
   // PassengerResource
-  private readonly passengersResource = this.passengerClient.findResource(
-    this.name,
-    this.firstName,
+
+  private readonly originalPassengerResource =
+    this.passengerClient.findResource(this.name, this.firstName);
+
+  private readonly passengersResource = withPreviousValue(
+    this.originalPassengerResource,
   );
+
   readonly passengers = this.passengersResource.value;
   readonly isLoading = this.passengersResource.isLoading;
   readonly error = this.passengersResource.error;
@@ -33,7 +38,7 @@ export class SimplePassengerStore {
   updateFilter(name: string, firstName: string): void {
     this._name.set(name);
     this._firstName.set(firstName);
-    this.passengersResource.reload();
+    this.originalPassengerResource.reload();
   }
 
   updateSelected(passengerId: number, selected: boolean): void {
@@ -44,6 +49,6 @@ export class SimplePassengerStore {
   }
 
   reload(): void {
-    this.passengersResource.reload();
+    this.originalPassengerResource.reload();
   }
 }
