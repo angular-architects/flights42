@@ -4,32 +4,43 @@
   <div class="validation-errors">Please correct the validation errors!</div>
 }
 
-<form class="small-form">
+<form class="small-form" class="signal-form">
   <div>
     <label for="flightId">Ticket Id</label>
-    <input #input [formField]="checkinForm.ticketId" id="flightId" />
+    <input [formField]="checkinForm.ticketId" id="flightId" />
     @if (checkinForm.ticketId().invalid()) {
       <div>{{ checkinForm.ticketId().errorSummary() | json }}</div>
     }
   </div>
 
-  <ng-container [formGroup]="passengerGroup">
+  <fieldset [formGroup]="passengerGroup" class="reactive-form">
     <div>
       <label for="firstName">First Name</label>
-      <input #input formControlName="firstName" id="firstName" />
+      <input formControlName="firstName" id="firstName" />
     </div>
     <div>
       <label for="lastName">Last Name</label>
-      <input #input formControlName="lastName" id="lastName" />
+      <input formControlName="lastName" id="lastName" />
     </div>
     <div>
       <label for="email">Email Address</label>
-      <input #input formControlName="email" id="email" />
+      <input formControlName="email" id="email" />
       @if (passengerGroup.controls.email.invalid) {
         <div>{{ passengerGroup.controls.email.errors | json }}</div>
       }
     </div>
-  </ng-container>
+
+    <fieldset class="signal-form">
+      <div>
+        <label for="phoneNumber">Phone</label>
+        <input formControlName="phoneNumber" id="phoneNumber" />
+        <!-- {{ this.phoneNumber.sourceValue() }} -->
+        @if (passengerGroup.controls.phoneNumber.invalid) {
+          <div>{{ passengerGroup.controls.phoneNumber.errors | json }}</div>
+        }
+      </div>
+    </fieldset>
+  </fieldset>
 
   <div>
     <div class="checkbox">

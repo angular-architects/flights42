@@ -203,6 +203,7 @@ form {
 }
 
 .form-group,
+fieldset > div,
 form > div {
   margin-bottom: 1rem;
 }

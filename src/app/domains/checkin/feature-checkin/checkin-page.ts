@@ -12,13 +12,14 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormField, required } from '@angular/forms/signals';
+import { SignalFormControl } from '@angular/forms/signals/compat';
 import { compatForm } from '@angular/forms/signals/compat';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 // import { NextFlightsModule } from '../../ticketing/api';
 import { CheckinInfo } from '../data/checkin-info';
-import { initPassengerInfo, PassengerInfo } from '../data/passenger-info';
+import { initPassengerInfo } from '../data/passenger-info';
 import { CheckinDialogComponent } from './checkin-dialog';
 
 @Component({
@@ -31,6 +32,7 @@ import { CheckinDialogComponent } from './checkin-dialog';
     // NextFlightsModule,
   ],
   templateUrl: './checkin-page.html',
+  styleUrl: './checkin-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckinPage {
@@ -43,12 +45,33 @@ export class CheckinPage {
 
   protected readonly showNextFlights = signal(false);
 
-  protected readonly passengerGroup =
-    this.formBuilder.nonNullable.group<PassengerInfo>({
-      firstName: '',
-      lastName: '',
-      email: 'me@here.com',
-    });
+  protected readonly addressFormModel = signal({
+    street: '',
+    zipCode: '',
+    city: '',
+    country: '',
+  });
+
+  protected readonly address = new SignalFormControl(
+    this.addressFormModel(),
+    (path) => {
+      required(path.street);
+      required(path.zipCode);
+      required(path.country);
+    },
+  );
+
+  protected readonly phoneNumber = new SignalFormControl('', (path) => {
+    required(path);
+  });
+
+  protected readonly passengerGroup = this.formBuilder.nonNullable.group({
+    firstName: '',
+    lastName: '',
+    email: 'me@here.com',
+    address: this.address,
+    phoneNumber: this.phoneNumber,
+  });
 
   protected readonly checkinFormModel = signal({
     ticketId: '',
@@ -70,6 +93,9 @@ export class CheckinPage {
     this.initValidators();
     this.connectRouterParams();
     this.initForm();
+
+    const street = this.passengerGroup.controls.address.get('street');
+    console.log('street', street);
 
     effect(() => {
       console.log('expertMode', this.expertMode());
