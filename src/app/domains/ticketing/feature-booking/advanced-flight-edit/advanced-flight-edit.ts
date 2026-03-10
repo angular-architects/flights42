@@ -6,7 +6,7 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { form, submit } from '@angular/forms/signals';
+import { FieldTree, form, FormRoot } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
@@ -28,6 +28,7 @@ import { PricesForm } from './prices-form/prices-form';
     FlightForm,
     ValidationErrorsPane,
     RouterLink,
+    FormRoot,
   ],
   templateUrl: './advanced-flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,7 +46,14 @@ export class AdvancedFlightEdit {
   protected readonly isDisabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
   );
-  protected readonly flightForm = form(this.flight, flightSchema);
+
+  protected readonly flightForm = form(this.flight, flightSchema, {
+    submission: {
+      action: async (form) => this.save(form),
+      ignoreValidators: 'none',
+      onInvalid: (form) => this.reportValidationError(form),
+    },
+  });
 
   protected readonly disabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
@@ -62,25 +70,25 @@ export class AdvancedFlightEdit {
     });
   }
 
-  protected async save(): Promise<void> {
-    if (this.flightForm().invalid()) {
-      this.snackBar.open('Please correct the validation errors.', 'OK');
-      return;
+  private reportValidationError(form: FieldTree<Flight>): void {
+    this.snackBar.open('Please correct the validation errors', 'OK');
+
+    const errors = form().errorSummary();
+    if (errors.length > 0) {
+      errors[0].fieldTree().focusBoundControl();
     }
+  }
 
-    // this.store.updateFlight(this.flightForm().value());
-
-    await submit(this.flightForm, async (form) => {
-      try {
-        await this.store.saveFlight(form().value());
-        return null;
-      } catch (error) {
-        return {
-          kind: 'processing_error',
-          error: extractError(error),
-        };
-      }
-    });
+  protected async save(form: FieldTree<Flight>) {
+    try {
+      await this.store.saveFlight(form().value());
+      return null;
+    } catch (error) {
+      return {
+        kind: 'processing_error',
+        error: extractError(error),
+      };
+    }
   }
 }
 

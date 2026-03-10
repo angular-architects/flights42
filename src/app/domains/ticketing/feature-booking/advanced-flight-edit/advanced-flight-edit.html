@@ -7,15 +7,13 @@
 @if (flight().id !== 0) {
   <app-validation-errors-pane [errors]="flightForm().errors()" />
 
-  <form class="flight-form" novalidate>
+  <form class="flight-form" [formRoot]="flightForm">
     <app-flight [flight]="flightForm"></app-flight>
     <app-prices [prices]="flightForm.prices"></app-prices>
     <app-aircraft [aircraft]="flightForm.aircraft"></app-aircraft>
 
     <div class="mt-40">
-      <button [disabled]="disabled()" type="button" (click)="save()">
-        Save
-      </button>
+      <button>Save</button>
     </div>
   </form>
 }
