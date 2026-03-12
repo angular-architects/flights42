@@ -1,0 +1,16 @@
+<div class="date-control">
+  <input
+    type="text"
+    class="form-control date-field"
+    [value]="internal().date"
+    (input)="updateDate($event)"
+    placeholder="dd.MM.yyyy"
+    aria-label="Datum" />
+  <input
+    type="text"
+    class="form-control time-field"
+    [value]="internal().time"
+    (input)="updateTime($event)"
+    placeholder="HH:mm"
+    aria-label="Uhrzeit" />
+</div>

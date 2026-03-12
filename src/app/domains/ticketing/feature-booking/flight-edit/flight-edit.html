@@ -1,8 +1,8 @@
 <h1>Flight Edit</h1>
 
 @if (flight().id !== 0) {
-  @if (flightForm().invalid()) {
-    <div>{{ flightForm().errorSummary() | json }}</div>
+  @for (error of flightForm().errorSummary(); track error) {
+    <div>{{ error.fieldTree().name() }}: {{ error.kind }}</div>
   }
   <form>
     <div>
@@ -34,12 +34,13 @@
       <div>
         <input
           class="form-control"
+          type="datetime-local"
           [formField]="flightForm.date"
-          id="flight-date"
-          type="datetime-local" />
+          id="flight-date" />
       </div>
-      @if (flightForm.date().invalid()) {
-        <div>{{ flightForm.date().errors() | json }}</div>
+      @for (error of flightForm.date().errors(); track error) {
+        <div>Error: kind={{ error.kind }}</div>
+        <br />
       }
     </div>
 
@@ -58,6 +59,10 @@
       <button [disabled]="isDisabled()" type="button" (click)="save()">
         Save
       </button>
+
+      <!-- <button (click)="toggleStrict()" type="button" (click)="save()">
+        Toggle Strict Mode
+      </button> -->
     </div>
   </form>
 

@@ -3,6 +3,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   ElementRef,
   inject,
@@ -18,8 +19,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 // import { NextFlightsModule } from '../../ticketing/api';
-import { CheckinInfo } from '../data/checkin-info';
-import { initPassengerInfo } from '../data/passenger-info';
 import { CheckinDialogComponent } from './checkin-dialog';
 
 @Component({
@@ -44,6 +43,10 @@ export class CheckinPage {
   private readonly inputs = viewChildren<ElementRef>('input');
 
   protected readonly showNextFlights = signal(false);
+
+  protected readonly fullPhoneNumber = computed(
+    () => '+43 ' + this.phoneNumber.sourceValue(),
+  );
 
   protected readonly addressFormModel = signal({
     street: '',
@@ -166,10 +169,9 @@ export class CheckinPage {
   protected checkin(): void {
     const { passenger, ...header } = this.checkinFormModel();
 
-    const checkinInfo: CheckinInfo = {
+    const checkinInfo = {
       ...header,
       passenger: {
-        ...initPassengerInfo,
         ...passenger.value,
       },
     };

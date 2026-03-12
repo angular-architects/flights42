@@ -1,4 +1,8 @@
+import { computed, Signal } from '@angular/core';
+import { SchemaPathTree, validateStandardSchema } from '@angular/forms/signals';
 import { z } from 'zod';
+
+import { Flight } from './flight';
 
 export const FlightZodSchema = z.object({
   id: z.number().int(),
@@ -15,3 +19,19 @@ export const StrictFlightZodSchema = z.object({
   date: z.string(),
   delayed: z.boolean(),
 });
+
+export function validateWithSchema(
+  path: SchemaPathTree<Flight>,
+  strict: Signal<boolean>,
+) {
+  validateStandardSchema(
+    path,
+    computed(() => {
+      if (strict()) {
+        return StrictFlightZodSchema;
+      } else {
+        return FlightZodSchema;
+      }
+    }),
+  );
+}

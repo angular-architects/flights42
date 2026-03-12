@@ -6,6 +6,7 @@ import {
   inject,
   input,
   linkedSignal,
+  signal,
 } from '@angular/core';
 import {
   form,
@@ -21,6 +22,7 @@ import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
 import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
+import { validateWithSchema } from '../../data/flight-zod-schema';
 import { FlightDetailStore } from './flight-detail-store';
 
 @Component({
@@ -40,11 +42,15 @@ export class FlightEdit implements FormComponent {
   );
   protected readonly isPending = this.store.saveFlightIsPending;
 
+  protected readonly strict = signal(false);
+
   protected readonly flightForm = form(this.flight, (path) => {
     required(path.from);
     required(path.to);
     required(path.date);
     minLength(path.from, 3);
+
+    validateWithSchema(path, this.strict);
 
     const allowed = ['Graz', 'Hamburg', 'Zürich'];
     validate(path.from, (ctx) => {
@@ -93,6 +99,10 @@ export class FlightEdit implements FormComponent {
         };
       }
     });
+  }
+
+  protected toggleStrict(): void {
+    this.strict.update((s) => !s);
   }
 }
 

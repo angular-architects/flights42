@@ -11,7 +11,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ValidationErrorsPane } from '../../../shared/ui-forms/validation-errors/validation-errors-pane';
-import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
 import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { flightSchema } from '../../data/flight-schema';
@@ -38,9 +37,7 @@ export class AdvancedFlightEdit {
   private readonly route = inject(ActivatedRoute);
   private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly flight = linkedSignal(() =>
-    normalizeFlight(this.store.flightValue()),
-  );
+  protected readonly flight = linkedSignal(() => this.store.flightValue());
   protected readonly isPending = this.store.saveFlightIsPending;
 
   protected readonly isDisabled = computed(
@@ -90,11 +87,4 @@ export class AdvancedFlightEdit {
       };
     }
   }
-}
-
-function normalizeFlight(flight: Flight): Flight {
-  return {
-    ...flight,
-    date: toLocalDateTimeString(flight.date),
-  };
 }
