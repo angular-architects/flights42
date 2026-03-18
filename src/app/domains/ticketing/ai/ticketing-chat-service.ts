@@ -14,7 +14,6 @@ import { getCurrentRoute } from './tools/get-current-route.tool';
 import { getLoadedFlights } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelection } from './tools/toggle-flight-selection.tool';
 import { updateFlight } from './tools/update-flight.tool';
-import { flightWidget } from './widgets/flight-widget';
 
 @Injectable({ providedIn: 'root' })
 export class TicketingChatService {
@@ -36,7 +35,7 @@ export class TicketingChatService {
       getCurrentRoute,
       getCurrentFlight,
     ],
-    components: [flightWidget, messageWidget],
+    components: [messageWidget],
   });
 
   public init(): void {
