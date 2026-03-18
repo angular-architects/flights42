@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   linkedSignal,
+  signal,
 } from '@angular/core';
 import { FieldTree, form, FormRoot } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -14,10 +15,10 @@ import { ValidationErrorsPane } from '../../../shared/ui-forms/validation-errors
 import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { flightSchema } from '../../data/flight-schema';
-import { SimpleFlightDetailStore } from '../flight-edit/simple-flight-detail-store';
 import { AircraftForm } from './aircraft-form/aircraft-form';
 import { FlightForm } from './flight-form/flight-form';
 import { PricesForm } from './prices-form/prices-form';
+import { FlightDetailStore } from '../flight-edit/flight-detail-store';
 
 @Component({
   selector: 'app-flight-edit',
@@ -33,14 +34,12 @@ import { PricesForm } from './prices-form/prices-form';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdvancedFlightEdit {
-  private readonly store = inject(SimpleFlightDetailStore);
+  private readonly store = inject(FlightDetailStore);
   private readonly route = inject(ActivatedRoute);
   private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly flight = linkedSignal(() =>
-    (this.store.flight()),
-  );
-  protected readonly isPending = this.store.isPending;
+  protected readonly flight = linkedSignal(() => this.store.flightValue());
+  protected readonly isPending = signal(false);
 
   protected readonly isDisabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
@@ -79,14 +78,6 @@ export class AdvancedFlightEdit {
   }
 
   protected async save(form: FieldTree<Flight>) {
-    try {
-      await this.store.saveFlight(form().value());
-      return null;
-    } catch (error) {
-      return {
-        kind: 'processing_error',
-        error: extractError(error),
-      };
-    }
+    console.log('not implemented in this branch');
   }
 }

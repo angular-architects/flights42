@@ -6,6 +6,7 @@ import {
   inject,
   input,
   linkedSignal,
+  signal,
 } from '@angular/core';
 import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -13,7 +14,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toLocalDateTimeString } from '../../../shared/util-common/date-utils';
 import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { Flight } from '../../data/flight';
-import { SimpleFlightDetailStore } from './simple-flight-detail-store';
+import { FlightDetailStore } from './flight-detail-store';
 
 @Component({
   selector: 'app-flight-edit',
@@ -22,15 +23,17 @@ import { SimpleFlightDetailStore } from './simple-flight-detail-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightEdit implements FormComponent {
-  private readonly store = inject(SimpleFlightDetailStore);
+  private readonly store = inject(FlightDetailStore);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly id = input.required<number>();
 
   protected readonly flight = linkedSignal(() =>
-    normalizeFlight(this.store.flight()),
+    normalizeFlight(this.store.flightValue()),
   );
-  protected readonly isPending = this.store.isPending;
+
+  // TODO: Read from store.
+  protected readonly isPending = signal(false);
 
   protected readonly flightForm = form(this.flight);
 
@@ -53,9 +56,8 @@ export class FlightEdit implements FormComponent {
   }
 
   protected async save(): Promise<void> {
-    await this.store.saveFlight(this.flight());
+    // TODO: Call saveFlight in store
   }
-
 }
 
 function normalizeFlight(flight: Flight): Flight {

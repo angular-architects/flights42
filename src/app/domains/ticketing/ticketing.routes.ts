@@ -13,7 +13,6 @@ import { PassengerEdit } from './feature-booking/passenger-edit/passenger-edit';
 import { passengerResolver } from './feature-booking/passenger-edit/passenger-resolver';
 import { PassengerSearch } from './feature-booking/passenger-search/passenger-search';
 import { ProtoFlightEdit } from './feature-booking/proto-flight-edit/proto-flight-edit';
-import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/reactive-flight-search';
 import { SummaryPage } from './feature-booking/summary-page/summary-page';
 import { ReportingPage } from './feature-reporting/reporting-page/reporting-page';
 
@@ -39,10 +38,6 @@ export const bookingRoutes: Routes = [
       {
         path: 'flight-search',
         component: FlightSearch,
-      },
-      {
-        path: 'reactive-flight-search',
-        component: ReactiveFlightSearch,
       },
       {
         path: 'flight-edit/:id',
