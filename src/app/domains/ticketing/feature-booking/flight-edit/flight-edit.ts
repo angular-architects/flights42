@@ -55,11 +55,17 @@ export class FlightEdit implements FormComponent {
 
   protected readonly strict = signal(false);
 
+<<<<<<< HEAD
   protected readonly flightForm = form(this.flight, flightSchema, {
     submission: {
       action: async (form) => this.save(form),
     },
   });
+=======
+  protected readonly flightForm = form(this.flight);
+
+  protected readonly isPending = signal(false);
+>>>>>>> f77cf98 (refactor: simplify flight-edit for lab)
 
   protected readonly isDisabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
