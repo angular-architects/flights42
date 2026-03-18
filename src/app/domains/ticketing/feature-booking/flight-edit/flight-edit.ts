@@ -52,7 +52,6 @@ export class FlightEdit implements FormComponent {
   protected readonly flight = linkedSignal(() =>
     normalizeFlight(this.store.flightValue()),
   );
-  protected readonly isPending = this.store.saveFlightIsPending;
 
   protected readonly strict = signal(false);
 
@@ -80,16 +79,8 @@ export class FlightEdit implements FormComponent {
     return this.flightForm().dirty();
   }
 
-  protected async save(form: FieldTree<Flight>) {
-    try {
-      await this.store.saveFlight(form().value());
-      return null;
-    } catch (error) {
-      return {
-        kind: 'processing_error',
-        error: extractError(error),
-      };
-    }
+  protected async save(): Promise<void> {
+    console.log('Not implemented in this branch');
   }
 
   protected toggleStrict(): void {

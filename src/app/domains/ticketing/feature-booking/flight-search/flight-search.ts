@@ -10,11 +10,6 @@ import { form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
-<<<<<<< HEAD
-// import { LuggageClient } from '../../../luggage/data/luggage-client';
-import { appSettings } from '../../../shared/util-common/app-settings';
-=======
->>>>>>> bd5de5c (feat: prepare starter kit)
 import { Flight } from '../../data/flight';
 import { FlightClient } from '../../data/flight-client';
 import { FlightCard } from '../../ui/flight-card/flight-card';

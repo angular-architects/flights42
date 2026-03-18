@@ -36,23 +36,6 @@ export const FlightDetailStore = signalStore(
     { errorHandling: 'previous value' },
   ),
 
-  withMutations((store) => ({
-    saveFlight: store._flightClient.createSaveMutation({
-      onSuccess() {
-        store._snackBar.open('Flight updated successfully', 'OK', {
-          duration: 3000,
-        });
-      },
-      onError(error: unknown) {
-        const message = 'Failed to update flight';
-        console.error(message, error);
-        store._snackBar.open(message, 'OK', {
-          duration: 5000,
-        });
-      },
-    }),
-  })),
-
   withMethods((store) => ({
     setFlightId(id: number): void {
       patchState(store, { flightId: id });
