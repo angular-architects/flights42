@@ -4,7 +4,7 @@
   @for (error of flightForm().errorSummary(); track error) {
     <div>{{ error.fieldTree().name() }}: {{ error.kind }}</div>
   }
-  <form>
+  <form [formRoot]="flightForm">
     <div>
       <label for="flight-id">ID</label>
       <input [formField]="flightForm.id" type="number" id="flight-id" />
@@ -56,13 +56,7 @@
     </div>
 
     <div class="mt-40">
-      <button [disabled]="isDisabled()" type="button" (click)="save()">
-        Save
-      </button>
-
-      <!-- <button (click)="toggleStrict()" type="button" (click)="save()">
-        Toggle Strict Mode
-      </button> -->
+      <button [disabled]="isDisabled()">Save</button>
     </div>
   </form>
 

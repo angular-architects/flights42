@@ -11,6 +11,7 @@ import {
 import {
   form,
   FormField,
+  FormRoot,
   minLength,
   required,
   submit,
@@ -27,7 +28,7 @@ import { FlightDetailStore } from './flight-detail-store';
 
 @Component({
   selector: 'app-flight-edit',
-  imports: [FormField, JsonPipe, RouterLink],
+  imports: [FormField, FormRoot, JsonPipe, RouterLink],
   templateUrl: './flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
