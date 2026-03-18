@@ -5,13 +5,13 @@ import {
   effect,
   inject,
   linkedSignal,
+  signal,
 } from '@angular/core';
 import { FieldTree, form, FormRoot } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ValidationErrorsPane } from '../../../shared/ui-forms/validation-errors/validation-errors-pane';
-import { extractError } from '../../../shared/util-common/extract-error';
 import { Flight } from '../../data/flight';
 import { flightSchema } from '../../data/flight-schema';
 import { FlightDetailStore } from '../flight-edit/flight-detail-store';
@@ -38,7 +38,7 @@ export class AdvancedFlightEdit {
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly flight = linkedSignal(() => this.store.flightValue());
-  protected readonly isPending = this.store.saveFlightIsPending;
+  protected readonly isPending = signal(false);
 
   protected readonly isDisabled = computed(
     () => this.flightForm().invalid() || this.isPending(),
@@ -77,14 +77,6 @@ export class AdvancedFlightEdit {
   }
 
   protected async save(form: FieldTree<Flight>) {
-    try {
-      await this.store.saveFlight(form().value());
-      return null;
-    } catch (error) {
-      return {
-        kind: 'processing_error',
-        error: extractError(error),
-      };
-    }
+    console.log('not implemented in this branch');
   }
 }
