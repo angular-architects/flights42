@@ -17,7 +17,7 @@ import { FieldTree } from '@angular/forms/signals';
 @Component({
   selector: 'app-flight-edit',
 
-  // TODO: Import the FormField directive and the JSON pipe
+  // TODO: Import FormField, FormRoot and the JSON pipe
   imports: [RouterLink],
   templateUrl: './flight-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,10 +47,9 @@ export class FlightEdit {
     });
   }
 
-  protected async save(form: FieldTree<Flight>): Promise<void> {
+  protected async save(form: FieldTree<Flight>) {
     // TODO: Use submit to save flight with the store
   }
-
 }
 
 function normalizeFlight(flight: Flight): Flight {
