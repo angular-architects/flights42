@@ -73,7 +73,7 @@ export function validateRoundTripTree(path: SchemaPathTree<Flight>) {
     if (from === to) {
       return {
         kind: 'roundtrip_tree',
-        field: ctx.fieldTree.from,
+        fieldTree: ctx.fieldTree.from,
         from,
         to,
       };
