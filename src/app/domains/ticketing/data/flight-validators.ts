@@ -28,8 +28,8 @@ export function validateCity(path: SchemaPathTree<string>, allowed: string[]) {
   });
 }
 
-export function validateRoundTrip(schema: SchemaPathTree<Flight>) {
-  validate(schema, (ctx) => {
+export function validateRoundTrip(path: SchemaPathTree<Flight>) {
+  validate(path, (ctx) => {
     const from = ctx.fieldTree.from().value();
     const to = ctx.fieldTree.to().value();
 
@@ -48,11 +48,11 @@ export function validateRoundTrip(schema: SchemaPathTree<Flight>) {
   });
 }
 
-export function validateRoundTrip2(schema: SchemaPathTree<Flight>) {
+export function validateRoundTrip2(path: SchemaPathTree<Flight>) {
   // Now, we are validating the 'from' field only
-  validate(schema.from, (ctx) => {
+  validate(path.from, (ctx) => {
     const from = ctx.value();
-    const to = ctx.valueOf(schema.to);
+    const to = ctx.valueOf(path.to);
 
     if (from === to) {
       return {
@@ -65,8 +65,8 @@ export function validateRoundTrip2(schema: SchemaPathTree<Flight>) {
   });
 }
 
-export function validateRoundTripTree(schema: SchemaPathTree<Flight>) {
-  validateTree(schema, (ctx) => {
+export function validateRoundTripTree(path: SchemaPathTree<Flight>) {
+  validateTree(path, (ctx) => {
     const from = ctx.fieldTree.from().value();
     const to = ctx.fieldTree.to().value();
 
@@ -82,10 +82,10 @@ export function validateRoundTripTree(schema: SchemaPathTree<Flight>) {
   });
 }
 
-export function validateCityAsync(schema: SchemaPathTree<string>) {
-  metadata(schema, CITY2, () => true);
+export function validateCityAsync(path: SchemaPathTree<string>) {
+  metadata(path, CITY2, () => true);
 
-  validateAsync(schema, {
+  validateAsync(path, {
     params: (ctx) => ({
       value: ctx.value(),
     }),
@@ -122,10 +122,10 @@ function rxValidateAirport(airport: string): Observable<boolean> {
   );
 }
 
-export function validateCityHttp(schema: SchemaPathTree<string>) {
-  metadata(schema, CITY, () => true);
+export function validateCityHttp(path: SchemaPathTree<string>) {
+  metadata(path, CITY, () => true);
 
-  validateHttp(schema, {
+  validateHttp(path, {
     request: (ctx) => ({
       url: 'https://demo.angulararchitects.io/api/flight',
       params: {
@@ -151,8 +151,8 @@ export function validateCityHttp(schema: SchemaPathTree<string>) {
 
 // Simulates a serverside validation
 
-export function validateDuplicatePrices(prices: SchemaPathTree<Price[]>) {
-  validate(prices, (ctx) => {
+export function validateDuplicatePrices(path: SchemaPathTree<Price[]>) {
+  validate(path, (ctx) => {
     const prices = ctx.value();
     const flightClasses = new Set<string>();
 
