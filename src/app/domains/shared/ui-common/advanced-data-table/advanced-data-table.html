@@ -1,21 +1,21 @@
 <table class="table">
   <tr>
-    @for (f of fields(); track f) {
-      <th (click)="sort(f.propName())">
-        {{ colInfo()[f.propName()] }}
+    @for (field of fields(); track field) {
+      <th (click)="sort(field.propName())">
+        {{ colInfo()[field.propName()] }}
       </th>
     }
   </tr>
 
   @for (row of pagedData(); track $index) {
     <tr [class.empty-row]="!row">
-      @for (f of fields(); track f) {
+      @for (field of fields(); track field) {
         <td>
           @if (row) {
             <ng-container
               *ngTemplateOutlet="
-                f.templateRef;
-                context: { $implicit: row[f.propName()] }
+                field.templateRef;
+                context: { $implicit: row[field.propName()] }
               "></ng-container>
           } @else {
             &nbsp;

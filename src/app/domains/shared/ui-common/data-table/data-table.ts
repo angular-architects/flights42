@@ -10,21 +10,21 @@ import { TableField } from './table-field';
   template: `
     <table class="table">
       <tr>
-        @for (f of fields(); track f) {
+        @for (field of fields(); track field) {
           <th>
-            {{ f.title() }}
+            {{ field.title() }}
           </th>
         }
       </tr>
 
       @for (row of data(); track row) {
         <tr>
-          @for (f of fields(); track f) {
+          @for (field of fields(); track field) {
             <td>
               <ng-container
                 *ngTemplateOutlet="
-                  f.templateRef;
-                  context: { $implicit: row[f.propName()] }
+                  field.templateRef;
+                  context: { $implicit: row[field.propName()] }
                 "></ng-container>
             </td>
           }
