@@ -1,15 +1,15 @@
-@let priceForms = prices();
+@let pricesForm = prices();
 
 <fieldset>
   <legend>Prices</legend>
-  <app-validation-errors-pane [errors]="priceForms().errors()" />
+  <app-validation-errors-pane [errors]="pricesForm().errors()" />
   <table class="compact">
     <tr>
       <th>Flight Class</th>
       <th>Amount</th>
       <th></th>
     </tr>
-    @for (price of priceForms; track $index) {
+    @for (price of pricesForm; track $index) {
       <tr>
         <td>
           <input [formField]="price.flightClass" class="medium" />

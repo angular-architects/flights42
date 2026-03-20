@@ -14,7 +14,7 @@ export class PricesForm {
   readonly prices = input.required<FieldTree<Price[]>>();
 
   addPrice(): void {
-    const pricesForms = this.prices();
-    pricesForms().value.update((prices) => [...prices, { ...initialPrice }]);
+    const prices = this.prices();
+    prices().value.update((prices) => [...prices, { ...initialPrice }]);
   }
 }
