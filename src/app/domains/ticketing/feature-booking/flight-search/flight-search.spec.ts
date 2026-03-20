@@ -4,7 +4,7 @@ import {
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { page, userEvent } from 'vitest/browser';
+import { page } from 'vitest/browser';
 
 import { createTestFlight } from '../../../../testing/create-test-flight';
 import { provideTestConfig } from '../../../../testing/provide-test-config';
@@ -48,8 +48,8 @@ describe('flight-search', () => {
   });
 
   it('disables search button when from and to are not given', async () => {
-    await userEvent.fill(page.getByLabelText('From'), '');
-    await userEvent.fill(page.getByLabelText('To'), '');
+    await page.getByLabelText('From').fill('');
+    await page.getByLabelText('To').fill('');
 
     // await page.getByLabelText('From').fill('');
     // await page.getByLabelText('To').fill('');
@@ -59,8 +59,8 @@ describe('flight-search', () => {
   });
 
   it('enables search button when from and to are given', async () => {
-    await userEvent.fill(page.getByLabelText('From'), 'Paris');
-    await userEvent.fill(page.getByLabelText('To'), 'London');
+    await page.getByLabelText('From').fill('Paris');
+    await page.getByLabelText('To').fill('London');
 
     // await page.getByLabelText('From').fill('Paris');
     // await page.getByLabelText('To').fill('London');
@@ -80,15 +80,12 @@ describe('flight-search', () => {
 
     vi.spyOn(flightStore, 'updateFilter');
 
-    // await page.getByLabelText('From').fill('Paris');
-    // await page.getByLabelText('To').fill('London');
-
-    await userEvent.fill(page.getByLabelText('From'), 'Paris');
-    await userEvent.fill(page.getByLabelText('To'), 'London');
+    await page.getByLabelText('From').fill('Paris');
+    await page.getByLabelText('To').fill('London');
 
     const button = page.getByRole('button', { name: 'Search' });
 
-    await userEvent.click(button);
+    await button.click();
 
     const request = await vi.waitFor(() =>
       ctrl.expectOne('/flight?from=Paris&to=London'),
