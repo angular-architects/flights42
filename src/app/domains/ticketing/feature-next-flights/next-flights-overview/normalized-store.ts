@@ -8,7 +8,7 @@ import {
 } from '@ngrx/signals';
 import { setEntities, withEntities } from '@ngrx/signals/entities';
 
-import { initAircraft } from '../../data/aircraft';
+import { initialAircraft } from '../../data/aircraft';
 import { Flight } from '../../data/flight';
 import { Passenger } from '../../data/passenger';
 import { Price } from '../../data/price';
@@ -63,7 +63,7 @@ export const NormalizedStore = signalStore(
               date,
               delayed: false,
               delay: 0,
-              aircraft: initAircraft,
+              aircraft: initialAircraft,
               prices: [] as Price[],
               passengerIds: [1, 3],
             },
@@ -74,7 +74,7 @@ export const NormalizedStore = signalStore(
               date,
               delayed: false,
               delay: 0,
-              aircraft: initAircraft,
+              aircraft: initialAircraft,
               prices: [] as Price[],
               passengerIds: [1, 2],
             },
@@ -85,7 +85,7 @@ export const NormalizedStore = signalStore(
               date,
               delayed: false,
               delay: 0,
-              aircraft: initAircraft,
+              aircraft: initialAircraft,
               prices: [] as Price[],
               passengerIds: [2, 3],
             },

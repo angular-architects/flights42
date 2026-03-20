@@ -2,7 +2,7 @@ import { min, required, schema } from '@angular/forms/signals';
 
 import { Price } from './price';
 
-export const initPrice: Price = {
+export const initialPrice: Price = {
   flightClass: '',
   amount: 0,
 };

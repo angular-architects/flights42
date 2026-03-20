@@ -4,12 +4,12 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { page } from 'vitest/browser';
 
-import { initFlight } from '../../data/flight';
+import { initialFlight } from '../../data/flight';
 import { FlightDetailStore } from './flight-detail-store';
 import { FlightEdit } from './flight-edit';
 
 class FlightDetailStoreMock {
-  private readonly flightState = signal(initFlight);
+  private readonly flightState = signal(initialFlight);
   readonly flightValue = this.flightState.asReadonly();
   readonly saveFlightIsPending = signal(false);
 

@@ -10,8 +10,8 @@ import {
 import { firstValueFrom, map, Observable } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
-import { initAircraft } from './aircraft';
-import { Flight, initFlight } from './flight';
+import { initialAircraft } from './aircraft';
+import { Flight, initialFlight } from './flight';
 
 @Injectable({
   providedIn: 'root',
@@ -118,7 +118,7 @@ export class FlightClient {
       }),
       // TODO: Extend Service
       {
-        defaultValue: initFlight,
+        defaultValue: initialFlight,
         parse: (raw) => {
           return initializeFlight(raw);
         },
@@ -169,7 +169,7 @@ export class FlightClient {
 }
 function initializeFlight(raw: unknown) {
   const flight = raw as Flight;
-  flight.aircraft = initAircraft;
+  flight.aircraft = initialAircraft;
   flight.prices = [];
   flight.delay = flight.delayed ? 15 : 0;
   return flight;

@@ -3,7 +3,7 @@ import { FieldTree, FormField } from '@angular/forms/signals';
 
 import { ValidationErrorsPane } from '../../../../shared/ui-forms/validation-errors/validation-errors-pane';
 import { Price } from '../../../data/price';
-import { initPrice } from '../../../data/price-schema';
+import { initialPrice } from '../../../data/price-schema';
 
 @Component({
   selector: 'app-prices',
@@ -15,6 +15,6 @@ export class PricesForm {
 
   addPrice(): void {
     const pricesForms = this.prices();
-    pricesForms().value.update((prices) => [...prices, { ...initPrice }]);
+    pricesForms().value.update((prices) => [...prices, { ...initialPrice }]);
   }
 }

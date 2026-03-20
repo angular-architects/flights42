@@ -3,7 +3,7 @@ export interface Aircraft {
   registration: string;
 }
 
-export const initAircraft: Aircraft = {
+export const initialAircraft: Aircraft = {
   registration: '',
   type: '',
 };
