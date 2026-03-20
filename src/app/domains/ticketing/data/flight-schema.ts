@@ -31,7 +31,7 @@ export const flightSchema = schema<Flight>((path) => {
 
   // disabled(path.delay, (ctx) => !ctx.valueOf(path.delayed));
   disabled(path.delay, (ctx) =>
-    !ctx.valueOf(path.delayed) ? 'not delayed' : false,
+    ctx.valueOf(path.delayed) ? false : 'not delayed',
   );
 
   applyWhenValue(path, (flight) => flight.delayed, delayedFlight);
