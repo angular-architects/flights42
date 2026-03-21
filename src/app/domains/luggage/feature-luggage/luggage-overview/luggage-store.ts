@@ -24,9 +24,9 @@ import { LuggageClient } from '../../data/luggage-client';
 export const luggageEvents = eventGroup({
   source: 'Luggage Store',
   events: {
-    loadLuggage: type<void>(),
-    loadLuggageSuccess: type<{ luggage: Luggage[] }>(),
-    loadLuggageError: type<{ error: string }>(),
+    loadLuggageTriggered: type<void>(),
+    loadLuggageSucceeded: type<{ luggage: Luggage[] }>(),
+    loadLuggageFailed: type<{ error: string }>(),
   },
 });
 
@@ -46,29 +46,29 @@ export const LuggageStore = signalStore(
   })),
 
   withReducer(
-    on(luggageEvents.loadLuggage, () => ({
+    on(luggageEvents.loadLuggageTriggered, () => ({
       isLoading: true,
       error: null,
     })),
-    on(luggageEvents.loadLuggageSuccess, ({ payload }) => ({
+    on(luggageEvents.loadLuggageSucceeded, ({ payload }) => ({
       luggage: payload.luggage,
       isLoading: false,
     })),
-    on(luggageEvents.loadLuggageError, ({ payload }) => ({
+    on(luggageEvents.loadLuggageFailed, ({ payload }) => ({
       error: payload.error,
       isLoading: false,
     })),
   ),
 
   withEventHandlers((store) => ({
-    loadLuggage$: store._events.on(luggageEvents.loadLuggage).pipe(
+    loadLuggage$: store._events.on(luggageEvents.loadLuggageTriggered).pipe(
       switchMap(() =>
         store._luggageClient.find().pipe(
           mapResponse({
             next: (luggage: Luggage[]) =>
-              luggageEvents.loadLuggageSuccess({ luggage }),
+              luggageEvents.loadLuggageSucceeded({ luggage }),
             error: (error: unknown) =>
-              luggageEvents.loadLuggageError({ error: String(error) }),
+              luggageEvents.loadLuggageFailed({ error: String(error) }),
           }),
         ),
       ),

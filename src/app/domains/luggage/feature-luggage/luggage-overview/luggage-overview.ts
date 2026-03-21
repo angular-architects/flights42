@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Dispatcher } from '@ngrx/signals/events';
+import { injectDispatch } from '@ngrx/signals/events';
 
 import { LuggageCard } from '../luggage-card/luggage-card';
 import { luggageEvents, LuggageStore } from './luggage-store';
@@ -12,13 +12,13 @@ import { luggageEvents, LuggageStore } from './luggage-store';
 })
 export class LuggageOverview {
   private readonly store = inject(LuggageStore);
-  private readonly dispatcher = inject(Dispatcher);
+  private readonly dispatch = injectDispatch(luggageEvents);
 
   protected readonly luggage = this.store.luggage;
   protected readonly selected = this.store.selected;
 
   constructor() {
-    this.dispatcher.dispatch(luggageEvents.loadLuggage());
+    this.dispatch.loadLuggageTriggered();
   }
 
   protected updateSelected(luggageId: number, selected: boolean): void {
