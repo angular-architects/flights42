@@ -3,8 +3,9 @@ import { Component, computed, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RenderMessageComponent, UiChatMessage } from '@hashbrownai/angular';
 
+import { AgUiChatMessage } from '../../ui-agent/ag-ui-types';
+import { WidgetContainerComponent } from '../../ui-agent/widget-container/widget-container';
 import { MessageComponent } from '../message';
 import { ToolStatusComponent } from '../tool-status';
 
@@ -15,7 +16,7 @@ import { ToolStatusComponent } from '../tool-status';
     MatButtonModule,
     JsonPipe,
     MatTooltipModule,
-    RenderMessageComponent,
+    WidgetContainerComponent,
     MessageComponent,
     ToolStatusComponent,
   ],
@@ -23,11 +24,9 @@ import { ToolStatusComponent } from '../tool-status';
   styleUrls: ['./chat-messages.css'],
 })
 export class ChatMessages {
-  readonly messages = input.required<UiChatMessage[]>();
+  readonly messages = input.required<AgUiChatMessage[]>();
   readonly pending = input<boolean>(false);
-  protected readonly showIndicator = computed(
-    () => this.pending() && this.messages().at(-1)?.role !== 'assistant',
-  );
+  protected readonly showIndicator = computed(() => this.pending());
 
   protected readonly icons = {
     user: '💬',
@@ -64,7 +63,6 @@ export class ChatMessages {
         typeof message.content === 'string' ? message.content : String(''),
       hasContent: this.hasContent(message),
       icon: this.icons[message.role] || '❓',
-      toolCalls: message.role === 'assistant' ? message.toolCalls : [],
     })),
   );
 }

@@ -8,6 +8,7 @@ export const config: SheriffConfig = {
       'ui-<name>': ['domain:<domain>', 'type:ui'],
       'data-<name>': ['domain:<domain>', 'type:data'],
       'util-<name>': ['domain:<domain>', 'type:util'],
+      'ai/<name>': ['domain:<domain>', 'type:ai'],
 
       data: ['domain:<domain>', 'type:data'],
       ui: ['domain:<domain>', 'type:ui'],
@@ -23,10 +24,10 @@ export const config: SheriffConfig = {
 
     'domain:*': [sameTag, 'domain:shared'],
 
-    'type:ai': ['type:feature', 'type:ui', 'type:data', 'type:util'],
+    'type:ai': ['type:ai', 'type:feature', 'type:ui', 'type:data', 'type:util'],
 
     'type:feature': ['type:ui', 'type:data', 'type:util'],
-    'type:ui': ['type:data', 'type:util'],
+    'type:ui': ['type:ui', 'type:data', 'type:util'],
     'type:data': ['type:util'],
     'type:util': [],
 

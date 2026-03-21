@@ -1,0 +1,16 @@
+---
+description: Run ng lint fix after substantial app edits
+alwaysApply: true
+---
+
+# Angular Lint Fix
+
+- After substantial Angular or TypeScript edits in this project, run `ng lint --fix` before finishing.
+- Treat import ordering warnings as something to fix, not defer.
+- If `ng lint --fix` cannot run or still leaves issues behind, mention that explicitly in the final response.
+
+Example:
+
+```bash
+ng lint --fix
+```

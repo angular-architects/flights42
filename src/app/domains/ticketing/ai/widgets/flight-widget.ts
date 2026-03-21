@@ -1,14 +1,20 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
 import { Router } from '@angular/router';
-import { exposeComponent } from '@hashbrownai/angular';
-import { s } from '@hashbrownai/core';
 
-import { FlightInfo, FlightSchema } from '../../data/flight-info';
+import { AgUiRegisteredComponent } from '../../../shared/ui-agent/ag-ui-types';
+import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
 @Component({
   selector: 'app-flight-widget',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe],
   template: `
     @let itemValue = flight();
@@ -86,8 +92,8 @@ export class FlightWidget {
   private router = inject(Router);
   private store = inject(FlightStore);
 
-  protected readonly flight = input.required<FlightInfo>();
-  protected readonly status = input<'booked' | 'other'>('other');
+  readonly flight = input.required<FlightInfo>();
+  readonly status = input<'booked' | 'other'>('other');
 
   protected readonly isBooked = computed(() => this.status() === 'booked');
   protected readonly isSelected = computed(
@@ -103,11 +109,7 @@ export class FlightWidget {
   }
 }
 
-export const flightWidget = exposeComponent(FlightWidget, {
+export const flightWidgetComponent: AgUiRegisteredComponent = {
   name: 'flightWidget',
-  description: 'Displays information about a flight',
-  input: {
-    flight: FlightSchema,
-    status: s.enumeration('Status of the flight', ['booked', 'other']),
-  },
-});
+  component: FlightWidget,
+};

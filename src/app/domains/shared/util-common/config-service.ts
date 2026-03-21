@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 export interface Config {
   readonly baseUrl: string;
+  readonly agUiUrl: string;
   readonly model: string;
 }
 
@@ -14,7 +15,8 @@ export class ConfigService {
   private readonly http = inject(HttpClient);
 
   private _baseUrl = 'https://demo.angulararchitects.io/api';
-  private _model = 'gpt-5-chat-latest';
+  private _agUiUrl = 'http://localhost:3001/ag-ui/ticketingAgent';
+  private _model = 'gpt-5.3';
 
   get baseUrl() {
     return this._baseUrl;
@@ -24,9 +26,14 @@ export class ConfigService {
     return this._model;
   }
 
+  get agUiUrl() {
+    return this._agUiUrl;
+  }
+
   async load(configPath = '/config.json'): Promise<void> {
     const config = await firstValueFrom(this.http.get<Config>(configPath));
     this._model = config.model;
     this._baseUrl = config.baseUrl;
+    this._agUiUrl = config.agUiUrl;
   }
 }

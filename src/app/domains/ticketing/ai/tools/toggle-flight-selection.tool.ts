@@ -1,21 +1,33 @@
 import { inject } from '@angular/core';
-import { createTool } from '@hashbrownai/angular';
-import { s } from '@hashbrownai/core';
 
+import { AgUiClientToolDefinition } from '../../../shared/ui-agent/ag-ui-types';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
-export const toggleFlightSelection = createTool({
-  name: 'toggleFlightSelection',
-  description: `
-    Selects a flight or deselects it. Selected flights are added to the basket.
-  `,
-  schema: s.object('search parameters for flights', {
-    flightId: s.number('id of flight to select or deselect'),
-    selected: s.boolean('whether flight should be selected or deselected'),
-  }),
-  handler: (input) => {
-    const store = inject(FlightStore);
-    store.updateBasket(input.flightId, input.selected);
-    return Promise.resolve(true);
-  },
-});
+export function createToggleFlightSelectionTool(): AgUiClientToolDefinition {
+  const store = inject(FlightStore);
+
+  return {
+    name: 'toggleFlightSelection',
+    description:
+      'Selects a flight or deselects it. Selected flights are added to the basket.',
+    parameters: {
+      type: 'object',
+      properties: {
+        flightId: {
+          type: 'number',
+          description: 'id of flight to select or deselect',
+        },
+        selected: {
+          type: 'boolean',
+          description: 'whether flight should be selected or deselected',
+        },
+      },
+      required: ['flightId', 'selected'],
+    },
+    execute: (args) => {
+      const input = args as { flightId: number; selected: boolean };
+      store.updateBasket(input.flightId, input.selected);
+      return { selected: input.selected };
+    },
+  };
+}

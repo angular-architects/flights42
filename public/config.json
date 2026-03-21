@@ -1,4 +1,5 @@
 {
   "baseUrl": "https://demo.angulararchitects.io/api",
-  "model": "gpt-5-chat-latest"
+  "agUiUrl": "http://localhost:3001/ag-ui/ticketingAgent",
+  "model": "gpt-5.3"
 }

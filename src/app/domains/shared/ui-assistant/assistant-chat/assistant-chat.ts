@@ -7,9 +7,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { UiChatResourceRef } from '@hashbrownai/angular';
-import { Chat } from '@hashbrownai/core';
 
+import { AgUiChatResourceRef } from '../../ui-agent/ag-ui-types';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
 
@@ -30,7 +29,7 @@ export class AssistantChat {
   protected readonly panelVisible = signal(false);
   protected readonly message = signal('');
 
-  protected chat: UiChatResourceRef<Chat.AnyTool> | null = null;
+  protected chat: AgUiChatResourceRef | null = null;
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {

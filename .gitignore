@@ -41,4 +41,13 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+<<<<<<< HEAD
 .mastra
+=======
+
+/tmp-prompts
+
+agent/src/mastra/public
+
+.mastra
+>>>>>>> 8c1c217 (refactor: rename events used in event api example)

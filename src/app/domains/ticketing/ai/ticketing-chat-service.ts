@@ -1,42 +1,43 @@
 import { inject, Injectable } from '@angular/core';
-import { uiChatResource } from '@hashbrownai/angular';
 
+import { agUiResource } from '../../shared/ui-agent/ag-ui-resource';
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
-import { messageWidget } from '../../shared/ui-assistant/message-widget';
+import { messageWidgetComponent } from '../../shared/ui-assistant/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
-import { systemExtended } from './system-prompt';
-import { displayFlightDetail } from './tools/display-flight-detail.tool';
-import { findFlightsTool } from './tools/find-flights.tool';
-import { getBookedFlights } from './tools/get-booked-flights.tool';
-import { getCurrentBasket } from './tools/get-current-basket.tool';
-import { getCurrentFlight } from './tools/get-current-flight.tool';
-import { getCurrentRoute } from './tools/get-current-route.tool';
-import { getLoadedFlights } from './tools/get-loaded-flights.tool';
-import { toggleFlightSelection } from './tools/toggle-flight-selection.tool';
-import { updateFlight } from './tools/update-flight.tool';
-import { flightWidget } from './widgets/flight-widget';
+import {
+  createDisplayFlightDetailTool,
+  createFindFlightsTool,
+  createGetCurrentBasketTool,
+  createGetLoadedFlightsTool,
+  createShowComponentTool,
+  createToggleFlightSelectionTool,
+} from './tools';
+import { flightWidgetComponent } from './widgets/flight-widget';
 
 @Injectable({ providedIn: 'root' })
 export class TicketingChatService {
-  private config = inject(ConfigService);
-  private chatStore = inject(ChatRegistry);
+  private readonly config = inject(ConfigService);
+  private readonly chatStore = inject(ChatRegistry);
+  private readonly findFlightsTool = createFindFlightsTool();
+  private readonly getLoadedFlightsTool = createGetLoadedFlightsTool();
+  private readonly toggleFlightSelectionTool =
+    createToggleFlightSelectionTool();
+  private readonly getCurrentBasketTool = createGetCurrentBasketTool();
+  private readonly displayFlightDetailTool = createDisplayFlightDetailTool();
+  private readonly showComponentTool = createShowComponentTool();
 
-  private readonly chat = uiChatResource({
+  private readonly chat = agUiResource({
+    url: this.config.agUiUrl,
     model: this.config.model,
-    system: systemExtended,
     tools: [
-      findFlightsTool,
-      getLoadedFlights,
-      toggleFlightSelection,
-      getCurrentBasket,
-      displayFlightDetail,
-      // showBookedFlights,
-      getBookedFlights,
-      updateFlight,
-      getCurrentRoute,
-      getCurrentFlight,
+      this.findFlightsTool,
+      this.getLoadedFlightsTool,
+      this.toggleFlightSelectionTool,
+      this.getCurrentBasketTool,
+      this.displayFlightDetailTool,
+      this.showComponentTool,
     ],
-    components: [flightWidget, messageWidget],
+    components: [messageWidgetComponent, flightWidgetComponent],
   });
 
   public init(): void {

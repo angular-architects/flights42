@@ -1,25 +1,27 @@
 import { Injectable } from '@angular/core';
-import { UiChatResourceRef } from '@hashbrownai/angular';
-import { Chat } from '@hashbrownai/core';
-import { Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+
+import { AgUiChatResourceRef } from '../ui-agent/ag-ui-types';
 
 export interface ChatInfo {
-  chat: UiChatResourceRef<Chat.AnyTool> | null;
+  chat: AgUiChatResourceRef | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ChatRegistry {
-  private chat: UiChatResourceRef<Chat.AnyTool> | null = null;
-  private _chatInfo = new Subject<ChatInfo>();
-  public chatInfo = this._chatInfo.asObservable();
+  private chat: AgUiChatResourceRef | null = null;
+  private readonly _chatInfo = new BehaviorSubject<ChatInfo>({ chat: null });
+  public readonly chatInfo = this._chatInfo.asObservable();
 
-  public setChat(chat: UiChatResourceRef<Chat.AnyTool>) {
+  public setChat(chat: AgUiChatResourceRef) {
     if (chat !== this.chat) {
+      this.chat = chat;
       this._chatInfo.next({ chat });
     }
   }
 
   public clearChat(): void {
+    this.chat = null;
     this._chatInfo.next({ chat: null });
   }
 }

@@ -1,28 +1,34 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { createTool } from '@hashbrownai/angular';
-import { s } from '@hashbrownai/core';
 
+import { AgUiClientToolDefinition } from '../../../shared/ui-agent/ag-ui-types';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
-export const findFlightsTool = createTool({
-  name: 'findFlights',
-  description: `
-  Searches for flights and redirects the user to the result page where the found flights are shown.
-  
-  Remarks:
-  - For the search parameters, airport codes are NOT used but the city name. First letter in upper case.
-  `,
-  schema: s.object('search parameters for flights', {
-    from: s.string('airport of departure'),
-    to: s.string('airport of destination'),
-  }),
-  handler: async (input) => {
-    const store = inject(FlightStore);
-    const router = inject(Router);
+export function createFindFlightsTool(): AgUiClientToolDefinition {
+  const store = inject(FlightStore);
+  const router = inject(Router);
 
-    store.updateFilter(input.from, input.to);
+  return {
+    name: 'findFlights',
+    description: `
+Searches for flights and redirects the user to the result page where the found flights are shown.
 
-    router.navigate(['/ticketing/booking/flight-search']);
-  },
-});
+Remarks:
+- For the search parameters, airport codes are NOT used but the city name. First letter in upper case.
+    `.trim(),
+    parameters: {
+      type: 'object',
+      properties: {
+        from: { type: 'string', description: 'airport of departure' },
+        to: { type: 'string', description: 'airport of destination' },
+      },
+      required: ['from', 'to'],
+    },
+    execute: async (args) => {
+      const input = args as { from: string; to: string };
+      store.updateFilter(input.from, input.to);
+      await router.navigate(['/ticketing/booking/flight-search']);
+      return { ok: true };
+    },
+  };
+}

@@ -43,6 +43,9 @@
     },
     {
       "path": "./projects/ui-common/tsconfig.spec.json"
+    },
+    {
+      "path": "./agent/tsconfig.json"
     }
   ]
 }

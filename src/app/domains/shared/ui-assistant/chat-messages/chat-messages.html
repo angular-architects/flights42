@@ -9,10 +9,15 @@
 </article>
 
 @for (message of messageModels(); track $index) {
-  <article class="msg assistant">
+  <article
+    class="msg"
+    [class.assistant]="message.role === 'assistant'"
+    [class.user]="message.role === 'user'"
+    [class.error]="message.role === 'error'">
     <div class="avatar">{{ message.icon }}</div>
     <div>
       <div class="bubble">
+<<<<<<< HEAD
         @if (message.role === 'assistant' && message.hasContent) {
           <hb-render-message [message]="message" />
         } @else if (message.role !== 'assistant' && message.hasContent) {
@@ -22,6 +27,24 @@
         @for (toolCall of message.toolCalls; track toolCall.toolCallId) {
           <div class="tool-call" [title]="toolCall.args | json">
             <span class="tool-call-label">Tool Call: {{ toolCall.name }}</span>
+=======
+        @if (message.role === 'assistant') {
+          @if (message.contentString) {
+            <app-message [data]="message.contentString"></app-message>
+          }
+          @for (widget of message.widgets; track widget.name + $index) {
+            <app-widget-container [widget]="widget" />
+          }
+        } @else if (message.role === 'error') {
+          <app-message [data]="message.contentString"></app-message>
+        } @else {
+          <app-message [data]="message.contentString"></app-message>
+        }
+
+        @for (toolCall of message.toolCalls; track toolCall.id) {
+          <div class="tool-call" [title]="toolCall.args | json">
+            Tool Call: {{ toolCall.name }}
+>>>>>>> 8c1c217 (refactor: rename events used in event api example)
             <app-tool-status
               class="ml-5"
               [pending]="toolCall.status === 'pending'" />

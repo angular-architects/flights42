@@ -82,7 +82,6 @@ export const bookingRoutes: Routes = [
 ];
 
 export default bookingRoutes;
-
 function configAi() {
   inject(TicketingChatService).init();
   return true;

@@ -5,6 +5,7 @@
 .bubble {
   display: flex;
   flex-direction: column;
+<<<<<<< HEAD
   gap: 10px;
 }
 
@@ -36,4 +37,19 @@
 app-widget-container {
   display: block;
   margin: 0;
+=======
+  gap: 12px;
+}
+
+.tool-call {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+app-widget-container {
+  display: block;
+>>>>>>> 8c1c217 (refactor: rename events used in event api example)
 }

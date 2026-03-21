@@ -1,12 +1,7 @@
-import { exposeComponent } from '@hashbrownai/angular';
-import { s } from '@hashbrownai/core';
-
+import { AgUiRegisteredComponent } from '../ui-agent/ag-ui-types';
 import { MessageComponent } from './message';
 
-export const messageWidget = exposeComponent(MessageComponent, {
+export const messageWidgetComponent: AgUiRegisteredComponent = {
   name: 'messageWidget',
-  description: 'Displays a message to the user',
-  input: {
-    data: s.string('Plain text or markdown to be displayed to the user.'),
-  },
-});
+  component: MessageComponent,
+};
