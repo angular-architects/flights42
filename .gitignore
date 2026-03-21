@@ -46,7 +46,7 @@ Thumbs.db
 /tmp-prompts
 
 ai-server/src/mastra/public
-
-.mastra
-
 ai-server/src/mastra/db
+
+agent/src/mastra/public
+
