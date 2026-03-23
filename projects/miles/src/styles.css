@@ -1,6 +1,0 @@
-/* To save time, we are directly importing the other app's styles */
-@import url(../../../src/styles.css);
-
-body {
-  margin: 20px;
-}

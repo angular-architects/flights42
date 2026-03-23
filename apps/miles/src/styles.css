@@ -1,5 +1,5 @@
 /* To simplify this example, we reference the styles of the main project */
-@import url(../../../src/styles.css);
+@import url(../../flights/src/styles.css);
 
 body {
   padding: 20px;

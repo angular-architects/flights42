@@ -1,7 +1,10 @@
 {
-  "$schema": "node_modules/nx/schemas/project-schema.json",
-  "name": "flights42",
+  "name": "flights",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
+  "sourceRoot": "apps/flights/src",
+  "prefix": "app",
+  "tags": ["type:app"],
   "generators": {
     "@schematics/angular:component": {
       "style": "none",
@@ -18,23 +21,23 @@
       "skipTests": true
     }
   },
-  "sourceRoot": "src",
-  "prefix": "app",
-  "tags": ["type:app"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
       "options": {
-        "browser": "src/main.ts",
-        "tsConfig": "tsconfig.app.json",
+        "browser": "apps/flights/src/main.ts",
+        "tsConfig": "apps/flights/tsconfig.app.json",
         "assets": [
           {
             "glob": "**/*",
             "input": "public"
           }
         ],
-        "styles": ["src/material-theme.scss", "src/styles.css"],
-        "outputPath": "dist/flights42"
+        "styles": [
+          "apps/flights/src/material-theme.scss",
+          "apps/flights/src/styles.css"
+        ],
+        "outputPath": "dist/flights"
       },
       "configurations": {
         "production": {
@@ -65,10 +68,10 @@
       "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {
-          "buildTarget": "flights42:build:production"
+          "buildTarget": "flights:build:production"
         },
         "development": {
-          "buildTarget": "flights42:build:development"
+          "buildTarget": "flights:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -87,7 +90,10 @@
     "lint": {
       "executor": "@angular-eslint/builder:lint",
       "options": {
-        "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+        "lintFilePatterns": [
+          "apps/flights/src/**/*.ts",
+          "apps/flights/src/**/*.html"
+        ]
       },
       "outputs": ["{options.outputFile}"]
     },

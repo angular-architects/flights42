@@ -1,3 +1,4 @@
+/* eslint-disable @angular-eslint/no-input-rename */
 import { Directive, inject, input, TemplateRef } from '@angular/core';
 
 @Directive({
@@ -5,7 +6,6 @@ import { Directive, inject, input, TemplateRef } from '@angular/core';
 })
 export class TableFieldDirective<T> {
   readonly propName = input.required<keyof T>({
-    // eslint-disable-next-line @angular-eslint/no-input-rename
     alias: 'appTableFieldProvide',
   });
   readonly title = input.required<string>({ alias: 'appTableFieldTitle' });

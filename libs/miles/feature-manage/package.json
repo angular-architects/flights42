@@ -4,7 +4,7 @@
   "peerDependencies": {
     "@angular/core": "^21.0.0",
     "@flights42/miles-data": "0.0.1",
-    "@flight-demo/shared/util-auth": "0.0.1"
+    "@flights42/shared-util-auth": "0.0.1"
   },
   "sideEffects": false
 }

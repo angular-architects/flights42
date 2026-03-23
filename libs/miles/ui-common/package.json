@@ -2,8 +2,7 @@
   "name": "@flights42/miles-ui-common",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/core": "^21.0.0",
-    "@flights42/miles-feature-manage": "0.0.1"
+    "@angular/core": "^21.0.0"
   },
   "sideEffects": false
 }

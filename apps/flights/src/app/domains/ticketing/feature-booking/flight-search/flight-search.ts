@@ -14,6 +14,8 @@ import { RouterLink } from '@angular/router';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from './flight-store';
 
+import * as x from '@flights42/miles-data';
+
 @Component({
   selector: 'app-flight-search',
   imports: [FormField, FlightCard, JsonPipe, RouterLink],

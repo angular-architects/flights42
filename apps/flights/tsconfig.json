@@ -1,19 +1,13 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
     "isolatedModules": true,
-    "experimentalDecorators": true,
-    "importHelpers": true,
-    "target": "ES2022",
-    "module": "preserve",
-    "paths": {
-      "@flights42/ui-common": ["./projects/ui-common/src/public-api.ts"]
-    }
+    "moduleResolution": "bundler"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -22,25 +16,13 @@
     "strictTemplates": true
   },
   "files": [],
+  "include": [],
   "references": [
     {
       "path": "./tsconfig.app.json"
     },
     {
       "path": "./tsconfig.spec.json"
-    },
-    {
-      "path": "./projects/miles/tsconfig.app.json"
-    },
-    {
-      "path": "./projects/miles/tsconfig.spec.json"
-    },
-    {
-      "path": "./projects/ui-common/tsconfig.lib.json"
-    },
-    {
-      "path": "./projects/ui-common/tsconfig.spec.json"
     }
-  ],
-  "extends": "./tsconfig.base.json"
+  ]
 }
