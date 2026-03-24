@@ -75,6 +75,10 @@ module.exports = defineConfig([
         {
           depConstraints: [
             {
+              sourceTag: 'domain:flights',
+              onlyDependOnLibsWithTags: ['domain:flights', 'domain:shared'],
+            },
+            {
               sourceTag: 'domain:miles',
               onlyDependOnLibsWithTags: ['domain:miles', 'domain:shared'],
             },
