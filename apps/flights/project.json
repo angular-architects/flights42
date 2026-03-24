@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/flights/src",
   "prefix": "app",
-  "tags": ["type:app"],
+  "tags": ["type:app", "domain:flights"],
   "generators": {
     "@schematics/angular:component": {
       "style": "none",
