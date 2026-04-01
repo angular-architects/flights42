@@ -65,7 +65,9 @@ export class ChatMessages {
         typeof message.content === 'string' ? message.content : String(''),
       hasContent: this.hasContent(message),
       icon: this.icons[message.role] || '❓',
-      toolCalls: message.toolCalls,
+      toolCalls: message.toolCalls.filter(
+        (toolCall) => toolCall.name !== 'showComponent',
+      ),
     })),
   );
 }
