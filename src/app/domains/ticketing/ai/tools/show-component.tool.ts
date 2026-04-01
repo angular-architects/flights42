@@ -1,93 +1,68 @@
-import {
-  AgUiClientToolDefinition,
-  AgUiWidget,
-} from '../../../shared/ui-agent/ag-ui-types';
+import { z } from 'zod';
 
-const flightSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'number', description: 'The flight id' },
-    from: { type: 'string', description: 'Departure city' },
-    to: { type: 'string', description: 'Arrival city' },
-    date: { type: 'string', description: 'Departure date in ISO format' },
-    delay: { type: 'number', description: 'Delay in minutes' },
-  },
-  required: ['id', 'from', 'to', 'date', 'delay'],
-  additionalProperties: false,
-};
+import { AgUiClientToolDefinition } from '../../../shared/ui-agent/ag-ui-types';
+
+const flightSchema = z
+  .object({
+    id: z.number().describe('The flight id'),
+    from: z.string().describe('Departure city'),
+    to: z.string().describe('Arrival city'),
+    date: z.string().describe('Departure date in ISO format'),
+    delay: z.number().describe('Delay in minutes'),
+  })
+  .strict();
+
+const messageWidgetComponentSchema = z
+  .object({
+    name: z.literal('messageWidget'),
+    params: z
+      .object({
+        data: z
+          .string()
+          .describe('Plain text or markdown to display to the user.'),
+      })
+      .strict(),
+  })
+  .strict();
+
+const flightWidgetComponentSchema = z
+  .object({
+    name: z.literal('flightWidget'),
+    params: z
+      .object({
+        flight: flightSchema,
+        status: z.enum(['booked', 'other']).describe('Status of the flight'),
+      })
+      .strict(),
+  })
+  .strict();
+
+const componentSchema = z.discriminatedUnion('name', [
+  messageWidgetComponentSchema,
+  flightWidgetComponentSchema,
+]);
+
+const showComponentInputSchema = z
+  .object({
+    component: componentSchema.describe(
+      'Component config with name discriminator and params.',
+    ),
+  })
+  .strict();
 
 export function createShowComponentTool(): AgUiClientToolDefinition {
   return {
     name: 'showComponent',
     description:
       'Render a UI component for the user. Use this for messageWidget and flightWidget output.',
-    parameters: {
-      type: 'object',
-      properties: {
-        name: {
-          type: 'string',
-          enum: ['messageWidget', 'flightWidget'],
-          description: 'Name of the component to render.',
-        },
-        props: {
-          type: 'object',
-          description: 'Inputs for the selected component.',
-        },
-      },
-      required: ['name', 'props'],
-      additionalProperties: false,
-      allOf: [
-        {
-          if: {
-            properties: {
-              name: { const: 'messageWidget' },
-            },
-            required: ['name'],
-          },
-          then: {
-            properties: {
-              props: {
-                type: 'object',
-                properties: {
-                  data: {
-                    type: 'string',
-                    description:
-                      'Plain text or markdown to display to the user.',
-                  },
-                },
-                required: ['data'],
-                additionalProperties: false,
-              },
-            },
-          },
-        },
-        {
-          if: {
-            properties: {
-              name: { const: 'flightWidget' },
-            },
-            required: ['name'],
-          },
-          then: {
-            properties: {
-              props: {
-                type: 'object',
-                properties: {
-                  flight: flightSchema,
-                  status: {
-                    type: 'string',
-                    enum: ['booked', 'other'],
-                    description: 'Status of the flight',
-                  },
-                },
-                required: ['flight', 'status'],
-                additionalProperties: false,
-              },
-            },
-          },
-        },
-      ],
+    parameters: z.toJSONSchema(showComponentInputSchema),
+    execute: (args) => {
+      const value = showComponentInputSchema.parse(args);
+
+      return {
+        name: value.component.name,
+        props: value.component.params,
+      };
     },
-    execute: (args) => args as AgUiWidget,
   };
 }

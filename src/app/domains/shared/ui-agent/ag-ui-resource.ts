@@ -102,6 +102,7 @@ export function agUiResource(
       component,
     ]),
   );
+
   const pendingRun = signal<PendingRun | undefined>(undefined);
   const messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>> =
     signal({
@@ -335,6 +336,24 @@ async function runAgent(
 
   const pendingLocalCalls: PendingToolExecution[] = [];
   const toolParents = new Map<string, string>();
+  const _getToolCall = (toolCallId: string): AgUiToolCall | undefined => {
+    const messages = readMessages(messageStream());
+
+    for (const message of messages) {
+      if (message.role !== 'assistant') {
+        continue;
+      }
+
+      const toolCall = message.toolCalls.find(
+        (entry: AgUiToolCall) => entry.id === toolCallId,
+      );
+      if (toolCall) {
+        return toolCall;
+      }
+    }
+
+    return undefined;
+  };
 
   const subscriber: AgentSubscriber = {
     onTextMessageStartEvent: ({ event }) => {
@@ -384,10 +403,24 @@ async function runAgent(
       }));
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
+      const normalizedToolCallArgs = toolCallArgs ?? {};
+      const parentMessageId = toolParents.get(event.toolCallId);
+
+      if (toolCallName === 'showComponent') {
+        messageStream.update((item) => ({
+          value: applyToolResult(
+            readMessages(item),
+            event.toolCallId,
+            '',
+            componentMap,
+          ),
+        }));
+      }
+
       messageStream.update((item) => ({
         value: updateToolCall(readMessages(item), event.toolCallId, {
           name: toolCallName,
-          args: toolCallArgs,
+          args: normalizedToolCallArgs,
           status: 'pending',
         }),
       }));
@@ -399,18 +432,17 @@ async function runAgent(
       pendingLocalCalls.push({
         toolCallId: event.toolCallId,
         toolCallName,
-        toolCallArgs,
-        parentMessageId: toolParents.get(event.toolCallId),
+        toolCallArgs: normalizedToolCallArgs,
+        parentMessageId,
       });
     },
     onToolCallResultEvent: ({ event }) => {
+      console.log('Tool call result', event);
+
       messageStream.update((item) => ({
-        value: applyToolResult(
-          readMessages(item),
-          event.toolCallId,
-          event.content,
-          componentMap,
-        ),
+        value: updateToolCall(readMessages(item), event.toolCallId, {
+          status: 'complete',
+        }),
       }));
     },
     onRunErrorEvent: ({ event }) => {
@@ -595,6 +627,7 @@ function applyToolResult(
   const messagesWithStatus = updateToolCall(messages, toolCallId, {
     status: 'complete',
   });
+
   const widget = toWidget(
     toolNameFor(messagesWithStatus, toolCallId),
     content,
