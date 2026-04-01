@@ -44,24 +44,42 @@ const componentSchema = z.discriminatedUnion('name', [
 
 const showComponentInputSchema = z
   .object({
-    component: componentSchema.describe(
-      'Component config with name discriminator and params.',
-    ),
+    component: componentSchema
+      .describe('Single component config with name discriminator and params.')
+      .optional(),
+    components: z
+      .array(componentSchema)
+      .min(1)
+      .describe(
+        'Multiple component configs with name discriminator and params.',
+      )
+      .optional(),
   })
+  .refine(
+    (value) => (value.component ? 1 : 0) + (value.components ? 1 : 0) === 1,
+    'Either component or components must be provided.',
+  )
   .strict();
 
 export function createShowComponentTool(): AgUiClientToolDefinition {
   return {
     name: 'showComponent',
     description:
-      'Render a UI component for the user. Use this for messageWidget and flightWidget output.',
+      'Render one or multiple UI components for the user. Use this for messageWidget and flightWidget output.',
     parameters: z.toJSONSchema(showComponentInputSchema),
     execute: (args) => {
       const value = showComponentInputSchema.parse(args);
+      const components =
+        value.components ??
+        (value.component
+          ? [value.component]
+          : ([] as z.infer<typeof componentSchema>[]));
 
       return {
-        name: value.component.name,
-        props: value.component.params,
+        components: components.map((component) => ({
+          name: component.name,
+          props: component.params,
+        })),
       };
     },
   };

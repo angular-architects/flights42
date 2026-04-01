@@ -628,17 +628,17 @@ function applyToolResult(
     status: 'complete',
   });
 
-  const widget = toWidget(
+  const widgets = toWidgets(
     toolNameFor(messagesWithStatus, toolCallId),
     content,
     componentMap,
   );
 
-  if (!widget) {
+  if (widgets.length === 0) {
     return messagesWithStatus;
   }
 
-  return appendWidget(messagesWithStatus, toolCallId, widget);
+  return appendWidgets(messagesWithStatus, toolCallId, widgets);
 }
 
 function applyLocalToolResult(
@@ -650,18 +650,38 @@ function applyLocalToolResult(
   const messagesWithStatus = updateToolCall(messages, pendingCall.toolCallId, {
     status: 'complete',
   });
-  const widget = toWidget(pendingCall.toolCallName, content, componentMap);
+  const widgets = toWidgets(pendingCall.toolCallName, content, componentMap);
 
-  if (!widget) {
+  if (widgets.length === 0) {
     return messagesWithStatus;
   }
 
-  return appendWidget(
+  return appendWidgets(
     messagesWithStatus,
     pendingCall.toolCallId,
-    widget,
+    widgets,
     pendingCall.parentMessageId,
   );
+}
+
+function appendWidgets(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+  widgets: AgUiWidget[],
+  parentMessageId?: string,
+): AgUiChatMessage[] {
+  let nextMessages = messages;
+
+  for (const widget of widgets) {
+    nextMessages = appendWidget(
+      nextMessages,
+      toolCallId,
+      widget,
+      parentMessageId,
+    );
+  }
+
+  return nextMessages;
 }
 
 function appendWidget(
@@ -732,25 +752,47 @@ function replaceMessage(
   return nextMessages;
 }
 
-function toWidget(
+function toWidgets(
   name: string | undefined,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidget | null {
+): AgUiWidget[] {
   const parsed = safeParseJson(content);
 
   if (name === 'showComponent') {
-    return toRegisteredWidget(parsed, componentMap);
+    return toRegisteredWidgets(parsed, componentMap);
   }
 
   if (!name) {
-    return null;
+    return [];
   }
 
   const component = componentMap.get(name)?.component;
   return parsed && typeof parsed === 'object' && component
-    ? { name, component, props: parsed as Record<string, unknown> }
-    : null;
+    ? [{ name, component, props: parsed as Record<string, unknown> }]
+    : [];
+}
+
+function toRegisteredWidgets(
+  value: unknown,
+  componentMap: Map<string, AgUiRegisteredComponent>,
+): AgUiWidget[] {
+  if (!value || typeof value !== 'object') {
+    return [];
+  }
+
+  if (
+    'components' in value &&
+    Array.isArray((value as { components?: unknown }).components)
+  ) {
+    const components = (value as { components: unknown[] }).components;
+    return components
+      .map((item) => toRegisteredWidget(item, componentMap))
+      .filter((widget): widget is AgUiWidget => widget !== null);
+  }
+
+  const single = toRegisteredWidget(value, componentMap);
+  return single ? [single] : [];
 }
 
 function toRegisteredWidget(
