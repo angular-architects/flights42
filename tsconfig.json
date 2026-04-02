@@ -37,7 +37,7 @@
       "path": "./ai-server/tsconfig.json"
     },
     {
-      "path": "./agent/tsconfig.json"
+      "path": "./ai-server/tsconfig.json"
     }
   ]
 }
