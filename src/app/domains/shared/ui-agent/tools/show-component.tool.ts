@@ -10,7 +10,7 @@ type AnyRegisteredComponent = AgUiRegisteredComponent<
 
 interface RegisteredComponentInput<TComponent extends AnyRegisteredComponent> {
   name: TComponent['name'];
-  params: z.infer<TComponent['schema']>;
+  props: z.infer<TComponent['schema']>;
 }
 
 interface ShowComponentToolArgs<
@@ -29,7 +29,7 @@ function createComponentSchema(
   const schemas = registeredComponents.map((entry) =>
     z.object({
       name: z.literal(entry.name),
-      params: entry.schema,
+      props: entry.schema,
     }),
   );
 
@@ -59,13 +59,13 @@ export function createShowComponentTool<
       components: z
         .array(componentSchema)
         .min(1)
-        .describe('Component configs with name discriminator and params.'),
+        .describe('Component configs with name discriminator and props.'),
     }) as z.ZodType<ShowComponentToolArgs<TComponents>>,
     registeredComponents,
     execute: (args) => ({
       components: args.components.map((component) => ({
         name: component.name,
-        props: component.params,
+        props: component.props,
       })),
     }),
   });

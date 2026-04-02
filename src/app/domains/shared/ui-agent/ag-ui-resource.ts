@@ -345,6 +345,14 @@ function recordToolError(options: RecordToolErrorOptions): void {
   const message =
     error instanceof Error ? error.message : 'Tool execution failed';
 
+  if (pendingCall.toolCallName === 'showComponent') {
+    console.error('AG-UI showComponent call rejected', {
+      toolCallId: pendingCall.toolCallId,
+      args: pendingCall.toolCallArgs,
+      error,
+    });
+  }
+
   agent.addMessage({
     id: randomUUID(),
     role: 'tool',
