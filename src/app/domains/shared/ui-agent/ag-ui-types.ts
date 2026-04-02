@@ -126,6 +126,7 @@ export function defineAgUiTool(
 export interface AgUiResourceOptions {
   url: string;
   tools: AgUiClientToolDefinition<never>[];
+  hideInternal?: boolean;
   model?: string;
 }
 

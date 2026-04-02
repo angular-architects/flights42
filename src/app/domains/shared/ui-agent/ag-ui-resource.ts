@@ -7,6 +7,7 @@ import {
 import {
   EnvironmentInjector,
   inject,
+  linkedSignal,
   resource,
   type ResourceStreamItem,
   runInInjectionContext,
@@ -96,6 +97,7 @@ interface SendMessageOptions {
 export function agUiResource(
   options: AgUiResourceOptions,
 ): AgUiChatResourceRef {
+  const hideInternal = options.hideInternal ?? true;
   const environmentInjector = inject(EnvironmentInjector);
   const threadId = randomUUID();
   const agent = new HttpAgent({ url: options.url, threadId });
@@ -205,9 +207,11 @@ export function agUiResource(
     defaultValue: [],
     stream,
   });
+  const publicValue = linkedSignal(() => filterPublicMessages(chat.value()));
 
   return {
     ...chat,
+    value: hideInternal ? publicValue : chat.value,
     isLoading,
     sendMessage,
     resendMessages,
@@ -215,6 +219,27 @@ export function agUiResource(
       agent.abortRun();
     },
   } satisfies AgUiChatResourceRef;
+}
+
+function filterPublicMessages(messages: AgUiChatMessage[]): AgUiChatMessage[] {
+  return messages.flatMap((message) => {
+    const filteredToolCalls = message.toolCalls.filter(
+      (toolCall) => toolCall.name !== 'showComponent',
+    );
+    const hasContent = message.content.trim().length > 0;
+    const hasToolCalls = filteredToolCalls.length > 0;
+    const hasWidgets = message.widgets.length > 0;
+
+    if (!hasContent && !hasToolCalls && !hasWidgets) {
+      return [];
+    }
+
+    if (filteredToolCalls.length === message.toolCalls.length) {
+      return [message];
+    }
+
+    return [{ ...message, toolCalls: filteredToolCalls }];
+  });
 }
 
 function readRegisteredComponents(
@@ -376,24 +401,6 @@ async function runAgent(
 
   const pendingLocalCalls: PendingToolExecution[] = [];
   const toolParents = new Map<string, string>();
-  const _getToolCall = (toolCallId: string): AgUiToolCall | undefined => {
-    const messages = readMessages(messageStream());
-
-    for (const message of messages) {
-      if (message.role !== 'assistant') {
-        continue;
-      }
-
-      const toolCall = message.toolCalls.find(
-        (entry: AgUiToolCall) => entry.id === toolCallId,
-      );
-      if (toolCall) {
-        return toolCall;
-      }
-    }
-
-    return undefined;
-  };
 
   const subscriber: AgentSubscriber = {
     onTextMessageStartEvent: ({ event }) => {
@@ -477,8 +484,6 @@ async function runAgent(
       });
     },
     onToolCallResultEvent: ({ event }) => {
-      console.log('Tool call result', event);
-
       messageStream.update((item) => ({
         value: updateToolCall(readMessages(item), event.toolCallId, {
           status: 'complete',
@@ -492,9 +497,6 @@ async function runAgent(
           event.message || 'Unknown AG-UI run error',
         ),
       }));
-
-      console.error('AG-UI run error', event);
-      console.error('AG-UI run error', messageStream());
     },
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
@@ -503,9 +505,6 @@ async function runAgent(
           error instanceof Error ? error.message : 'Unknown AG-UI run failure',
         ),
       }));
-
-      console.error('AG-UI run failed', error);
-      console.error('AG-UI run failed', messageStream());
     },
   };
 
