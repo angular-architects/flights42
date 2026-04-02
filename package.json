@@ -57,6 +57,7 @@
     "@mastra/core": "^1.20.0",
     "@mastra/libsql": "^1.7.3",
     "@mastra/loggers": "^1.0.4",
+    "@mastra/memory": "^1.13.0",
     "@ngrx/operators": "^21.0.1",
     "@ngrx/signals": "^21.0.1",
     "chart.js": "^4.5.1",

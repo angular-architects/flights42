@@ -20,6 +20,7 @@ export class TicketingChatService {
   private readonly chat = agUiResource({
     url: this.config.agUiUrl,
     model: this.config.model,
+    useServerMemory: true,
     tools: [
       findFlightsTool,
       getLoadedFlightsTool,

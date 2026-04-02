@@ -127,6 +127,8 @@ export interface AgUiResourceOptions {
   url: string;
   tools: AgUiClientToolDefinition<never>[];
   hideInternal?: boolean;
+  useServerMemory?: boolean;
+  maxLocalTurns?: number;
   model?: string;
 }
 

@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
 
 import { ticketingSystemPrompt } from '../prompts/system-prompt.js';
 import { getBookedFlightsTool as getBookedFlights } from '../tools/get-booked-flights.tool.js';
@@ -9,4 +10,5 @@ export const ticketingAgent = new Agent({
   instructions: ticketingSystemPrompt,
   model: 'openai/gpt-5.4',
   tools: { getBookedFlights },
+  memory: new Memory(),
 });

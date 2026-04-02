@@ -46,6 +46,7 @@ interface RunUntilSettledOptions {
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
+  maxLocalTurns: number;
 }
 
 interface ExecutePendingToolsOptions {
@@ -97,6 +98,8 @@ export function agUiResource(
   options: AgUiResourceOptions,
 ): AgUiChatResourceRef {
   const hideInternal = options.hideInternal ?? true;
+  const useServerMemory = options.useServerMemory ?? false;
+  const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
   const threadId = randomUUID();
   const agent = new HttpAgent({ url: options.url, threadId });
@@ -144,6 +147,7 @@ export function agUiResource(
         abortSignal,
         messageStream,
         isLoading,
+        maxLocalTurns,
       });
     } catch (error) {
       if (!abortSignal.aborted) {
@@ -176,6 +180,10 @@ export function agUiResource(
       role: 'user' as const,
       content,
     };
+
+    if (useServerMemory) {
+      agent.messages = [];
+    }
 
     agent.addMessage(userMessage);
 
@@ -259,11 +267,25 @@ async function runUntilSettled(options: RunUntilSettledOptions): Promise<void> {
     abortSignal,
     messageStream,
     isLoading,
+    maxLocalTurns,
   } = options;
 
   let done = false;
   let currentRunId = runId;
+  let turnCount = 0;
   while (!done && !abortSignal.aborted) {
+    if (turnCount >= maxLocalTurns) {
+      messageStream.update((item) => ({
+        value: appendErrorMessage(
+          readMessages(item),
+          `Local tool turn limit (${maxLocalTurns}) reached.`,
+        ),
+      }));
+      break;
+    }
+
+    turnCount += 1;
+
     const pendingLocalCalls = await runAgent({
       agent,
       tools,
@@ -453,6 +475,12 @@ async function runAgent(
             componentMap,
           ),
         }));
+
+        messageStream.update((item) => ({
+          value: completeToolCall(readMessages(item), event.toolCallId),
+        }));
+
+        return;
       }
 
       messageStream.update((item) => ({
