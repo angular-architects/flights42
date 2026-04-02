@@ -5,8 +5,11 @@ import {
   randomUUID,
 } from '@ag-ui/client';
 import {
+  EnvironmentInjector,
+  inject,
   resource,
   type ResourceStreamItem,
+  runInInjectionContext,
   signal,
   type WritableSignal,
 } from '@angular/core';
@@ -34,9 +37,10 @@ interface PendingToolExecution {
 
 interface RunUntilSettledOptions {
   agent: HttpAgent;
-  tools: AgUiClientToolDefinition[];
-  toolMap: Map<string, AgUiClientToolDefinition>;
+  tools: AgUiClientToolDefinition<never>[];
+  toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
+  environmentInjector: EnvironmentInjector;
   runId: string;
   model?: string;
   abortSignal: AbortSignal;
@@ -46,16 +50,18 @@ interface RunUntilSettledOptions {
 
 interface ExecutePendingToolsOptions {
   agent: HttpAgent;
-  toolMap: Map<string, AgUiClientToolDefinition>;
+  toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
+  environmentInjector: EnvironmentInjector;
   pendingLocalCalls: PendingToolExecution[];
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
 }
 
 interface ExecuteToolOptions {
   agent: HttpAgent;
-  tool: AgUiClientToolDefinition;
+  tool: AgUiClientToolDefinition<never>;
   componentMap: Map<string, AgUiRegisteredComponent>;
+  environmentInjector: EnvironmentInjector;
   pendingCall: PendingToolExecution;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
 }
@@ -69,8 +75,8 @@ interface RecordToolErrorOptions {
 
 interface RunAgentOptions {
   agent: HttpAgent;
-  tools: AgUiClientToolDefinition[];
-  toolMap: Map<string, AgUiClientToolDefinition>;
+  tools: AgUiClientToolDefinition<never>[];
+  toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
   model?: string;
@@ -90,14 +96,15 @@ interface SendMessageOptions {
 export function agUiResource(
   options: AgUiResourceOptions,
 ): AgUiChatResourceRef {
+  const environmentInjector = inject(EnvironmentInjector);
   const threadId = randomUUID();
   const agent = new HttpAgent({ url: options.url, threadId });
   const tools = options.tools;
-  const toolMap = new Map<string, AgUiClientToolDefinition>(
-    tools.map((tool: AgUiClientToolDefinition) => [tool.name, tool]),
+  const toolMap = new Map<string, AgUiClientToolDefinition<never>>(
+    tools.map((tool: AgUiClientToolDefinition<never>) => [tool.name, tool]),
   );
   const componentMap = new Map<string, AgUiRegisteredComponent>(
-    options.components.map((component: AgUiRegisteredComponent) => [
+    readRegisteredComponents(tools).map((component) => [
       component.name,
       component,
     ]),
@@ -130,6 +137,7 @@ export function agUiResource(
         tools,
         toolMap,
         componentMap,
+        environmentInjector,
         runId: params.id,
         model: options.model,
         abortSignal,
@@ -209,12 +217,19 @@ export function agUiResource(
   } satisfies AgUiChatResourceRef;
 }
 
+function readRegisteredComponents(
+  tools: AgUiClientToolDefinition<never>[],
+): AgUiRegisteredComponent[] {
+  return tools.flatMap((tool) => tool.registeredComponents ?? []);
+}
+
 async function runUntilSettled(options: RunUntilSettledOptions): Promise<void> {
   const {
     agent,
     tools,
     toolMap,
     componentMap,
+    environmentInjector,
     runId,
     model,
     abortSignal,
@@ -239,6 +254,7 @@ async function runUntilSettled(options: RunUntilSettledOptions): Promise<void> {
       agent,
       toolMap,
       componentMap,
+      environmentInjector,
       pendingLocalCalls,
       messageStream,
     });
@@ -252,8 +268,14 @@ async function runUntilSettled(options: RunUntilSettledOptions): Promise<void> {
 async function executePendingTools(
   options: ExecutePendingToolsOptions,
 ): Promise<boolean> {
-  const { agent, toolMap, componentMap, pendingLocalCalls, messageStream } =
-    options;
+  const {
+    agent,
+    toolMap,
+    componentMap,
+    environmentInjector,
+    pendingLocalCalls,
+    messageStream,
+  } = options;
 
   let executedAnyTool = false;
 
@@ -269,6 +291,7 @@ async function executePendingTools(
         agent,
         tool,
         componentMap,
+        environmentInjector,
         pendingCall,
         messageStream,
       });
@@ -286,9 +309,18 @@ async function executePendingTools(
 }
 
 async function executeTool(options: ExecuteToolOptions): Promise<void> {
-  const { agent, tool, componentMap, pendingCall, messageStream } = options;
+  const {
+    agent,
+    tool,
+    componentMap,
+    environmentInjector,
+    pendingCall,
+    messageStream,
+  } = options;
 
-  const result = await tool.execute(pendingCall.toolCallArgs);
+  const result = await runInInjectionContext(environmentInjector, () =>
+    tool.execute(pendingCall.toolCallArgs as never),
+  );
   const serializedResult = JSON.stringify(result ?? null);
 
   agent.addMessage({
@@ -777,22 +809,19 @@ function toRegisteredWidgets(
   value: unknown,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiWidget[] {
-  if (!value || typeof value !== 'object') {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !('components' in value) ||
+    !Array.isArray((value as { components?: unknown }).components)
+  ) {
     return [];
   }
 
-  if (
-    'components' in value &&
-    Array.isArray((value as { components?: unknown }).components)
-  ) {
-    const components = (value as { components: unknown[] }).components;
-    return components
-      .map((item) => toRegisteredWidget(item, componentMap))
-      .filter((widget): widget is AgUiWidget => widget !== null);
-  }
-
-  const single = toRegisteredWidget(value, componentMap);
-  return single ? [single] : [];
+  const components = (value as { components: unknown[] }).components;
+  return components
+    .map((item) => toRegisteredWidget(item, componentMap))
+    .filter((widget): widget is AgUiWidget => widget !== null);
 }
 
 function toRegisteredWidget(

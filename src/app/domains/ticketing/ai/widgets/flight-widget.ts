@@ -7,10 +7,19 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { z } from 'zod';
 
-import { AgUiRegisteredComponent } from '../../../shared/ui-agent/ag-ui-types';
+import { defineAgUiComponent } from '../../../shared/ui-agent/ag-ui-types';
 import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
+
+const flightSchema = z.object({
+  id: z.number().describe('The flight id'),
+  from: z.string().describe('Departure city'),
+  to: z.string().describe('Arrival city'),
+  date: z.string().describe('Departure date in ISO format'),
+  delay: z.number().describe('Delay in minutes'),
+});
 
 @Component({
   selector: 'app-flight-widget',
@@ -109,7 +118,11 @@ export class FlightWidget {
   }
 }
 
-export const flightWidgetComponent: AgUiRegisteredComponent = {
+export const flightWidgetComponent = defineAgUiComponent({
   name: 'flightWidget',
   component: FlightWidget,
-};
+  schema: z.object({
+    flight: flightSchema,
+    status: z.enum(['booked', 'other']).describe('Status of the flight'),
+  }),
+});

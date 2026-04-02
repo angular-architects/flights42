@@ -1,33 +1,22 @@
 import { inject } from '@angular/core';
+import { z } from 'zod';
 
-import { AgUiClientToolDefinition } from '../../../shared/ui-agent/ag-ui-types';
+import { defineAgUiTool } from '../../../shared/ui-agent/ag-ui-types';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
-export function createToggleFlightSelectionTool(): AgUiClientToolDefinition {
-  const store = inject(FlightStore);
-
-  return {
-    name: 'toggleFlightSelection',
-    description:
-      'Selects a flight or deselects it. Selected flights are added to the basket.',
-    parameters: {
-      type: 'object',
-      properties: {
-        flightId: {
-          type: 'number',
-          description: 'id of flight to select or deselect',
-        },
-        selected: {
-          type: 'boolean',
-          description: 'whether flight should be selected or deselected',
-        },
-      },
-      required: ['flightId', 'selected'],
-    },
-    execute: (args) => {
-      const input = args as { flightId: number; selected: boolean };
-      store.updateBasket(input.flightId, input.selected);
-      return { selected: input.selected };
-    },
-  };
-}
+export const toggleFlightSelectionTool = defineAgUiTool({
+  name: 'toggleFlightSelection',
+  description:
+    'Selects a flight or deselects it. Selected flights are added to the basket.',
+  schema: z.object({
+    flightId: z.number().describe('id of flight to select or deselect'),
+    selected: z
+      .boolean()
+      .describe('whether flight should be selected or deselected'),
+  }),
+  execute: (args) => {
+    const store = inject(FlightStore);
+    store.updateBasket(args.flightId, args.selected);
+    return { selected: args.selected };
+  },
+});
