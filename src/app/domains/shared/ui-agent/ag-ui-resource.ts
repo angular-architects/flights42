@@ -33,7 +33,6 @@ interface PendingToolExecution {
   toolCallId: string;
   toolCallName: string;
   toolCallArgs: Record<string, unknown>;
-  parentMessageId?: string;
 }
 
 interface RunUntilSettledOptions {
@@ -400,7 +399,6 @@ async function runAgent(
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
-  const toolParents = new Map<string, string>();
 
   const subscriber: AgentSubscriber = {
     onTextMessageStartEvent: ({ event }) => {
@@ -424,15 +422,9 @@ async function runAgent(
     onToolCallStartEvent: ({ event }) => {
       messageStream.update((item) => {
         const messages = readMessages(item);
-        const parentMessageId = resolveParentMessageId(
-          messages,
-          event.parentMessageId,
-          event.toolCallId,
-        );
-        toolParents.set(event.toolCallId, parentMessageId);
 
         return {
-          value: upsertToolCall(messages, parentMessageId, {
+          value: upsertToolCall(messages, {
             id: event.toolCallId,
             name: event.toolCallName,
             args: {},
@@ -451,7 +443,6 @@ async function runAgent(
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
-      const parentMessageId = toolParents.get(event.toolCallId);
 
       if (toolCallName === 'showComponent') {
         messageStream.update((item) => ({
@@ -480,7 +471,6 @@ async function runAgent(
         toolCallId: event.toolCallId,
         toolCallName,
         toolCallArgs: normalizedToolCallArgs,
-        parentMessageId,
       });
     },
     onToolCallResultEvent: ({ event }) => {
@@ -565,49 +555,36 @@ function upsertAssistantMessage(
   });
 }
 
-function resolveParentMessageId(
-  messages: AgUiChatMessage[],
-  parentMessageId: string | undefined,
-  fallbackId: string,
-): string {
-  if (parentMessageId) {
-    return parentMessageId;
-  }
-
-  const lastAssistantMessage = [...messages]
-    .reverse()
-    .find((message) => message.role === 'assistant');
-
-  return lastAssistantMessage?.id ?? fallbackId;
-}
-
 function upsertToolCall(
   messages: AgUiChatMessage[],
-  parentMessageId: string,
   toolCall: AgUiToolCall,
 ): AgUiChatMessage[] {
-  const messagesWithParent = upsertAssistantMessage(
-    messages,
-    parentMessageId,
-    '',
-  );
-  const parentIndex = messagesWithParent.findIndex(
-    (message) => message.id === parentMessageId,
+  const toolCallMessageIndex = messages.findIndex(
+    (message) => message.id === toolCall.id,
   );
 
-  if (parentIndex === -1) {
-    return messagesWithParent;
+  if (toolCallMessageIndex === -1) {
+    return [
+      ...messages,
+      {
+        id: toolCall.id,
+        role: 'assistant',
+        content: '',
+        widgets: [],
+        toolCalls: [toolCall],
+      },
+    ];
   }
 
-  const parentMessage = messagesWithParent[parentIndex];
-  if (parentMessage.role !== 'assistant') {
-    return messagesWithParent;
+  const toolCallMessage = messages[toolCallMessageIndex];
+  if (toolCallMessage.role !== 'assistant') {
+    return messages;
   }
 
-  const existingToolCallIndex = parentMessage.toolCalls.findIndex(
+  const existingToolCallIndex = toolCallMessage.toolCalls.findIndex(
     (entry: AgUiToolCall) => entry.id === toolCall.id,
   );
-  const nextToolCalls = [...parentMessage.toolCalls];
+  const nextToolCalls = [...toolCallMessage.toolCalls];
 
   if (existingToolCallIndex === -1) {
     nextToolCalls.push(toolCall);
@@ -618,8 +595,8 @@ function upsertToolCall(
     };
   }
 
-  return replaceMessage(messagesWithParent, parentIndex, {
-    ...parentMessage,
+  return replaceMessage(messages, toolCallMessageIndex, {
+    ...toolCallMessage,
     toolCalls: nextToolCalls,
   });
 }
@@ -695,29 +672,18 @@ function applyLocalToolResult(
     return messagesWithStatus;
   }
 
-  return appendWidgets(
-    messagesWithStatus,
-    pendingCall.toolCallId,
-    widgets,
-    pendingCall.parentMessageId,
-  );
+  return appendWidgets(messagesWithStatus, pendingCall.toolCallId, widgets);
 }
 
 function appendWidgets(
   messages: AgUiChatMessage[],
   toolCallId: string,
   widgets: AgUiWidget[],
-  parentMessageId?: string,
 ): AgUiChatMessage[] {
   let nextMessages = messages;
 
   for (const widget of widgets) {
-    nextMessages = appendWidget(
-      nextMessages,
-      toolCallId,
-      widget,
-      parentMessageId,
-    );
+    nextMessages = appendWidget(nextMessages, toolCallId, widget);
   }
 
   return nextMessages;
@@ -727,7 +693,6 @@ function appendWidget(
   messages: AgUiChatMessage[],
   toolCallId: string,
   widget: AgUiWidget,
-  parentMessageId?: string,
 ): AgUiChatMessage[] {
   for (let index = 0; index < messages.length; index += 1) {
     const message = messages[index];
@@ -735,10 +700,9 @@ function appendWidget(
       continue;
     }
 
-    const matchesToolCall =
-      message.toolCalls.some(
-        (toolCall: AgUiToolCall) => toolCall.id === toolCallId,
-      ) || message.id === parentMessageId;
+    const matchesToolCall = message.toolCalls.some(
+      (toolCall: AgUiToolCall) => toolCall.id === toolCallId,
+    );
     if (!matchesToolCall) {
       continue;
     }
