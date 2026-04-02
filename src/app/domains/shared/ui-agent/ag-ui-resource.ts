@@ -101,8 +101,9 @@ export function agUiResource(
   const useServerMemory = options.useServerMemory ?? false;
   const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
-  const threadId = randomUUID();
-  const agent = new HttpAgent({ url: options.url, threadId });
+  const createAgent = (): HttpAgent =>
+    new HttpAgent({ url: options.url, threadId: randomUUID() });
+  let agent = createAgent();
   const tools = options.tools;
   const toolMap = new Map<string, AgUiClientToolDefinition<never>>(
     tools.map((tool: AgUiClientToolDefinition<never>) => [tool.name, tool]),
@@ -209,6 +210,14 @@ export function agUiResource(
     pendingRun.set({ id: randomUUID() });
   };
 
+  const reset = (): void => {
+    agent.abortRun();
+    agent = createAgent();
+    isLoading.set(false);
+    pendingRun.set(undefined);
+    messageStream.set({ value: [] });
+  };
+
   const chat = resource<AgUiChatMessage[], PendingRun | undefined>({
     params: () => pendingRun(),
     defaultValue: [],
@@ -222,6 +231,7 @@ export function agUiResource(
     isLoading,
     sendMessage,
     resendMessages,
+    reset,
     stop: () => {
       agent.abortRun();
     },

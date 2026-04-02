@@ -45,7 +45,7 @@
       "path": "./projects/ui-common/tsconfig.spec.json"
     },
     {
-      "path": "./agent/tsconfig.json"
+      "path": "./ai-server/tsconfig.json"
     }
   ]
 }

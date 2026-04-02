@@ -136,4 +136,5 @@ export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
   sendMessage: (message: { role: 'user'; content: string }) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
+  reset: () => void;
 }
