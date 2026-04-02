@@ -355,8 +355,8 @@ async function executeTool(options: ExecuteToolOptions): Promise<void> {
   });
 
   messageStream.update((item) => ({
-    value: applyLocalToolResult(
-      readMessages(item),
+    value: appendWidgetsFromPendingToolResult(
+      completeToolCall(readMessages(item), pendingCall.toolCallId),
       pendingCall,
       serializedResult,
       componentMap,
@@ -446,10 +446,10 @@ async function runAgent(
 
       if (toolCallName === 'showComponent') {
         messageStream.update((item) => ({
-          value: applyToolResult(
+          value: appendWidgetsFromToolResult(
             readMessages(item),
             event.toolCallId,
-            '',
+            JSON.stringify(normalizedToolCallArgs),
             componentMap,
           ),
         }));
@@ -475,9 +475,7 @@ async function runAgent(
     },
     onToolCallResultEvent: ({ event }) => {
       messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          status: 'complete',
-        }),
+        value: completeToolCall(readMessages(item), event.toolCallId),
       }));
     },
     onRunErrorEvent: ({ event }) => {
@@ -634,45 +632,47 @@ function updateToolCall(
   return messages;
 }
 
-function applyToolResult(
+function completeToolCall(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+): AgUiChatMessage[] {
+  return updateToolCall(messages, toolCallId, {
+    status: 'complete',
+  });
+}
+
+function appendWidgetsFromToolResult(
   messages: AgUiChatMessage[],
   toolCallId: string,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiChatMessage[] {
-  const messagesWithStatus = updateToolCall(messages, toolCallId, {
-    status: 'complete',
-  });
-
   const widgets = toWidgets(
-    toolNameFor(messagesWithStatus, toolCallId),
+    toolNameFor(messages, toolCallId),
     content,
     componentMap,
   );
 
   if (widgets.length === 0) {
-    return messagesWithStatus;
+    return messages;
   }
 
-  return appendWidgets(messagesWithStatus, toolCallId, widgets);
+  return appendWidgets(messages, toolCallId, widgets);
 }
 
-function applyLocalToolResult(
+function appendWidgetsFromPendingToolResult(
   messages: AgUiChatMessage[],
   pendingCall: PendingToolExecution,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiChatMessage[] {
-  const messagesWithStatus = updateToolCall(messages, pendingCall.toolCallId, {
-    status: 'complete',
-  });
   const widgets = toWidgets(pendingCall.toolCallName, content, componentMap);
 
   if (widgets.length === 0) {
-    return messagesWithStatus;
+    return messages;
   }
 
-  return appendWidgets(messagesWithStatus, pendingCall.toolCallId, widgets);
+  return appendWidgets(messages, pendingCall.toolCallId, widgets);
 }
 
 function appendWidgets(

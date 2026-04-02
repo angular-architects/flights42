@@ -62,11 +62,6 @@ export function createShowComponentTool<
         .describe('Component configs with name discriminator and props.'),
     }) as z.ZodType<ShowComponentToolArgs<TComponents>>,
     registeredComponents,
-    execute: (args) => ({
-      components: args.components.map((component) => ({
-        name: component.name,
-        props: component.props,
-      })),
-    }),
+    execute: () => ({ ok: true }),
   });
 }
