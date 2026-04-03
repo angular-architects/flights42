@@ -149,8 +149,7 @@ export function agUiResource(
     });
 
   const isLoading = signal<boolean>(false);
-
-  let activeRunRequestId = '';
+  let activeRunRequestId: string | null = null;
 
   const stream = async (streamOptions: StreamOptions) => {
     const { params, abortSignal } = streamOptions;
@@ -167,7 +166,7 @@ export function agUiResource(
       agent.abortRun();
     });
 
-    runUntilSettled({
+    void runUntilSettled({
       agent,
       tools,
       toolMap,
@@ -193,7 +192,6 @@ export function agUiResource(
             friendlyErrorMessage(error, 'Unknown AG-UI error'),
           ),
         }));
-        isLoading.set(false);
       })
       .finally(() => {
         if (activeRunRequestId === runRequestId) {
