@@ -22,14 +22,8 @@ export const bookingRoutes: Routes = [
     path: 'booking',
     component: BookingNavigation,
     providers: [
-      // FlightStore,
-      provideEnvironmentInitializer(() => {
-        console.log('init bookingRoutes');
-      }),
+      provideEnvironmentInitializer(() => inject(TicketingChatService).init()),
     ],
-    resolve: {
-      ai: configAi,
-    },
     children: [
       {
         path: '',
@@ -82,7 +76,3 @@ export const bookingRoutes: Routes = [
 ];
 
 export default bookingRoutes;
-function configAi() {
-  inject(TicketingChatService).init();
-  return true;
-}

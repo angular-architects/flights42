@@ -8,8 +8,12 @@ import { z } from 'zod';
 export interface AgUiWidget {
   id: string;
   name: string;
-  component: Type<unknown>;
-  props: Record<string, unknown>;
+  // For traditional Angular component rendering:
+  component?: Type<unknown>;
+  props?: Record<string, unknown>;
+  // For A2UI rendering:
+  a2uiSurfaceId?: string;
+  a2uiMessages?: unknown[];
 }
 
 type UnwrapInputSignalWriteType<Field> =
