@@ -649,69 +649,30 @@ input[type='button']:disabled {
   width: 48px;
 }
 
-/* Message widget (first/root text in showComponents Column): no vertical spacing */
-app-widget-container
-  a2ui-v09-surface
-  > a2ui-v09-column
-  > section.a2ui-column
-  > a2ui-v09-text:first-child
-  > section.a2ui-text-body {
-  padding-block: 0 !important;
-  margin-block: 0 !important;
-  font-size: var(--font-size-sm) !important;
-  line-height: 1.35 !important;
-}
-
-app-widget-container
-  a2ui-v09-surface
-  > a2ui-v09-column
-  > section.a2ui-column
-  > a2ui-v09-text:first-child
-  > section.a2ui-text-body
-  > p {
-  margin: 0 !important;
-  padding-block: 0 !important;
-  font-size: var(--font-size-sm) !important;
-  line-height: 1.35 !important;
-}
-
-/* Backward compatibility for older single-component surfaces. */
-app-widget-container a2ui-v09-surface > a2ui-v09-text p {
-  margin: 0 !important;
-  padding-block: 0 !important;
-}
-
-/* A2UI v0.9 fallback: text hint styles are not always applied reliably. */
-app-widget-container a2ui-v09-surface a2ui-v09-text h2 {
-  font-size: 1.1rem !important;
-  font-weight: 700 !important;
-  line-height: 1.3 !important;
-  margin: 0 !important;
-}
-
-app-widget-container a2ui-v09-surface a2ui-v09-card h3 {
+/* A2UI 0.8 fallback: text hint styles are not always applied reliably. */
+app-widget-container a2ui-surface a2ui-card h3 {
   font-size: 1.42rem !important;
   font-weight: 700 !important;
   line-height: 1.26 !important;
   margin: 0 !important;
 }
 
-app-widget-container a2ui-v09-surface a2ui-v09-card h5 {
+app-widget-container a2ui-surface a2ui-card h5 {
   font-size: 1rem !important;
   font-weight: 500 !important;
   line-height: 1.3 !important;
   margin: 0 !important;
 }
 
-app-widget-container a2ui-v09-surface a2ui-v09-card p {
+app-widget-container a2ui-surface a2ui-card p {
   margin: 0 !important;
 }
 
-app-widget-container a2ui-v09-surface a2ui-v09-card a2ui-v09-divider hr {
+app-widget-container a2ui-surface a2ui-card a2ui-divider hr {
   margin: 0.14rem 0 !important;
 }
 
-app-widget-container a2ui-v09-surface a2ui-v09-card a2ui-v09-button p {
+app-widget-container a2ui-surface a2ui-card a2ui-button p {
   color: #fff !important;
   font-weight: 700 !important;
   margin: 0 !important;
