@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx skills:*)",
+      "WebFetch(domain:docs.ag-ui.com)",
+      "Bash(npx eslint:*)"
+    ]
+  }
+}
