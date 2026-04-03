@@ -38,14 +38,14 @@ export interface AgUiChatMessageAttachment {
 export interface AgUiWidget {
   id: string;
   name: string;
-  // For traditional Angular component rendering:
+  /** Traditional Angular component embedding (e.g. showComponent payloads). */
   component?: Type<unknown>;
 }
 
 export interface AgUiWidgetInstance extends AgUiWidget {
   // For traditional Angular component rendering:
   props?: Record<string, unknown>;
-  // For A2UI rendering:
+  /** A2UI surface embedding. */
   a2uiSurfaceId?: string;
   a2uiSurface?: Types.Surface | null;
   a2uiMessages?: unknown[];
