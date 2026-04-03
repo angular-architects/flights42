@@ -649,9 +649,32 @@ input[type='button']:disabled {
   width: 48px;
 }
 
-/* Message widget (plain Text root): no extra vertical space */
+/* Message widget (first/root text in showComponents Column): no vertical spacing */
+app-widget-container
+  a2ui-surface
+  > a2ui-column
+  > section.a2ui-column
+  > a2ui-text:first-child
+  > section.a2ui-text-body {
+  padding-block: 0 !important;
+  margin-block: 0 !important;
+}
+
+app-widget-container
+  a2ui-surface
+  > a2ui-column
+  > section.a2ui-column
+  > a2ui-text:first-child
+  > section.a2ui-text-body
+  > p {
+  margin: 0 !important;
+  padding-block: 0 !important;
+}
+
+/* Backward compatibility for older single-component surfaces. */
 app-widget-container a2ui-surface > a2ui-text p {
   margin: 0 !important;
+  padding-block: 0 !important;
 }
 
 /* A2UI 0.8 fallback: text hint styles are not always applied reliably. */
