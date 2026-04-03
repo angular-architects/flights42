@@ -37,7 +37,7 @@
       "path": "./ai-server/tsconfig.json"
     },
     {
-      "path": "./ai-server/tsconfig.json"
+      "path": "./projects/a2ui-demo/tsconfig.app.json"
     }
   ]
 }

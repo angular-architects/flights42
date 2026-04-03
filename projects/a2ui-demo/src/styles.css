@@ -1,0 +1,79 @@
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+/* A2UI theme classes used by the demo theme mapping. */
+.a2ui-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 0.85rem 0.75rem;
+  border: 1px solid #dbe3ff;
+  border-radius: 0.9rem;
+  background: #ffffff;
+  box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.4);
+  display: grid;
+  gap: 0.2rem;
+}
+
+.a2ui-button {
+  border: none;
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  margin-top: 0.8rem;
+  background: linear-gradient(90deg, #5665e8 0%, #6f7cff 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 8px 20px -14px rgba(74, 88, 215, 0.7);
+  cursor: pointer;
+}
+
+.a2ui-button:hover {
+  filter: brightness(1.03);
+}
+
+.a2ui-button .a2ui-text-body {
+  color: #ffffff;
+}
+
+.a2ui-column {
+  gap: 0.1rem;
+}
+
+.a2ui-row {
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.a2ui-text-h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1c2640;
+}
+
+.a2ui-text-body {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #2b3755;
+}
+
+.a2ui-text-h2 p,
+.a2ui-text-body p {
+  margin: 0;
+}
+
+.a2ui-row > :first-child .a2ui-text-body {
+  font-weight: 700;
+  color: #51607f;
+}
