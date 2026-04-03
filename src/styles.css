@@ -649,6 +649,11 @@ input[type='button']:disabled {
   width: 48px;
 }
 
+/* Message widget (plain Text root): no extra vertical space */
+app-widget-container a2ui-surface > a2ui-text p {
+  margin: 0 !important;
+}
+
 /* A2UI 0.8 fallback: text hint styles are not always applied reliably. */
 app-widget-container a2ui-surface a2ui-card h3 {
   font-size: 1.42rem !important;
