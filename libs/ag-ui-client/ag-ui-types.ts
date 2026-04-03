@@ -1,75 +1,28 @@
 import type { Types } from '@a2ui/lit/0.8';
-import {
-  type InputSignalWithTransform,
-  ResourceRef,
-  Type,
-} from '@angular/core';
+import { ResourceRef, type Type } from '@angular/core';
 import { z } from 'zod';
 
 export interface AgUiWidget {
   id: string;
   name: string;
-  // For traditional Angular component rendering:
+  /** Traditional Angular component embedding (e.g. showComponent payloads). */
   component?: Type<unknown>;
   props?: Record<string, unknown>;
-  // For A2UI rendering:
+  /** A2UI surface embedding. */
   a2uiSurfaceId?: string;
   a2uiSurface?: Types.Surface | null;
   a2uiMessages?: unknown[];
 }
 
-type UnwrapInputSignalWriteType<Field> =
-  Field extends InputSignalWithTransform<infer _Read, infer WriteT>
-    ? WriteT
-    : never;
-
-type UnwrapDirectiveSignalInputs<Dir, Fields extends keyof Dir> = {
-  [P in Fields]: UnwrapInputSignalWriteType<Dir[P]>;
-};
-
-type NonNeverProperties<TValue> = {
-  [TKey in keyof TValue as [TValue[TKey]] extends [never]
-    ? never
-    : TKey]: TValue[TKey];
-};
-
-export type ComponentSignalInputs<TComponent> = NonNeverProperties<
-  UnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
->;
-
-type SchemaPropsForComponent<
-  TComponent,
-  TProps extends Record<string, unknown>,
-> = TProps & {
-  [TKey in keyof TProps]: TKey extends keyof ComponentSignalInputs<TComponent>
-    ? TProps[TKey] extends ComponentSignalInputs<TComponent>[TKey]
-      ? TProps[TKey]
-      : never
-    : never;
-};
-
 export interface AgUiRegisteredComponent<
   TComponent = unknown,
-  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
+  TProps extends Record<string, unknown> = Record<string, unknown>,
   TName extends string = string,
 > {
   name: TName;
   description: string;
   component: Type<TComponent>;
   schema: z.ZodType<TProps>;
-}
-
-export function defineAgUiComponent<
-  const TName extends string,
-  TComponent,
-  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
->(component: {
-  name: TName;
-  description: string;
-  component: Type<TComponent>;
-  schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
-}): AgUiRegisteredComponent<TComponent, TProps, TName> {
-  return component;
 }
 
 export interface AgUiToolCall {

@@ -9,11 +9,13 @@ import { AgUiWidget } from '../ag-ui-types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgComponentOutlet, Surface],
   template: `
-    @if (widget().a2uiSurface; as surface) {
-      <a2ui-surface [surfaceId]="widget().a2uiSurfaceId!" [surface]="surface" />
-    } @else if (widget().component) {
+    @if (widget().component; as comp) {
       <ng-container
-        *ngComponentOutlet="widget().component!; inputs: widget().props!" />
+        *ngComponentOutlet="comp; inputs: widget().props ?? {}" />
+    } @else if (widget().a2uiSurface; as surface) {
+      <a2ui-surface
+        [surfaceId]="widget().a2uiSurfaceId ?? ''"
+        [surface]="surface" />
     }
   `,
 })

@@ -7,19 +7,11 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
+import { AgUiRegisteredComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
-
-const flightSchema = z.object({
-  id: z.number().describe('The flight id'),
-  from: z.string().describe('Departure city'),
-  to: z.string().describe('Arrival city'),
-  date: z.string().describe('Departure date in ISO format'),
-  delay: z.number().describe('Delay in minutes'),
-});
 
 @Component({
   selector: 'app-flight-widget',
@@ -118,7 +110,15 @@ export class FlightWidget {
   }
 }
 
-export const flightWidget = defineAgUiComponent({
+const flightSchema = z.object({
+  id: z.number(),
+  from: z.string(),
+  to: z.string(),
+  date: z.string(),
+  delay: z.number(),
+});
+
+export const flightWidgetComponent: AgUiRegisteredComponent = {
   name: 'flightWidget',
   description: [
     'Interactive card displaying one concrete flight.',
@@ -128,6 +128,6 @@ export const flightWidget = defineAgUiComponent({
   component: FlightWidget,
   schema: z.object({
     flight: flightSchema,
-    status: z.enum(['booked', 'other']).describe('Status of the flight'),
+    status: z.enum(['booked', 'other']),
   }),
-});
+};
