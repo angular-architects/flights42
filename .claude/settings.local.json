@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx skills:*)",
       "WebFetch(domain:docs.ag-ui.com)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:a2ui.org)",
+      "Bash(npm search:*)"
     ]
   }
 }

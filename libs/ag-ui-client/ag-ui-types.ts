@@ -37,11 +37,16 @@ export interface AgUiChatMessageAttachment {
 export interface AgUiWidget {
   id: string;
   name: string;
-  component: Type<unknown>;
+  // For traditional Angular component rendering:
+  component?: Type<unknown>;
 }
 
 export interface AgUiWidgetInstance extends AgUiWidget {
-  props: Record<string, unknown>;
+  // For traditional Angular component rendering:
+  props?: Record<string, unknown>;
+  // For A2UI rendering:
+  a2uiSurfaceId?: string;
+  a2uiMessages?: unknown[];
 }
 
 export interface AgUiMcpAppsSnapshotContent {
