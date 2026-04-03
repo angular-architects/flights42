@@ -1,0 +1,19 @@
+<main class="demo-shell">
+  <section class="demo-card">
+    <h1>A2UI PassengerCard Demo</h1>
+    <p>
+      Values are resolved via <strong>data binding</strong> from the data model
+      into the surface components.
+    </p>
+
+    @let currentSurface = surface();
+    @if (currentSurface) {
+      <a2ui-surface [surfaceId]="surfaceId" [surface]="currentSurface" />
+    }
+
+    <p class="hint">
+      Click <strong>Select</strong> to see the A2UI event in the browser
+      console.
+    </p>
+  </section>
+</main>

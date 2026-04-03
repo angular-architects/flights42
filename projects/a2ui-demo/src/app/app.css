@@ -1,0 +1,60 @@
+:host {
+  --demo-bg: #f4f7ff;
+  --demo-text: #1f2a44;
+  --demo-subtle: #5d6984;
+  display: block;
+  min-height: 100dvh;
+}
+
+.demo-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 15% 15%, #dbe7ff 0%, transparent 40%),
+    radial-gradient(circle at 90% 10%, #d9f2ff 0%, transparent 38%),
+    var(--demo-bg);
+  color: var(--demo-text);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+.demo-card {
+  width: min(100%, 34rem);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  box-shadow:
+    0 20px 40px -28px rgba(16, 31, 92, 0.45),
+    0 8px 20px -18px rgba(16, 31, 92, 0.45);
+  border: 1px solid #e5ebff;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+  line-height: 1.35;
+}
+
+p {
+  margin: 0;
+  color: var(--demo-subtle);
+  line-height: 1.5;
+}
+
+a2ui-surface {
+  display: block;
+  margin-block: 1rem;
+}
+
+.hint {
+  font-size: 0.9rem;
+}
