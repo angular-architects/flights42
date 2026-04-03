@@ -22,7 +22,66 @@ export type UserMessageContent = UserMessage['content'];
 
 export interface AgUiWidget {
   name: string;
-  a2uiSurfaceId: string;
+  // For traditional Angular component rendering:
+  component?: Type<unknown>;
+  props?: Record<string, unknown>;
+  // For A2UI rendering:
+  a2uiSurfaceId?: string;
+  a2uiMessages?: unknown[];
+}
+
+type UnwrapInputSignalWriteType<Field> =
+  Field extends InputSignalWithTransform<infer _Read, infer WriteT>
+    ? WriteT
+    : never;
+
+type UnwrapDirectiveSignalInputs<Dir, Fields extends keyof Dir> = {
+  [P in Fields]: UnwrapInputSignalWriteType<Dir[P]>;
+};
+
+type NonNeverProperties<TValue> = {
+  [TKey in keyof TValue as [TValue[TKey]] extends [never]
+    ? never
+    : TKey]: TValue[TKey];
+};
+
+export type ComponentSignalInputs<TComponent> = NonNeverProperties<
+  UnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
+>;
+
+type SchemaPropsForComponent<
+  TComponent,
+  TProps extends Record<string, unknown>,
+> = TProps & {
+  [TKey in keyof TProps]: TKey extends keyof ComponentSignalInputs<TComponent>
+    ? TProps[TKey] extends ComponentSignalInputs<TComponent>[TKey]
+      ? TProps[TKey]
+      : never
+    : never;
+};
+
+export interface AgUiRegisteredComponent<
+  TComponent = unknown,
+  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
+  TName extends string = string,
+> {
+  name: TName;
+  description: string;
+  component: Type<TComponent>;
+  schema: z.ZodType<TProps>;
+}
+
+export function defineAgUiComponent<
+  const TName extends string,
+  TComponent,
+  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
+>(component: {
+  name: TName;
+  description: string;
+  component: Type<TComponent>;
+  schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
+}): AgUiRegisteredComponent<TComponent, TProps, TName> {
+  return component;
 }
 
 export interface AgUiToolCall {

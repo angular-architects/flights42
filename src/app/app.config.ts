@@ -1,4 +1,4 @@
-import { provideMarkdownRenderer } from '@a2ui/angular/v0_9';
+import { DEFAULT_CATALOG, provideA2UI, Theme } from '@a2ui/angular';
 import {
   ApplicationConfig,
   inject,
@@ -15,26 +15,110 @@ import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
 import { ticketingExtraComponents } from './domains/ticketing/ai/custom-catalog/ticketing-extra-components';
 
+const emptyClasses: Record<string, boolean> = {};
+
+const a2uiTheme: Theme = {
+  components: {
+    AudioPlayer: emptyClasses,
+    Button: emptyClasses,
+    Card: emptyClasses,
+    Column: emptyClasses,
+    CheckBox: {
+      container: emptyClasses,
+      element: emptyClasses,
+      label: emptyClasses,
+    },
+    DateTimeInput: {
+      container: emptyClasses,
+      element: emptyClasses,
+      label: emptyClasses,
+    },
+    Divider: emptyClasses,
+    Image: {
+      all: emptyClasses,
+      icon: emptyClasses,
+      avatar: emptyClasses,
+      smallFeature: emptyClasses,
+      mediumFeature: emptyClasses,
+      largeFeature: emptyClasses,
+      header: emptyClasses,
+    },
+    Icon: emptyClasses,
+    List: emptyClasses,
+    Modal: { backdrop: emptyClasses, element: emptyClasses },
+    MultipleChoice: {
+      container: emptyClasses,
+      element: emptyClasses,
+      label: emptyClasses,
+    },
+    Row: emptyClasses,
+    Slider: {
+      container: emptyClasses,
+      element: emptyClasses,
+      label: emptyClasses,
+    },
+    Tabs: {
+      container: emptyClasses,
+      element: emptyClasses,
+      controls: { all: emptyClasses, selected: emptyClasses },
+    },
+    Text: {
+      all: emptyClasses,
+      h1: emptyClasses,
+      h2: emptyClasses,
+      h3: emptyClasses,
+      h4: emptyClasses,
+      h5: emptyClasses,
+      caption: emptyClasses,
+      body: emptyClasses,
+    },
+    TextField: {
+      container: emptyClasses,
+      element: emptyClasses,
+      label: emptyClasses,
+    },
+    Video: emptyClasses,
+  },
+  elements: {
+    a: emptyClasses,
+    audio: emptyClasses,
+    body: emptyClasses,
+    button: emptyClasses,
+    h1: emptyClasses,
+    h2: emptyClasses,
+    h3: emptyClasses,
+    h4: emptyClasses,
+    h5: emptyClasses,
+    iframe: emptyClasses,
+    input: emptyClasses,
+    p: emptyClasses,
+    pre: emptyClasses,
+    textarea: emptyClasses,
+    video: emptyClasses,
+  },
+  markdown: {
+    p: [],
+    h1: [],
+    h2: [],
+    h3: [],
+    h4: [],
+    h5: [],
+    ul: [],
+    ol: [],
+    li: [],
+    a: [],
+    strong: [],
+    em: [],
+  },
+};
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideAppInitializer(() => inject(ConfigService).load()),
     // provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes, withComponentInputBinding()),
-    // Demo-simplification: sendCatalogDescription forwards the full
-    // descriptor (component schemas etc.) to the agent so the LLM can build
-    // valid A2UI messages without server-side knowledge of the catalog.
-    // In production, set sendCatalogDescription: false and let the server
-    // resolve the catalog id against its own trusted registry to avoid
-    // prompt-injection attacks via untrusted component metadata.
-    provideA2uiCatalog({
-      id: 'https://a2ui.org/specification/v0_9/basic_catalog.json',
-      components: ticketingExtraComponents,
-      sendCatalogDescription: true,
-    }),
-    provideMarkdownRenderer(async (markdown) =>
-      marked.parse(String(markdown ?? '')),
-    ),
+    provideA2UI({ catalog: DEFAULT_CATALOG, theme: a2uiTheme }),
     provideHashbrown({
       baseUrl: 'http://localhost:3000/api/chat',
       emulateStructuredOutput: true,
