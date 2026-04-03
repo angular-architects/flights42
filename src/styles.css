@@ -649,6 +649,35 @@ input[type='button']:disabled {
   width: 48px;
 }
 
+/* A2UI 0.8 fallback: text hint styles are not always applied reliably. */
+app-widget-container a2ui-surface a2ui-card h3 {
+  font-size: 1.42rem !important;
+  font-weight: 700 !important;
+  line-height: 1.26 !important;
+  margin: 0 !important;
+}
+
+app-widget-container a2ui-surface a2ui-card h5 {
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+}
+
+app-widget-container a2ui-surface a2ui-card p {
+  margin: 0 !important;
+}
+
+app-widget-container a2ui-surface a2ui-card a2ui-divider hr {
+  margin: 0.14rem 0 !important;
+}
+
+app-widget-container a2ui-surface a2ui-card a2ui-button p {
+  color: #fff !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+}
+
 .tooltip {
   background: var(--color-white);
   border: 1px solid var(--color-black);
@@ -689,6 +718,47 @@ input[type='button']:disabled {
 
 .tooltip :last-child {
   margin-bottom: 0;
+}
+
+.a2ui-md-p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.34;
+  color: #1f2430;
+}
+
+.a2ui-md-h1,
+.a2ui-md-h2,
+.a2ui-md-h3,
+.a2ui-md-h4,
+.a2ui-md-h5 {
+  margin: 0;
+  line-height: 1.2;
+  color: #1f2430;
+}
+
+.a2ui-md-h4 {
+  font-size: 1.08rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.a2ui-md-h5 {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.a2ui-md-em {
+  color: #5f636f;
+  font-style: italic;
+  font-size: 0.96rem;
+  line-height: 1.3;
+}
+
+a2ui-button .a2ui-md-p {
+  color: #fff;
+  font-weight: 700;
 }
 
 .validation-errors {
