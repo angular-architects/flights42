@@ -1,4 +1,4 @@
-import { DEFAULT_CATALOG, provideA2UI, Theme } from '@a2ui/angular';
+import { DEFAULT_CATALOG, provideA2UI } from '@a2ui/angular';
 import {
   ApplicationConfig,
   inject,
@@ -9,105 +9,9 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHashbrown } from '@hashbrownai/angular';
 import { provideMarkdown } from 'ngx-markdown';
 
+import { a2uiTheme } from './a2ui-theme';
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
-
-const emptyClasses: Record<string, boolean> = {};
-
-const a2uiTheme = {
-  components: {
-    AudioPlayer: emptyClasses,
-    Button: { 'a2ui-button': true },
-    Card: { 'a2ui-card': true },
-    Column: { 'a2ui-column': true },
-    CheckBox: {
-      container: emptyClasses,
-      element: emptyClasses,
-      label: emptyClasses,
-    },
-    DateTimeInput: {
-      container: emptyClasses,
-      element: emptyClasses,
-      label: emptyClasses,
-    },
-    Divider: { 'a2ui-divider': true },
-    Image: {
-      all: emptyClasses,
-      icon: emptyClasses,
-      avatar: emptyClasses,
-      smallFeature: emptyClasses,
-      mediumFeature: emptyClasses,
-      largeFeature: emptyClasses,
-      header: emptyClasses,
-    },
-    Icon: emptyClasses,
-    List: emptyClasses,
-    Modal: { backdrop: emptyClasses, element: emptyClasses },
-    MultipleChoice: {
-      container: emptyClasses,
-      element: emptyClasses,
-      label: emptyClasses,
-    },
-    Row: emptyClasses,
-    Slider: {
-      container: emptyClasses,
-      element: emptyClasses,
-      label: emptyClasses,
-    },
-    Tabs: {
-      container: emptyClasses,
-      element: emptyClasses,
-      controls: { all: emptyClasses, selected: emptyClasses },
-    },
-    Text: {
-      all: emptyClasses,
-      h1: { 'a2ui-text-h1': true },
-      h2: { 'a2ui-text-h2': true },
-      h3: { 'a2ui-text-h3': true },
-      h4: { 'a2ui-text-h4': true },
-      h5: { 'a2ui-text-h5': true },
-      caption: { 'a2ui-text-caption': true },
-      body: { 'a2ui-text-body': true },
-    },
-    TextField: {
-      container: { 'a2ui-textfield-container': true },
-      element: { 'a2ui-textfield-element': true },
-      label: emptyClasses,
-    },
-    Video: emptyClasses,
-  },
-  elements: {
-    a: emptyClasses,
-    audio: emptyClasses,
-    body: emptyClasses,
-    button: emptyClasses,
-    h1: emptyClasses,
-    h2: emptyClasses,
-    h3: emptyClasses,
-    h4: emptyClasses,
-    h5: emptyClasses,
-    iframe: emptyClasses,
-    input: emptyClasses,
-    p: emptyClasses,
-    pre: emptyClasses,
-    textarea: emptyClasses,
-    video: emptyClasses,
-  },
-  markdown: {
-    p: [],
-    h1: [],
-    h2: [],
-    h3: [],
-    h4: [],
-    h5: [],
-    ul: [],
-    ol: [],
-    li: [],
-    a: [],
-    strong: [],
-    em: [],
-  },
-} as Theme;
 
 export const appConfig: ApplicationConfig = {
   providers: [
