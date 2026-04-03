@@ -1339,6 +1339,11 @@ legend {
   gap: 0.08rem;
 }
 
+/* showComponents root stack spacing (between sibling components) */
+app-widget-container a2ui-surface > a2ui-column > section.a2ui-column {
+  gap: 0.6rem;
+}
+
 .a2ui-divider {
   margin: 0.14rem 0;
 }
