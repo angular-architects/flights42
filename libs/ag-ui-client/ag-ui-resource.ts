@@ -201,7 +201,8 @@ function filterPublicMessages(messages: AgUiChatMessage[]): AgUiChatMessage[] {
     }
 
     const filteredToolCalls = message.toolCalls.filter(
-      (toolCall) => toolCall.name !== 'showComponent',
+      (toolCall) =>
+        toolCall.name !== 'showComponent' && toolCall.name !== 'showComponents',
     );
     const hasContent = message.content.trim().length > 0;
     const hasToolCalls = filteredToolCalls.length > 0;
@@ -421,16 +422,17 @@ async function runAgent(
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
+      const isLocalTool = toolMap.has(toolCallName);
 
       messageStream.update((item) => ({
         value: updateToolCall(readMessages(item), event.toolCallId, {
           name: toolCallName,
           args: normalizedToolCallArgs,
-          status: 'pending',
+          status: isLocalTool ? 'pending' : 'complete',
         }),
       }));
 
-      if (!toolMap.has(toolCallName)) {
+      if (!isLocalTool) {
         return;
       }
 
