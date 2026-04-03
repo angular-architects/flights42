@@ -1,13 +1,6 @@
-import { MessageProcessor, Surface, type Types } from '@a2ui/angular';
+import { Surface } from '@a2ui/angular';
 import { NgComponentOutlet } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { AgUiWidgetInstance } from '../ag-ui-types';
 
@@ -16,7 +9,7 @@ import { AgUiWidgetInstance } from '../ag-ui-types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgComponentOutlet, Surface],
   template: `
-    @if (a2uiSurface(); as surface) {
+    @if (widget().a2uiSurface; as surface) {
       <a2ui-surface [surfaceId]="widget().a2uiSurfaceId!" [surface]="surface" />
     } @else if (widget().component) {
       <ng-container
@@ -25,26 +18,5 @@ import { AgUiWidgetInstance } from '../ag-ui-types';
   `,
 })
 export class WidgetContainerComponent {
-  private readonly processor = inject(MessageProcessor);
   readonly widget = input.required<AgUiWidgetInstance>();
-
-  protected readonly a2uiSurface = signal<Types.Surface | null>(null);
-
-  constructor() {
-    effect(() => {
-      this.syncA2uiSurface();
-    });
-  }
-
-  private syncA2uiSurface(): void {
-    const w = this.widget();
-    if (!w.a2uiMessages || !w.a2uiSurfaceId) {
-      this.a2uiSurface.set(null);
-      return;
-    }
-    this.processor.processMessages(w.a2uiMessages as never);
-    this.a2uiSurface.set(
-      this.processor.getSurfaces().get(w.a2uiSurfaceId) ?? null,
-    );
-  }
 }

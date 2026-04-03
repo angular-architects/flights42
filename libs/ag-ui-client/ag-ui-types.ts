@@ -1,3 +1,4 @@
+import type { Types } from '@a2ui/angular';
 import { type InputContentPart, type UserMessage } from '@ag-ui/core';
 import {
   type InputSignalWithTransform,
@@ -46,6 +47,7 @@ export interface AgUiWidgetInstance extends AgUiWidget {
   props?: Record<string, unknown>;
   // For A2UI rendering:
   a2uiSurfaceId?: string;
+  a2uiSurface?: Types.Surface | null;
   a2uiMessages?: unknown[];
 }
 
