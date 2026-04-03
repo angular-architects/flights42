@@ -168,6 +168,11 @@ export function agUiResource(
     messageStream.set({ value: [] });
   };
 
+  const dispose = (): void => {
+    agent.abortRun();
+    reset();
+  };
+
   const chat = resource<AgUiChatMessage[], PendingRun | undefined>({
     params: () => pendingRun(),
     defaultValue: [],
@@ -182,6 +187,7 @@ export function agUiResource(
     sendMessage,
     resendMessages,
     reset,
+    dispose,
     stop: () => {
       agent.abortRun();
     },

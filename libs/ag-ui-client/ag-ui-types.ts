@@ -1,3 +1,4 @@
+import type { Types } from '@a2ui/lit/0.8';
 import {
   type InputSignalWithTransform,
   ResourceRef,
@@ -13,6 +14,7 @@ export interface AgUiWidget {
   props?: Record<string, unknown>;
   // For A2UI rendering:
   a2uiSurfaceId?: string;
+  a2uiSurface?: Types.Surface | null;
   a2uiMessages?: unknown[];
 }
 
@@ -160,4 +162,5 @@ export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;
+  dispose: () => void;
 }
