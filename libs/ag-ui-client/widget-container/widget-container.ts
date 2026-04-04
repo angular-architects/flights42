@@ -8,10 +8,10 @@ import { type AgUiWidget } from '../ag-ui-types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Surface],
   template: `
-    @if (widget().a2uiSurface; as surface) {
-      <a2ui-surface
-        [surfaceId]="widget().a2uiSurfaceId"
-        [surface]="surface" />
+    @let surface = widget().a2uiSurface;
+    @let surfaceId = widget().a2uiSurfaceId;
+    @if (surface) {
+      <a2ui-surface [surfaceId]="surfaceId" [surface]="surface" />
     }
   `,
 })
