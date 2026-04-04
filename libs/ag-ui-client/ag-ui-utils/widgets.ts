@@ -1,10 +1,16 @@
+import { MessageProcessor } from '@a2ui/angular';
+import type { Types } from '@a2ui/lit/0.8';
+
 import {
+  type AgUiA2uiWidget,
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
-  type AgUiMcpAppsSnapshotContent,
+  type AgUiComponentWidget,
   type AgUiRegisteredComponent,
   type AgUiToolCall,
-  type AgUiWidgetInstance,
+  type AgUiWidget,
+  isAgUiA2uiWidget,
+  isAgUiComponentWidget,
 } from '../ag-ui-types';
 import { replaceMessage } from './messages';
 
@@ -12,6 +18,51 @@ export function readRegisteredComponents(
   tools: AgUiClientToolDefinition<never>[],
 ): AgUiRegisteredComponent[] {
   return tools.flatMap((tool) => tool.registeredComponents ?? []);
+}
+
+/**
+ * Handles server tool results such as `showComponents` that return A2UI
+ * `{ surfaceId, messages }` JSON.
+ */
+export function appendA2uiSurfaceFromToolResult(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+  content: string,
+  processor: MessageProcessor,
+): AgUiChatMessage[] {
+  const parsed = safeParseJson(content);
+  const widget = toA2uiWidgetFromToolResult(parsed, toolCallId, processor);
+  if (!widget) {
+    return messages;
+  }
+  return appendWidget(messages, toolCallId, widget);
+}
+
+function toA2uiWidgetFromToolResult(
+  value: unknown,
+  toolCallId: string,
+  processor: MessageProcessor,
+): AgUiA2uiWidget | null {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !('surfaceId' in value) ||
+    !('messages' in value) ||
+    !Array.isArray((value as { messages?: unknown }).messages)
+  ) {
+    return null;
+  }
+
+  const result = value as {
+    surfaceId: string;
+    messages: Types.ServerToClientMessage[];
+  };
+  processor.processMessages(result.messages);
+  return {
+    name: `a2ui_${toolCallId}`,
+    a2uiSurfaceId: result.surfaceId,
+    a2uiSurface: processor.getSurfaces().get(result.surfaceId) ?? null,
+  };
 }
 
 export function appendWidgetsFromToolResult(
@@ -54,58 +105,23 @@ export function appendWidgetsFromPendingToolResult(
   return appendWidgets(messages, pendingCall.toolCallId, widgets);
 }
 
-export function upsertWidgetFromActivitySnapshot(
-  messages: AgUiChatMessage[],
-  messageId: string,
-  activityType: string,
-  content: unknown,
-  componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiChatMessage[] {
-  if (activityType !== 'mcp-apps') {
-    return messages;
+function widgetsContentEqual(a: AgUiWidget, b: AgUiWidget): boolean {
+  if (a.name !== b.name) {
+    return false;
   }
-
-  const widget = toMcpAppsWidget(messageId, content, componentMap);
-  if (!widget) {
-    return messages;
+  if (isAgUiComponentWidget(a) && isAgUiComponentWidget(b)) {
+    return JSON.stringify(a.props) === JSON.stringify(b.props);
   }
-
-  const existingIndex = messages.findIndex(
-    (message) => message.id === messageId,
-  );
-  if (existingIndex === -1) {
-    return [
-      ...messages,
-      {
-        id: messageId,
-        role: 'assistant',
-        content: '',
-        widgets: [widget],
-        toolCalls: [],
-        workflowSteps: [],
-      },
-    ];
+  if (isAgUiA2uiWidget(a) && isAgUiA2uiWidget(b)) {
+    return a.a2uiSurfaceId === b.a2uiSurfaceId;
   }
-
-  const existingMessage = messages[existingIndex];
-  if (existingMessage.role !== 'assistant') {
-    return messages;
-  }
-
-  const nextWidgets = existingMessage.widgets.filter(
-    (entry) => entry.name !== widget.name,
-  );
-
-  return replaceMessage(messages, existingIndex, {
-    ...existingMessage,
-    widgets: [...nextWidgets, widget],
-  });
+  return false;
 }
 
 function appendWidgets(
   messages: AgUiChatMessage[],
   toolCallId: string,
-  widgets: AgUiWidgetInstance[],
+  widgets: AgUiWidget[],
 ): AgUiChatMessage[] {
   let nextMessages = messages;
 
@@ -119,7 +135,7 @@ function appendWidgets(
 function appendWidget(
   messages: AgUiChatMessage[],
   toolCallId: string,
-  widget: AgUiWidgetInstance,
+  widget: AgUiWidget,
 ): AgUiChatMessage[] {
   for (let index = 0; index < messages.length; index += 1) {
     const message = messages[index];
@@ -134,17 +150,11 @@ function appendWidget(
       continue;
     }
 
-    const existingWidgetIndex = message.widgets.findIndex(
-      (entry: AgUiWidgetInstance) => entry.id === widget.id,
+    const hasWidget = message.widgets.some((entry: AgUiWidget) =>
+      widgetsContentEqual(entry, widget),
     );
-    if (existingWidgetIndex !== -1) {
-      const nextWidgets = [...message.widgets];
-      nextWidgets[existingWidgetIndex] = widget;
-
-      return replaceMessage(messages, index, {
-        ...message,
-        widgets: nextWidgets,
-      });
+    if (hasWidget) {
+      return messages;
     }
 
     return replaceMessage(messages, index, {
@@ -181,7 +191,7 @@ function toWidgets(
   toolCallId: string,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidgetInstance[] {
+): AgUiWidget[] {
   const parsed = safeParseJson(content);
 
   if (name === 'showComponents') {
@@ -192,20 +202,14 @@ function toWidgets(
     return [];
   }
 
-  const registeredComponent = componentMap.get(name);
-  if (!registeredComponent) {
-    return [];
-  }
-
-  const component = registeredComponent.component;
+  const component = componentMap.get(name)?.component;
   return parsed && typeof parsed === 'object' && component
     ? [
         {
-          id: `${toolCallId}-0`,
           name,
           component,
           props: parsed as Record<string, unknown>,
-        },
+        } satisfies AgUiComponentWidget,
       ]
     : [];
 }
@@ -214,7 +218,7 @@ function toRegisteredWidgets(
   value: unknown,
   toolCallId: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidgetInstance[] {
+): AgUiWidget[] {
   if (
     !value ||
     typeof value !== 'object' ||
@@ -229,7 +233,7 @@ function toRegisteredWidgets(
     .map((item, index) =>
       toRegisteredWidget(item, toolCallId, index, componentMap),
     )
-    .filter((widget): widget is AgUiWidgetInstance => widget !== null);
+    .filter((widget): widget is AgUiWidget => widget !== null);
 }
 
 function toRegisteredWidget(
@@ -237,26 +241,21 @@ function toRegisteredWidget(
   toolCallId: string,
   index: number,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidgetInstance | null {
+): AgUiWidget | null {
   if (!value || typeof value !== 'object') {
     return null;
   }
 
-  const widget = value as Partial<{
-    name: string;
-    props: Record<string, unknown>;
-  }>;
-  const componentName =
-    typeof widget.name === 'string' ? widget.name : undefined;
-  const registeredComponent = componentName
-    ? componentMap.get(componentName)
+  const raw = value as Partial<AgUiComponentWidget>;
+  const componentName = typeof raw.name === 'string' ? raw.name : undefined;
+  const component = componentName
+    ? componentMap.get(componentName)?.component
     : undefined;
-  const component = registeredComponent?.component;
 
   if (
     !componentName ||
-    !widget.props ||
-    typeof widget.props !== 'object' ||
+    !raw.props ||
+    typeof raw.props !== 'object' ||
     !component
   ) {
     return null;
@@ -266,53 +265,8 @@ function toRegisteredWidget(
     id: `${toolCallId}-${index}`,
     name: componentName,
     component,
-    props: widget.props as Record<string, unknown>,
+    props: raw.props as Record<string, unknown>,
   };
-}
-
-function toMcpAppsWidget(
-  messageId: string,
-  value: unknown,
-  componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidgetInstance | null {
-  if (!isMcpAppsSnapshotContent(value)) {
-    return null;
-  }
-
-  const componentName = 'mcpAppsWidget';
-  const component = componentMap.get(componentName)?.component;
-  if (!component) {
-    return null;
-  }
-
-  return {
-    id: `${messageId}-mcp-apps`,
-    name: componentName,
-    component,
-    props: { data: value } as Record<string, unknown>,
-  };
-}
-
-function isMcpAppsSnapshotContent(
-  value: unknown,
-): value is AgUiMcpAppsSnapshotContent {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { serverId?: unknown }).serverId === 'string' &&
-    typeof (value as { resourceUri?: unknown }).resourceUri === 'string' &&
-    typeof (value as { toolInput?: unknown }).toolInput === 'object' &&
-    (value as { toolInput?: unknown }).toolInput !== null &&
-    isCallToolResult((value as { result?: unknown }).result)
-  );
-}
-
-function isCallToolResult(value: unknown): boolean {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    Array.isArray((value as { content?: unknown }).content)
-  );
 }
 
 function safeParseJson(value: string): unknown {

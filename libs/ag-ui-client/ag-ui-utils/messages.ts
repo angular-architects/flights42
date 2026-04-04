@@ -19,12 +19,39 @@ export function replaceMessage(
   return nextMessages;
 }
 
+function isHiddenA2uiFormResponse(message: AgUiChatMessage): boolean {
+  if (message.role !== 'user') {
+    return false;
+  }
+
+  const parsed = safeParseJson(message.content);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return false;
+  }
+
+  const payload = parsed as Record<string, unknown>;
+  return payload['type'] === 'a2ui_form_response';
+}
+
+function safeParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
 export function filterPublicMessages(
   messages: AgUiChatMessage[],
 ): AgUiChatMessage[] {
   return messages.flatMap((message) => {
+    if (isHiddenA2uiFormResponse(message)) {
+      return [];
+    }
+
     const filteredToolCalls = message.toolCalls.filter(
-      (toolCall) => toolCall.name !== 'showComponents',
+      (toolCall) =>
+        toolCall.name !== 'showComponent' && toolCall.name !== 'showComponents',
     );
     const hasContent = message.content.trim().length > 0;
     const hasToolCalls = filteredToolCalls.length > 0;
