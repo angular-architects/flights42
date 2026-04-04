@@ -13,7 +13,6 @@ import {
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
-  type AgUiRegisteredComponent,
 } from '../ag-ui-types';
 import {
   appendErrorMessage,
@@ -29,16 +28,12 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import {
-  appendA2uiSurfaceFromToolResult,
-  appendWidgetsFromToolResult,
-} from './widgets';
+import { appendA2uiSurfaceFromToolResult } from './widgets';
 
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  componentMap: Map<string, AgUiRegisteredComponent>;
   processor: MessageProcessor;
   runId: string;
   model?: string;
@@ -54,15 +49,7 @@ interface RunAgentResult {
 export async function runAgent(
   options: RunAgentOptions,
 ): Promise<PendingToolExecution[]> {
-  const {
-    agent,
-    tools,
-    toolMap,
-    componentMap,
-    processor,
-    model,
-    messageStream,
-  } = options;
+  const { agent, tools, toolMap, processor, model, messageStream } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
@@ -213,7 +200,6 @@ export interface RunUntilSettledOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  componentMap: Map<string, AgUiRegisteredComponent>;
   processor: MessageProcessor;
   environmentInjector: EnvironmentInjector;
   runId: string;
@@ -232,7 +218,6 @@ export async function runUntilSettled(
     agent,
     tools,
     toolMap,
-    componentMap,
     processor,
     environmentInjector,
     runId,
@@ -263,11 +248,7 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
-<<<<<<< HEAD
-=======
-      componentMap,
       processor,
->>>>>>> 07d3210 (fix: merge conflicts)
       runId: currentRunId,
       model,
       useServerMemory,
@@ -283,7 +264,7 @@ export async function runUntilSettled(
     await executePendingTools({
       agent,
       toolMap,
-      componentMap,
+      processor,
       environmentInjector,
       pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,

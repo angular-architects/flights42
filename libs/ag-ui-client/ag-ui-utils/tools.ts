@@ -1,3 +1,4 @@
+import { MessageProcessor } from '@a2ui/angular';
 import { type HttpAgent, type Message, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -10,11 +11,10 @@ import { z } from 'zod';
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
-  type AgUiRegisteredComponent,
   type AgUiToolCall,
 } from '../ag-ui-types';
 import { readMessages, replaceMessage } from './messages';
-import { appendWidgetsFromPendingToolResult } from './widgets';
+import { appendA2uiSurfaceFromToolResult } from './widgets';
 
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 type ToolMessage = Extract<Message, { role: 'tool' }>;
@@ -33,7 +33,7 @@ export interface PendingToolExecution {
 interface ExecutePendingToolsOptions {
   agent: HttpAgent;
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  componentMap: Map<string, AgUiRegisteredComponent>;
+  processor: MessageProcessor;
   environmentInjector: EnvironmentInjector;
   pendingLocalCalls: PendingToolExecution[];
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -42,7 +42,7 @@ interface ExecutePendingToolsOptions {
 interface ExecuteToolOptions {
   agent: HttpAgent;
   tool: AgUiClientToolDefinition<never>;
-  componentMap: Map<string, AgUiRegisteredComponent>;
+  processor: MessageProcessor;
   environmentInjector: EnvironmentInjector;
   pendingCall: PendingToolExecution;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -240,7 +240,7 @@ export async function executePendingTools(
   const {
     agent,
     toolMap,
-    componentMap,
+    processor,
     environmentInjector,
     pendingLocalCalls,
     messageStream,
@@ -258,7 +258,7 @@ export async function executePendingTools(
       const sentToolResult = await executeTool({
         agent,
         tool,
-        componentMap,
+        processor,
         environmentInjector,
         pendingCall,
         messageStream,
@@ -281,7 +281,7 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
   const {
     agent,
     tool,
-    componentMap,
+    processor,
     environmentInjector,
     pendingCall,
     messageStream,
@@ -306,11 +306,11 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
   addToolResultMessage(agent, pendingCall.toolCallId, result);
 
   messageStream.update((item) => ({
-    value: appendWidgetsFromPendingToolResult(
+    value: appendA2uiSurfaceFromToolResult(
       completeToolCall(readMessages(item), pendingCall.toolCallId),
-      pendingCall,
+      pendingCall.toolCallId,
       serializedResult,
-      componentMap,
+      processor,
     ),
   }));
 
@@ -320,14 +320,6 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
 function recordToolError(options: RecordToolErrorOptions): void {
   const { agent, pendingCall, error, messageStream } = options;
   const message = formatToolErrorMessage(pendingCall.toolCallName, error);
-
-  if (pendingCall.toolCallName === 'showComponents') {
-    console.error('AG-UI showComponents call rejected', {
-      toolCallId: pendingCall.toolCallId,
-      args: pendingCall.toolCallArgs,
-      error,
-    });
-  }
 
   agent.addMessage({
     id: randomUUID(),
