@@ -1,5 +1,5 @@
 import { MessageProcessor } from '@a2ui/angular';
-import type { UserAction as A2UiUserAction } from '@a2ui/web_core/types/client-event';
+import type { UserAction } from '@a2ui/web_core/types/client-event';
 import {
   assertInInjectionContext,
   DestroyRef,
@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-export type Handlers = Record<string, (action: A2UiUserAction) => void>;
+export type Handlers = Record<string, (action: UserAction) => void>;
 
 export function registerHandlers(handlers: Handlers): void {
   assertInInjectionContext(registerHandlers);
@@ -30,7 +30,7 @@ export function registerHandlers(handlers: Handlers): void {
 }
 
 export function callHandler(
-  action: A2UiUserAction,
+  action: UserAction,
   handlers: Handlers,
   environmentInjector: EnvironmentInjector,
 ): void {
