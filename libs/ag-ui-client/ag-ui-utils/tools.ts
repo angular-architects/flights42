@@ -1,3 +1,4 @@
+import { MessageProcessor } from '@a2ui/angular';
 import { type HttpAgent, type Message, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -13,6 +14,7 @@ import {
   type AgUiToolCall,
 } from '../ag-ui-types';
 import { readMessages, replaceMessage } from './messages';
+import { appendA2uiSurfaceFromToolResult } from './widgets';
 
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 type ToolMessage = Extract<Message, { role: 'tool' }>;
@@ -31,6 +33,7 @@ export interface PendingToolExecution {
 interface ExecutePendingToolsOptions {
   agent: HttpAgent;
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
+  processor: MessageProcessor;
   environmentInjector: EnvironmentInjector;
   pendingLocalCalls: PendingToolExecution[];
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -39,6 +42,7 @@ interface ExecutePendingToolsOptions {
 interface ExecuteToolOptions {
   agent: HttpAgent;
   tool: AgUiClientToolDefinition<never>;
+  processor: MessageProcessor;
   environmentInjector: EnvironmentInjector;
   pendingCall: PendingToolExecution;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -236,6 +240,7 @@ export async function executePendingTools(
   const {
     agent,
     toolMap,
+    processor,
     environmentInjector,
     pendingLocalCalls,
     messageStream,
@@ -253,6 +258,7 @@ export async function executePendingTools(
       const sentToolResult = await executeTool({
         agent,
         tool,
+        processor,
         environmentInjector,
         pendingCall,
         messageStream,
@@ -272,8 +278,14 @@ export async function executePendingTools(
 }
 
 async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
-  const { agent, tool, environmentInjector, pendingCall, messageStream } =
-    options;
+  const {
+    agent,
+    tool,
+    processor,
+    environmentInjector,
+    pendingCall,
+    messageStream,
+  } = options;
 
   const result = await runInInjectionContext(environmentInjector, () =>
     tool.execute(pendingCall.toolCallArgs as never),
@@ -292,7 +304,12 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
   addToolResultMessage(agent, pendingCall.toolCallId, result);
 
   messageStream.update((item) => ({
-    value: completeToolCall(readMessages(item), pendingCall.toolCallId),
+    value: appendA2uiSurfaceFromToolResult(
+      completeToolCall(readMessages(item), pendingCall.toolCallId),
+      pendingCall.toolCallId,
+      serializedResult,
+      processor,
+    ),
   }));
 
   return true;

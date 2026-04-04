@@ -26,7 +26,6 @@ import {
   readMessages,
 } from './ag-ui-utils/messages';
 import { type PendingRun } from './ag-ui-utils/tools';
-import { A2UI_CUSTOM_CATALOG } from './provide-a2ui-catalog';
 
 interface StreamOptions {
   params: PendingRun | undefined;
@@ -164,7 +163,6 @@ export function agUiResource(
       agent,
       tools,
       toolMap,
-      componentMap,
       processor,
       environmentInjector,
       runId: params.id,

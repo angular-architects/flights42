@@ -2,27 +2,14 @@ import { MessageProcessor } from '@a2ui/angular';
 import type { Types } from '@a2ui/lit/0.8';
 
 import {
-  type AgUiA2uiWidget,
   type AgUiChatMessage,
-  type AgUiClientToolDefinition,
-  type AgUiComponentWidget,
-  type AgUiRegisteredComponent,
   type AgUiToolCall,
   type AgUiWidget,
-  isAgUiA2uiWidget,
-  isAgUiComponentWidget,
 } from '../ag-ui-types';
 import { replaceMessage } from './messages';
 
-export function readRegisteredComponents(
-  tools: AgUiClientToolDefinition<never>[],
-): AgUiRegisteredComponent[] {
-  return tools.flatMap((tool) => tool.registeredComponents ?? []);
-}
-
 /**
- * Handles server tool results such as `showComponents` that return A2UI
- * `{ surfaceId, messages }` JSON.
+ * Handles tool results that return A2UI `{ surfaceId, messages }` JSON (e.g. `showComponents`).
  */
 export function appendA2uiSurfaceFromToolResult(
   messages: AgUiChatMessage[],
@@ -42,7 +29,7 @@ function toA2uiWidgetFromToolResult(
   value: unknown,
   toolCallId: string,
   processor: MessageProcessor,
-): AgUiA2uiWidget | null {
+): AgUiWidget | null {
   if (
     !value ||
     typeof value !== 'object' ||
@@ -65,65 +52,8 @@ function toA2uiWidgetFromToolResult(
   };
 }
 
-export function appendWidgetsFromToolResult(
-  messages: AgUiChatMessage[],
-  messageId: string,
-  content: unknown,
-  renderer: A2uiRendererService,
-): AgUiChatMessage[] {
-  const widget = toA2uiWidgetFromActivitySnapshot(content, messageId, renderer);
-  if (!widget) {
-    return messages;
-  }
-
-  return appendStandaloneWidget(messages, messageId, widget);
-}
-
-function appendStandaloneWidget(
-  messages: AgUiChatMessage[],
-  pendingCall: { toolCallId: string; toolCallName: string },
-  content: string,
-  componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiChatMessage[] {
-  const widgets = toWidgets(
-    pendingCall.toolCallName,
-    pendingCall.toolCallId,
-    content,
-    componentMap,
-  );
-
-  if (widgets.length === 0) {
-    return messages;
-  }
-
-  return appendWidgets(messages, pendingCall.toolCallId, widgets);
-}
-
 function widgetsContentEqual(a: AgUiWidget, b: AgUiWidget): boolean {
-  if (a.name !== b.name) {
-    return false;
-  }
-  if (isAgUiComponentWidget(a) && isAgUiComponentWidget(b)) {
-    return JSON.stringify(a.props) === JSON.stringify(b.props);
-  }
-  if (isAgUiA2uiWidget(a) && isAgUiA2uiWidget(b)) {
-    return a.a2uiSurfaceId === b.a2uiSurfaceId;
-  }
-  return false;
-}
-
-function appendWidgets(
-  messages: AgUiChatMessage[],
-  toolCallId: string,
-  widgets: AgUiWidget[],
-): AgUiChatMessage[] {
-  let nextMessages = messages;
-
-  for (const widget of widgets) {
-    nextMessages = appendWidget(nextMessages, toolCallId, widget);
-  }
-
-  return nextMessages;
+  return a.name === b.name && a.a2uiSurfaceId === b.a2uiSurfaceId;
 }
 
 function appendWidget(
@@ -173,112 +103,10 @@ function appendWidget(
   ];
 }
 
-function toolNameFor(
-  messages: AgUiChatMessage[],
-  toolCallId: string,
-): string | undefined {
-  for (const message of messages) {
-    if (message.role !== 'assistant') {
-      continue;
-    }
-
-    const toolCall = message.toolCalls.find(
-      (entry: AgUiToolCall) => entry.id === toolCallId,
-    );
-    if (toolCall) {
-      return toolCall.name;
-    }
+function safeParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
   }
-
-  return undefined;
-}
-
-function toWidgets(
-  name: string | undefined,
-  toolCallId: string,
-  content: string,
-  componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidget[] {
-  const parsed = safeParseJson(content);
-
-  if (name === 'showComponents') {
-    return toRegisteredWidgets(parsed, toolCallId, componentMap);
-  }
-
-  if (!name) {
-    return [];
-  }
-
-  const component = componentMap.get(name)?.component;
-  return parsed && typeof parsed === 'object' && component
-    ? [
-        {
-          name,
-          component,
-          props: parsed as Record<string, unknown>,
-        } satisfies AgUiComponentWidget,
-      ]
-    : [];
-}
-
-function toRegisteredWidgets(
-  value: unknown,
-  messageId: string,
-  renderer: A2uiRendererService,
-): AgUiWidget | null {
-  if (
-    !value ||
-    typeof value !== 'object' ||
-    !('operations' in value) ||
-    !Array.isArray((value as { operations?: unknown }).operations)
-  ) {
-    return null;
-  }
-
-  const raw = value as Partial<AgUiComponentWidget>;
-  const componentName = typeof raw.name === 'string' ? raw.name : undefined;
-  const component = componentName
-    ? componentMap.get(componentName)?.component
-    : undefined;
-
-  if (
-    !componentName ||
-    !raw.props ||
-    typeof raw.props !== 'object' ||
-    !component
-  ) {
-    return null;
-  }
-
-  return {
-    id: `${toolCallId}-${index}`,
-    name: componentName,
-    component,
-    props: raw.props as Record<string, unknown>,
-  };
-}
-
-function widgetsContentEqual(a: AgUiWidget, b: AgUiWidget): boolean {
-  return a.name === b.name && a.a2uiSurfaceId === b.a2uiSurfaceId;
-}
-
-function getRenderedSurfaceId(operations: A2uiMessage[]): string | null {
-  for (const operation of operations) {
-    if ('createSurface' in operation && operation.createSurface.surfaceId) {
-      return operation.createSurface.surfaceId;
-    }
-
-    if (
-      'updateComponents' in operation &&
-      operation.updateComponents.surfaceId
-    ) {
-      return operation.updateComponents.surfaceId;
-    }
-
-    if ('updateDataModel' in operation && operation.updateDataModel.surfaceId) {
-      return operation.updateDataModel.surfaceId;
-    }
-  }
-
-  return null;
 }
