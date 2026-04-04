@@ -1,23 +1,14 @@
 import type { Types } from '@a2ui/lit/0.8';
-import {
-  type ɵUnwrapDirectiveSignalInputs,
-  ResourceRef,
-  type Type,
-} from '@angular/core';
+import { ResourceRef } from '@angular/core';
 import { z } from 'zod';
 
-export interface AgUiComponentWidget {
-  name: string;
-  component: Type<unknown>;
-  props: Record<string, unknown>;
-}
-
-export interface AgUiA2uiWidget {
+export interface AgUiWidget {
   name: string;
   a2uiSurfaceId: string;
   a2uiSurface?: Types.Surface | null;
 }
 
+<<<<<<< HEAD
 export type AgUiWidget = AgUiComponentWidget | AgUiA2uiWidget;
 
 export function isAgUiComponentWidget(
@@ -74,6 +65,8 @@ export function defineAgUiComponent<
   return component;
 }
 
+=======
+>>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
 export interface AgUiToolCall {
   id: string;
   name: string;
@@ -96,8 +89,11 @@ type ToolExecuteFn<TArgs> = {
 export interface AgUiClientToolDefinition<TArgs = unknown> {
   name: string;
   description: string;
+<<<<<<< HEAD
   registeredComponents?: readonly AgUiRegisteredComponent[];
   followUpAfterExecution?: boolean;
+=======
+>>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
   parameters?: Record<string, unknown>;
   parse?: (args: unknown) => unknown;
   execute: ToolExecuteFn<TArgs>;
@@ -108,16 +104,22 @@ interface AgUiToolWithSchema<TSchema extends z.ZodTypeAny> {
   description: string;
   schema: TSchema;
   execute: (args: z.infer<TSchema>) => Promise<unknown> | unknown;
+<<<<<<< HEAD
   registeredComponents?: readonly AgUiRegisteredComponent[];
   followUpAfterExecution?: boolean;
+=======
+>>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
 }
 
 interface AgUiToolWithoutSchema {
   name: string;
   description: string;
   execute: () => Promise<unknown> | unknown;
+<<<<<<< HEAD
   registeredComponents?: readonly AgUiRegisteredComponent[];
   followUpAfterExecution?: boolean;
+=======
+>>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
 }
 
 export function defineAgUiTool<const TSchema extends z.ZodTypeAny>(
@@ -133,8 +135,11 @@ export function defineAgUiTool(
     return {
       name: tool.name,
       description: tool.description,
+<<<<<<< HEAD
       registeredComponents: tool.registeredComponents,
       followUpAfterExecution: tool.followUpAfterExecution ?? true,
+=======
+>>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
       execute: () => tool.execute(),
     };
   }
@@ -142,8 +147,11 @@ export function defineAgUiTool(
   return {
     name: tool.name,
     description: tool.description,
+<<<<<<< HEAD
     registeredComponents: tool.registeredComponents,
     followUpAfterExecution: tool.followUpAfterExecution ?? true,
+=======
+>>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
     parameters: z.toJSONSchema(tool.schema) as Record<string, unknown>,
     parse: (args) => tool.schema.parse(args),
     execute: (args) => tool.execute(tool.schema.parse(args)),
