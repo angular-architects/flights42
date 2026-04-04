@@ -11,7 +11,6 @@ export interface AgUiWidget {
   props: Record<string, unknown>;
 }
 
-/** Write type of an `input()` / `InputSignalWithTransform` field (same idea as Angular’s internal unwrap). */
 type UnwrapInputSignalWriteType<Field> =
   Field extends InputSignalWithTransform<infer _Read, infer WriteT>
     ? WriteT
