@@ -1,49 +1,23 @@
-import type { Types } from '@a2ui/angular';
-import { type InputContentPart, type UserMessage } from '@ag-ui/core';
+import type { Types } from '@a2ui/lit/0.8';
 import {
-  type InputSignalWithTransform,
+  type ɵUnwrapDirectiveSignalInputs,
   ResourceRef,
-  Type,
+  type Type,
 } from '@angular/core';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-/**
- * Re-export of the AG-UI core `InputContentPart` discriminated union
- * (text / image / audio / video / document / binary). Lets consumers of
- * this lib build multimodal user messages without importing from
- * `@ag-ui/core` directly.
- */
-export type UserMessageContentPart = InputContentPart;
-
-/**
- * Content that `agUiResource.sendMessage` accepts for `role: 'user'`.
- * Either a plain string or an array of typed content parts.
- */
-export type UserMessageContent = UserMessage['content'];
-
-/**
- * `attachments` describes non-text parts of a user message (e.g.
- * uploaded images) that should be surfaced to the renderer as a
- * lightweight badge while the structured payload travels separately to
- * the agent.
- */
-export interface AgUiChatMessageAttachment {
-  type: 'image' | 'audio' | 'video' | 'document' | 'binary';
-  mimeType?: string;
-  /** Optional short label for the badge, e.g. file name. */
-  label?: string;
+/** Rendered via registered Angular components (`app-widget-container`). */
+export interface AgUiComponentWidget {
+  name: string;
+  component: Type<unknown>;
+  props: Record<string, unknown>;
 }
 
-export interface AgUiWidget {
-  id: string;
+/** Rendered via A2UI `<a2ui-surface>`. */
+export interface AgUiA2uiWidget {
   name: string;
   /** Traditional Angular component embedding (e.g. showComponent payloads). */
   component?: Type<unknown>;
-}
-
-export interface AgUiWidgetInstance extends AgUiWidget {
-  // For traditional Angular component rendering:
   props?: Record<string, unknown>;
   /** A2UI surface embedding. */
   a2uiSurfaceId?: string;
@@ -51,21 +25,17 @@ export interface AgUiWidgetInstance extends AgUiWidget {
   a2uiMessages?: unknown[];
 }
 
-export interface AgUiMcpAppsSnapshotContent {
-  serverId: string;
-  resourceUri: string;
-  result: CallToolResult;
-  toolInput: Record<string, unknown>;
+export type AgUiWidget = AgUiComponentWidget | AgUiA2uiWidget;
+
+export function isAgUiComponentWidget(
+  widget: AgUiWidget,
+): widget is AgUiComponentWidget {
+  return 'component' in widget && 'props' in widget;
 }
 
-type UnwrapInputSignalWriteType<Field> =
-  Field extends InputSignalWithTransform<infer _Read, infer WriteT>
-    ? WriteT
-    : never;
-
-type UnwrapDirectiveSignalInputs<Dir, Fields extends keyof Dir> = {
-  [P in Fields]: UnwrapInputSignalWriteType<Dir[P]>;
-};
+export function isAgUiA2uiWidget(widget: AgUiWidget): widget is AgUiA2uiWidget {
+  return 'a2uiSurfaceId' in widget && 'a2uiSurface' in widget;
+}
 
 type NonNeverProperties<TValue> = {
   [TKey in keyof TValue as [TValue[TKey]] extends [never]
@@ -74,7 +44,7 @@ type NonNeverProperties<TValue> = {
 };
 
 export type ComponentSignalInputs<TComponent> = NonNeverProperties<
-  UnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
+  ɵUnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
 >;
 
 type SchemaPropsForComponent<
@@ -97,7 +67,6 @@ export interface AgUiRegisteredComponent<
   description: string;
   component: Type<TComponent>;
   schema: z.ZodType<TProps>;
-  clientOnly?: true;
 }
 
 export function defineAgUiComponent<
@@ -106,53 +75,25 @@ export function defineAgUiComponent<
   TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
 >(component: {
   name: TName;
-  description: string;
   component: Type<TComponent>;
   schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
-  clientOnly?: true;
-}): AgUiRegisteredComponent<TComponent, TProps, TName>;
-export function defineAgUiComponent(component: {
-  name: string;
-  description: string;
-  component: Type<unknown>;
-  schema: z.ZodType<Record<string, unknown>>;
-  clientOnly?: true;
-}): AgUiRegisteredComponent {
-  return component as AgUiRegisteredComponent;
+}): AgUiRegisteredComponent<TComponent, TProps, TName> {
+  return component;
 }
-
-export type AgUiToolCallStatus = 'pending' | 'complete' | 'error';
 
 export interface AgUiToolCall {
   id: string;
   name: string;
   args: unknown;
-  status: AgUiToolCallStatus;
-  result?: unknown;
-  error?: string;
-  /**
-   * Optional: name of the workflow step this tool call was made from. Set by
-   * the server when the call was emitted via the AG-UI bridge from inside a
-   * workflow step. Used by the UI to nest tool calls under their parent step.
-   */
-  stepName?: string;
-}
-
-export type AgUiWorkflowStepStatus = 'pending' | 'complete';
-
-export interface AgUiWorkflowStep {
-  name: string;
-  status: AgUiWorkflowStepStatus;
+  status: 'pending' | 'complete' | 'error';
 }
 
 export interface AgUiChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'error';
   content: string;
-  widgets: AgUiWidgetInstance[];
+  widgets: AgUiWidget[];
   toolCalls: AgUiToolCall[];
-  workflowSteps: AgUiWorkflowStep[];
-  attachments?: AgUiChatMessageAttachment[];
 }
 
 type ToolExecuteFn<TArgs> = {
@@ -223,11 +164,10 @@ export interface AgUiResourceOptions {
   useServerMemory?: boolean;
   maxLocalTurns?: number;
   model?: string;
-  forwardedProps?: () => Record<string, unknown>;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
-  sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
+  sendMessage: (message: { role: 'user'; content: string }) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;
