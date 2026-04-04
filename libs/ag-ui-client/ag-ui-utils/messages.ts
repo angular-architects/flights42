@@ -50,8 +50,7 @@ export function filterPublicMessages(
     }
 
     const filteredToolCalls = message.toolCalls.filter(
-      (toolCall) =>
-        toolCall.name !== 'showComponent' && toolCall.name !== 'showComponents',
+      (toolCall) => toolCall.name !== 'showComponents',
     );
     const hasContent = message.content.trim().length > 0;
     const hasToolCalls = filteredToolCalls.length > 0;

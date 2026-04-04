@@ -15,7 +15,6 @@ import {
   type AgUiChatMessageAttachment,
   type AgUiChatResourceRef,
   type AgUiClientToolDefinition,
-  type AgUiRegisteredComponent,
   type AgUiResourceOptions,
   type UserMessageContent,
   type UserMessageContentPart,
@@ -28,7 +27,6 @@ import {
   readMessages,
 } from './ag-ui-utils/messages';
 import { type PendingRun } from './ag-ui-utils/tools';
-import { readRegisteredComponents } from './ag-ui-utils/widgets';
 
 interface StreamOptions {
   params: PendingRun | undefined;
@@ -137,12 +135,6 @@ export function agUiResource(
   const toolMap = new Map<string, AgUiClientToolDefinition<never>>(
     tools.map((tool: AgUiClientToolDefinition<never>) => [tool.name, tool]),
   );
-  const componentMap = new Map<string, AgUiRegisteredComponent>(
-    readRegisteredComponents(tools).map((component) => [
-      component.name,
-      component,
-    ]),
-  );
 
   const pendingRun = signal<PendingRun | undefined>(undefined);
   const messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>> =
@@ -172,7 +164,6 @@ export function agUiResource(
       agent,
       tools,
       toolMap,
-      componentMap,
       processor,
       environmentInjector,
       runId: params.id,

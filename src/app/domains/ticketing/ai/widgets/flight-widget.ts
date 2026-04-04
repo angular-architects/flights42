@@ -7,8 +7,6 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { AgUiRegisteredComponent } from '@internal/ag-ui-client';
-import { z } from 'zod';
 
 import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
@@ -109,25 +107,3 @@ export class FlightWidget {
     this.store.updateBasket(this.flight().id, selected);
   }
 }
-
-const flightSchema = z.object({
-  id: z.number(),
-  from: z.string(),
-  to: z.string(),
-  date: z.string(),
-  delay: z.number(),
-});
-
-export const flightWidgetComponent: AgUiRegisteredComponent = {
-  name: 'flightWidget',
-  description: [
-    'Interactive card displaying one concrete flight.',
-    'Use after showComponents whenever users should see flights: booked flight lists, specific booked-flight confirmations (e.g. "Did I book Paris?"), or current search/working-set flights.',
-    'For booked flights use status: "booked"; for search/current flights use status: "other".',
-  ].join('\n'),
-  component: FlightWidget,
-  schema: z.object({
-    flight: flightSchema,
-    status: z.enum(['booked', 'other']),
-  }),
-};
