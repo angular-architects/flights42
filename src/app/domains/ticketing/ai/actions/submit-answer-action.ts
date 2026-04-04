@@ -1,4 +1,4 @@
-import type { UserAction as A2UiUserAction } from '@a2ui/web_core/types/client-event';
+import type { UserAction } from '@a2ui/web_core/types/client-event';
 
 import type { AgUiChatResourceRef } from '../../../shared/ui-agent/ag-ui-types';
 
@@ -13,7 +13,7 @@ interface QuestionContext {
 }
 
 export function submitAnswerAction(
-  action: A2UiUserAction,
+  action: UserAction,
   chat: AgUiChatResourceRef,
 ): void {
   const context = normalizeQuestionContext(action.context);
