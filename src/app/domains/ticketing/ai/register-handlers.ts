@@ -1,5 +1,5 @@
-import { A2uiRendererService } from '@a2ui/angular/v0_9';
-import type { A2uiClientAction } from '@a2ui/web_core/v0_9';
+import { MessageProcessor } from '@a2ui/angular';
+import type { UserAction as A2UiUserAction } from '@a2ui/web_core/types/client-event';
 import {
   assertInInjectionContext,
   DestroyRef,
@@ -7,27 +7,30 @@ import {
   inject,
   runInInjectionContext,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-export type Handlers = Record<string, (action: A2uiClientAction) => void>;
+export type Handlers = Record<string, (action: A2UiUserAction) => void>;
 
 export function registerHandlers(handlers: Handlers): void {
   assertInInjectionContext(registerHandlers);
 
-  const renderer = inject(A2uiRendererService);
+  const processor = inject(MessageProcessor);
   const destroyRef = inject(DestroyRef);
   const environmentInjector = inject(EnvironmentInjector);
 
-  const subscription = renderer.surfaceGroup.onAction.subscribe((action) => {
-    callHandler(action, handlers, environmentInjector);
-  });
-
-  destroyRef.onDestroy(() => {
-    subscription.unsubscribe();
-  });
+  processor.events
+    .pipe(takeUntilDestroyed(destroyRef))
+    .subscribe(({ message, completion }) => {
+      const action = message.userAction;
+      if (action) {
+        callHandler(action, handlers, environmentInjector);
+      }
+      completion.next([]);
+    });
 }
 
 export function callHandler(
-  action: A2uiClientAction,
+  action: A2UiUserAction,
   handlers: Handlers,
   environmentInjector: EnvironmentInjector,
 ): void {
