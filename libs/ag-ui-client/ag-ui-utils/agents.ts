@@ -1,3 +1,4 @@
+import { MessageProcessor } from '@a2ui/angular';
 import {
   type AgentSubscriber,
   type HttpAgent,
@@ -28,11 +29,17 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
+import {
+  appendA2uiSurfaceFromToolResult,
+  appendWidgetsFromToolResult,
+} from './widgets';
 
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
+  componentMap: Map<string, AgUiRegisteredComponent>;
+  processor: MessageProcessor;
   runId: string;
   model?: string;
   useServerMemory?: boolean;
@@ -46,9 +53,16 @@ interface RunAgentResult {
 
 export async function runAgent(
   options: RunAgentOptions,
-): Promise<RunAgentResult> {
-  const { agent, tools, toolMap, model, useServerMemory, messageStream } =
-    options;
+): Promise<PendingToolExecution[]> {
+  const {
+    agent,
+    tools,
+    toolMap,
+    componentMap,
+    processor,
+    model,
+    messageStream,
+  } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
@@ -137,9 +151,18 @@ export async function runAgent(
       }
     },
     onToolCallResultEvent: ({ event }) => {
-      messageStream.update((item) => ({
-        value: completeToolCall(readMessages(item), event.toolCallId),
-      }));
+      messageStream.update((item) => {
+        const messages = readMessages(item);
+        const withSurface = appendA2uiSurfaceFromToolResult(
+          messages,
+          event.toolCallId,
+          event.content,
+          processor,
+        );
+        return {
+          value: completeToolCall(withSurface, event.toolCallId),
+        };
+      });
     },
     onRunErrorEvent: ({ event }) => {
       messageStream.update((item) => ({
@@ -191,6 +214,7 @@ export interface RunUntilSettledOptions {
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
+  processor: MessageProcessor;
   environmentInjector: EnvironmentInjector;
   runId: string;
   model?: string;
@@ -209,6 +233,7 @@ export async function runUntilSettled(
     tools,
     toolMap,
     componentMap,
+    processor,
     environmentInjector,
     runId,
     model,
@@ -238,6 +263,11 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
+<<<<<<< HEAD
+=======
+      componentMap,
+      processor,
+>>>>>>> 07d3210 (fix: merge conflicts)
       runId: currentRunId,
       model,
       useServerMemory,

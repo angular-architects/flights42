@@ -1,9 +1,16 @@
+import { MessageProcessor } from '@a2ui/angular';
+import type { Types } from '@a2ui/lit/0.8';
+
 import {
+  type AgUiA2uiWidget,
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
+  type AgUiComponentWidget,
   type AgUiRegisteredComponent,
   type AgUiToolCall,
   type AgUiWidget,
+  isAgUiA2uiWidget,
+  isAgUiComponentWidget,
 } from '../ag-ui-types';
 import { replaceMessage } from './messages';
 
@@ -11,6 +18,51 @@ export function readRegisteredComponents(
   tools: AgUiClientToolDefinition<never>[],
 ): AgUiRegisteredComponent[] {
   return tools.flatMap((tool) => tool.registeredComponents ?? []);
+}
+
+/**
+ * Handles server tool results such as `showComponents` that return A2UI
+ * `{ surfaceId, messages }` JSON.
+ */
+export function appendA2uiSurfaceFromToolResult(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+  content: string,
+  processor: MessageProcessor,
+): AgUiChatMessage[] {
+  const parsed = safeParseJson(content);
+  const widget = toA2uiWidgetFromToolResult(parsed, toolCallId, processor);
+  if (!widget) {
+    return messages;
+  }
+  return appendWidget(messages, toolCallId, widget);
+}
+
+function toA2uiWidgetFromToolResult(
+  value: unknown,
+  toolCallId: string,
+  processor: MessageProcessor,
+): AgUiA2uiWidget | null {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !('surfaceId' in value) ||
+    !('messages' in value) ||
+    !Array.isArray((value as { messages?: unknown }).messages)
+  ) {
+    return null;
+  }
+
+  const result = value as {
+    surfaceId: string;
+    messages: Types.ServerToClientMessage[];
+  };
+  processor.processMessages(result.messages);
+  return {
+    name: `a2ui_${toolCallId}`,
+    a2uiSurfaceId: result.surfaceId,
+    a2uiSurface: processor.getSurfaces().get(result.surfaceId) ?? null,
+  };
 }
 
 export function appendWidgetsFromToolResult(
@@ -53,6 +105,19 @@ export function appendWidgetsFromPendingToolResult(
   return appendWidgets(messages, pendingCall.toolCallId, widgets);
 }
 
+function widgetsContentEqual(a: AgUiWidget, b: AgUiWidget): boolean {
+  if (a.name !== b.name) {
+    return false;
+  }
+  if (isAgUiComponentWidget(a) && isAgUiComponentWidget(b)) {
+    return JSON.stringify(a.props) === JSON.stringify(b.props);
+  }
+  if (isAgUiA2uiWidget(a) && isAgUiA2uiWidget(b)) {
+    return a.a2uiSurfaceId === b.a2uiSurfaceId;
+  }
+  return false;
+}
+
 function appendWidgets(
   messages: AgUiChatMessage[],
   toolCallId: string,
@@ -85,8 +150,8 @@ function appendWidget(
       continue;
     }
 
-    const hasWidget = message.widgets.some(
-      (entry: AgUiWidget) => entry.id === widget.id,
+    const hasWidget = message.widgets.some((entry: AgUiWidget) =>
+      widgetsContentEqual(entry, widget),
     );
     if (hasWidget) {
       return messages;
@@ -141,11 +206,10 @@ function toWidgets(
   return parsed && typeof parsed === 'object' && component
     ? [
         {
-          id: `${toolCallId}-0`,
           name,
           component,
           props: parsed as Record<string, unknown>,
-        },
+        } satisfies AgUiComponentWidget,
       ]
     : [];
 }
@@ -182,17 +246,16 @@ function toRegisteredWidget(
     return null;
   }
 
-  const widget = value as Partial<AgUiWidget>;
-  const componentName =
-    typeof widget.name === 'string' ? widget.name : undefined;
+  const raw = value as Partial<AgUiComponentWidget>;
+  const componentName = typeof raw.name === 'string' ? raw.name : undefined;
   const component = componentName
     ? componentMap.get(componentName)?.component
     : undefined;
 
   if (
     !componentName ||
-    !widget.props ||
-    typeof widget.props !== 'object' ||
+    !raw.props ||
+    typeof raw.props !== 'object' ||
     !component
   ) {
     return null;
@@ -202,7 +265,7 @@ function toRegisteredWidget(
     id: `${toolCallId}-${index}`,
     name: componentName,
     component,
-    props: widget.props as Record<string, unknown>,
+    props: raw.props as Record<string, unknown>,
   };
 }
 
