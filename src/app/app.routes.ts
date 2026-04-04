@@ -51,11 +51,6 @@ export const routes: Routes = [
     component: About,
   },
   {
-    path: 'ag-ui-demo',
-    loadComponent: () =>
-      import('./ag-ui-demo/ag-ui-demo-page').then((m) => m.AgUiDemoPage),
-  },
-  {
     path: '**',
     redirectTo: 'home',
   },
