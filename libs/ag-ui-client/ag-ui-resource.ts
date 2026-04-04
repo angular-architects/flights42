@@ -231,9 +231,7 @@ function isHiddenInternalMessage(message: AgUiChatMessage): boolean {
   }
 
   const payload = parsed as Record<string, unknown>;
-  return (
-    payload['type'] === 'a2ui_form_response' && payload['hideInternal'] === true
-  );
+  return payload['type'] === 'a2ui_form_response';
 }
 
 async function runUntilSettled(options: RunUntilSettledOptions): Promise<void> {
