@@ -1,4 +1,4 @@
-import { A2uiRendererService } from '@a2ui/angular/v0_9';
+import { MessageProcessor } from '@a2ui/angular';
 import {
   type AgentSubscriber,
   type HttpAgent,
@@ -30,26 +30,17 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import { appendA2uiSurfaceFromActivitySnapshot } from './widgets';
-
-export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
-
-function buildForwardedProps(
-  model: string | undefined,
-  extras: Record<string, unknown> | undefined,
-): Record<string, unknown> | undefined {
-  const merged: Record<string, unknown> = { ...(extras ?? {}) };
-  if (model) {
-    merged['modelHint'] = model;
-  }
-  return Object.keys(merged).length > 0 ? merged : undefined;
-}
+import {
+  appendA2uiSurfaceFromToolResult,
+  appendWidgetsFromToolResult,
+} from './widgets';
 
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  renderer: A2uiRendererService;
+  componentMap: Map<string, AgUiRegisteredComponent>;
+  processor: MessageProcessor;
   runId: string;
   model?: string;
   useServerMemory?: boolean;
@@ -118,17 +109,15 @@ interface RunAgentResult {
 
 export async function runAgent(
   options: RunAgentOptions,
-): Promise<RunAgentResult> {
+): Promise<PendingToolExecution[]> {
   const {
     agent,
     tools,
     toolMap,
-    renderer,
+    componentMap,
+    processor,
     model,
-    useServerMemory,
-    a2uiCatalog,
     messageStream,
-    extraForwardedProps,
   } = options;
   const { runId } = options;
 
@@ -216,9 +205,18 @@ export async function runAgent(
       followUpToolCallIds.push(event.toolCallId);
     },
     onToolCallResultEvent: ({ event }) => {
-      messageStream.update((item) => ({
-        value: completeToolCall(readMessages(item), event.toolCallId),
-      }));
+      messageStream.update((item) => {
+        const messages = readMessages(item);
+        const withSurface = appendA2uiSurfaceFromToolResult(
+          messages,
+          event.toolCallId,
+          event.content,
+          processor,
+        );
+        return {
+          value: completeToolCall(withSurface, event.toolCallId),
+        };
+      });
     },
     onActivitySnapshotEvent: ({ event }) => {
       if (event.activityType !== 'a2ui-surface') {
@@ -291,7 +289,8 @@ export interface RunUntilSettledOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  renderer: A2uiRendererService;
+  componentMap: Map<string, AgUiRegisteredComponent>;
+  processor: MessageProcessor;
   environmentInjector: EnvironmentInjector;
   runId: string;
   model?: string;
@@ -316,7 +315,8 @@ export async function runUntilSettled(
     agent,
     tools,
     toolMap,
-    renderer,
+    componentMap,
+    processor,
     environmentInjector,
     runId,
     model,
@@ -348,7 +348,11 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
-      renderer,
+<<<<<<< HEAD
+=======
+      componentMap,
+      processor,
+>>>>>>> 07d3210 (fix: merge conflicts)
       runId: currentRunId,
       model,
       useServerMemory,
