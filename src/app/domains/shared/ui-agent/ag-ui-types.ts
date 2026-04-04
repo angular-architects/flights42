@@ -1,5 +1,5 @@
 import {
-  type ɵUnwrapDirectiveSignalInputs,
+  type InputSignalWithTransform,
   ResourceRef,
   Type,
 } from '@angular/core';
@@ -11,6 +11,16 @@ export interface AgUiWidget {
   props: Record<string, unknown>;
 }
 
+/** Write type of an `input()` / `InputSignalWithTransform` field (same idea as Angular’s internal unwrap). */
+type UnwrapInputSignalWriteType<Field> =
+  Field extends InputSignalWithTransform<infer _Read, infer WriteT>
+    ? WriteT
+    : never;
+
+type UnwrapDirectiveSignalInputs<Dir, Fields extends keyof Dir> = {
+  [P in Fields]: UnwrapInputSignalWriteType<Dir[P]>;
+};
+
 type NonNeverProperties<TValue> = {
   [TKey in keyof TValue as [TValue[TKey]] extends [never]
     ? never
@@ -18,7 +28,7 @@ type NonNeverProperties<TValue> = {
 };
 
 export type ComponentSignalInputs<TComponent> = NonNeverProperties<
-  ɵUnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
+  UnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
 >;
 
 type SchemaPropsForComponent<
