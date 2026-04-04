@@ -10,8 +10,9 @@ import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
   type AgUiRegisteredComponent,
+  type AgUiToolCall,
 } from '../ag-ui-types';
-import { completeToolCall, readMessages, updateToolCall } from './messages';
+import { readMessages, replaceMessage } from './messages';
 import { appendWidgetsFromPendingToolResult } from './widgets';
 
 export interface PendingRun {
@@ -49,10 +50,92 @@ interface RecordToolErrorOptions {
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
 }
 
-export function readRegisteredComponents(
-  tools: AgUiClientToolDefinition<never>[],
-): AgUiRegisteredComponent[] {
-  return tools.flatMap((tool) => tool.registeredComponents ?? []);
+export function upsertToolCall(
+  messages: AgUiChatMessage[],
+  toolCall: AgUiToolCall,
+): AgUiChatMessage[] {
+  const toolCallMessageIndex = messages.findIndex(
+    (message) => message.id === toolCall.id,
+  );
+
+  if (toolCallMessageIndex === -1) {
+    return [
+      ...messages,
+      {
+        id: toolCall.id,
+        role: 'assistant',
+        content: '',
+        widgets: [],
+        toolCalls: [toolCall],
+      },
+    ];
+  }
+
+  const toolCallMessage = messages[toolCallMessageIndex];
+  if (toolCallMessage.role !== 'assistant') {
+    return messages;
+  }
+
+  const existingToolCallIndex = toolCallMessage.toolCalls.findIndex(
+    (entry: AgUiToolCall) => entry.id === toolCall.id,
+  );
+  const nextToolCalls = [...toolCallMessage.toolCalls];
+
+  if (existingToolCallIndex === -1) {
+    nextToolCalls.push(toolCall);
+  } else {
+    nextToolCalls[existingToolCallIndex] = {
+      ...nextToolCalls[existingToolCallIndex],
+      ...toolCall,
+    };
+  }
+
+  return replaceMessage(messages, toolCallMessageIndex, {
+    ...toolCallMessage,
+    toolCalls: nextToolCalls,
+  });
+}
+
+export function updateToolCall(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+  patch: Partial<AgUiToolCall>,
+): AgUiChatMessage[] {
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index];
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCallIndex = message.toolCalls.findIndex(
+      (toolCall: AgUiToolCall) => toolCall.id === toolCallId,
+    );
+    if (toolCallIndex === -1) {
+      continue;
+    }
+
+    const nextToolCalls = [...message.toolCalls];
+    nextToolCalls[toolCallIndex] = {
+      ...nextToolCalls[toolCallIndex],
+      ...patch,
+    };
+
+    return replaceMessage(messages, index, {
+      ...message,
+      toolCalls: nextToolCalls,
+    });
+  }
+
+  return messages;
+}
+
+export function completeToolCall(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+): AgUiChatMessage[] {
+  return updateToolCall(messages, toolCallId, {
+    status: 'complete',
+  });
 }
 
 export async function executePendingTools(

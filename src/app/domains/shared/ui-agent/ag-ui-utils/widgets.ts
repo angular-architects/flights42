@@ -1,10 +1,17 @@
 import {
   type AgUiChatMessage,
+  type AgUiClientToolDefinition,
   type AgUiRegisteredComponent,
   type AgUiToolCall,
   type AgUiWidget,
 } from '../ag-ui-types';
 import { replaceMessage } from './messages';
+
+export function readRegisteredComponents(
+  tools: AgUiClientToolDefinition<never>[],
+): AgUiRegisteredComponent[] {
+  return tools.flatMap((tool) => tool.registeredComponents ?? []);
+}
 
 export function appendWidgetsFromToolResult(
   messages: AgUiChatMessage[],

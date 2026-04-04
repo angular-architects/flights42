@@ -16,13 +16,16 @@ import {
 } from '../ag-ui-types';
 import {
   appendErrorMessage,
-  completeToolCall,
   readMessages,
-  updateToolCall,
   upsertAssistantMessage,
-  upsertToolCall,
 } from './messages';
-import { executePendingTools, type PendingToolExecution } from './tools';
+import {
+  completeToolCall,
+  executePendingTools,
+  type PendingToolExecution,
+  updateToolCall,
+  upsertToolCall,
+} from './tools';
 import { appendWidgetsFromToolResult } from './widgets';
 
 export interface RunAgentOptions {

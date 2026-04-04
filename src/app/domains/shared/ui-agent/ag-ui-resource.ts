@@ -22,7 +22,8 @@ import {
   filterPublicMessages,
   readMessages,
 } from './ag-ui-utils/messages';
-import { type PendingRun, readRegisteredComponents } from './ag-ui-utils/tools';
+import { type PendingRun } from './ag-ui-utils/tools';
+import { readRegisteredComponents } from './ag-ui-utils/widgets';
 
 interface StreamOptions {
   params: PendingRun | undefined;
