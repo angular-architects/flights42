@@ -1,7 +1,0 @@
-> nx run miles-feature-next-level:lint
-
-
-Linting "miles-feature-next-level"...
-
-✔ All files pass linting
-
