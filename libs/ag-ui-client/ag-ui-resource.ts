@@ -166,7 +166,7 @@ export function agUiResource(
       agent.abortRun();
     });
 
-    void runUntilSettled({
+    runUntilSettled({
       agent,
       tools,
       toolMap,

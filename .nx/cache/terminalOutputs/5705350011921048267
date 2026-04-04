@@ -1,7 +1,0 @@
-> nx run flights42:lint
-
-
-Linting "flights42"...
-
-All files pass linting.
-

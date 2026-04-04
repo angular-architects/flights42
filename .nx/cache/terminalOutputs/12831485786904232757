@@ -1,7 +1,0 @@
-> nx run miles-data:lint
-
-
-Linting "miles-data"...
-
-✔ All files pass linting
-

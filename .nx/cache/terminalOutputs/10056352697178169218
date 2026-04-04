@@ -1,7 +1,0 @@
-> nx run shared-util-auth:lint
-
-
-Linting "shared-util-auth"...
-
-✔ All files pass linting
-
