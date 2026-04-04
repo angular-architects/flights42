@@ -17,7 +17,6 @@ export function submitAnswerAction(
   chat: AgUiChatResourceRef,
 ): void {
   const context = normalizeQuestionContext(action.context);
-  console.log('submit context', JSON.stringify(context, null, 2));
 
   chat.sendMessage({
     role: 'user',
