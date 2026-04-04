@@ -12,6 +12,7 @@ Searches for flights and redirects the user to the result page where the found f
 
 Remarks:
 - For the search parameters, airport codes are NOT used but the city name. First letter in upper case.
+- Do not render flights or flight lists in the chat after this tool: the user is taken to the booking flight-search route where results appear. A short text message (e.g. via showComponents / messageWidget) is enough to confirm the search or next steps.
     `.trim(),
   schema: z.object({
     from: z.string().describe('airport of departure'),
