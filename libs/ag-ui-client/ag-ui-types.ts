@@ -6,23 +6,16 @@ import {
 } from '@angular/core';
 import { z } from 'zod';
 
-/** Rendered via registered Angular components (`app-widget-container`). */
 export interface AgUiComponentWidget {
   name: string;
   component: Type<unknown>;
   props: Record<string, unknown>;
 }
 
-/** Rendered via A2UI `<a2ui-surface>`. */
 export interface AgUiA2uiWidget {
   name: string;
-  /** Traditional Angular component embedding (e.g. showComponent payloads). */
-  component?: Type<unknown>;
-  props?: Record<string, unknown>;
-  /** A2UI surface embedding. */
-  a2uiSurfaceId?: string;
+  a2uiSurfaceId: string;
   a2uiSurface?: Types.Surface | null;
-  a2uiMessages?: unknown[];
 }
 
 export type AgUiWidget = AgUiComponentWidget | AgUiA2uiWidget;
