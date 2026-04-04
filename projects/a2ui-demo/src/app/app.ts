@@ -60,7 +60,9 @@ export class App {
             bonusMiles: passenger.bonusMiles + 300,
           });
           const updates = [updateMessage];
+          completion.next(updates);
           this.processor.processMessages(updates);
+          return;
         }
 
         completion.next([]);
@@ -77,6 +79,16 @@ export class App {
           components: [
             {
               id: 'root',
+              component: {
+                Column: {
+                  children: {
+                    explicitList: ['passenger-card', 'miles-progress'],
+                  },
+                },
+              },
+            },
+            {
+              id: 'passenger-card',
               component: {
                 Card: {
                   children: {
@@ -204,6 +216,15 @@ export class App {
                 Text: {
                   text: { path: '/passenger/bonusMiles' },
                   usageHint: 'body',
+                },
+              },
+            },
+            {
+              id: 'miles-progress',
+              component: {
+                MilesProgress: {
+                  label: { literalString: 'Miles Progress' },
+                  miles: { path: '/passenger/bonusMiles' },
                 },
               },
             },
