@@ -22,8 +22,6 @@ export function submitAnswerAction(
     role: 'user',
     content: JSON.stringify({
       type: 'a2ui_form_response',
-      schemaVersion: 1,
-      hideInternal: true,
       surfaceId: action.surfaceId,
       context,
     }),
