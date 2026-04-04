@@ -102,20 +102,20 @@ class FlightWeatherAgent extends AbstractAgent {
         });
         await sleep(300);
 
-        // Client-side tool call: showComponent
-        const showComponentArgs = {
+        // Client-side tool call: showComponents
+        const showComponentsArgs = {
           components: [{ name: 'weather', props: weatherResult }],
         };
 
         observer.next({
           type: EventType.TOOL_CALL_START,
           toolCallId: '2002',
-          toolCallName: 'showComponent',
+          toolCallName: 'showComponents',
         });
         observer.next({
           type: EventType.TOOL_CALL_ARGS,
           toolCallId: '2002',
-          delta: JSON.stringify(showComponentArgs),
+          delta: JSON.stringify(showComponentsArgs),
         });
         observer.next({ type: EventType.TOOL_CALL_END, toolCallId: '2002' });
         await sleep(200);

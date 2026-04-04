@@ -124,7 +124,7 @@ function toWidgets(
 ): AgUiWidget[] {
   const parsed = safeParseJson(content);
 
-  if (name === 'showComponent') {
+  if (name === 'showComponents') {
     return toRegisteredWidgets(parsed, componentMap);
   }
 

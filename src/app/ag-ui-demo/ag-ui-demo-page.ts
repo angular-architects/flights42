@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { agUiResource } from '../domains/shared/ui-agent/ag-ui-resource';
-import { createShowComponentTool } from '../domains/shared/ui-agent/tools/show-component.tool';
+import { createShowComponentsTool } from '../domains/shared/ui-agent/tools/show-component.tool';
 import { ChatMessages } from '../domains/shared/ui-assistant/chat-messages/chat-messages';
 import { weatherWidget } from './weather-widget';
 
-const showComponentTool = createShowComponentTool([weatherWidget]);
+const showComponentsTool = createShowComponentsTool([weatherWidget]);
 
 @Component({
   selector: 'app-ag-ui-demo-page',
@@ -30,7 +30,7 @@ const showComponentTool = createShowComponentTool([weatherWidget]);
 export class AgUiDemoPage {
   protected readonly chat = agUiResource({
     url: 'http://localhost:4300/api/demo-agent',
-    tools: [showComponentTool],
+    tools: [showComponentsTool],
     hideInternal: false,
   });
 

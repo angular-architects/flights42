@@ -13,7 +13,7 @@ interface RegisteredComponentInput<TComponent extends AnyRegisteredComponent> {
   props: z.infer<TComponent['schema']>;
 }
 
-interface ShowComponentToolArgs<
+interface ShowComponentsToolArgs<
   TComponents extends readonly AnyRegisteredComponent[],
 > {
   components: RegisteredComponentInput<TComponents[number]>[];
@@ -23,7 +23,7 @@ function createComponentSchema(
   registeredComponents: readonly AnyRegisteredComponent[],
 ): z.ZodTypeAny {
   if (registeredComponents.length === 0) {
-    throw new Error('createShowComponentTool requires at least one component');
+    throw new Error('createShowComponentsTool requires at least one component');
   }
 
   const schemas = registeredComponents.map((entry) =>
@@ -47,20 +47,20 @@ function createComponentSchema(
   );
 }
 
-export function createShowComponentTool<
+export function createShowComponentsTool<
   const TComponents extends readonly AnyRegisteredComponent[],
 >(registeredComponents: TComponents) {
   const componentSchema = createComponentSchema(registeredComponents);
 
   return defineAgUiTool({
-    name: 'showComponent',
+    name: 'showComponents',
     description: 'Render one or multiple UI components for the user.',
     schema: z.object({
       components: z
         .array(componentSchema)
         .min(1)
         .describe('Component configs with name discriminator and props.'),
-    }) as z.ZodType<ShowComponentToolArgs<TComponents>>,
+    }) as z.ZodType<ShowComponentsToolArgs<TComponents>>,
     registeredComponents,
     execute: () => ({ ok: true }),
   });

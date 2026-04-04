@@ -90,7 +90,7 @@ export async function runAgent(
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
-      if (toolCallName === 'showComponent') {
+      if (toolCallName === 'showComponents') {
         messageStream.update((item) => ({
           value: appendWidgetsFromToolResult(
             readMessages(item),
