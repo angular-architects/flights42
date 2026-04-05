@@ -193,7 +193,6 @@ export async function runUntilSettled(
     model,
     abortSignal,
     messageStream,
-    isLoading,
     maxLocalTurns,
   } = options;
 
@@ -235,5 +234,4 @@ export async function runUntilSettled(
     done = !executedAnyTool;
     currentRunId = randomUUID();
   }
-  isLoading.set(false);
 }

@@ -64,6 +64,8 @@ export function agUiResource(
 
   const isLoading = signal<boolean>(false);
 
+  let activeRunRequestId = '';
+
   const stream = async (streamOptions: StreamOptions) => {
     const { params, abortSignal } = streamOptions;
 
@@ -72,27 +74,31 @@ export function agUiResource(
     }
 
     isLoading.set(true);
+    const runRequestId = params.id;
+    activeRunRequestId = runRequestId;
 
     abortSignal.addEventListener('abort', () => {
       agent.abortRun();
     });
 
-    try {
-      runUntilSettled({
-        agent,
-        tools,
-        toolMap,
-        componentMap,
-        environmentInjector,
-        runId: params.id,
-        model: options.model,
-        abortSignal,
-        messageStream,
-        isLoading,
-        maxLocalTurns,
-      });
-    } catch (error) {
-      if (!abortSignal.aborted) {
+    runUntilSettled({
+      agent,
+      tools,
+      toolMap,
+      componentMap,
+      environmentInjector,
+      runId: params.id,
+      model: options.model,
+      abortSignal,
+      messageStream,
+      isLoading,
+      maxLocalTurns,
+    })
+      .catch((error: unknown) => {
+        if (abortSignal.aborted || activeRunRequestId !== runRequestId) {
+          return;
+        }
+
         messageStream.update((item) => ({
           value: appendErrorMessage(
             readMessages(item),
@@ -100,8 +106,12 @@ export function agUiResource(
           ),
         }));
         isLoading.set(false);
-      }
-    }
+      })
+      .finally(() => {
+        if (activeRunRequestId === runRequestId) {
+          isLoading.set(false);
+        }
+      });
 
     return messageStream.asReadonly();
   };
