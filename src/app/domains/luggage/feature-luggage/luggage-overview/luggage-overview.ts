@@ -1,8 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-<<<<<<< HEAD
-import { injectDispatch } from '@ngrx/signals/events';
-=======
->>>>>>> acd41f4 (chore: rename flight store simple)
 
 import { LuggageCard } from '../luggage-card/luggage-card';
 import { LuggageStore } from './luggage-store';
@@ -22,7 +18,6 @@ export class LuggageOverview {
   protected readonly selected = this.store.selected;
 
   constructor() {
-
     // TODO: dispatch event to load luggage
   }
 
