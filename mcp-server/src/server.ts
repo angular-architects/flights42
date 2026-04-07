@@ -23,6 +23,7 @@ import {
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const distDir = resolve(currentDir, '../dist');
+const publicDir = resolve(currentDir, '../public');
 const htmlPath = resolve(distDir, 'index.html');
 const port = 3002;
 const allowedCorsOrigins = readAllowedCorsOrigins();
@@ -84,7 +85,7 @@ function createServer(): McpServer {
             _meta: {
               ui: {
                 csp: {
-                  resourceDomains: ['https://picsum.photos'],
+                  resourceDomains: ['http://127.0.0.1:3002'],
                 },
               },
             },
@@ -132,6 +133,7 @@ async function start(): Promise<void> {
   });
   app.use(cors(corsOptions));
   app.options('/mcp', cors(corsOptions));
+  app.use('/assets', express.static(publicDir));
   app.use(express.json());
 
   app.post('/mcp', async (req: SessionRequest, res: Response) => {
