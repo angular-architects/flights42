@@ -2,6 +2,7 @@
 
 # Compiled output
 /dist
+/mcp-server/dist
 /tmp
 /out-tsc
 /bazel-out
