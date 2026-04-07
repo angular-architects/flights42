@@ -12,6 +12,13 @@ export interface AgUiWidget {
   props: Record<string, unknown>;
 }
 
+export interface AgUiMcpAppsSnapshotContent {
+  serverId: string;
+  resourceUri: string;
+  result: unknown;
+  toolInput: Record<string, unknown>;
+}
+
 type UnwrapInputSignalWriteType<Field> =
   Field extends InputSignalWithTransform<infer _Read, infer WriteT>
     ? WriteT
@@ -51,6 +58,7 @@ export interface AgUiRegisteredComponent<
   description: string;
   component: Type<TComponent>;
   schema: z.ZodType<TProps>;
+  clientOnly?: true;
 }
 
 export function defineAgUiComponent<
@@ -62,6 +70,7 @@ export function defineAgUiComponent<
   description: string;
   component: Type<TComponent>;
   schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
+  clientOnly?: true;
 }): AgUiRegisteredComponent<TComponent, TProps, TName> {
   return component;
 }

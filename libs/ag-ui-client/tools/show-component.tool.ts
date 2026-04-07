@@ -145,11 +145,15 @@ function createExampleFromSchema(schema: JsonSchema): unknown {
 function createComponentSchema(
   registeredComponents: readonly AnyRegisteredComponent[],
 ): z.ZodTypeAny {
-  if (registeredComponents.length === 0) {
+  const publicComponents = registeredComponents.filter(
+    (entry) => entry.clientOnly !== true,
+  );
+
+  if (publicComponents.length === 0) {
     throw new Error('createShowComponentsTool requires at least one component');
   }
 
-  const schemas = registeredComponents.map((entry) =>
+  const schemas = publicComponents.map((entry) =>
     z
       .object({
         name: z.literal(entry.name),

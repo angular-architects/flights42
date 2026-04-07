@@ -1,6 +1,7 @@
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
+  type AgUiMcpAppsSnapshotContent,
   type AgUiRegisteredComponent,
   type AgUiToolCall,
   type AgUiWidget,
@@ -51,6 +52,53 @@ export function appendWidgetsFromPendingToolResult(
   }
 
   return appendWidgets(messages, pendingCall.toolCallId, widgets);
+}
+
+export function upsertWidgetFromActivitySnapshot(
+  messages: AgUiChatMessage[],
+  messageId: string,
+  activityType: string,
+  content: unknown,
+  componentMap: Map<string, AgUiRegisteredComponent>,
+): AgUiChatMessage[] {
+  if (activityType !== 'mcp-apps') {
+    return messages;
+  }
+
+  const widget = toMcpAppsWidget(content, componentMap);
+  if (!widget) {
+    return messages;
+  }
+
+  const existingIndex = messages.findIndex(
+    (message) => message.id === messageId,
+  );
+  if (existingIndex === -1) {
+    return [
+      ...messages,
+      {
+        id: messageId,
+        role: 'assistant',
+        content: '',
+        widgets: [widget],
+        toolCalls: [],
+      },
+    ];
+  }
+
+  const existingMessage = messages[existingIndex];
+  if (existingMessage.role !== 'assistant') {
+    return messages;
+  }
+
+  const nextWidgets = existingMessage.widgets.filter(
+    (entry) => entry.name !== widget.name,
+  );
+
+  return replaceMessage(messages, existingIndex, {
+    ...existingMessage,
+    widgets: [...nextWidgets, widget],
+  });
 }
 
 function appendWidgets(
@@ -204,6 +252,41 @@ function toRegisteredWidget(
     component,
     props: widget.props as Record<string, unknown>,
   };
+}
+
+function toMcpAppsWidget(
+  value: unknown,
+  componentMap: Map<string, AgUiRegisteredComponent>,
+): AgUiWidget | null {
+  if (!isMcpAppsSnapshotContent(value)) {
+    return null;
+  }
+
+  const componentName = 'mcpAppsWidget';
+  const component = componentMap.get(componentName)?.component;
+  if (!component) {
+    return null;
+  }
+
+  return {
+    name: componentName,
+    component,
+    props: value as unknown as Record<string, unknown>,
+  };
+}
+
+function isMcpAppsSnapshotContent(
+  value: unknown,
+): value is AgUiMcpAppsSnapshotContent {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { serverId?: unknown }).serverId === 'string' &&
+    typeof (value as { resourceUri?: unknown }).resourceUri === 'string' &&
+    typeof (value as { toolInput?: unknown }).toolInput === 'object' &&
+    (value as { toolInput?: unknown }).toolInput !== null &&
+    'result' in value
+  );
 }
 
 function safeParseJson(value: string): unknown {

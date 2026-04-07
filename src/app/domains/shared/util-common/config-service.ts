@@ -6,6 +6,7 @@ export interface Config {
   readonly baseUrl: string;
   readonly agUiUrl: string;
   readonly aiServerUrl: string;
+  readonly mcpServerUrl: string;
   readonly model: string;
 }
 
@@ -18,6 +19,7 @@ export class ConfigService {
   private _baseUrl = 'https://demo.angulararchitects.io/api';
   private _agUiUrl = 'http://localhost:3001/ag-ui/ticketingAgent';
   private _aiServerUrl = 'http://localhost:3001';
+  private _mcpServerUrl = 'http://127.0.0.1:3002/mcp';
   private _model = 'gpt-5.3';
 
   get baseUrl() {
@@ -36,6 +38,10 @@ export class ConfigService {
     return this._aiServerUrl;
   }
 
+  get mcpServerUrl() {
+    return this._mcpServerUrl;
+  }
+
   async load(configPath = '/config.json'): Promise<void> {
     const config = await firstValueFrom(this.http.get<Config>(configPath));
     this._model = config.model;
@@ -44,5 +50,6 @@ export class ConfigService {
     if (config.aiServerUrl) {
       this._aiServerUrl = config.aiServerUrl;
     }
+    this._mcpServerUrl = config.mcpServerUrl;
   }
 }

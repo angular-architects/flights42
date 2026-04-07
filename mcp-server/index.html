@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hotel Finder MCP App</title>
+    <style>
+      :root {
+        --surface-color: #ffffff;
+        --surface-muted: #f5f7fb;
+        --text-color: #1f2937;
+        --text-muted: #6b7280;
+        --border-color: #dbe3ef;
+        font-family: Inter, Roboto, 'Helvetica Neue', Arial, sans-serif;
+      }
+
+      [data-theme='dark'] {
+        --surface-color: #111827;
+        --surface-muted: #1f2937;
+        --text-color: #f9fafb;
+        --text-muted: #cbd5e1;
+        --border-color: #334155;
+      }
+
+      body {
+        margin: 0;
+        background: transparent;
+        color: var(--text-color);
+      }
+
+      .shell {
+        background: var(--surface-color);
+      }
+
+      .hero {
+        padding: 16px;
+        background: linear-gradient(
+          135deg,
+          var(--color-ring-primary, #3f51b5),
+          color-mix(in srgb, var(--color-ring-primary, #3f51b5) 72%, white)
+        );
+        color: white;
+      }
+
+      .hero h2,
+      .hero p {
+        margin: 0;
+      }
+
+      .hero p {
+        margin-top: 8px;
+        opacity: 0.9;
+      }
+
+      .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .pill {
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .toolbar button {
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-weight: 600;
+        background: var(--color-ring-primary, #3f51b5);
+        color: white;
+        cursor: pointer;
+      }
+
+      .toolbar button:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
+      .status {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .hotel-card {
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        background: var(--surface-muted);
+        overflow: hidden;
+      }
+
+      .hotel-card img {
+        display: block;
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+      }
+
+      .hotel-card-body {
+        padding: 12px;
+      }
+
+      .hotel-card-body h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      .hotel-card-body p {
+        margin: 0;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./src/mcp-app.ts"></script>
+  </body>
+</html>

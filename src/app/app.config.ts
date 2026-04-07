@@ -9,7 +9,9 @@ import { provideHashbrown } from '@hashbrownai/angular';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
+import { provideMcpApps } from './domains/shared/ui-agent/widgets/mcp-apps.provider';
 import { ConfigService } from './domains/shared/util-common/config-service';
+import { mcpAppsConfig } from './mcp-apps.config';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,6 +29,7 @@ export const appConfig: ApplicationConfig = {
         },
       ],
     }),
+    provideMcpApps(mcpAppsConfig),
     provideMarkdown(),
   ],
 };

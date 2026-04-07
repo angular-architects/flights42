@@ -28,11 +28,16 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
+import {
+  appendWidgetsFromToolResult,
+  upsertWidgetFromActivitySnapshot,
+} from './widgets';
 
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
   model?: string;
   useServerMemory?: boolean;
@@ -47,8 +52,15 @@ interface RunAgentResult {
 export async function runAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { agent, tools, toolMap, model, useServerMemory, messageStream } =
-    options;
+  const {
+    agent,
+    tools,
+    toolMap,
+    componentMap,
+    model,
+    useServerMemory,
+    messageStream,
+  } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
@@ -139,6 +151,17 @@ export async function runAgent(
     onToolCallResultEvent: ({ event }) => {
       messageStream.update((item) => ({
         value: completeToolCall(readMessages(item), event.toolCallId),
+      }));
+    },
+    onActivitySnapshotEvent: ({ event }) => {
+      messageStream.update((item) => ({
+        value: upsertWidgetFromActivitySnapshot(
+          readMessages(item),
+          event.messageId,
+          event.activityType,
+          event.content,
+          componentMap,
+        ),
       }));
     },
     onRunErrorEvent: ({ event }) => {
@@ -238,6 +261,7 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
+      componentMap,
       runId: currentRunId,
       model,
       useServerMemory,
