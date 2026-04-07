@@ -21,6 +21,8 @@
     "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
     "ag-ui-demo:server": "node --import tsx ag-ui-demo/server/index.ts",
     "ag-ui-demo:client": "node --import tsx ag-ui-demo/client/index.ts",
+    "mcp-apps-demo": "vite --config mcp-apps-demo/vite.config.ts --open /host.html",
+    "mcp-apps-demo:build": "vite build --config mcp-apps-demo/vite.config.ts",
     "prepare": "husky"
   },
   "lint-staged": {
