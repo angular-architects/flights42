@@ -1,7 +1,8 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
-  effect,
+  DestroyRef,
   ElementRef,
   inject,
   input,
@@ -10,17 +11,11 @@ import {
 } from '@angular/core';
 import {
   AppBridge,
-  buildAllowAttribute,
-  type McpUiResourcePermissions,
   PostMessageTransport,
-  RESOURCE_MIME_TYPE,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import type {
-  CallToolResult,
-  ReadResourceResult,
-} from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
   type AgUiMcpAppsSnapshotContent,
   defineAgUiComponent,
@@ -36,9 +31,9 @@ import { MCP_APPS_CONFIG } from './mcp-apps.provider';
   template: `
     @if (error()) {
       <p class="mcp-apps-error">{{ error() }}</p>
-    } @else {
-      <iframe #appFrame class="mcp-apps-frame"></iframe>
     }
+
+    <iframe #appFrame class="mcp-apps-frame"></iframe>
   `,
   styles: `
     .mcp-apps-frame {
@@ -58,80 +53,43 @@ import { MCP_APPS_CONFIG } from './mcp-apps.provider';
 })
 export class McpAppsWidgetComponent {
   private readonly config = inject(ConfigService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly mcpAppsConfig = inject(MCP_APPS_CONFIG);
 
-  readonly serverId = input.required<string>();
-  readonly resourceUri = input.required<string>();
-  readonly result = input.required<unknown>();
-  readonly toolInput = input.required<Record<string, unknown>>();
-
-  protected readonly error = signal('');
+  readonly data = input.required<AgUiMcpAppsSnapshotContent>();
 
   private readonly appFrame =
     viewChild.required<ElementRef<HTMLIFrameElement>>('appFrame');
 
   private bridge: AppBridge | null = null;
   private client: Client | null = null;
-  private resizeObserver: ResizeObserver | null = null;
+  protected readonly error = signal('');
 
   constructor() {
-    effect((onCleanup) => {
+    this.destroyRef.onDestroy(() => {
+      void this.dispose();
+    });
+
+    afterNextRender(() => {
       const frame = this.appFrame().nativeElement;
-      const data: AgUiMcpAppsSnapshotContent = {
-        serverId: this.serverId(),
-        resourceUri: this.resourceUri(),
-        result: this.result(),
-        toolInput: this.toolInput(),
-      };
-
-      let disposed = false;
-      onCleanup(() => {
-        disposed = true;
-        void this.disposeBridge();
-      });
-
-      void this.renderApp(frame, data, () => disposed);
+      const data = this.data();
+      void this.renderApp(frame, data);
     });
   }
 
   private async renderApp(
     frame: HTMLIFrameElement,
     data: AgUiMcpAppsSnapshotContent,
-    isDisposed: () => boolean,
   ): Promise<void> {
-    await this.disposeBridge();
     this.error.set('');
 
     try {
-      const client = new Client({
-        name: 'Flights42 MCP Host',
-        version: '1.0.0',
-      });
-      const transport = new StreamableHTTPClientTransport(
-        new URL(this.config.mcpServerUrl),
-      );
-
-      await client.connect(transport);
-      if (isDisposed()) {
-        await client.close();
-        return;
-      }
-
+      const client = await this.getClient();
       const resource = await client.readResource({ uri: data.resourceUri });
-      const { html, permissions } = extractHtmlResource(resource);
-      if (isDisposed()) {
-        await client.close();
-        return;
-      }
+      const content = resource.contents[0] as { text: string };
+      const html = content.text;
 
-      frame.setAttribute(
-        'sandbox',
-        'allow-scripts allow-forms allow-same-origin',
-      );
-      const allowAttribute = buildAllowAttribute(permissions);
-      if (allowAttribute) {
-        frame.setAttribute('allow', allowAttribute);
-      }
+      frame.setAttribute('sandbox', 'allow-scripts allow-forms');
 
       const bridge = new AppBridge(
         client,
@@ -140,7 +98,6 @@ export class McpAppsWidgetComponent {
         {
           hostContext: {
             ...this.mcpAppsConfig.hostContext,
-            theme: prefersDarkMode() ? 'dark' : 'light',
             containerDimensions: {
               width: Math.round(frame.clientWidth || 640),
               maxHeight: 5000,
@@ -163,46 +120,18 @@ export class McpAppsWidgetComponent {
       };
       bridge.onrequestdisplaymode = async () => ({ mode: 'inline' });
 
-      const initialized = new Promise<void>((resolve) => {
-        bridge.oninitialized = () => {
-          resolve();
-        };
-      });
-
       frame.srcdoc = html;
       await bridge.connect(
         new PostMessageTransport(frame.contentWindow!, frame.contentWindow!),
       );
-      await initialized;
 
-      await sendInitialToolState(bridge, data);
+      await whenInitialized(bridge);
 
-      this.resizeObserver = new ResizeObserver(([entry]) => {
-        bridge.sendHostContextChange({
-          containerDimensions: {
-            width: Math.round(entry.contentRect.width),
-            maxHeight: 5000,
-          },
-        });
-      });
-      this.resizeObserver.observe(frame);
-
-      const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)');
-      const darkModeListener = (event: MediaQueryListEvent) => {
-        bridge.sendHostContextChange({
-          theme: event.matches ? 'dark' : 'light',
-        });
-      };
-      darkModeMedia.addEventListener('change', darkModeListener);
+      const toolInput = { arguments: data.toolInput };
+      bridge.sendToolInput(toolInput);
+      bridge.sendToolResult(data.result);
 
       this.bridge = bridge;
-      this.client = client;
-
-      const previousOnclose = bridge.onclose;
-      bridge.onclose = () => {
-        darkModeMedia.removeEventListener('change', darkModeListener);
-        previousOnclose?.();
-      };
     } catch (error) {
       this.error.set(
         error instanceof Error ? error.message : 'Unable to render MCP App.',
@@ -212,99 +141,56 @@ export class McpAppsWidgetComponent {
   }
 
   private async disposeBridge(): Promise<void> {
-    this.resizeObserver?.disconnect();
-    this.resizeObserver = null;
-
     if (this.bridge) {
       await this.bridge.teardownResource({}).catch(() => undefined);
       await this.bridge.close().catch(() => undefined);
       this.bridge = null;
     }
+  }
 
-    if (this.client) {
-      await this.client.close().catch(() => undefined);
-      this.client = null;
+  private async getClient(): Promise<Client> {
+    if (!this.client) {
+      this.client = await this.createClient();
+    }
+
+    return this.client;
+  }
+
+  private async createClient(): Promise<Client> {
+    const client = new Client({
+      name: 'MCP Host',
+      version: '1.0.0',
+    });
+    const transport = new StreamableHTTPClientTransport(
+      new URL(this.config.mcpServerUrl),
+    );
+
+    await client.connect(transport);
+    return client;
+  }
+
+  private async disposeClient(): Promise<void> {
+    const client = this.client;
+
+    this.client = null;
+
+    if (client) {
+      await client.close().catch(() => undefined);
     }
   }
-}
 
-function extractHtmlResource(resource: ReadResourceResult): {
-  html: string;
-  permissions?: McpUiResourcePermissions;
-} {
-  const content = resource.contents[0];
-  if (!content) {
-    throw new Error('MCP App resource is empty.');
+  private async dispose(): Promise<void> {
+    await this.disposeBridge();
+    await this.disposeClient();
   }
-
-  if (content.mimeType !== RESOURCE_MIME_TYPE) {
-    throw new Error(`Unsupported MCP App mime type: ${content.mimeType}`);
-  }
-
-  const html = 'text' in content ? content.text : atob(content.blob);
-  const permissions = readUiPermissions(content);
-  return { html, permissions };
 }
 
-function readUiPermissions(content: ReadResourceResult['contents'][number]) {
-  const meta = (
-    content as { _meta?: { ui?: { permissions?: McpUiResourcePermissions } } }
-  )._meta;
-  return meta?.ui?.permissions;
-}
-
-function prefersDarkMode(): boolean {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
-function toCallToolResult(value: unknown): CallToolResult {
-  if (
-    value &&
-    typeof value === 'object' &&
-    'content' in value &&
-    Array.isArray((value as { content?: unknown }).content)
-  ) {
-    return value as CallToolResult;
-  }
-
-  if (value && typeof value === 'object') {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(value),
-        },
-      ],
-      structuredContent: value as Record<string, unknown>,
+function whenInitialized(bridge: AppBridge): Promise<void> {
+  return new Promise((resolve) => {
+    bridge.oninitialized = () => {
+      resolve();
     };
-  }
-
-  return {
-    content: [
-      {
-        type: 'text',
-        text: String(value ?? ''),
-      },
-    ],
-  };
-}
-
-async function sendInitialToolState(
-  bridge: AppBridge,
-  data: AgUiMcpAppsSnapshotContent,
-): Promise<void> {
-  const toolResult = toCallToolResult(data.result);
-  const toolInput = { arguments: data.toolInput };
-
-  bridge.sendToolInput(toolInput);
-  bridge.sendToolResult(toolResult);
-
-  await new Promise((resolve) => {
-    window.setTimeout(resolve, 50);
   });
-
-  bridge.sendToolInput(toolInput);
-  bridge.sendToolResult(toolResult);
 }
 
 export const mcpAppsWidgetComponent = defineAgUiComponent({
@@ -313,9 +199,11 @@ export const mcpAppsWidgetComponent = defineAgUiComponent({
   component: McpAppsWidgetComponent,
   clientOnly: true,
   schema: z.object({
-    serverId: z.string(),
-    resourceUri: z.string(),
-    result: z.unknown(),
-    toolInput: z.record(z.string(), z.unknown()),
+    data: z.object({
+      serverId: z.string(),
+      resourceUri: z.string(),
+      result: z.custom<CallToolResult>(),
+      toolInput: z.record(z.string(), z.unknown()),
+    }),
   }),
 });

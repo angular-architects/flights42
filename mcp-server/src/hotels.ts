@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const HOTELS_RESOURCE_URI = 'ui://hotels/results.html';
+export const HOTEL_ASSET_BASE_URL = 'http://127.0.0.1:3002/assets/hotels';
 
 export const hotelSchema = z.object({
   id: z.string(),
@@ -23,19 +24,19 @@ const baseHotels = [
     id: 'biz-hotel',
     name: 'Biz Hotel',
     sterne: 3,
-    imageUrl: 'https://picsum.photos/seed/biz-hotel/800/480',
+    imageUrl: `${HOTEL_ASSET_BASE_URL}/biz-hotel.svg`,
   },
   {
     id: 'skyline-suites',
     name: 'Skyline Suites',
     sterne: 4,
-    imageUrl: 'https://picsum.photos/seed/skyline-suites/800/480',
+    imageUrl: `${HOTEL_ASSET_BASE_URL}/skyline-suites.svg`,
   },
   {
     id: 'grand-palace',
     name: 'Grand Palace',
     sterne: 5,
-    imageUrl: 'https://picsum.photos/seed/grand-palace/800/480',
+    imageUrl: `${HOTEL_ASSET_BASE_URL}/grand-palace.svg`,
   },
 ] as const;
 
