@@ -1,15 +1,35 @@
 {
   "version": 1,
   "skills": {
+    "add-app-to-server": {
+      "source": "modelcontextprotocol/ext-apps",
+      "sourceType": "github",
+      "computedHash": "e9441d0b6a4eedf016903b78648e25234d5fd40e191124e1a1d1e56e71e9a4f4"
+    },
     "angular-developer": {
       "source": "angular/skills",
       "sourceType": "github",
       "computedHash": "b7764c591c965d85f95f1d4f6d3620b6ab92a1b1fedbcdead7d59e946fc3fd2e"
     },
+    "convert-web-app": {
+      "source": "modelcontextprotocol/ext-apps",
+      "sourceType": "github",
+      "computedHash": "9e2171bff4ea0d0cf82c8cae3ec6c600c8f3ebd41de73cc8a778ef2cd694ade0"
+    },
+    "create-mcp-app": {
+      "source": "modelcontextprotocol/ext-apps",
+      "sourceType": "github",
+      "computedHash": "39f1ce1c5d4c43b8281e7e51332f9a05f4b689ddd9bf426b4833fb671237f757"
+    },
     "mastra": {
       "source": "mastra-ai/skills",
       "sourceType": "github",
       "computedHash": "b42f583342dfee7deb541f4d094f03e8748898257f1f884fa71de1fdba9f38a2"
+    },
+    "migrate-oai-app": {
+      "source": "modelcontextprotocol/ext-apps",
+      "sourceType": "github",
+      "computedHash": "de7efc510078320e126b6b0af3c023d88b98e7c6498fbb8bf93b3daecde0f4d3"
     }
   }
 }
