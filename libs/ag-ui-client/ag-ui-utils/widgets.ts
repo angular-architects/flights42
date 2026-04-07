@@ -271,7 +271,7 @@ function toMcpAppsWidget(
   return {
     name: componentName,
     component,
-    props: value as unknown as Record<string, unknown>,
+    props: { data: value },
   };
 }
 
@@ -285,7 +285,15 @@ function isMcpAppsSnapshotContent(
     typeof (value as { resourceUri?: unknown }).resourceUri === 'string' &&
     typeof (value as { toolInput?: unknown }).toolInput === 'object' &&
     (value as { toolInput?: unknown }).toolInput !== null &&
-    'result' in value
+    isCallToolResult((value as { result?: unknown }).result)
+  );
+}
+
+function isCallToolResult(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    Array.isArray((value as { content?: unknown }).content)
   );
 }
 

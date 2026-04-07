@@ -3,6 +3,7 @@ import {
   ResourceRef,
   Type,
 } from '@angular/core';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 export interface AgUiWidget {
@@ -15,7 +16,7 @@ export interface AgUiWidget {
 export interface AgUiMcpAppsSnapshotContent {
   serverId: string;
   resourceUri: string;
-  result: unknown;
+  result: CallToolResult;
   toolInput: Record<string, unknown>;
 }
 
