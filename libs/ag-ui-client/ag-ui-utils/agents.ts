@@ -28,7 +28,10 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import { appendA2uiSurfaceFromToolResult } from './widgets';
+import {
+  appendA2uiSurfaceFromActivitySnapshot,
+  appendA2uiSurfaceFromToolResult,
+} from './widgets';
 
 export interface RunAgentOptions {
   agent: HttpAgent;
@@ -148,6 +151,25 @@ export async function runAgent(
         );
         return {
           value: completeToolCall(withSurface, event.toolCallId),
+        };
+      });
+    },
+    onActivitySnapshotEvent: ({ event }) => {
+      if (event.activityType !== 'a2ui-surface') {
+        return;
+      }
+
+      messageStream.update((item) => {
+        const messages = readMessages(item);
+        const withSurface = appendA2uiSurfaceFromActivitySnapshot(
+          messages,
+          event.messageId,
+          event.content,
+          processor,
+        );
+
+        return {
+          value: completeToolCall(withSurface, event.messageId),
         };
       });
     },

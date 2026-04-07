@@ -25,6 +25,27 @@ export function appendA2uiSurfaceFromToolResult(
   return appendWidget(messages, toolCallId, widget);
 }
 
+/**
+ * Handles AG-UI activity snapshots that contain A2UI surface operations.
+ */
+export function appendA2uiSurfaceFromActivitySnapshot(
+  messages: AgUiChatMessage[],
+  messageId: string,
+  content: unknown,
+  processor: MessageProcessor,
+): AgUiChatMessage[] {
+  const widget = toA2uiWidgetFromActivitySnapshot(
+    content,
+    messageId,
+    processor,
+  );
+  if (!widget) {
+    return messages;
+  }
+
+  return appendWidget(messages, messageId, widget);
+}
+
 function toA2uiWidgetFromToolResult(
   value: unknown,
   toolCallId: string,
@@ -52,13 +73,44 @@ function toA2uiWidgetFromToolResult(
   };
 }
 
+function toA2uiWidgetFromActivitySnapshot(
+  value: unknown,
+  messageId: string,
+  processor: MessageProcessor,
+): AgUiWidget | null {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !('operations' in value) ||
+    !Array.isArray((value as { operations?: unknown }).operations)
+  ) {
+    return null;
+  }
+
+  const result = value as {
+    operations: Types.ServerToClientMessage[];
+  };
+  processor.processMessages(result.operations);
+
+  const surfaceId = getRenderedSurfaceId(result.operations);
+  if (!surfaceId) {
+    return null;
+  }
+
+  return {
+    name: `a2ui_${messageId}`,
+    a2uiSurfaceId: surfaceId,
+    a2uiSurface: processor.getSurfaces().get(surfaceId) ?? null,
+  };
+}
+
 function widgetsContentEqual(a: AgUiWidget, b: AgUiWidget): boolean {
   return a.name === b.name && a.a2uiSurfaceId === b.a2uiSurfaceId;
 }
 
 function appendWidget(
   messages: AgUiChatMessage[],
-  toolCallId: string,
+  anchorId: string,
   widget: AgUiWidget,
 ): AgUiChatMessage[] {
   for (let index = 0; index < messages.length; index += 1) {
@@ -68,9 +120,10 @@ function appendWidget(
     }
 
     const matchesToolCall = message.toolCalls.some(
-      (toolCall: AgUiToolCall) => toolCall.id === toolCallId,
+      (toolCall: AgUiToolCall) => toolCall.id === anchorId,
     );
-    if (!matchesToolCall) {
+    const matchesMessage = message.id === anchorId;
+    if (!matchesToolCall && !matchesMessage) {
       continue;
     }
 
@@ -87,7 +140,65 @@ function appendWidget(
     });
   }
 
-  return messages;
+  const lastAssistantIndex = findLastAssistantMessageIndex(messages);
+  if (lastAssistantIndex !== -1) {
+    const lastAssistantMessage = messages[lastAssistantIndex];
+    const hasWidget = lastAssistantMessage.widgets.some((entry: AgUiWidget) =>
+      widgetsContentEqual(entry, widget),
+    );
+    if (hasWidget) {
+      return messages;
+    }
+
+    return replaceMessage(messages, lastAssistantIndex, {
+      ...lastAssistantMessage,
+      widgets: [...lastAssistantMessage.widgets, widget],
+    });
+  }
+
+  return [
+    ...messages,
+    {
+      id: anchorId,
+      role: 'assistant',
+      content: '',
+      widgets: [widget],
+      toolCalls: [],
+    },
+  ];
+}
+
+function findLastAssistantMessageIndex(messages: AgUiChatMessage[]): number {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role === 'assistant') {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function getRenderedSurfaceId(
+  operations: Types.ServerToClientMessage[],
+): string | null {
+  for (const operation of operations) {
+    if ('beginRendering' in operation && operation.beginRendering?.surfaceId) {
+      return operation.beginRendering.surfaceId;
+    }
+
+    if ('surfaceUpdate' in operation && operation.surfaceUpdate?.surfaceId) {
+      return operation.surfaceUpdate.surfaceId;
+    }
+
+    if (
+      'dataModelUpdate' in operation &&
+      operation.dataModelUpdate?.surfaceId
+    ) {
+      return operation.dataModelUpdate.surfaceId;
+    }
+  }
+
+  return null;
 }
 
 function safeParseJson(value: string): unknown {
