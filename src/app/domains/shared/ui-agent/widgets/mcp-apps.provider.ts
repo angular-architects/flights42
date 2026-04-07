@@ -16,10 +16,7 @@ export type StyleVariables = NonNullable<
 export interface McpAppsConfig {
   hostInfo: Implementation;
   hostCapabilities: McpUiHostCapabilities;
-  hostContext: Pick<
-    McpUiHostContext,
-    'platform' | 'displayMode' | 'availableDisplayModes' | 'styles'
-  >;
+  hostContext: McpUiHostContext;
 }
 
 export const MCP_APPS_CONFIG = new InjectionToken<McpAppsConfig>(
