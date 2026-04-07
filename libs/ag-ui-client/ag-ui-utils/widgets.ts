@@ -302,7 +302,6 @@ function isMcpAppsSnapshotContent(
     typeof (value as { serverId?: unknown }).serverId === 'string' &&
     typeof (value as { resourceUri?: unknown }).resourceUri === 'string' &&
     typeof (value as { toolInput?: unknown }).toolInput === 'object' &&
-    (value as { toolInput?: unknown }).toolInput !== null &&
     isCallToolResult((value as { result?: unknown }).result)
   );
 }
