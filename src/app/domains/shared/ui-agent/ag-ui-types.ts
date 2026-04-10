@@ -47,6 +47,7 @@ export interface AgUiRegisteredComponent<
   TName extends string = string,
 > {
   name: TName;
+  description: string;
   component: Type<TComponent>;
   schema: z.ZodType<TProps>;
 }
@@ -57,6 +58,7 @@ export function defineAgUiComponent<
   TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
 >(component: {
   name: TName;
+  description: string;
   component: Type<TComponent>;
   schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
 }): AgUiRegisteredComponent<TComponent, TProps, TName> {

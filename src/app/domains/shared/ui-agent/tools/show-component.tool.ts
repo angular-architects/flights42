@@ -27,10 +27,12 @@ function createComponentSchema(
   }
 
   const schemas = registeredComponents.map((entry) =>
-    z.object({
-      name: z.literal(entry.name),
-      props: entry.schema,
-    }),
+    z
+      .object({
+        name: z.literal(entry.name),
+        props: entry.schema,
+      })
+      .describe(entry.description),
   );
 
   if (schemas.length === 1) {
