@@ -1,17 +1,11 @@
-import { type AgentSubscriber } from '@ag-ui/client';
+import { AgentSubscriber, HttpAgent, randomUUID } from '@ag-ui/client';
 
-import { FlightWeatherAgent } from './server.js';
 import { title } from './utils.js';
 
-function connectToAgent() {
-  // Assume establishing a streaming connection via HTTP
-  // and a randomly generated threadId (e.g., a UUID)
-  const threadId = '4711';
-  const agent = new FlightWeatherAgent({ threadId });
-  return agent;
-}
+const threadId = '4711';
+const url = 'http://localhost:3331/agent';
 
-const agent = connectToAgent();
+const agent = new HttpAgent({ url, threadId });
 
 const subscriber: AgentSubscriber = {
   onRunStartedEvent: ({ event }) => {
@@ -71,19 +65,18 @@ const subscriber: AgentSubscriber = {
 };
 
 const userMessage = {
-  id: 'msg-user-1',
+  id: randomUUID(),
   role: 'user' as const,
   content: 'What is the flight weather in Frankfurt?',
 };
 
 // The user message is not an event but part of the request's payload.
 console.log(
-  `${title('USER REQUEST')}\nrole=${userMessage.role}\ncontent="${userMessage.content}"`,
+  `${title('USER REQUEST')}\nrole=${userMessage.role}\ncontent="${userMessage.content}\n"`,
 );
-console.log();
 
 agent.addMessage(userMessage);
 
 agent
-  .runAgent({ runId: '0815' }, subscriber)
+  .runAgent({ runId: randomUUID() }, subscriber)
   .catch((err) => console.error('Agent error:', err));

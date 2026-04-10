@@ -1,130 +1,54 @@
-import { AbstractAgent } from '@ag-ui/client';
-import { type BaseEvent, EventType, type RunAgentInput } from '@ag-ui/core';
-import { Observable } from 'rxjs';
+import { type RunAgentInput } from '@ag-ui/core';
+import express from 'express';
 
-// ─── Dummy Agent ─────────────────────────────────────────────────────────────
+import { FlightWeatherAgent } from './agent.js';
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const app = express();
+const port = Number(process.env.AG_UI_DEMO_PORT ?? 3331);
 
-class FlightWeatherAgent extends AbstractAgent {
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable((observer) => {
-      (async () => {
-        const { threadId, runId } = input;
+app.use(express.json());
 
-        observer.next({ type: EventType.RUN_STARTED, threadId, runId });
-        await sleep(200);
+app.get('/health', (_request, response) => {
+  response.json({ status: 'ok' });
+});
 
-        // Message 1
-        observer.next({
-          type: EventType.TEXT_MESSAGE_START,
-          messageId: '1001',
-          role: 'assistant',
-        });
-        observer.next({
-          type: EventType.TEXT_MESSAGE_CONTENT,
-          messageId: '1001',
-          delta: 'Checking flight weather for Frankfurt...',
-        });
-        observer.next({ type: EventType.TEXT_MESSAGE_END, messageId: '1001' });
-        await sleep(300);
+app.post('/agent', (request, response) => {
+  const input = request.body as RunAgentInput;
 
-        // Message 2
-        observer.next({
-          type: EventType.TEXT_MESSAGE_START,
-          messageId: '1002',
-          role: 'assistant',
-        });
+  response.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  response.setHeader('Cache-Control', 'no-cache, no-transform');
+  response.setHeader('Connection', 'keep-alive');
+  response.flushHeaders();
 
-        observer.next({
-          type: EventType.TEXT_MESSAGE_CONTENT,
-          messageId: '1002',
-          delta: 'Connecting',
-        });
+  const agent = new FlightWeatherAgent();
+  const subscription = agent.run(input).subscribe({
+    next: (event) => {
+      response.write(`data: ${JSON.stringify(event)}\n\n`);
+    },
+    error: (error: unknown) => {
+      console.error('AG-UI demo agent error:', error);
+      response.write(
+        `data: ${JSON.stringify({
+          type: 'ERROR',
+          message: 'The AG-UI demo agent failed to process the request.',
+        })}\n\n`,
+      );
+      response.end();
+    },
+    complete: () => {
+      response.end();
+    },
+  });
 
-        await sleep(300);
+  response.on('close', () => {
+    subscription.unsubscribe();
+  });
+});
 
-        observer.next({
-          type: EventType.TEXT_MESSAGE_CONTENT,
-          messageId: '1002',
-          delta: 'to',
-        });
+const server = app.listen(port, () => {
+  console.log(`AG-UI demo server listening on http://localhost:${port}`);
+});
 
-        await sleep(300);
-
-        observer.next({
-          type: EventType.TEXT_MESSAGE_CONTENT,
-          messageId: '1002',
-          delta: 'weather',
-        });
-
-        await sleep(300);
-
-        observer.next({
-          type: EventType.TEXT_MESSAGE_CONTENT,
-          messageId: '1002',
-          delta: 'service...',
-        });
-
-        await sleep(300);
-
-        observer.next({ type: EventType.TEXT_MESSAGE_END, messageId: '1002' });
-        await sleep(300);
-
-        // Server-side tool call: loadFlightWeather
-        observer.next({
-          type: EventType.TOOL_CALL_START,
-          toolCallId: '2001',
-          toolCallName: 'loadFlightWeather',
-        });
-        observer.next({
-          type: EventType.TOOL_CALL_ARGS,
-          toolCallId: '2001',
-          delta: '{"city":"Frankfurt"}',
-        });
-        observer.next({ type: EventType.TOOL_CALL_END, toolCallId: '2001' });
-        await sleep(500);
-
-        const weatherResult = {
-          condition: 'Sunny',
-          temperature: '18° C',
-          wind: 'no wind',
-        };
-
-        observer.next({
-          type: EventType.TOOL_CALL_RESULT,
-          toolCallId: '2001',
-          messageId: '3001',
-          role: 'tool',
-          content: JSON.stringify(weatherResult),
-        });
-        await sleep(300);
-
-        // Client-side tool call: showComponents
-        const showComponentsArgs = {
-          components: [{ name: 'weather', props: weatherResult }],
-        };
-
-        observer.next({
-          type: EventType.TOOL_CALL_START,
-          toolCallId: '2002',
-          toolCallName: 'showComponents',
-        });
-        observer.next({
-          type: EventType.TOOL_CALL_ARGS,
-          toolCallId: '2002',
-          delta: JSON.stringify(showComponentsArgs),
-        });
-        observer.next({ type: EventType.TOOL_CALL_END, toolCallId: '2002' });
-        await sleep(200);
-
-        observer.next({ type: EventType.RUN_FINISHED, threadId, runId });
-        observer.complete();
-      })().catch((err) => observer.error(err));
-    });
-  }
-}
-
-export { FlightWeatherAgent };
+server.on('error', (error) => {
+  console.error('AG-UI demo server failed to start:', error);
+});
