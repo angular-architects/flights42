@@ -3,9 +3,8 @@ import { Component, computed, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { AgUiChatMessage, WidgetContainerComponent } from '@internal/ag-ui';
 
-import { AgUiChatMessage } from '../../ui-agent/ag-ui-types';
-import { WidgetContainerComponent } from '../../ui-agent/widget-container/widget-container';
 import { MessageComponent } from '../message';
 import { ToolStatusComponent } from '../tool-status';
 

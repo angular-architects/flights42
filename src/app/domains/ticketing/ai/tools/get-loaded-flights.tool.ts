@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
+import { defineAgUiTool } from '@internal/ag-ui';
 
-import { defineAgUiTool } from '../../../shared/ui-agent/ag-ui-types';
 import { Flight } from '../../data/flight';
 import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';

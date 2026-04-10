@@ -7,9 +7,9 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { defineAgUiComponent } from '@internal/ag-ui';
 import { z } from 'zod';
 
-import { defineAgUiComponent } from '../../../shared/ui-agent/ag-ui-types';
 import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 

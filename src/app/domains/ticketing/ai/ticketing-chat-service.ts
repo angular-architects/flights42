@@ -1,8 +1,10 @@
 import { inject, Injectable } from '@angular/core';
+import {
+  agUiResource,
+  createShowComponentsTool,
+  messageWidget,
+} from '@internal/ag-ui';
 
-import { agUiResource } from '../../shared/ui-agent/ag-ui-resource';
-import { createShowComponentsTool } from '../../shared/ui-agent/tools/show-component.tool';
-import { messageWidget } from '../../shared/ui-agent/widgets/message-widget';
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
