@@ -8,7 +8,7 @@
   </div>
 </article>
 
-@for (message of messageModels(); track $index) {
+@for (message of messageModels(); track message.id) {
   <article
     class="msg"
     [class.assistant]="message.role === 'assistant'"
@@ -32,7 +32,7 @@
           @if (message.contentString) {
             <app-message [data]="message.contentString"></app-message>
           }
-          @for (widget of message.widgets; track widget.name + $index) {
+          @for (widget of message.widgets; track widget.id) {
             <app-widget-container [widget]="widget" />
           }
         } @else if (message.role === 'error') {

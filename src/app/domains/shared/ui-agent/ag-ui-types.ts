@@ -6,6 +6,7 @@ import {
 import { z } from 'zod';
 
 export interface AgUiWidget {
+  id: string;
   name: string;
   component: Type<unknown>;
   props: Record<string, unknown>;

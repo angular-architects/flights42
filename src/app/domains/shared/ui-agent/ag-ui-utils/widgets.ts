@@ -21,6 +21,7 @@ export function appendWidgetsFromToolResult(
 ): AgUiChatMessage[] {
   const widgets = toWidgets(
     toolNameFor(messages, toolCallId),
+    toolCallId,
     content,
     componentMap,
   );
@@ -38,7 +39,12 @@ export function appendWidgetsFromPendingToolResult(
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiChatMessage[] {
-  const widgets = toWidgets(pendingCall.toolCallName, content, componentMap);
+  const widgets = toWidgets(
+    pendingCall.toolCallName,
+    pendingCall.toolCallId,
+    content,
+    componentMap,
+  );
 
   if (widgets.length === 0) {
     return messages;
@@ -80,9 +86,7 @@ function appendWidget(
     }
 
     const hasWidget = message.widgets.some(
-      (entry: AgUiWidget) =>
-        entry.name === widget.name &&
-        JSON.stringify(entry.props) === JSON.stringify(widget.props),
+      (entry: AgUiWidget) => entry.id === widget.id,
     );
     if (hasWidget) {
       return messages;
@@ -119,13 +123,14 @@ function toolNameFor(
 
 function toWidgets(
   name: string | undefined,
+  toolCallId: string,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiWidget[] {
   const parsed = safeParseJson(content);
 
   if (name === 'showComponents') {
-    return toRegisteredWidgets(parsed, componentMap);
+    return toRegisteredWidgets(parsed, toolCallId, componentMap);
   }
 
   if (!name) {
@@ -134,12 +139,20 @@ function toWidgets(
 
   const component = componentMap.get(name)?.component;
   return parsed && typeof parsed === 'object' && component
-    ? [{ name, component, props: parsed as Record<string, unknown> }]
+    ? [
+        {
+          id: `${toolCallId}-0`,
+          name,
+          component,
+          props: parsed as Record<string, unknown>,
+        },
+      ]
     : [];
 }
 
 function toRegisteredWidgets(
   value: unknown,
+  toolCallId: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiWidget[] {
   if (
@@ -153,12 +166,16 @@ function toRegisteredWidgets(
 
   const components = (value as { components: unknown[] }).components;
   return components
-    .map((item) => toRegisteredWidget(item, componentMap))
+    .map((item, index) =>
+      toRegisteredWidget(item, toolCallId, index, componentMap),
+    )
     .filter((widget): widget is AgUiWidget => widget !== null);
 }
 
 function toRegisteredWidget(
   value: unknown,
+  toolCallId: string,
+  index: number,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiWidget | null {
   if (!value || typeof value !== 'object') {
@@ -182,6 +199,7 @@ function toRegisteredWidget(
   }
 
   return {
+    id: `${toolCallId}-${index}`,
     name: componentName,
     component,
     props: widget.props as Record<string, unknown>,
