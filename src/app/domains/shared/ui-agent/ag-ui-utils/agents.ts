@@ -20,7 +20,6 @@ import {
   upsertAssistantMessage,
 } from './messages';
 import {
-  addToolResultMessage,
   completeToolCall,
   executePendingTools,
   keepToolCallMessages,
@@ -29,13 +28,11 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import { appendWidgetsFromToolResult } from './widgets';
 
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
   model?: string;
   useServerMemory?: boolean;
@@ -50,15 +47,8 @@ interface RunAgentResult {
 export async function runAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const {
-    agent,
-    tools,
-    toolMap,
-    componentMap,
-    model,
-    useServerMemory,
-    messageStream,
-  } = options;
+  const { agent, tools, toolMap, model, useServerMemory, messageStream } =
+    options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
@@ -75,6 +65,21 @@ export async function runAgent(
       }));
     },
     onTextMessageContentEvent: ({ event, textMessageBuffer }) => {
+      // HttpAgent passes the buffer *before* applying this chunk's delta; full text is buffer + delta.
+      const delta =
+        event && typeof event === 'object' && 'delta' in event
+          ? String((event as { delta?: unknown }).delta ?? '')
+          : '';
+      const content = `${textMessageBuffer}${delta}`;
+      messageStream.update((item) => ({
+        value: upsertAssistantMessage(
+          readMessages(item),
+          event.messageId,
+          content,
+        ),
+      }));
+    },
+    onTextMessageEndEvent: ({ event, textMessageBuffer }) => {
       messageStream.update((item) => ({
         value: upsertAssistantMessage(
           readMessages(item),
@@ -108,58 +113,6 @@ export async function runAgent(
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
-      if (toolCallName === 'showComponents') {
-        const showComponentsTool = toolMap.get(toolCallName);
-
-        try {
-          showComponentsTool?.parse?.(normalizedToolCallArgs);
-        } catch {
-          messageStream.update((item) => ({
-            value: updateToolCall(readMessages(item), event.toolCallId, {
-              name: toolCallName,
-              args: normalizedToolCallArgs,
-              status: 'pending',
-            }),
-          }));
-
-          if (showComponentsTool) {
-            pendingLocalCalls.push({
-              toolCallId: event.toolCallId,
-              toolCallName,
-              toolCallArgs: normalizedToolCallArgs,
-            });
-            followUpToolCallIds.push(event.toolCallId);
-          }
-
-          return;
-        }
-
-        messageStream.update((item) => ({
-          value: updateToolCall(readMessages(item), event.toolCallId, {
-            name: toolCallName,
-            args: normalizedToolCallArgs,
-          }),
-        }));
-
-        messageStream.update((item) => ({
-          value: appendWidgetsFromToolResult(
-            readMessages(item),
-            event.toolCallId,
-            JSON.stringify(normalizedToolCallArgs),
-            componentMap,
-          ),
-        }));
-
-        messageStream.update((item) => ({
-          value: completeToolCall(readMessages(item), event.toolCallId),
-        }));
-
-        addToolResultMessage(agent, event.toolCallId, { ok: true });
-        followUpToolCallIds.push(event.toolCallId);
-
-        return;
-      }
-
       messageStream.update((item) => ({
         value: updateToolCall(readMessages(item), event.toolCallId, {
           name: toolCallName,
@@ -168,7 +121,8 @@ export async function runAgent(
         }),
       }));
 
-      if (!toolMap.has(toolCallName)) {
+      const toolDefinition = toolMap.get(toolCallName);
+      if (!toolDefinition) {
         return;
       }
 
@@ -177,7 +131,10 @@ export async function runAgent(
         toolCallName,
         toolCallArgs: normalizedToolCallArgs,
       });
-      followUpToolCallIds.push(event.toolCallId);
+
+      if (toolDefinition.followUpAfterExecution ?? true) {
+        followUpToolCallIds.push(event.toolCallId);
+      }
     },
     onToolCallResultEvent: ({ event }) => {
       messageStream.update((item) => ({
@@ -281,7 +238,6 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
-      componentMap,
       runId: currentRunId,
       model,
       useServerMemory,
@@ -294,7 +250,7 @@ export async function runUntilSettled(
       );
     }
 
-    const executedAnyTool = await executePendingTools({
+    await executePendingTools({
       agent,
       toolMap,
       componentMap,
@@ -303,7 +259,7 @@ export async function runUntilSettled(
       messageStream,
     });
 
-    done = !executedAnyTool && runResult.followUpToolCallIds.length === 0;
+    done = runResult.followUpToolCallIds.length === 0;
     currentRunId = randomUUID();
   }
 }

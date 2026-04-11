@@ -1,9 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import {
-  agUiResource,
-  createShowComponentsTool,
-  messageWidget,
-} from '@internal/ag-ui';
+import { agUiResource, createShowComponentsTool } from '@internal/ag-ui';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -29,7 +25,7 @@ export class TicketingChatService {
       toggleFlightSelectionTool,
       getCurrentBasketTool,
       displayFlightDetailTool,
-      createShowComponentsTool([messageWidget, flightWidget]),
+      createShowComponentsTool([flightWidget]),
     ],
   });
 

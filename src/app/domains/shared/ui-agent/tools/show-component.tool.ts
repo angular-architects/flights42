@@ -57,6 +57,7 @@ function createToolDescription(
     '- Never invent props.',
     '- Use only the registered components listed below.',
     '- Each entry in components must contain exactly name and props.',
+    "- Follow each component's **Purpose** below for when and how to use it.",
     '',
     'Registered components:',
     componentsDescription,
@@ -187,6 +188,8 @@ export function createShowComponentsTool<
         .describe('Component configs with name discriminator and props.'),
     }) as z.ZodType<ShowComponentsToolArgs<TComponents>>,
     registeredComponents,
-    execute: () => ({ ok: true }),
+    followUpAfterExecution: false,
+    // Returned value is serialized for tool-result messages and for widget rendering in executeTool.
+    execute: (args) => args,
   });
 }

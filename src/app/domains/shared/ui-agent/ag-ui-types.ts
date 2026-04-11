@@ -89,6 +89,7 @@ export interface AgUiClientToolDefinition<TArgs = unknown> {
   name: string;
   description: string;
   registeredComponents?: readonly AgUiRegisteredComponent[];
+  followUpAfterExecution?: boolean;
   parameters?: Record<string, unknown>;
   parse?: (args: unknown) => unknown;
   execute: ToolExecuteFn<TArgs>;
@@ -100,6 +101,7 @@ interface AgUiToolWithSchema<TSchema extends z.ZodTypeAny> {
   schema: TSchema;
   execute: (args: z.infer<TSchema>) => Promise<unknown> | unknown;
   registeredComponents?: readonly AgUiRegisteredComponent[];
+  followUpAfterExecution?: boolean;
 }
 
 interface AgUiToolWithoutSchema {
@@ -107,6 +109,7 @@ interface AgUiToolWithoutSchema {
   description: string;
   execute: () => Promise<unknown> | unknown;
   registeredComponents?: readonly AgUiRegisteredComponent[];
+  followUpAfterExecution?: boolean;
 }
 
 export function defineAgUiTool<const TSchema extends z.ZodTypeAny>(
@@ -123,6 +126,7 @@ export function defineAgUiTool(
       name: tool.name,
       description: tool.description,
       registeredComponents: tool.registeredComponents,
+      followUpAfterExecution: tool.followUpAfterExecution ?? true,
       execute: () => tool.execute(),
     };
   }
@@ -131,6 +135,7 @@ export function defineAgUiTool(
     name: tool.name,
     description: tool.description,
     registeredComponents: tool.registeredComponents,
+    followUpAfterExecution: tool.followUpAfterExecution ?? true,
     parameters: z.toJSONSchema(tool.schema) as Record<string, unknown>,
     parse: (args) => tool.schema.parse(args),
     execute: (args) => tool.execute(tool.schema.parse(args)),

@@ -8,14 +8,10 @@ import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 export const getLoadedFlightsTool = defineAgUiTool({
   name: 'getLoadedFlights',
   description: `
-Returns the currently loaded/displayed flights.
+Returns the currently loaded/displayed flights (search/working set). This tool only returns data — it does not render UI.
 
-Remarks:
-- This tool is NOT displaying the list with these flights to the user
-- This list is useful to answer questions about the current working set
-- Use this tool when the user is asking for flights in general but not when they are asking for booked flights, tickets or check-in
-- The returned flights are not booked. If displayed with the flightWidget, use status: 'other'
-    `.trim(),
+If the user should **see** these flights as cards, call \`showComponents\` with one \`flightWidget\` per flight (\`status: 'other'\`). Use this tool when the user asks about the current flight list or search results, not for booked-flight / ticket questions (use the appropriate booked-flights flow instead).
+  `.trim(),
   execute: () => {
     const store = inject(FlightStore);
     return store.flightsValue().map(toFlightInfo);

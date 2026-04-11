@@ -44,7 +44,7 @@ app.post('/api/chat', async (req, res) => {
       //   - Do not propose search filters that are not covered by the provided tools
       //   - Do not propose any further actions
       //   - Provide enumerations as markdown lists
-      //   - Answer questions with the messageWidget to provide some text to the user.
+      //   - Answer with normal assistant text; when appropriate, *also* use showComponents (e.g. flightWidget) for flights.
       //   - When appropriate, *also* answer with other components (widgets), e.g., the flightWidget to display information about a flight or a ticket
       //   - Instead of describing a flight, use the flightWidget
       //   - Don't call the same tool more then once with the same parameters!
@@ -53,7 +53,7 @@ app.post('/api/chat', async (req, res) => {
 
       //   - User: Which flights did I book?
       //   - Assistant:
-      //     - UI: messageWidget(You've booked these 3 flights)
+      //     - Text: You've booked these 3 flights.
       //     - UI: flightWidget({id: 0, from: '...', to:'...', ...})
       //   - UI: flightWidget({id: 1, from: '...', to:'...', ...})
       //   - UI: flightWidget({id: 2, from: '...', to:'...', ...})
