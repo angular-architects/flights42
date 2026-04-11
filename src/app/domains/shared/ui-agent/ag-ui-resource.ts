@@ -89,6 +89,7 @@ export function agUiResource(
       environmentInjector,
       runId: params.id,
       model: options.model,
+      useServerMemory,
       abortSignal,
       messageStream,
       isLoading,

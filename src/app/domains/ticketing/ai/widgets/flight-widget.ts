@@ -121,7 +121,7 @@ export class FlightWidget {
 export const flightWidget = defineAgUiComponent({
   name: 'flightWidget',
   description:
-    'Displays a concrete flight as an interactive card via `flightWidget`. Use it when referring to one or more specific flights.',
+    'Displays a concrete flight as an interactive card via `flightWidget`. Use it only when the user explicitly asked to see, inspect, compare, select, or review specific flights. Do not show it for general confirmations or summary messages.',
   component: FlightWidget,
   schema: z.object({
     flight: flightSchema,

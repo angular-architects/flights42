@@ -20,8 +20,11 @@ import {
   upsertAssistantMessage,
 } from './messages';
 import {
+  addToolResultMessage,
   completeToolCall,
   executePendingTools,
+  keepToolCallMessages,
+  normalizeAgentMessagesForRun,
   type PendingToolExecution,
   updateToolCall,
   upsertToolCall,
@@ -35,16 +38,31 @@ export interface RunAgentOptions {
   componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
   model?: string;
+  useServerMemory?: boolean;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+}
+
+interface RunAgentResult {
+  pendingLocalCalls: PendingToolExecution[];
+  followUpToolCallIds: string[];
 }
 
 export async function runAgent(
   options: RunAgentOptions,
-): Promise<PendingToolExecution[]> {
-  const { agent, tools, toolMap, componentMap, model, messageStream } = options;
+): Promise<RunAgentResult> {
+  const {
+    agent,
+    tools,
+    toolMap,
+    componentMap,
+    model,
+    useServerMemory,
+    messageStream,
+  } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
+  const followUpToolCallIds: string[] = [];
 
   const subscriber: AgentSubscriber = {
     onTextMessageStartEvent: ({ event }) => {
@@ -91,6 +109,38 @@ export async function runAgent(
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
       if (toolCallName === 'showComponents') {
+        const showComponentsTool = toolMap.get(toolCallName);
+
+        try {
+          showComponentsTool?.parse?.(normalizedToolCallArgs);
+        } catch {
+          messageStream.update((item) => ({
+            value: updateToolCall(readMessages(item), event.toolCallId, {
+              name: toolCallName,
+              args: normalizedToolCallArgs,
+              status: 'pending',
+            }),
+          }));
+
+          if (showComponentsTool) {
+            pendingLocalCalls.push({
+              toolCallId: event.toolCallId,
+              toolCallName,
+              toolCallArgs: normalizedToolCallArgs,
+            });
+            followUpToolCallIds.push(event.toolCallId);
+          }
+
+          return;
+        }
+
+        messageStream.update((item) => ({
+          value: updateToolCall(readMessages(item), event.toolCallId, {
+            name: toolCallName,
+            args: normalizedToolCallArgs,
+          }),
+        }));
+
         messageStream.update((item) => ({
           value: appendWidgetsFromToolResult(
             readMessages(item),
@@ -103,6 +153,9 @@ export async function runAgent(
         messageStream.update((item) => ({
           value: completeToolCall(readMessages(item), event.toolCallId),
         }));
+
+        addToolResultMessage(agent, event.toolCallId, { ok: true });
+        followUpToolCallIds.push(event.toolCallId);
 
         return;
       }
@@ -124,6 +177,7 @@ export async function runAgent(
         toolCallName,
         toolCallArgs: normalizedToolCallArgs,
       });
+      followUpToolCallIds.push(event.toolCallId);
     },
     onToolCallResultEvent: ({ event }) => {
       messageStream.update((item) => ({
@@ -154,6 +208,12 @@ export async function runAgent(
     parameters,
   }));
 
+  agent.setMessages(
+    useServerMemory
+      ? agent.messages
+      : normalizeAgentMessagesForRun(agent.messages),
+  );
+
   await agent.runAgent(
     {
       runId,
@@ -163,7 +223,10 @@ export async function runAgent(
     subscriber,
   );
 
-  return pendingLocalCalls;
+  return {
+    pendingLocalCalls,
+    followUpToolCallIds,
+  };
 }
 
 export interface RunUntilSettledOptions {
@@ -174,6 +237,7 @@ export interface RunUntilSettledOptions {
   environmentInjector: EnvironmentInjector;
   runId: string;
   model?: string;
+  useServerMemory?: boolean;
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
@@ -191,6 +255,7 @@ export async function runUntilSettled(
     environmentInjector,
     runId,
     model,
+    useServerMemory,
     abortSignal,
     messageStream,
     maxLocalTurns,
@@ -212,26 +277,33 @@ export async function runUntilSettled(
 
     turnCount += 1;
 
-    const pendingLocalCalls = await runAgent({
+    const runResult = await runAgent({
       agent,
       tools,
       toolMap,
       componentMap,
       runId: currentRunId,
       model,
+      useServerMemory,
       messageStream,
     });
+
+    if (useServerMemory) {
+      agent.setMessages(
+        keepToolCallMessages(agent.messages, runResult.followUpToolCallIds),
+      );
+    }
 
     const executedAnyTool = await executePendingTools({
       agent,
       toolMap,
       componentMap,
       environmentInjector,
-      pendingLocalCalls,
+      pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,
     });
 
-    done = !executedAnyTool;
+    done = !executedAnyTool && runResult.followUpToolCallIds.length === 0;
     currentRunId = randomUUID();
   }
 }

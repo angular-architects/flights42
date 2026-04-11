@@ -90,6 +90,7 @@ export interface AgUiClientToolDefinition<TArgs = unknown> {
   description: string;
   registeredComponents?: readonly AgUiRegisteredComponent[];
   parameters?: Record<string, unknown>;
+  parse?: (args: unknown) => unknown;
   execute: ToolExecuteFn<TArgs>;
 }
 
@@ -131,6 +132,7 @@ export function defineAgUiTool(
     description: tool.description,
     registeredComponents: tool.registeredComponents,
     parameters: z.toJSONSchema(tool.schema) as Record<string, unknown>,
+    parse: (args) => tool.schema.parse(args),
     execute: (args) => tool.execute(tool.schema.parse(args)),
   };
 }
