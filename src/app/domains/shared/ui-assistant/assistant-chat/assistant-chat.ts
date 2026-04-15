@@ -1,5 +1,4 @@
 import {
-  afterEveryRender,
   Component,
   ElementRef,
   inject,
@@ -9,6 +8,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { AgUiChatResourceRef } from '@internal/ag-ui-client';
 
+import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
 
@@ -26,6 +26,11 @@ export class AssistantChat {
   private messagesContainer =
     viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
 
+  private autoScroller = injectAutoScroller({
+    getContainer: () => this.messagesContainer()?.nativeElement ?? null,
+    shouldScroll: () => this.panelVisible(),
+  });
+
   protected readonly panelVisible = signal(false);
   protected readonly message = signal('');
 
@@ -35,24 +40,30 @@ export class AssistantChat {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
       this.chat = chatInfo.chat;
     });
+  }
 
-    afterEveryRender(() => {
-      if (this.panelVisible()) {
-        this.scrollDown();
-      }
+  private handlePanelOpened(): void {
+    this.autoScroller.connect();
+
+    queueMicrotask(() => {
+      this.autoScroller.scrollToBottom();
+      this.composerInput()?.nativeElement.focus();
     });
   }
 
-  private scrollDown() {
-    this.messagesContainer()?.nativeElement.scrollTo({
-      top: this.messagesContainer()?.nativeElement.scrollHeight,
-      behavior: 'smooth',
-    });
+  private handlePanelClosed(): void {
+    this.autoScroller.disconnect();
   }
 
   protected toggle() {
     this.panelVisible.update((visible) => !visible);
-    this.composerInput()?.nativeElement.focus();
+
+    if (this.panelVisible()) {
+      this.handlePanelOpened();
+      return;
+    }
+
+    this.handlePanelClosed();
   }
 
   protected submit() {
