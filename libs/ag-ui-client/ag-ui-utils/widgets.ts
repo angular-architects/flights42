@@ -65,7 +65,7 @@ export function upsertWidgetFromActivitySnapshot(
     return messages;
   }
 
-  const widget = toMcpAppsWidget(content, componentMap);
+  const widget = toMcpAppsWidget(messageId, content, componentMap);
   if (!widget) {
     return messages;
   }
@@ -255,6 +255,7 @@ function toRegisteredWidget(
 }
 
 function toMcpAppsWidget(
+  messageId: string,
   value: unknown,
   componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiWidget | null {
@@ -269,9 +270,10 @@ function toMcpAppsWidget(
   }
 
   return {
+    id: `${messageId}-mcp-apps`,
     name: componentName,
     component,
-    props: { data: value },
+    props: { data: value } as Record<string, unknown>,
   };
 }
 

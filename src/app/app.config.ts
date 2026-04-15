@@ -6,10 +6,10 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHashbrown } from '@hashbrownai/angular';
+import { provideMcpApps } from '@internal/ag-ui';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
-import { provideMcpApps } from './domains/shared/ui-agent/widgets/mcp-apps.provider';
 import { ConfigService } from './domains/shared/util-common/config-service';
 import { mcpAppsConfig } from './mcp-apps.config';
 

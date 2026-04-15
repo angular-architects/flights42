@@ -28,10 +28,7 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import {
-  appendWidgetsFromToolResult,
-  upsertWidgetFromActivitySnapshot,
-} from './widgets';
+import { upsertWidgetFromActivitySnapshot } from './widgets';
 
 export interface RunAgentOptions {
   agent: HttpAgent;

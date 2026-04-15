@@ -44,11 +44,15 @@ export type FindHotelsInput = z.infer<typeof findHotelsInputSchema>;
 export type FindHotelsResult = z.infer<typeof findHotelsResultSchema>;
 
 export function findHotels(input: FindHotelsInput): FindHotelsResult {
-  return {
-    city: input.city,
-    hotels: baseHotels.map((hotel) => ({
-      ...hotel,
-      name: `${hotel.name} ${input.city}`,
-    })),
-  };
+  const hotels = baseHotels.map((hotel) => ({
+    ...hotel,
+    name: `${hotel.name} ${input.city}`,
+  }));
+
+  for (let i = hotels.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [hotels[i], hotels[j]] = [hotels[j], hotels[i]];
+  }
+
+  return { city: input.city, hotels };
 }
