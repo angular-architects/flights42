@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHashbrown } from '@hashbrownai/angular';
-import { provideMcpApps } from '@internal/ag-ui-client';
+import { MCP_APPS_SERVER_URL, provideMcpApps } from '@internal/ag-ui-client';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
@@ -29,6 +29,10 @@ export const appConfig: ApplicationConfig = {
         },
       ],
     }),
+    {
+      provide: MCP_APPS_SERVER_URL,
+      useFactory: () => inject(ConfigService).mcpServerUrl,
+    },
     provideMcpApps(mcpAppsConfig),
     provideMarkdown(),
   ],
