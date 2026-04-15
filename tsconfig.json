@@ -16,8 +16,7 @@
     "module": "preserve",
     "paths": {
       "@internal/ag-ui": ["./libs/ag-ui-client/index.ts"],
-      "@internal/ag-ui/*": ["./libs/ag-ui-client/*"],
-      "@flights42/ui-common": ["./projects/ui-common/src/public-api.ts"]
+      "@internal/ag-ui/*": ["./libs/ag-ui-client/*"]
     }
   },
   "angularCompilerOptions": {
@@ -33,18 +32,6 @@
     },
     {
       "path": "./tsconfig.spec.json"
-    },
-    {
-      "path": "./projects/miles/tsconfig.app.json"
-    },
-    {
-      "path": "./projects/miles/tsconfig.spec.json"
-    },
-    {
-      "path": "./projects/ui-common/tsconfig.lib.json"
-    },
-    {
-      "path": "./projects/ui-common/tsconfig.spec.json"
     },
     {
       "path": "./ai-server/tsconfig.json"
