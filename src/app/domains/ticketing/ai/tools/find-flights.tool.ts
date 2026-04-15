@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiTool } from '@internal/ag-ui';
+import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';

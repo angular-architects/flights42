@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { agUiResource, createShowComponentsTool } from '@internal/ag-ui';
+import { agUiResource, createShowComponentsTool } from '@internal/ag-ui-client';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { ConfigService } from '../../shared/util-common/config-service';

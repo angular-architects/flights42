@@ -15,8 +15,8 @@
     "target": "ES2022",
     "module": "preserve",
     "paths": {
-      "@internal/ag-ui": ["./libs/ag-ui-client/index.ts"],
-      "@internal/ag-ui/*": ["./libs/ag-ui-client/*"]
+      "@internal/ag-ui-client": ["./libs/ag-ui-client/index.ts"],
+      "@internal/ag-ui-client/*": ["./libs/ag-ui-client/*"]
     }
   },
   "angularCompilerOptions": {

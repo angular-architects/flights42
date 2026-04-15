@@ -7,7 +7,7 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiComponent } from '@internal/ag-ui';
+import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { FlightInfo } from '../../data/flight-info';

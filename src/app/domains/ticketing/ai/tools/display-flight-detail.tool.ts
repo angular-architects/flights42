@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiTool } from '@internal/ag-ui';
+import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 export const displayFlightDetailTool = defineAgUiTool({

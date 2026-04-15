@@ -7,7 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AgUiChatResourceRef } from '@internal/ag-ui';
+import { AgUiChatResourceRef } from '@internal/ag-ui-client';
 
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';

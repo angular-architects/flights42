@@ -3,7 +3,10 @@ import { Component, computed, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AgUiChatMessage, WidgetContainerComponent } from '@internal/ag-ui';
+import {
+  AgUiChatMessage,
+  WidgetContainerComponent,
+} from '@internal/ag-ui-client';
 
 import { MessageComponent } from '../message';
 import { ToolStatusComponent } from '../tool-status';
