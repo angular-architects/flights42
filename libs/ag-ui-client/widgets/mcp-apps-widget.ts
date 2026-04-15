@@ -10,11 +10,6 @@ import {
   viewChild,
 } from '@angular/core';
 import {
-  type AgUiMcpAppsSnapshotContent,
-  defineAgUiComponent,
-  MCP_APPS_CONFIG,
-} from '@internal/ag-ui-client';
-import {
   AppBridge,
   PostMessageTransport,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
@@ -22,7 +17,11 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
 
-import { ConfigService } from '../../util-common/config-service';
+import {
+  type AgUiMcpAppsSnapshotContent,
+  defineAgUiComponent,
+} from '../ag-ui-types';
+import { MCP_APPS_CONFIG, MCP_APPS_SERVER_URL } from './mcp-apps.provider';
 
 @Component({
   selector: 'app-mcp-apps-widget',
@@ -51,9 +50,9 @@ import { ConfigService } from '../../util-common/config-service';
   `,
 })
 export class McpAppsWidgetComponent {
-  private readonly config = inject(ConfigService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly mcpAppsConfig = inject(MCP_APPS_CONFIG);
+  private readonly mcpAppsServerUrl = inject(MCP_APPS_SERVER_URL);
 
   readonly data = input.required<AgUiMcpAppsSnapshotContent>();
 
@@ -161,7 +160,7 @@ export class McpAppsWidgetComponent {
       version: '1.0.0',
     });
     const transport = new StreamableHTTPClientTransport(
-      new URL(this.config.mcpServerUrl),
+      new URL(this.mcpAppsServerUrl),
     );
 
     await client.connect(transport);

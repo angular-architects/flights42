@@ -23,6 +23,10 @@ export const MCP_APPS_CONFIG = new InjectionToken<McpAppsConfig>(
   'MCP_APPS_CONFIG',
 );
 
+export const MCP_APPS_SERVER_URL = new InjectionToken<string>(
+  'MCP_APPS_SERVER_URL',
+);
+
 export function provideMcpApps(config: McpAppsConfig): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
