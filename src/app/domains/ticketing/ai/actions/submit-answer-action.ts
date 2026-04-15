@@ -1,5 +1,5 @@
 import type { UserAction } from '@a2ui/web_core/types/client-event';
-import type { AgUiChatResourceRef } from '@internal/ag-ui';
+import type { AgUiChatResourceRef } from '@internal/ag-ui-client';
 
 interface Question {
   id: string;
