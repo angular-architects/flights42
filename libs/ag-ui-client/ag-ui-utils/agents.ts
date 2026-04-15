@@ -105,8 +105,16 @@ interface RunAgentResult {
 
 export async function runAgent(
   options: RunAgentOptions,
-): Promise<PendingToolExecution[]> {
-  const { agent, tools, toolMap, processor, model, messageStream } = options;
+): Promise<RunAgentResult> {
+  const {
+    agent,
+    tools,
+    toolMap,
+    processor,
+    model,
+    useServerMemory,
+    messageStream,
+  } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
