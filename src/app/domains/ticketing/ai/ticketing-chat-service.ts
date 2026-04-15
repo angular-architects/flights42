@@ -1,10 +1,17 @@
-import { inject, Injectable } from '@angular/core';
+import {
+  EnvironmentInjector,
+  inject,
+  Injectable,
+  runInInjectionContext,
+} from '@angular/core';
 import {
   type AgUiChatResourceRef,
   agUiResource,
   createShowComponentsTool,
 } from '@internal/ag-ui-client';
 
+// eslint-disable-next-line @softarc/sheriff/encapsulation
+import { mcpAppsWidgetComponent } from '../../shared/ui-agent/widgets/mcp-apps-widget';
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -14,30 +21,36 @@ import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 import { flightWidget } from './widgets/flight-widget';
-import { hotelWidget } from './widgets/hotel-widget';
 
 @Injectable({ providedIn: 'root' })
 export class TicketingChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
+  private readonly injector = inject(EnvironmentInjector);
 
   private chat: AgUiChatResourceRef | null = null;
 
   public init(): void {
     if (!this.chat) {
-      this.chat = agUiResource({
-        url: this.config.agUiUrl,
-        model: this.config.model,
-        useServerMemory: true,
-        tools: [
-          findFlightsTool,
-          getLoadedFlightsTool,
-          toggleFlightSelectionTool,
-          getCurrentBasketTool,
-          displayFlightDetailTool,
-          createShowComponentsTool([messageWidget, flightWidget, hotelWidget]),
-        ],
-      });
+      this.chat = runInInjectionContext(this.injector, () =>
+        agUiResource({
+          url: this.config.agUiUrl,
+          model: this.config.model,
+          useServerMemory: true,
+          tools: [
+            findFlightsTool,
+            getLoadedFlightsTool,
+            toggleFlightSelectionTool,
+            getCurrentBasketTool,
+            displayFlightDetailTool,
+            createShowComponentsTool([
+              messageWidget,
+              flightWidget,
+              mcpAppsWidgetComponent,
+            ]),
+          ],
+        }),
+      );
     }
     this.chatStore.setChat(this.chat);
   }
