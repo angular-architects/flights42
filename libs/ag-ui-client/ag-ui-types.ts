@@ -8,65 +8,6 @@ export interface AgUiWidget {
   a2uiSurface?: Types.Surface | null;
 }
 
-<<<<<<< HEAD
-export type AgUiWidget = AgUiComponentWidget | AgUiA2uiWidget;
-
-export function isAgUiComponentWidget(
-  widget: AgUiWidget,
-): widget is AgUiComponentWidget {
-  return 'component' in widget && 'props' in widget;
-}
-
-export function isAgUiA2uiWidget(widget: AgUiWidget): widget is AgUiA2uiWidget {
-  return 'a2uiSurfaceId' in widget && 'a2uiSurface' in widget;
-}
-
-type NonNeverProperties<TValue> = {
-  [TKey in keyof TValue as [TValue[TKey]] extends [never]
-    ? never
-    : TKey]: TValue[TKey];
-};
-
-export type ComponentSignalInputs<TComponent> = NonNeverProperties<
-  ɵUnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
->;
-
-type SchemaPropsForComponent<
-  TComponent,
-  TProps extends Record<string, unknown>,
-> = TProps & {
-  [TKey in keyof TProps]: TKey extends keyof ComponentSignalInputs<TComponent>
-    ? TProps[TKey] extends ComponentSignalInputs<TComponent>[TKey]
-      ? TProps[TKey]
-      : never
-    : never;
-};
-
-export interface AgUiRegisteredComponent<
-  TComponent = unknown,
-  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
-  TName extends string = string,
-> {
-  name: TName;
-  description: string;
-  component: Type<TComponent>;
-  schema: z.ZodType<TProps>;
-}
-
-export function defineAgUiComponent<
-  const TName extends string,
-  TComponent,
-  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
->(component: {
-  name: TName;
-  component: Type<TComponent>;
-  schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
-}): AgUiRegisteredComponent<TComponent, TProps, TName> {
-  return component;
-}
-
-=======
->>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
 export interface AgUiToolCall {
   id: string;
   name: string;
@@ -89,11 +30,6 @@ type ToolExecuteFn<TArgs> = {
 export interface AgUiClientToolDefinition<TArgs = unknown> {
   name: string;
   description: string;
-<<<<<<< HEAD
-  registeredComponents?: readonly AgUiRegisteredComponent[];
-  followUpAfterExecution?: boolean;
-=======
->>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
   parameters?: Record<string, unknown>;
   parse?: (args: unknown) => unknown;
   execute: ToolExecuteFn<TArgs>;
@@ -104,22 +40,12 @@ interface AgUiToolWithSchema<TSchema extends z.ZodTypeAny> {
   description: string;
   schema: TSchema;
   execute: (args: z.infer<TSchema>) => Promise<unknown> | unknown;
-<<<<<<< HEAD
-  registeredComponents?: readonly AgUiRegisteredComponent[];
-  followUpAfterExecution?: boolean;
-=======
->>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
 }
 
 interface AgUiToolWithoutSchema {
   name: string;
   description: string;
   execute: () => Promise<unknown> | unknown;
-<<<<<<< HEAD
-  registeredComponents?: readonly AgUiRegisteredComponent[];
-  followUpAfterExecution?: boolean;
-=======
->>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
 }
 
 export function defineAgUiTool<const TSchema extends z.ZodTypeAny>(
@@ -135,11 +61,6 @@ export function defineAgUiTool(
     return {
       name: tool.name,
       description: tool.description,
-<<<<<<< HEAD
-      registeredComponents: tool.registeredComponents,
-      followUpAfterExecution: tool.followUpAfterExecution ?? true,
-=======
->>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
       execute: () => tool.execute(),
     };
   }
@@ -147,11 +68,6 @@ export function defineAgUiTool(
   return {
     name: tool.name,
     description: tool.description,
-<<<<<<< HEAD
-    registeredComponents: tool.registeredComponents,
-    followUpAfterExecution: tool.followUpAfterExecution ?? true,
-=======
->>>>>>> 2b5ab76 (refactor: cleanup a2ui resource, remove ag-ui comp support)
     parameters: z.toJSONSchema(tool.schema) as Record<string, unknown>,
     parse: (args) => tool.schema.parse(args),
     execute: (args) => tool.execute(tool.schema.parse(args)),

@@ -51,8 +51,16 @@ interface RunAgentResult {
 
 export async function runAgent(
   options: RunAgentOptions,
-): Promise<PendingToolExecution[]> {
-  const { agent, tools, toolMap, processor, model, messageStream } = options;
+): Promise<RunAgentResult> {
+  const {
+    agent,
+    tools,
+    toolMap,
+    processor,
+    model,
+    useServerMemory,
+    messageStream,
+  } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
@@ -136,9 +144,7 @@ export async function runAgent(
         toolCallArgs: normalizedToolCallArgs,
       });
 
-      if (toolDefinition.followUpAfterExecution ?? true) {
-        followUpToolCallIds.push(event.toolCallId);
-      }
+      followUpToolCallIds.push(event.toolCallId);
     },
     onToolCallResultEvent: ({ event }) => {
       messageStream.update((item) => {

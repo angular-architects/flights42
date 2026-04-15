@@ -17,16 +17,23 @@
     <div class="avatar">{{ message.icon }}</div>
     <div>
       <div class="bubble">
-        @if (message.contentString) {
+
+        @if (message.role === 'assistant') {
+          @if (message.contentString) {
+            <app-message [data]="message.contentString"></app-message>
+          }
+          @for (widget of message.widgets; track widget.name) {
+            <app-widget-container [widget]="widget" />
+          }
+        } @else if (message.role === 'error') {
           <app-message [data]="message.contentString"></app-message>
-        }
-        @for (widget of message.widgets; track widget.id) {
-          <app-widget-container [widget]="widget" />
+        } @else {
+          <app-message [data]="message.contentString"></app-message>
         }
 
         @for (toolCall of message.toolCalls; track toolCall.id) {
           <div class="tool-call" [title]="toolCall.args | json">
-            Tool Call: {{ toolCall.name }}
+            <app-message [data]="'Tool Call: ' + toolCall.name"></app-message>
             <app-tool-status
               class="ml-5"
               [pending]="toolCall.status === 'pending'" />
