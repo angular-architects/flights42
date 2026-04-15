@@ -255,14 +255,17 @@ function rehydrateToolResultNames(
 function toClientTools(
   tools: RunAgentInput['tools'],
 ): Record<string, ClientToolDefinition> {
-  return tools.reduce<Record<string, ClientToolDefinition>>((result, tool) => {
-    result[tool.name] = {
-      id: tool.name,
-      description: tool.description,
-      inputSchema: tool.parameters,
-    };
-    return result;
-  }, {});
+  return (tools ?? []).reduce<Record<string, ClientToolDefinition>>(
+    (result, tool) => {
+      result[tool.name] = {
+        id: tool.name,
+        description: tool.description,
+        inputSchema: tool.parameters,
+      };
+      return result;
+    },
+    {},
+  );
 }
 
 export class ExtendedMastraAgent extends AbstractAgent {
