@@ -15,8 +15,8 @@
     "target": "ES2022",
     "module": "preserve",
     "paths": {
-      "@internal/ag-ui": ["./src/app/domains/shared/ui-agent/index.ts"],
-      "@internal/ag-ui/*": ["./src/app/domains/shared/ui-agent/*"],
+      "@internal/ag-ui": ["./libs/ag-ui-client/index.ts"],
+      "@internal/ag-ui/*": ["./libs/ag-ui-client/*"],
       "@flights42/ui-common": ["./projects/ui-common/src/public-api.ts"]
     }
   },

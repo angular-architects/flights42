@@ -9,6 +9,7 @@
   "include": [
     "src/**/*.d.ts",
     "src/**/*.spec.ts",
+    "libs/ag-ui-client/**/*.ts",
     "src/app/domains/shared/signals/delegated-signal.spec.ts",
     "src/app/domains/ticketing/feature-booking/flight-search/flight-store.spec.ts"
   ]

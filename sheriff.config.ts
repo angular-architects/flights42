@@ -17,6 +17,8 @@ export const config: SheriffConfig = {
       ai: ['domain:<domain>', 'type:ai'],
     },
 
+    'libs/<name>': ['lib:<name>'],
+
     'src/app/testing': ['testing'],
   },
   depRules: {
@@ -31,7 +33,9 @@ export const config: SheriffConfig = {
     'type:data': ['type:util'],
     'type:util': [],
 
+    'lib:*': '*',
+
     testing: '*',
-    '*': ['testing'],
+    '*': ['testing', 'lib:*'],
   },
 };
