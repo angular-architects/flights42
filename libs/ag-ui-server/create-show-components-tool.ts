@@ -1,13 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import {
-  createExampleFromJsonSchema,
-  type JsonSchema,
-} from './schema-example.js';
 import { buildA2UIFromBuilt, type BuiltComponent } from './widget-factory.js';
-
-export const SHOW_COMPONENTS_TOOL_NAME = 'showComponents';
 
 export interface ServerWidgetDefinition<
   TName extends string = string,
@@ -20,6 +14,7 @@ export interface ServerWidgetDefinition<
 }
 
 type AnyServerWidgetDefinition = ServerWidgetDefinition<string, z.ZodTypeAny>;
+type JsonSchema = Record<string, unknown>;
 
 type WidgetProps<TWidget extends AnyServerWidgetDefinition> = z.infer<
   TWidget['schema']
@@ -100,6 +95,76 @@ function createToolDescription(
   ].join('\n');
 }
 
+function createExampleFromJsonSchema(schema: JsonSchema): unknown {
+  const examples = schema['examples'];
+  if (Array.isArray(examples) && examples[0]) {
+    return examples[0];
+  }
+
+  const defaultValue = schema['default'];
+  if (defaultValue !== undefined) {
+    return defaultValue;
+  }
+
+  if ('const' in schema) {
+    return schema['const'];
+  }
+
+  const enumValues = schema['enum'];
+  if (Array.isArray(enumValues) && enumValues.length > 0) {
+    return enumValues[0];
+  }
+
+  const anyOf = schema['anyOf'];
+  if (Array.isArray(anyOf) && anyOf.length > 0) {
+    return createExampleFromJsonSchema(anyOf[0] as JsonSchema);
+  }
+
+  const oneOf = schema['oneOf'];
+  if (Array.isArray(oneOf) && oneOf.length > 0) {
+    return createExampleFromJsonSchema(oneOf[0] as JsonSchema);
+  }
+
+  const type = schema['type'];
+  if (type === 'object') {
+    const properties = schema['properties'];
+    return Object.entries(
+      properties && typeof properties === 'object' ? properties : {},
+    ).reduce<Record<string, unknown>>((result, [key, value]) => {
+      result[key] = createExampleFromJsonSchema(value as JsonSchema);
+      return result;
+    }, {});
+  }
+
+  const items = schema['items'];
+  if (type === 'array' && items) {
+    return [createExampleFromJsonSchema(items as JsonSchema)];
+  }
+
+  if (type === 'string') {
+    if (schema['format'] === 'date-time') {
+      return '2026-04-10T09:30:00.000Z';
+    }
+
+    return 'example';
+  }
+
+  const minimum = schema['minimum'];
+  if (type === 'number' || type === 'integer') {
+    if (typeof minimum === 'number') {
+      return minimum;
+    }
+
+    return 1;
+  }
+
+  if (type === 'boolean') {
+    return true;
+  }
+
+  return null;
+}
+
 function createComponentSchema(
   widgets: readonly AnyServerWidgetDefinition[],
 ): z.ZodTypeAny {
@@ -158,7 +223,7 @@ export function createShowComponentsTool<
   );
 
   return createTool({
-    id: SHOW_COMPONENTS_TOOL_NAME,
+    id: 'showComponents',
     description,
     inputSchema,
     execute: async (inputData: unknown) => {

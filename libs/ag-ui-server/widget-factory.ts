@@ -1,19 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
-import type { A2uiMessage } from '@a2ui/web_core/v0_9';
-
-const BASIC_CATALOG_ID =
-  'https://a2ui.org/specification/v0_9/basic_catalog.json';
+import type { ServerToClientMessage } from '@a2ui/web_core';
 
 export interface BuiltComponent {
   rootId: string;
-  components: ({
-    id: string;
-    component: string;
-  } & Record<string, unknown>)[];
+  components: { id: string; component: Record<string, unknown> }[];
   dataModelUpdate?: {
     path: string;
-    value: unknown;
+    contents: unknown[];
   };
 }
 
@@ -29,29 +23,24 @@ export type WidgetFactories<TInput extends WidgetInput> = {
 
 export function buildA2UIFromBuilt(built: BuiltComponent[]): {
   surfaceId: string;
-  messages: A2uiMessage[];
+  messages: ServerToClientMessage[];
 } {
   const surfaceId = randomUUID();
   const rootChildren = built.map((entry) => entry.rootId);
-  const surfaceRootId = 'root';
+  const surfaceRootId = 'surface-root';
 
   const messages = [
     {
-      version: 'v0.9' as const,
-      createSurface: {
-        surfaceId,
-        catalogId: BASIC_CATALOG_ID,
-      },
-    },
-    {
-      version: 'v0.9' as const,
-      updateComponents: {
+      surfaceUpdate: {
         surfaceId,
         components: [
           {
             id: surfaceRootId,
-            component: 'Column',
-            children: rootChildren,
+            component: {
+              Column: {
+                children: { explicitList: rootChildren },
+              },
+            },
           },
           ...built.flatMap((entry) => entry.components),
         ],
@@ -66,14 +55,14 @@ export function buildA2UIFromBuilt(built: BuiltComponent[]): {
         } => Boolean(entry.dataModelUpdate),
       )
       .map((entry) => ({
-        version: 'v0.9' as const,
-        updateDataModel: {
+        dataModelUpdate: {
           surfaceId,
           path: entry.dataModelUpdate.path,
-          value: entry.dataModelUpdate.value,
+          contents: entry.dataModelUpdate.contents,
         },
       })),
-  ] as A2uiMessage[];
+    { beginRendering: { surfaceId, root: surfaceRootId } },
+  ] as ServerToClientMessage[];
 
   return { surfaceId, messages };
 }
@@ -83,7 +72,7 @@ export function buildA2UI<TInput extends WidgetInput>(
   factories: WidgetFactories<TInput>,
 ): {
   surfaceId: string;
-  messages: A2uiMessage[];
+  messages: ServerToClientMessage[];
 } {
   const built = inputs.map((input) =>
     factories[input.type as TInput['type']](input as never),
