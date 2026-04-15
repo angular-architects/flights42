@@ -269,7 +269,7 @@ function toClientTools(
 }
 
 export class ExtendedMastraAgent extends AbstractAgent {
-  readonly agentId: string;
+  override readonly agentId: string;
   readonly agent: Agent;
   readonly resourceId: string;
   readonly requestContext: RequestContext;
