@@ -10,7 +10,9 @@ export const getLoadedFlightsTool = defineAgUiTool({
   description: `
 Returns the currently loaded/displayed flights (search/working set). This tool only returns data — it does not render UI.
 
-If the user should **see** these flights as cards, call \`showComponents\` with one \`flightWidget\` per flight (\`status: 'other'\`). Use this tool when the user asks about the current flight list or search results, not for booked-flight / ticket questions (use the appropriate booked-flights flow instead).
+If the user should **see** these flights as cards, call \`showComponents\` after your text response with one component per flight using the exact shape
+\`{ "type": "flightCard", "id", "from", "to", "date", "delay", "status": "other" }\`.
+Use this tool when the user asks about the current flight list or search results, not for booked-flight / ticket questions (use the appropriate booked-flights flow instead).
   `.trim(),
   execute: () => {
     const store = inject(FlightStore);
