@@ -1,4 +1,4 @@
-import type { McpAppsConfig, StyleVariables } from '@internal/ag-ui';
+import type { McpAppsConfig, StyleVariables } from '@internal/ag-ui-client';
 
 export const mcpAppsConfig: McpAppsConfig = {
   hostInfo: {

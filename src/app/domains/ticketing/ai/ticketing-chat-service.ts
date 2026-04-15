@@ -10,7 +10,6 @@ import {
   createShowComponentsTool,
 } from '@internal/ag-ui-client';
 
-// eslint-disable-next-line @softarc/sheriff/encapsulation
 import { mcpAppsWidgetComponent } from '../../shared/ui-agent/widgets/mcp-apps-widget';
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
