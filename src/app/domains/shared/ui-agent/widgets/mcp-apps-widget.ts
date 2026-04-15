@@ -10,19 +10,19 @@ import {
   viewChild,
 } from '@angular/core';
 import {
+  type AgUiMcpAppsSnapshotContent,
+  defineAgUiComponent,
+  MCP_APPS_CONFIG,
+} from '@internal/ag-ui-client';
+import {
   AppBridge,
   PostMessageTransport,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import {
-  type AgUiMcpAppsSnapshotContent,
-  defineAgUiComponent,
-} from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { ConfigService } from '../../util-common/config-service';
-import { MCP_APPS_CONFIG } from './mcp-apps.provider';
 
 @Component({
   selector: 'app-mcp-apps-widget',
