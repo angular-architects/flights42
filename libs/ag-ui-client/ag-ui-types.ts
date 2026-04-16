@@ -2,6 +2,7 @@ import { type InputContentPart, type UserMessage } from '@ag-ui/core';
 import {
   type InputSignalWithTransform,
   ResourceRef,
+  type Signal,
   Type,
 } from '@angular/core';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -114,7 +115,11 @@ export function defineAgUiComponent(component: {
   return component as AgUiRegisteredComponent;
 }
 
-export type AgUiToolCallStatus = 'pending' | 'complete' | 'error';
+export type AgUiToolCallStatus =
+  | 'pending'
+  | 'interrupt'
+  | 'complete'
+  | 'error';
 
 export interface AgUiToolCall {
   id: string;
@@ -146,6 +151,26 @@ export interface AgUiChatMessage {
   toolCalls: AgUiToolCall[];
   workflowSteps: AgUiWorkflowStep[];
   attachments?: AgUiChatMessageAttachment[];
+}
+
+export interface AgUiInterruptPayload {
+  kind: 'approval' | 'suspend';
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
+  resumeSchema?: unknown;
+  suspendPayload?: unknown;
+}
+
+export interface AgUiInterrupt {
+  id: string;
+  reason: string;
+  payload: AgUiInterruptPayload;
+}
+
+export interface AgUiResumeRequest {
+  interruptId?: string;
+  payload?: unknown;
 }
 
 type ToolExecuteFn<TArgs> = {
@@ -221,6 +246,10 @@ export interface AgUiResourceOptions {
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
   sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
+  interrupt: Signal<AgUiInterrupt | null>;
+  approveInterrupt: () => void;
+  rejectInterrupt: () => void;
+  resumeInterrupt: (payload?: unknown) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;
