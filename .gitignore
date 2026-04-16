@@ -48,6 +48,8 @@ Thumbs.db
 
 ai-server/src/mastra/public
 
+.env
+
 ai-server/src/mastra/db
 mcp-server/dist
 mcp-apps-demo/dist
