@@ -1,13 +1,14 @@
-import {
-  type AgUiActionWidgetData,
-  type AgUiToolCallStatus,
-} from '@internal/ag-ui-client';
+import { type AgUiToolCallStatus } from '@internal/ag-ui-client';
 
 import { formatUiDateTime } from '../../../shared/util-common/date-utils';
 import {
   type FlightMutationFlight,
   type FlightMutationResult,
 } from '../../data/flight-mutation-client';
+
+interface Result {
+  ok?: unknown;
+}
 
 export function isFlightMutationResult(
   value: unknown,
@@ -16,7 +17,8 @@ export function isFlightMutationResult(
     return false;
   }
 
-  return typeof (value as { ok?: unknown }).ok === 'boolean';
+  const result = value as Result;
+  return typeof result.ok === 'boolean';
 }
 
 export function toLoadFailedResult(
@@ -80,7 +82,7 @@ export function getActionStatusLabel(
 export function shouldShowUndo(
   undoPending: boolean,
   undoResult: FlightMutationResult | undefined,
-  status: AgUiActionWidgetData<unknown, FlightMutationResult>['status'],
+  status: AgUiToolCallStatus,
   result: FlightMutationResult | undefined,
 ): boolean {
   if (undoPending || undoResult) {

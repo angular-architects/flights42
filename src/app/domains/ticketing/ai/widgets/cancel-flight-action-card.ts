@@ -7,8 +7,9 @@ import {
   signal,
 } from '@angular/core';
 import {
-  type AgUiActionWidgetData,
-  defineAgUiComponent,
+  type AgUiActionCard,
+  type AgUiActionData,
+  defineActionCard,
 } from '@internal/ag-ui-client';
 
 import {
@@ -27,6 +28,11 @@ import {
 interface CancelFlightInput {
   flightId: number;
 }
+
+type CancelFlightActionData = AgUiActionData<
+  CancelFlightInput,
+  FlightMutationResult
+>;
 
 @Component({
   selector: 'app-cancel-flight-action-card',
@@ -96,13 +102,10 @@ interface CancelFlightInput {
     }
   `,
 })
-export class CancelFlightActionCard {
+export class CancelFlightActionCard implements AgUiActionCard<CancelFlightActionData> {
   private readonly bookingClient = inject(BookingClient);
 
-  readonly data =
-    input.required<
-      AgUiActionWidgetData<CancelFlightInput, FlightMutationResult>
-    >();
+  readonly actionData = input.required<CancelFlightActionData>();
 
   private readonly undoPending = signal(false);
   private readonly undoResult = signal<FlightMutationResult | undefined>(
@@ -121,8 +124,8 @@ export class CancelFlightActionCard {
     getActionStatusLabel(
       this.undoPending(),
       this.undoResult(),
-      this.data().status,
-      this.data().error,
+      this.actionData().status,
+      this.actionData().error,
       this.result(),
     ),
   );
@@ -131,7 +134,7 @@ export class CancelFlightActionCard {
     shouldShowUndo(
       this.undoPending(),
       this.undoResult(),
-      this.data().status,
+      this.actionData().status,
       this.result(),
     ),
   );
@@ -149,13 +152,13 @@ export class CancelFlightActionCard {
   }
 
   private result(): FlightMutationResult | undefined {
-    const result = this.data().result;
+    const result = this.actionData().result;
     return isFlightMutationResult(result) ? result : undefined;
   }
 
   private flightId(): number {
     const result = this.result();
-    return result?.ok ? result.flight.id : this.data().input.flightId;
+    return result?.ok ? result.flight.id : this.actionData().input.flightId;
   }
 
   private flightDetails(): FlightMutationFlight | undefined {
@@ -173,11 +176,7 @@ function getCancelFlightTitle(flightId: number): string {
   return `Cancel Flight #${flightId}`;
 }
 
-export const cancelFlightActionCard = defineAgUiComponent({
-  kind: 'action',
-  name: 'cancelFlightActionCard',
-  description:
-    'Shows cancellation progress and lets users undo a successful cancellation.',
-  component: CancelFlightActionCard,
+export const cancelFlightActionCard = defineActionCard({
   toolName: 'cancelFlight',
+  component: CancelFlightActionCard,
 });

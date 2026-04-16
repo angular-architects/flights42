@@ -1,5 +1,6 @@
 import { type InputContentPart, type UserMessage } from '@ag-ui/core';
 import {
+  type InputSignal,
   type InputSignalWithTransform,
   ResourceRef,
   type Signal,
@@ -41,14 +42,10 @@ export interface AgUiWidget {
   component: Type<unknown>;
 }
 
-export interface AgUiActionWidgetData<
-  TInput = unknown,
-  TResult = unknown,
-  TStatus extends AgUiToolCallStatus = AgUiToolCallStatus,
-> {
+export interface AgUiActionData<TInput = unknown, TResult = unknown> {
   toolCallId: string;
   toolName: string;
-  status: TStatus;
+  status: AgUiToolCallStatus;
   input: TInput;
   result?: TResult;
   error?: string;
@@ -62,7 +59,13 @@ export interface AgUiResultWidget extends AgUiWidget {
 export interface AgUiActionWidget extends AgUiWidget {
   kind: 'action';
   toolCallId: string;
-  data: AgUiActionWidgetData;
+  data: AgUiActionData;
+}
+
+export interface AgUiActionCard<
+  TActionData extends AgUiActionData = AgUiActionData,
+> {
+  actionData: InputSignal<TActionData>;
 }
 
 export type AgUiWidgetInstance = AgUiResultWidget | AgUiActionWidget;
@@ -93,6 +96,20 @@ export type ComponentSignalInputs<TComponent> = NonNeverProperties<
   UnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
 >;
 
+type ActionDataInputForComponent<TComponent> =
+  ComponentSignalInputs<TComponent> extends {
+    actionData: infer TActionData;
+  }
+    ? TActionData
+    : never;
+
+type ActionCardComponentGuard<TComponent> =
+  ActionDataInputForComponent<TComponent> extends AgUiActionData
+    ? unknown
+    : {
+        __actionDataError: 'Action components must expose an actionData input typed as AgUiActionData.';
+      };
+
 type SchemaPropsForComponent<
   TComponent,
   TProps extends Record<string, unknown>,
@@ -119,12 +136,10 @@ export interface AgUiResultRegisteredComponent<
 
 export interface AgUiActionRegisteredComponent<
   TComponent = unknown,
-  TName extends string = string,
   TToolName extends string = string,
 > {
   kind: 'action';
-  name: TName;
-  description: string;
+  name: TToolName;
   component: Type<TComponent>;
   toolName: TToolName;
   clientOnly?: true;
@@ -149,28 +164,29 @@ export function defineAgUiComponent<
   schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
   clientOnly?: true;
 }): AgUiResultRegisteredComponent<TComponent, TProps, TName>;
-export function defineAgUiComponent<
-  const TName extends string,
-  const TToolName extends string,
-  TComponent,
->(component: {
-  kind: 'action';
-  name: TName;
-  description: string;
-  component: Type<TComponent>;
-  toolName: TToolName;
-  clientOnly?: true;
-}): AgUiActionRegisteredComponent<TComponent, TName, TToolName>;
 export function defineAgUiComponent(component: {
-  kind?: 'result' | 'action';
+  kind?: 'result';
   name: string;
   description: string;
   component: Type<unknown>;
-  schema?: z.ZodType<Record<string, unknown>>;
-  toolName?: string;
+  schema: z.ZodType<Record<string, unknown>>;
   clientOnly?: true;
 }): AgUiRegisteredComponent {
   return component as AgUiRegisteredComponent;
+}
+
+export function defineActionCard<const TToolName extends string, TComponent>(
+  component: {
+    toolName: TToolName;
+    component: Type<TComponent>;
+    clientOnly?: true;
+  } & ActionCardComponentGuard<TComponent>,
+): AgUiActionRegisteredComponent<TComponent, TToolName> {
+  return {
+    kind: 'action',
+    name: component.toolName,
+    ...component,
+  } as AgUiActionRegisteredComponent<TComponent, TToolName>;
 }
 
 export type AgUiToolCallStatus =
