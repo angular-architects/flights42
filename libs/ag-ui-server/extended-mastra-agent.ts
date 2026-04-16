@@ -112,6 +112,29 @@ function readToolName(value: unknown): string | undefined {
   return getNestedString(record, 'toolName');
 }
 
+function finalizeActiveToolCall(
+  activeToolCallId: string | undefined,
+  activeToolName: string | undefined,
+  clientToolNames: Set<string>,
+  handlers: {
+    onToolResultPart: (value: { toolCallId: string; result: unknown }) => void;
+  },
+  errorMessage = 'Tool execution finished without a streamed result.',
+): void {
+  if (
+    !activeToolCallId ||
+    !activeToolName ||
+    clientToolNames.has(activeToolName)
+  ) {
+    return;
+  }
+
+  handlers.onToolResultPart({
+    toolCallId: activeToolCallId,
+    result: { error: errorMessage },
+  });
+}
+
 function setThoughtSignature(
   value: UnknownRecord,
   thoughtSignature: string,
@@ -444,8 +467,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
       input.threadId,
     );
     const clientTools = toClientTools(input.tools);
+    const clientToolNames = new Set(Object.keys(clientTools));
 
     this.requestContext.set('ag-ui', { context: input.context });
+
+    let activeToolCallId: string | undefined;
+    let activeToolName: string | undefined;
 
     try {
       const stream = await this.agent.stream(rehydratedMastraMessages, {
@@ -479,6 +506,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 providerMetadata?: UnknownRecord;
               };
             };
+            activeToolCallId = payload.payload.toolCallId;
+            activeToolName = payload.payload.toolName;
             cacheThoughtSignature(
               this.store,
               this.agentId,
@@ -499,6 +528,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 result: unknown;
               };
             };
+            activeToolCallId = undefined;
+            activeToolName = undefined;
             handlers.onToolResultPart(payload.payload);
 
             const pending = pendingToolCalls.get(payload.payload.toolCallId);
@@ -521,18 +552,54 @@ export class ExtendedMastraAgent extends AbstractAgent {
           }
           case 'error': {
             const payload = chunk as { payload: { error: string } };
+            if (activeToolCallId) {
+              finalizeActiveToolCall(
+                activeToolCallId,
+                activeToolName,
+                clientToolNames,
+                handlers,
+                payload.payload.error,
+              );
+              handlers.onRunFinished();
+              return;
+            }
+
             handlers.onError(new Error(payload.payload.error));
             return;
           }
           case 'finish': {
+            finalizeActiveToolCall(
+              activeToolCallId,
+              activeToolName,
+              clientToolNames,
+              handlers,
+            );
             handlers.onRunFinished();
             return;
           }
         }
       }
 
+      finalizeActiveToolCall(
+        activeToolCallId,
+        activeToolName,
+        clientToolNames,
+        handlers,
+      );
       handlers.onRunFinished();
     } catch (error) {
+      if (activeToolCallId) {
+        finalizeActiveToolCall(
+          activeToolCallId,
+          activeToolName,
+          clientToolNames,
+          handlers,
+          error instanceof Error ? error.message : 'Tool execution failed.',
+        );
+        handlers.onRunFinished();
+        return;
+      }
+
       handlers.onError(error);
     }
   }

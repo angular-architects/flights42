@@ -20,7 +20,6 @@ import {
   upsertAssistantMessage,
 } from './messages';
 import {
-  completeToolCall,
   executePendingTools,
   keepToolCallMessages,
   normalizeAgentMessagesForRun,
@@ -147,7 +146,9 @@ export async function runAgent(
     },
     onToolCallResultEvent: ({ event }) => {
       messageStream.update((item) => ({
-        value: completeToolCall(readMessages(item), event.toolCallId),
+        value: updateToolCall(readMessages(item), event.toolCallId, {
+          status: isToolErrorResult(event.content) ? 'error' : 'complete',
+        }),
       }));
     },
     onActivitySnapshotEvent: ({ event }) => {
@@ -164,7 +165,7 @@ export async function runAgent(
     onRunErrorEvent: ({ event }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          readMessages(item),
+          markPendingToolCallsAsError(readMessages(item)),
           event.message || 'Unknown AG-UI run error',
         ),
       }));
@@ -172,7 +173,7 @@ export async function runAgent(
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          readMessages(item),
+          markPendingToolCallsAsError(readMessages(item)),
           error instanceof Error ? error.message : 'Unknown AG-UI run failure',
         ),
       }));
@@ -204,6 +205,48 @@ export async function runAgent(
     pendingLocalCalls,
     followUpToolCallIds,
   };
+}
+
+function isToolErrorResult(content: unknown): boolean {
+  const parsed = safeParseJson(content);
+  return (
+    !!parsed &&
+    typeof parsed === 'object' &&
+    'error' in parsed &&
+    typeof (parsed as { error?: unknown }).error === 'string'
+  );
+}
+
+function markPendingToolCallsAsError(
+  messages: AgUiChatMessage[],
+): AgUiChatMessage[] {
+  return messages.reduce<AgUiChatMessage[]>((currentMessages, message) => {
+    if (message.role !== 'assistant') {
+      return currentMessages;
+    }
+
+    return message.toolCalls.reduce<AgUiChatMessage[]>(
+      (nextMessages, toolCall) =>
+        toolCall.status === 'pending'
+          ? updateToolCall(nextMessages, toolCall.id, {
+              status: 'error',
+            })
+          : nextMessages,
+      currentMessages,
+    );
+  }, messages);
+}
+
+function safeParseJson(content: unknown): unknown {
+  if (typeof content !== 'string') {
+    return content;
+  }
+
+  try {
+    return JSON.parse(content);
+  } catch {
+    return content;
+  }
 }
 
 export interface RunUntilSettledOptions {
@@ -279,6 +322,10 @@ export async function runUntilSettled(
       pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,
     });
+
+    messageStream.update((item) => ({
+      value: markPendingToolCallsAsError(readMessages(item)),
+    }));
 
     done = runResult.followUpToolCallIds.length === 0;
     currentRunId = randomUUID();
