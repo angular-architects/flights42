@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
+  type AgUiActionWidget,
   AgUiChatMessage,
   AgUiInterrupt,
   WidgetContainerComponent,
@@ -70,7 +71,9 @@ export class ChatMessages {
         typeof message.content === 'string' ? message.content : String(''),
       hasContent: this.hasContent(message),
       icon: this.icons[message.role] || '❓',
-      toolCalls: message.toolCalls,
+      toolCalls: message.toolCalls.filter(
+        (toolCall) => !hasActionWidget(message, toolCall.id),
+      ),
     })),
   );
 }
@@ -104,4 +107,14 @@ function toInterruptModel(
         ? suspendPayload.message
         : `Tool Call: ${interrupt.payload.toolName}`,
   };
+}
+
+function hasActionWidget(
+  message: AgUiChatMessage,
+  toolCallId: string,
+): boolean {
+  return message.widgets.some(
+    (widget): widget is AgUiActionWidget =>
+      widget.kind === 'action' && widget.toolCallId === toolCallId,
+  );
 }
