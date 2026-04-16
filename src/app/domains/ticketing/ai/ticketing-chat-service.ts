@@ -19,6 +19,8 @@ import { findFlightsTool } from './tools/find-flights.tool';
 import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
+import { bookFlightActionCard } from './widgets/book-flight-action-card';
+import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { flightWidget } from './widgets/flight-widget';
 
 @Injectable({ providedIn: 'root' })
@@ -46,6 +48,8 @@ export class TicketingChatService {
               messageWidget,
               flightWidget,
               mcpAppsWidgetComponent,
+              bookFlightActionCard,
+              cancelFlightActionCard,
             ]),
           ],
         }),

@@ -33,7 +33,10 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import { upsertWidgetFromActivitySnapshot } from './widgets';
+import {
+  upsertActionWidgetForToolCall,
+  upsertWidgetFromActivitySnapshot,
+} from './widgets';
 
 interface RunAgentCompatParameters {
   runId?: string;
@@ -227,8 +230,9 @@ export async function runAgent(
       // through a typed shadow.
       const stepName = (event as { stepName?: unknown }).stepName;
 
-      messageStream.update((item) => ({
-        value: upsertToolCall(readMessages(item), {
+      messageStream.update((item) => {
+        const messages = readMessages(item);
+        const toolCall = {
           id: event.toolCallId,
           name: event.toolCallName,
           args: {},
@@ -236,27 +240,65 @@ export async function runAgent(
           ...(typeof stepName === 'string' && stepName.length > 0
             ? { stepName }
             : {}),
-        }),
-      }));
+        };
+
+        return {
+          value: upsertActionWidgetForToolCall(
+            upsertToolCall(messages, toolCall),
+            toolCall,
+            componentMap,
+          ),
+        };
+      });
     },
     onToolCallArgsEvent: ({ event, toolCallName, partialToolCallArgs }) => {
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: partialToolCallArgs,
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: partialToolCallArgs,
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: normalizedToolCallArgs,
-          status: 'pending',
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: normalizedToolCallArgs,
+            status: 'pending',
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
 
       const toolDefinition = toolMap.get(toolCallName);
       if (!toolDefinition) {
@@ -277,13 +319,28 @@ export async function runAgent(
       const result = safeParseJson(event.content);
       const error = readToolErrorMessage(result);
 
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          status: error ? 'error' : 'complete',
-          result,
-          error,
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            status: error ? 'error' : 'complete',
+            result,
+            error,
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
     onActivitySnapshotEvent: ({ event }) => {
       messageStream.update((item) => ({
@@ -315,7 +372,7 @@ export async function runAgent(
 
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item)),
+          markPendingToolCallsAsError(readMessages(item), componentMap),
           message,
         ),
       }));
@@ -323,7 +380,7 @@ export async function runAgent(
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item)),
+          markPendingToolCallsAsError(readMessages(item), componentMap),
           friendlyErrorMessage(error, 'Unknown AG-UI run failure'),
         ),
       }));
@@ -336,15 +393,29 @@ export async function runAgent(
       }
 
       interrupt = activeInterrupt;
-      messageStream.update((item) => ({
-        value: updateToolCall(
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
           readMessages(item),
           activeInterrupt.payload.toolCallId,
           {
             status: 'interrupt',
           },
-        ),
-      }));
+        );
+        const toolCall = findToolCall(
+          nextMessages,
+          activeInterrupt.payload.toolCallId,
+        );
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
   };
 
@@ -387,6 +458,7 @@ export async function runAgent(
 
 function markPendingToolCallsAsError(
   messages: AgUiChatMessage[],
+  componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiChatMessage[] {
   return messages.reduce<AgUiChatMessage[]>((currentMessages, message) => {
     if (message.role !== 'assistant') {
@@ -399,14 +471,38 @@ function markPendingToolCallsAsError(
           return nextMessages;
         }
 
-        return updateToolCall(nextMessages, toolCall.id, {
+        const updatedMessages = updateToolCall(nextMessages, toolCall.id, {
           status: 'error',
           error: 'Tool execution did not complete.',
         });
+        const updatedToolCall = findToolCall(updatedMessages, toolCall.id);
+
+        return updatedToolCall
+          ? upsertActionWidgetForToolCall(
+              updatedMessages,
+              updatedToolCall,
+              componentMap,
+            )
+          : updatedMessages;
       },
       currentMessages,
     );
   }, messages);
+}
+
+function findToolCall(messages: AgUiChatMessage[], toolCallId: string) {
+  for (const message of messages) {
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
+    if (toolCall) {
+      return toolCall;
+    }
+  }
+
+  return undefined;
 }
 
 function readToolErrorMessage(content: unknown): string | undefined {
@@ -518,7 +614,7 @@ export async function runUntilSettled(
     });
 
     messageStream.update((item) => ({
-      value: markPendingToolCallsAsError(readMessages(item)),
+      value: markPendingToolCallsAsError(readMessages(item), componentMap),
     }));
 
     done = runResult.followUpToolCallIds.length === 0;
