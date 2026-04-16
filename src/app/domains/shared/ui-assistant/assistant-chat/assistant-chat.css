@@ -166,10 +166,6 @@
   width: fit-content;
 }
 
-:host ::ng-deep .bubble.tool-only {
-  padding: 8px 14px 12px;
-}
-
 :host ::ng-deep .bubble app-message {
   font-size: var(--font-size-sm);
   line-height: 1.35;

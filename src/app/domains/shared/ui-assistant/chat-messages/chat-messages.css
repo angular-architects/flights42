@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
 <<<<<<< HEAD
+<<<<<<< HEAD
   gap: 10px;
 }
 
@@ -39,17 +40,28 @@ app-widget-container {
   margin: 0;
 =======
   gap: 12px;
+=======
+  gap: 10px;
+>>>>>>> 88a5fc6 (style: adjust chat style to new design)
 }
 
 .tool-call {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--muted);
+  gap: 6px;
+  padding: 0;
+  width: fit-content;
+}
+
+.tool-call app-message {
+  font-size: 11px;
 }
 
 app-widget-container {
   display: block;
+<<<<<<< HEAD
 >>>>>>> 8c1c217 (refactor: rename events used in event api example)
+=======
+  margin: 0;
+>>>>>>> 88a5fc6 (style: adjust chat style to new design)
 }
