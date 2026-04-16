@@ -56,15 +56,15 @@
         <div [title]="activeInterrupt.payload.args | json">
           {{ activeInterrupt.message }}
         </div>
-        <div>
+        <div class="approval-actions">
           <button
-            mat-stroked-button
+            class="btn btn-default"
             type="button"
             (click)="resumeInterrupt.emit(false)">
             Reject
           </button>
           <button
-            mat-flat-button
+            class="btn btn-primary"
             type="button"
             (click)="resumeInterrupt.emit(true)">
             Approve

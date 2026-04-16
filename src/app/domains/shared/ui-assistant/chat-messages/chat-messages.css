@@ -37,3 +37,20 @@ app-widget-container {
   display: block;
   margin: 0;
 }
+
+.approval-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.approval-actions .btn {
+  margin-right: 0;
+}
+
+.approval-actions .btn-primary {
+  background-color: #3f51b5;
+}
+
+.approval-actions .btn-primary:hover {
+  background-color: #32408f;
+}
