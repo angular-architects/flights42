@@ -27,6 +27,31 @@ interface ClientToolDefinition {
   inputSchema?: Record<string, unknown>;
 }
 
+interface InterruptResumeInput {
+  interruptId?: string;
+  payload?: unknown;
+}
+
+interface InterruptAwareRunAgentInput extends RunAgentInput {
+  resume?: InterruptResumeInput;
+}
+
+type InterruptKind = 'approval' | 'suspend';
+
+interface InterruptDescriptor {
+  kind: InterruptKind;
+  runId: string;
+  toolCallId?: string;
+}
+
+interface PendingInterrupt extends InterruptDescriptor {
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
+  resumeSchema?: string;
+  suspendPayload?: unknown;
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): UnknownRecord | undefined {
@@ -322,6 +347,49 @@ function toClientTools(
   }, {});
 }
 
+function createInterruptId(descriptor: InterruptDescriptor): string {
+  return [descriptor.kind, descriptor.runId, descriptor.toolCallId ?? ''].join(
+    ':',
+  );
+}
+
+function parseInterruptId(
+  value: string | undefined,
+): InterruptDescriptor | null {
+  if (!value) {
+    return null;
+  }
+
+  const [kind, runId, toolCallId] = value.split(':');
+  if (
+    (kind !== 'approval' && kind !== 'suspend') ||
+    typeof runId !== 'string' ||
+    runId.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    kind,
+    runId,
+    toolCallId: toolCallId || undefined,
+  };
+}
+
+function readApproved(value: unknown): boolean | undefined {
+  const record = asRecord(value);
+  const approved = record?.['approved'];
+  return typeof approved === 'boolean' ? approved : undefined;
+}
+
+function safeParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
 export class ExtendedMastraAgent extends AbstractAgent {
   override readonly agentId: string;
   readonly agent: Agent;
@@ -351,6 +419,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
   override run(input: RunAgentInput): ReturnType<AbstractAgent['run']> {
     return new Observable<BaseEvent>((observer) => {
       const initialMessageId = randomUUID();
+      const interruptAwareInput = input as InterruptAwareRunAgentInput;
 
       const startedEvent: BaseEvent = {
         type: EventType.RUN_STARTED,
@@ -359,7 +428,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       };
       observer.next(startedEvent);
 
-      void this.streamMastraAgent(input, initialMessageId, {
+      void this.streamMastraAgent(interruptAwareInput, initialMessageId, {
         onTextPart: (delta, messageId) => {
           const textEvent: BaseEvent = {
             type: EventType.TEXT_MESSAGE_CHUNK,
@@ -410,11 +479,36 @@ export class ExtendedMastraAgent extends AbstractAgent {
           } as BaseEvent;
           observer.next(activityEvent);
         },
+        onRunInterrupted: (interrupt) => {
+          observer.next({
+            type: EventType.RUN_FINISHED,
+            threadId: input.threadId,
+            runId: input.runId,
+            outcome: 'interrupt',
+            interrupt: {
+              id: createInterruptId(interrupt),
+              reason:
+                interrupt.kind === 'approval'
+                  ? 'human_approval'
+                  : 'tool_suspended',
+              payload: {
+                kind: interrupt.kind,
+                toolCallId: interrupt.toolCallId,
+                toolName: interrupt.toolName,
+                args: interrupt.args,
+                resumeSchema: safeParseJson(interrupt.resumeSchema ?? ''),
+                suspendPayload: interrupt.suspendPayload,
+              },
+            },
+          } as BaseEvent);
+          observer.complete();
+        },
         onRunFinished: () => {
           const finishedEvent: BaseEvent = {
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
+            outcome: 'success',
           };
           observer.next(finishedEvent);
           observer.complete();
@@ -427,7 +521,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
   }
 
   private async streamMastraAgent(
-    input: RunAgentInput,
+    input: InterruptAwareRunAgentInput,
     assistantMessageId: string,
     handlers: {
       onTextPart: (delta: string, messageId: string) => void;
@@ -445,6 +539,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
         activityType: string;
         content: Record<string, unknown>;
       }) => void;
+      onRunInterrupted: (interrupt: PendingInterrupt) => void;
       onRunFinished: () => void;
       onError: (error: unknown) => void;
     },
@@ -475,12 +570,11 @@ export class ExtendedMastraAgent extends AbstractAgent {
     let activeToolName: string | undefined;
 
     try {
-      const stream = await this.agent.stream(rehydratedMastraMessages, {
-        memory: { thread: input.threadId, resource: this.resourceId },
-        runId: input.runId,
+      const stream = await this.createMastraStream(
+        input,
+        rehydratedMastraMessages,
         clientTools,
-        requestContext: this.requestContext,
-      });
+      );
 
       for await (const chunk of stream.fullStream) {
         switch ((chunk as { type?: string }).type) {
@@ -520,6 +614,50 @@ export class ExtendedMastraAgent extends AbstractAgent {
             });
             handlers.onToolCallPart(payload.payload);
             break;
+          }
+          case 'tool-call-approval': {
+            const payload = chunk as {
+              payload: {
+                toolCallId: string;
+                toolName: string;
+                args: unknown;
+                resumeSchema?: string;
+              };
+            };
+            activeToolCallId = undefined;
+            activeToolName = undefined;
+            handlers.onRunInterrupted({
+              kind: 'approval',
+              runId: stream.runId,
+              toolCallId: payload.payload.toolCallId,
+              toolName: payload.payload.toolName,
+              args: payload.payload.args,
+              resumeSchema: payload.payload.resumeSchema,
+            });
+            return;
+          }
+          case 'tool-call-suspended': {
+            const payload = chunk as {
+              payload: {
+                toolCallId: string;
+                toolName: string;
+                args: unknown;
+                resumeSchema?: string;
+                suspendPayload?: unknown;
+              };
+            };
+            activeToolCallId = undefined;
+            activeToolName = undefined;
+            handlers.onRunInterrupted({
+              kind: 'suspend',
+              runId: stream.runId,
+              toolCallId: payload.payload.toolCallId,
+              toolName: payload.payload.toolName,
+              args: payload.payload.args,
+              resumeSchema: payload.payload.resumeSchema,
+              suspendPayload: payload.payload.suspendPayload,
+            });
+            return;
           }
           case 'tool-result': {
             const payload = chunk as {
@@ -602,6 +740,49 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
       handlers.onError(error);
     }
+  }
+
+  private async createMastraStream(
+    input: InterruptAwareRunAgentInput,
+    messages: CoreMessage[],
+    clientTools: Record<string, ClientToolDefinition>,
+  ) {
+    const interrupt = parseInterruptId(input.resume?.interruptId);
+
+    if (interrupt) {
+      if (interrupt.kind === 'approval') {
+        const approved = readApproved(input.resume?.payload);
+        if (approved === undefined) {
+          throw new Error(
+            'Approval resume payload must include an approved boolean.',
+          );
+        }
+
+        if (approved) {
+          return this.agent.approveToolCall({
+            runId: interrupt.runId,
+            toolCallId: interrupt.toolCallId,
+          });
+        }
+
+        return this.agent.declineToolCall({
+          runId: interrupt.runId,
+          toolCallId: interrupt.toolCallId,
+        });
+      }
+
+      return this.agent.resumeStream(input.resume?.payload, {
+        runId: interrupt.runId,
+        toolCallId: interrupt.toolCallId,
+      });
+    }
+
+    return this.agent.stream(messages, {
+      memory: { thread: input.threadId, resource: this.resourceId },
+      runId: input.runId,
+      clientTools,
+      requestContext: this.requestContext,
+    });
   }
 }
 

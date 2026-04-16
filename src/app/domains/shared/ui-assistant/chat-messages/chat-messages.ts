@@ -1,10 +1,11 @@
 import { JsonPipe } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   AgUiChatMessage,
+  AgUiInterrupt,
   WidgetContainerComponent,
 } from '@internal/ag-ui-client';
 
@@ -27,7 +28,10 @@ import { ToolStatusComponent } from '../tool-status';
 })
 export class ChatMessages {
   readonly messages = input.required<AgUiChatMessage[]>();
+  readonly interrupt = input<AgUiInterrupt | null>(null);
   readonly pending = input<boolean>(false);
+  readonly approveInterrupt = output<void>();
+  readonly rejectInterrupt = output<void>();
   protected readonly showIndicator = computed(() => this.pending());
 
   protected readonly icons = {

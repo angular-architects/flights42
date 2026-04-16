@@ -1,3 +1,4 @@
+import type { AgentSubscriber, RunAgentInput } from '@ag-ui/client';
 import { HttpAgent, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -12,6 +13,8 @@ import {
 import {
   type AgUiChatMessage,
   type AgUiChatResourceRef,
+  type AgUiInterrupt,
+  type AgUiResumeRequest,
   type AgUiClientToolDefinition,
   type AgUiRegisteredComponent,
   type AgUiResourceOptions,
@@ -30,6 +33,36 @@ interface StreamOptions {
   abortSignal: AbortSignal;
 }
 
+interface RunAgentCompatParameters extends Partial<
+  Pick<RunAgentInput, 'runId' | 'tools' | 'context' | 'forwardedProps'>
+> {
+  abortController?: AbortController;
+  resume?: AgUiResumeRequest;
+}
+
+class InterruptAwareHttpAgent extends HttpAgent {
+  runAgentCompat(
+    parameters?: RunAgentCompatParameters,
+    subscriber?: AgentSubscriber,
+  ) {
+    return super.runAgent(parameters, subscriber);
+  }
+
+  protected override prepareRunAgentInput(
+    parameters?: RunAgentCompatParameters,
+  ): RunAgentInput {
+    const input = super.prepareRunAgentInput(parameters);
+    if (!parameters?.resume) {
+      return input;
+    }
+
+    return {
+      ...input,
+      resume: parameters.resume,
+    } as RunAgentInput;
+  }
+}
+
 interface SendMessageOptions {
   role: 'user';
   content: string;
@@ -42,8 +75,8 @@ export function agUiResource(
   const useServerMemory = options.useServerMemory ?? false;
   const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
-  const createAgent = (): HttpAgent =>
-    new HttpAgent({ url: options.url, threadId: randomUUID() });
+  const createAgent = (): InterruptAwareHttpAgent =>
+    new InterruptAwareHttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();
   const tools = options.tools;
   const toolMap = new Map<string, AgUiClientToolDefinition<never>>(
@@ -57,6 +90,7 @@ export function agUiResource(
   );
 
   const pendingRun = signal<PendingRun | undefined>(undefined);
+  const interrupt = signal<AgUiInterrupt | null>(null);
   const messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>> =
     signal({
       value: [],
@@ -88,9 +122,11 @@ export function agUiResource(
       componentMap,
       environmentInjector,
       runId: params.id,
+      resume: params.resume,
       model: options.model,
       useServerMemory,
       abortSignal,
+      interrupt,
       messageStream,
       isLoading,
       maxLocalTurns,
@@ -128,6 +164,8 @@ export function agUiResource(
       agent.abortRun();
     }
 
+    interrupt.set(null);
+
     const userMessage = {
       id: randomUUID(),
       role: 'user' as const,
@@ -159,13 +197,31 @@ export function agUiResource(
       return;
     }
 
+    interrupt.set(null);
     pendingRun.set({ id: randomUUID() });
+  };
+
+  const resumeInterrupt = (payload?: unknown): void => {
+    const activeInterrupt = interrupt();
+    if (!activeInterrupt) {
+      return;
+    }
+
+    interrupt.set(null);
+    pendingRun.set({
+      id: randomUUID(),
+      resume: {
+        interruptId: activeInterrupt.id,
+        payload,
+      },
+    });
   };
 
   const reset = (): void => {
     agent.abortRun();
     agent = createAgent();
     isLoading.set(false);
+    interrupt.set(null);
     pendingRun.set(undefined);
     messageStream.set({ value: [] });
   };
@@ -181,7 +237,15 @@ export function agUiResource(
     ...chat,
     value: hideInternal ? publicValue : chat.value,
     isLoading,
+    interrupt: interrupt.asReadonly(),
     sendMessage,
+    approveInterrupt: () => {
+      resumeInterrupt({ approved: true });
+    },
+    rejectInterrupt: () => {
+      resumeInterrupt({ approved: false });
+    },
+    resumeInterrupt,
     resendMessages,
     reset,
     stop: () => {

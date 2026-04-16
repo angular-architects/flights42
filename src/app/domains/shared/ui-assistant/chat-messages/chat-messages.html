@@ -45,6 +45,41 @@
   </article>
 }
 
+@if (interrupt(); as activeInterrupt) {
+  <article class="msg assistant">
+    <div class="avatar">🤖</div>
+    <div>
+      <div class="bubble">
+        <strong>Approval needed</strong>
+        <div>
+          {{ activeInterrupt.payload.toolName }} {{ activeInterrupt.reason }}
+        </div>
+        <div [title]="activeInterrupt.payload.args | json">
+          Args: {{ activeInterrupt.payload.args | json }}
+        </div>
+
+        @if (activeInterrupt.reason === 'human_approval') {
+          <div>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="rejectInterrupt.emit()">
+              Reject
+            </button>
+            <button
+              mat-flat-button
+              type="button"
+              (click)="approveInterrupt.emit()">
+              Approve
+            </button>
+          </div>
+        }
+      </div>
+      <div class="meta"></div>
+    </div>
+  </article>
+}
+
 @if (showIndicator()) {
   <article class="msg assistant">
     <div class="avatar">🤖</div>

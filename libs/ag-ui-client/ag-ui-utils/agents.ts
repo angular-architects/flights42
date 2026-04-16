@@ -1,5 +1,7 @@
 import {
   type AgentSubscriber,
+  type BaseEvent,
+  EventType,
   type HttpAgent,
   randomUUID,
 } from '@ag-ui/client';
@@ -12,6 +14,8 @@ import {
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
+  type AgUiInterrupt,
+  type AgUiResumeRequest,
   type AgUiRegisteredComponent,
 } from '../ag-ui-types';
 import {
@@ -29,12 +33,44 @@ import {
 } from './tools';
 import { upsertWidgetFromActivitySnapshot } from './widgets';
 
+interface RunAgentCompatParameters {
+  runId?: string;
+  tools?: RunAgentInputTool[];
+  context?: unknown;
+  forwardedProps?: Record<string, unknown>;
+  abortController?: AbortController;
+  resume?: AgUiResumeRequest;
+}
+
+interface RunAgentInputTool {
+  name: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
+}
+
+interface InterruptAwareHttpAgent extends HttpAgent {
+  runAgentCompat(
+    parameters?: RunAgentCompatParameters,
+    subscriber?: AgentSubscriber,
+  ): Promise<{
+    result: unknown;
+    newMessages: unknown[];
+  }>;
+}
+
+interface InterruptAwareRunFinishedEvent extends BaseEvent {
+  type: EventType.RUN_FINISHED;
+  outcome?: 'success' | 'interrupt';
+  interrupt?: AgUiInterrupt;
+}
+
 export interface RunAgentOptions {
-  agent: HttpAgent;
+  agent: InterruptAwareHttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
+  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -43,6 +79,7 @@ export interface RunAgentOptions {
 interface RunAgentResult {
   pendingLocalCalls: PendingToolExecution[];
   followUpToolCallIds: string[];
+  interrupt: AgUiInterrupt | null;
 }
 
 export async function runAgent(
@@ -61,6 +98,7 @@ export async function runAgent(
 
   const pendingLocalCalls: PendingToolExecution[] = [];
   const followUpToolCallIds: string[] = [];
+  let interrupt: AgUiInterrupt | null = null;
 
   const subscriber: AgentSubscriber = {
     onTextMessageStartEvent: ({ event }) => {
@@ -178,6 +216,24 @@ export async function runAgent(
         ),
       }));
     },
+    onRunFinishedEvent: ({ event }) => {
+      const interruptEvent = event as InterruptAwareRunFinishedEvent;
+      const activeInterrupt = interruptEvent.interrupt;
+      if (interruptEvent.outcome !== 'interrupt' || !activeInterrupt) {
+        return;
+      }
+
+      interrupt = activeInterrupt;
+      messageStream.update((item) => ({
+        value: updateToolCall(
+          readMessages(item),
+          activeInterrupt.payload.toolCallId,
+          {
+            status: 'interrupt',
+          },
+        ),
+      }));
+    },
   };
 
   const toolsToOffer = tools.map(({ name, description, parameters }) => ({
@@ -192,11 +248,12 @@ export async function runAgent(
       : normalizeAgentMessagesForRun(agent.messages),
   );
 
-  await agent.runAgent(
+  await agent.runAgentCompat(
     {
       runId,
       tools: toolsToOffer,
       forwardedProps: model ? { modelHint: model } : undefined,
+      resume: options.resume,
     },
     subscriber,
   );
@@ -204,6 +261,7 @@ export async function runAgent(
   return {
     pendingLocalCalls,
     followUpToolCallIds,
+    interrupt,
   };
 }
 
@@ -250,12 +308,14 @@ function safeParseJson(content: unknown): unknown {
 }
 
 export interface RunUntilSettledOptions {
-  agent: HttpAgent;
+  agent: InterruptAwareHttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   environmentInjector: EnvironmentInjector;
   runId: string;
+  interrupt: WritableSignal<AgUiInterrupt | null>;
+  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
   abortSignal: AbortSignal;
@@ -274,6 +334,8 @@ export async function runUntilSettled(
     componentMap,
     environmentInjector,
     runId,
+    interrupt,
+    resume,
     model,
     useServerMemory,
     abortSignal,
@@ -303,10 +365,16 @@ export async function runUntilSettled(
       toolMap,
       componentMap,
       runId: currentRunId,
+      resume: turnCount === 1 ? resume : undefined,
       model,
       useServerMemory,
       messageStream,
     });
+
+    if (runResult.interrupt) {
+      interrupt.set(runResult.interrupt);
+      break;
+    }
 
     if (useServerMemory) {
       agent.setMessages(
