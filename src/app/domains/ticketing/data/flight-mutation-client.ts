@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 
+const BOOKED_FLIGHTS_PATH = '/booked-flights';
+
 export interface FlightMutationFlight {
   id: number;
   from: string;
@@ -31,7 +33,7 @@ export type FlightMutationResult =
     };
 
 @Injectable({ providedIn: 'root' })
-export class FlightMutationClient {
+export class BookingClient {
   private readonly http = inject(HttpClient);
   private readonly config = inject(ConfigService);
 
@@ -49,14 +51,14 @@ export class FlightMutationClient {
 
   private bookFlightUrl(flightId: number): string {
     return new URL(
-      `/booked-flights/${flightId}/book`,
+      `${BOOKED_FLIGHTS_PATH}/${flightId}/book`,
       this.config.agUiUrl,
     ).toString();
   }
 
   private cancelFlightUrl(flightId: number): string {
     return new URL(
-      `/booked-flights/${flightId}/cancel`,
+      `${BOOKED_FLIGHTS_PATH}/${flightId}/cancel`,
       this.config.agUiUrl,
     ).toString();
   }
