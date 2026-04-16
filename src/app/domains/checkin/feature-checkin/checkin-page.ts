@@ -64,9 +64,12 @@ export class CheckinPage {
     },
   );
 
-  protected readonly phoneNumber = new SignalFormControl('', (path) => {
-    required(path);
-  });
+  protected readonly phoneNumber = new SignalFormControl(
+    '1234 5678',
+    (path) => {
+      required(path);
+    },
+  );
 
   protected readonly passengerGroup = this.formBuilder.nonNullable.group({
     firstName: '',
