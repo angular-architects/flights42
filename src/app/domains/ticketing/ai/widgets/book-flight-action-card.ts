@@ -10,9 +10,11 @@ import {
   type AgUiActionWidgetData,
   defineAgUiComponent,
 } from '@internal/ag-ui-client';
+import { format } from 'date-fns';
 
 import {
   FlightMutationClient,
+  type FlightMutationFlight,
   type FlightMutationResult,
 } from '../../data/flight-mutation-client';
 
@@ -25,11 +27,14 @@ interface BookFlightInput {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card">
-      <div class="card-header">
-        <h2 class="title">{{ headline() }}</h2>
-      </div>
       <div class="card-body">
-        <p>{{ description() }}</p>
+        <p class="action-title">{{ titleText() }}</p>
+
+        @if (contextText(); as context) {
+          <p class="action-context">{{ context }}</p>
+        }
+
+        <p class="status-line">Status: {{ statusLabel() }}</p>
 
         @if (showUndo()) {
           <p>
@@ -53,18 +58,17 @@ interface BookFlightInput {
       box-shadow: none;
     }
 
-    .card-header {
-      padding: 0.75rem 0.875rem 0;
-    }
-
-    .card-header h2.title {
-      font-size: 1rem;
-      line-height: 1.25;
-    }
-
     .card-body {
-      padding: 0.75rem 0.875rem 0.875rem;
-      font-size: 0.95rem;
+      padding: 0.625rem 0.75rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .action-title {
+      font-weight: 600;
+    }
+
+    .action-context {
+      color: #4e5b78;
     }
 
     p {
@@ -73,12 +77,16 @@ interface BookFlightInput {
     }
 
     p + p {
-      margin-top: 0.625rem;
+      margin-top: 0.5rem;
     }
 
     .btn {
-      padding: 0.35rem 0.75rem;
-      font-size: 0.875rem;
+      padding: 0.25rem 0.625rem;
+      font-size: 0.8125rem;
+    }
+
+    .status-line {
+      line-height: 1.4;
     }
   `,
 })
@@ -95,61 +103,50 @@ export class BookFlightActionCard {
     undefined,
   );
 
-  protected readonly headline = computed(() => {
-    if (this.undoPending()) {
-      return 'Undoing booking';
-    }
+  protected readonly titleText = computed(
+    () => `Book Flight #${this.flightId()}`,
+  );
 
-    const undoResult = this.undoResult();
-    if (undoResult) {
-      return undoResult.ok ? 'Booking undone' : 'Undo failed';
-    }
-
-    switch (this.data().status) {
-      case 'interrupt':
-        return 'Booking started';
-      case 'pending':
-        return 'Booking started';
-      case 'error':
-        return 'Booking failed';
-      case 'complete':
-        return this.result()?.ok ? 'Booking finished' : 'Booking failed';
-    }
+  protected readonly contextText = computed(() => {
+    const details = this.flightDetails();
+    return details
+      ? `${details.from} -> ${details.to}, ${formatDate(details.date)}`
+      : null;
   });
 
-  protected readonly description = computed(() => {
-    const flightId = this.flightId();
-
+  protected readonly statusLabel = computed(() => {
     if (this.undoPending()) {
-      return `Cancelling booked flight #${flightId}...`;
+      return 'Undoing';
     }
 
     const undoResult = this.undoResult();
     if (undoResult) {
-      return undoResult.ok
-        ? `Booking for flight #${undoResult.flight.id} has been undone.`
-        : undoResult.message;
+      return undoResult.ok ? 'Undone' : 'Failed';
     }
 
     const result = this.result();
     switch (this.data().status) {
       case 'interrupt':
-        return `Waiting for approval to book flight #${flightId}.`;
+        return 'Waiting for approval';
       case 'pending':
-        return `Starting booking for flight #${flightId}...`;
+        return 'Started';
       case 'error':
-        return this.data().error ?? `Booking flight #${flightId} failed.`;
+        return this.data().error ?? 'Failed';
       case 'complete':
         if (result?.ok) {
-          return `Booked flight #${result.flight.id} from ${result.flight.from} to ${result.flight.to}.`;
+          return 'Success';
         }
 
-        return result?.message ?? `Booking flight #${flightId} finished.`;
+        if (result?.code === 'USER_CANCELLED') {
+          return 'Not approved';
+        }
+
+        return result?.message ?? 'Failed';
     }
   });
 
   protected readonly showUndo = computed(() => {
-    if (this.undoPending() || this.undoResult()?.ok) {
+    if (this.undoPending() || this.undoResult()) {
       return false;
     }
 
@@ -179,6 +176,16 @@ export class BookFlightActionCard {
   private flightId(): number {
     const result = this.result();
     return result?.ok ? result.flight.id : this.data().input.flightId;
+  }
+
+  private flightDetails(): FlightMutationFlight | undefined {
+    const undoResult = this.undoResult();
+    if (undoResult?.ok) {
+      return undoResult.flight;
+    }
+
+    const result = this.result();
+    return result?.ok ? result.flight : undefined;
   }
 }
 
@@ -213,4 +220,13 @@ function toLoadFailedResult(
         ? error.message
         : `Could not ${action} flight ${flightId}.`,
   };
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return format(date, 'dd.MM.yyyy HH:mm');
 }
