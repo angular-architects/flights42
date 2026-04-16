@@ -45,35 +45,31 @@
   </article>
 }
 
-@if (interrupt(); as activeInterrupt) {
+@let activeInterrupt = interruptModel();
+
+@if (activeInterrupt) {
   <article class="msg assistant">
     <div class="avatar">🤖</div>
     <div>
       <div class="bubble">
         <strong>Approval needed</strong>
-        <div>
-          {{ activeInterrupt.payload.toolName }} {{ activeInterrupt.reason }}
-        </div>
         <div [title]="activeInterrupt.payload.args | json">
-          Args: {{ activeInterrupt.payload.args | json }}
+          {{ activeInterrupt.message }}
         </div>
-
-        @if (activeInterrupt.reason === 'human_approval') {
-          <div>
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="rejectInterrupt.emit()">
-              Reject
-            </button>
-            <button
-              mat-flat-button
-              type="button"
-              (click)="approveInterrupt.emit()">
-              Approve
-            </button>
-          </div>
-        }
+        <div>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="resumeInterrupt.emit(false)">
+            Reject
+          </button>
+          <button
+            mat-flat-button
+            type="button"
+            (click)="resumeInterrupt.emit(true)">
+            Approve
+          </button>
+        </div>
       </div>
       <div class="meta"></div>
     </div>

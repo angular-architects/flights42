@@ -30,9 +30,11 @@ export class ChatMessages {
   readonly messages = input.required<AgUiChatMessage[]>();
   readonly interrupt = input<AgUiInterrupt | null>(null);
   readonly pending = input<boolean>(false);
-  readonly approveInterrupt = output<void>();
-  readonly rejectInterrupt = output<void>();
+  readonly resumeInterrupt = output<boolean>();
   protected readonly showIndicator = computed(() => this.pending());
+  protected readonly interruptModel = computed(() =>
+    toInterruptModel(this.interrupt()),
+  );
 
   protected readonly icons = {
     user: '💬',
@@ -72,4 +74,35 @@ export class ChatMessages {
       toolCalls: message.toolCalls,
     })),
   );
+}
+
+interface InterruptPayload {
+  message?: string | undefined;
+}
+
+interface InterruptModel {
+  id: AgUiInterrupt['id'];
+  reason: AgUiInterrupt['reason'];
+  payload: AgUiInterrupt['payload'];
+  message: string;
+}
+
+function toInterruptModel(
+  interrupt: AgUiInterrupt | null,
+): InterruptModel | null {
+  if (!interrupt) {
+    return null;
+  }
+
+  const suspendPayload = interrupt.payload.suspendPayload as
+    | InterruptPayload
+    | undefined;
+
+  return {
+    ...interrupt,
+    message:
+      typeof suspendPayload?.message === 'string'
+        ? suspendPayload.message
+        : `Tool Call: ${interrupt.payload.toolName}`,
+  };
 }

@@ -72,11 +72,7 @@ export class AssistantChat {
     this.chat?.sendMessage({ role: 'user', content: message });
   }
 
-  protected approveInterrupt(): void {
-    this.chat?.approveInterrupt();
-  }
-
-  protected rejectInterrupt(): void {
-    this.chat?.rejectInterrupt();
+  protected resumeInterrupt(approved: boolean): void {
+    this.chat?.resumeInterrupt(approved);
   }
 }

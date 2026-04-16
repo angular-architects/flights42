@@ -185,9 +185,7 @@ export interface AgUiResourceOptions {
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
   sendMessage: (message: { role: 'user'; content: string }) => void;
   interrupt: Signal<AgUiInterrupt | null>;
-  approveInterrupt: () => void;
-  rejectInterrupt: () => void;
-  resumeInterrupt: (payload?: unknown) => void;
+  resumeInterrupt: (approved: boolean) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;
