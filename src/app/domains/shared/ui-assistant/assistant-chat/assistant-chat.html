@@ -66,8 +66,7 @@
       <app-chat-messages
         [messages]="chat.value()"
         [interrupt]="chat.interrupt()"
-        (approveInterrupt)="approveInterrupt()"
-        (rejectInterrupt)="rejectInterrupt()"
+        (resumeInterrupt)="resumeInterrupt($event)"
         [pending]="chat.isLoading()" />
     </section>
 
