@@ -11,8 +11,33 @@ export interface AgUiWidget {
   id: string;
   name: string;
   component: Type<unknown>;
+}
+
+export interface AgUiActionWidgetData<
+  TInput = unknown,
+  TResult = unknown,
+  TStatus extends AgUiToolCallStatus = AgUiToolCallStatus,
+> {
+  toolCallId: string;
+  toolName: string;
+  status: TStatus;
+  input: TInput;
+  result?: TResult;
+  error?: string;
+}
+
+export interface AgUiResultWidget extends AgUiWidget {
+  kind?: 'result';
   props: Record<string, unknown>;
 }
+
+export interface AgUiActionWidget extends AgUiWidget {
+  kind: 'action';
+  toolCallId: string;
+  data: AgUiActionWidgetData;
+}
+
+export type AgUiWidgetInstance = AgUiResultWidget | AgUiActionWidget;
 
 export interface AgUiMcpAppsSnapshotContent {
   serverId: string;
@@ -51,17 +76,39 @@ type SchemaPropsForComponent<
     : never;
 };
 
-export interface AgUiRegisteredComponent<
+export interface AgUiResultRegisteredComponent<
   TComponent = unknown,
   TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
   TName extends string = string,
 > {
+  kind?: 'result';
   name: TName;
   description: string;
   component: Type<TComponent>;
   schema: z.ZodType<TProps>;
   clientOnly?: true;
 }
+
+export interface AgUiActionRegisteredComponent<
+  TComponent = unknown,
+  TName extends string = string,
+  TToolName extends string = string,
+> {
+  kind: 'action';
+  name: TName;
+  description: string;
+  component: Type<TComponent>;
+  toolName: TToolName;
+  clientOnly?: true;
+}
+
+export type AgUiRegisteredComponent<
+  TComponent = unknown,
+  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
+  TName extends string = string,
+> =
+  | AgUiResultRegisteredComponent<TComponent, TProps, TName>
+  | AgUiActionRegisteredComponent<TComponent, TName>;
 
 export function defineAgUiComponent<
   const TName extends string,
@@ -73,22 +120,47 @@ export function defineAgUiComponent<
   component: Type<TComponent>;
   schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
   clientOnly?: true;
-}): AgUiRegisteredComponent<TComponent, TProps, TName> {
-  return component;
+}): AgUiResultRegisteredComponent<TComponent, TProps, TName>;
+export function defineAgUiComponent<
+  const TName extends string,
+  const TToolName extends string,
+  TComponent,
+>(component: {
+  kind: 'action';
+  name: TName;
+  description: string;
+  component: Type<TComponent>;
+  toolName: TToolName;
+  clientOnly?: true;
+}): AgUiActionRegisteredComponent<TComponent, TName, TToolName>;
+export function defineAgUiComponent(component: {
+  kind?: 'result' | 'action';
+  name: string;
+  description: string;
+  component: Type<unknown>;
+  schema?: z.ZodType<Record<string, unknown>>;
+  toolName?: string;
+  clientOnly?: true;
+}): AgUiRegisteredComponent {
+  return component as AgUiRegisteredComponent;
 }
+
+export type AgUiToolCallStatus = 'pending' | 'interrupt' | 'complete' | 'error';
 
 export interface AgUiToolCall {
   id: string;
   name: string;
   args: unknown;
-  status: 'pending' | 'interrupt' | 'complete' | 'error';
+  status: AgUiToolCallStatus;
+  result?: unknown;
+  error?: string;
 }
 
 export interface AgUiChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'error';
   content: string;
-  widgets: AgUiWidget[];
+  widgets: AgUiWidgetInstance[];
   toolCalls: AgUiToolCall[];
 }
 

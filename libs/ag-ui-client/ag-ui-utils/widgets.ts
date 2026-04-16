@@ -1,10 +1,12 @@
 import {
+  type AgUiActionRegisteredComponent,
+  type AgUiActionWidget,
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
   type AgUiMcpAppsSnapshotContent,
   type AgUiRegisteredComponent,
   type AgUiToolCall,
-  type AgUiWidget,
+  type AgUiWidgetInstance,
 } from '../ag-ui-types';
 import { replaceMessage } from './messages';
 
@@ -12,6 +14,19 @@ export function readRegisteredComponents(
   tools: AgUiClientToolDefinition<never>[],
 ): AgUiRegisteredComponent[] {
   return tools.flatMap((tool) => tool.registeredComponents ?? []);
+}
+
+export function upsertActionWidgetForToolCall(
+  messages: AgUiChatMessage[],
+  toolCall: AgUiToolCall,
+  componentMap: Map<string, AgUiRegisteredComponent>,
+): AgUiChatMessage[] {
+  const widget = toActionWidget(toolCall, componentMap);
+  if (!widget) {
+    return removeActionWidget(messages, toolCall.id);
+  }
+
+  return appendWidgets(messages, toolCall.id, [widget]);
 }
 
 export function appendWidgetsFromToolResult(
@@ -104,7 +119,7 @@ export function upsertWidgetFromActivitySnapshot(
 function appendWidgets(
   messages: AgUiChatMessage[],
   toolCallId: string,
-  widgets: AgUiWidget[],
+  widgets: AgUiWidgetInstance[],
 ): AgUiChatMessage[] {
   let nextMessages = messages;
 
@@ -118,7 +133,7 @@ function appendWidgets(
 function appendWidget(
   messages: AgUiChatMessage[],
   toolCallId: string,
-  widget: AgUiWidget,
+  widget: AgUiWidgetInstance,
 ): AgUiChatMessage[] {
   for (let index = 0; index < messages.length; index += 1) {
     const message = messages[index];
@@ -133,16 +148,49 @@ function appendWidget(
       continue;
     }
 
-    const hasWidget = message.widgets.some(
-      (entry: AgUiWidget) => entry.id === widget.id,
+    const existingWidgetIndex = message.widgets.findIndex(
+      (entry: AgUiWidgetInstance) => entry.id === widget.id,
     );
-    if (hasWidget) {
-      return messages;
+    if (existingWidgetIndex !== -1) {
+      const nextWidgets = [...message.widgets];
+      nextWidgets[existingWidgetIndex] = widget;
+
+      return replaceMessage(messages, index, {
+        ...message,
+        widgets: nextWidgets,
+      });
     }
 
     return replaceMessage(messages, index, {
       ...message,
       widgets: [...message.widgets, widget],
+    });
+  }
+
+  return messages;
+}
+
+function removeActionWidget(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+): AgUiChatMessage[] {
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index];
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const nextWidgets = message.widgets.filter(
+      (entry) => !(entry.kind === 'action' && entry.toolCallId === toolCallId),
+    );
+
+    if (nextWidgets.length === message.widgets.length) {
+      continue;
+    }
+
+    return replaceMessage(messages, index, {
+      ...message,
+      widgets: nextWidgets,
     });
   }
 
@@ -174,7 +222,7 @@ function toWidgets(
   toolCallId: string,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidget[] {
+): AgUiWidgetInstance[] {
   const parsed = safeParseJson(content);
 
   if (name === 'showComponents') {
@@ -185,7 +233,12 @@ function toWidgets(
     return [];
   }
 
-  const component = componentMap.get(name)?.component;
+  const registeredComponent = componentMap.get(name);
+  if (!registeredComponent || registeredComponent.kind === 'action') {
+    return [];
+  }
+
+  const component = registeredComponent.component;
   return parsed && typeof parsed === 'object' && component
     ? [
         {
@@ -202,7 +255,7 @@ function toRegisteredWidgets(
   value: unknown,
   toolCallId: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidget[] {
+): AgUiWidgetInstance[] {
   if (
     !value ||
     typeof value !== 'object' ||
@@ -217,7 +270,7 @@ function toRegisteredWidgets(
     .map((item, index) =>
       toRegisteredWidget(item, toolCallId, index, componentMap),
     )
-    .filter((widget): widget is AgUiWidget => widget !== null);
+    .filter((widget): widget is AgUiWidgetInstance => widget !== null);
 }
 
 function toRegisteredWidget(
@@ -225,17 +278,24 @@ function toRegisteredWidget(
   toolCallId: string,
   index: number,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidget | null {
+): AgUiWidgetInstance | null {
   if (!value || typeof value !== 'object') {
     return null;
   }
 
-  const widget = value as Partial<AgUiWidget>;
+  const widget = value as Partial<{
+    name: string;
+    props: Record<string, unknown>;
+  }>;
   const componentName =
     typeof widget.name === 'string' ? widget.name : undefined;
-  const component = componentName
-    ? componentMap.get(componentName)?.component
+  const registeredComponent = componentName
+    ? componentMap.get(componentName)
     : undefined;
+  const component =
+    registeredComponent && registeredComponent.kind !== 'action'
+      ? registeredComponent.component
+      : undefined;
 
   if (
     !componentName ||
@@ -258,13 +318,17 @@ function toMcpAppsWidget(
   messageId: string,
   value: unknown,
   componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidget | null {
+): AgUiWidgetInstance | null {
   if (!isMcpAppsSnapshotContent(value)) {
     return null;
   }
 
   const componentName = 'mcpAppsWidget';
-  const component = componentMap.get(componentName)?.component;
+  const registeredComponent = componentMap.get(componentName);
+  const component =
+    registeredComponent && registeredComponent.kind !== 'action'
+      ? registeredComponent.component
+      : undefined;
   if (!component) {
     return null;
   }
@@ -275,6 +339,45 @@ function toMcpAppsWidget(
     component,
     props: { data: value } as Record<string, unknown>,
   };
+}
+
+function toActionWidget(
+  toolCall: AgUiToolCall,
+  componentMap: Map<string, AgUiRegisteredComponent>,
+): AgUiActionWidget | null {
+  const registeredComponent = findActionComponent(componentMap, toolCall.name);
+  if (!registeredComponent) {
+    return null;
+  }
+
+  return {
+    kind: 'action',
+    id: `${toolCall.id}-action`,
+    name: registeredComponent.name,
+    component: registeredComponent.component,
+    toolCallId: toolCall.id,
+    data: {
+      toolCallId: toolCall.id,
+      toolName: toolCall.name,
+      status: toolCall.status,
+      input: toolCall.args,
+      result: toolCall.result,
+      error: toolCall.error,
+    },
+  };
+}
+
+function findActionComponent(
+  componentMap: Map<string, AgUiRegisteredComponent>,
+  toolName: string,
+): AgUiActionRegisteredComponent | undefined {
+  for (const component of componentMap.values()) {
+    if (component.kind === 'action' && component.toolName === toolName) {
+      return component;
+    }
+  }
+
+  return undefined;
 }
 
 function isMcpAppsSnapshotContent(

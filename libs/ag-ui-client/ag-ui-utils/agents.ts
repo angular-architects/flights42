@@ -31,7 +31,10 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import { upsertWidgetFromActivitySnapshot } from './widgets';
+import {
+  upsertActionWidgetForToolCall,
+  upsertWidgetFromActivitySnapshot,
+} from './widgets';
 
 interface RunAgentCompatParameters {
   runId?: string;
@@ -137,35 +140,70 @@ export async function runAgent(
     onToolCallStartEvent: ({ event }) => {
       messageStream.update((item) => {
         const messages = readMessages(item);
+        const toolCall = {
+          id: event.toolCallId,
+          name: event.toolCallName,
+          args: {},
+          status: 'pending' as const,
+        };
 
         return {
-          value: upsertToolCall(messages, {
-            id: event.toolCallId,
-            name: event.toolCallName,
-            args: {},
-            status: 'pending',
-          }),
+          value: upsertActionWidgetForToolCall(
+            upsertToolCall(messages, toolCall),
+            toolCall,
+            componentMap,
+          ),
         };
       });
     },
     onToolCallArgsEvent: ({ event, toolCallName, partialToolCallArgs }) => {
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: partialToolCallArgs,
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: partialToolCallArgs,
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: normalizedToolCallArgs,
-          status: 'pending',
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: normalizedToolCallArgs,
+            status: 'pending',
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
 
       const toolDefinition = toolMap.get(toolCallName);
       if (!toolDefinition) {
@@ -183,11 +221,31 @@ export async function runAgent(
       }
     },
     onToolCallResultEvent: ({ event }) => {
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          status: isToolErrorResult(event.content) ? 'error' : 'complete',
-        }),
-      }));
+      const result = safeParseJson(event.content);
+      const error = readToolErrorMessage(result);
+
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            status: error ? 'error' : 'complete',
+            result,
+            error,
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
     onActivitySnapshotEvent: ({ event }) => {
       messageStream.update((item) => ({
@@ -203,7 +261,7 @@ export async function runAgent(
     onRunErrorEvent: ({ event }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item)),
+          markPendingToolCallsAsError(readMessages(item), componentMap),
           event.message || 'Unknown AG-UI run error',
         ),
       }));
@@ -211,7 +269,7 @@ export async function runAgent(
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item)),
+          markPendingToolCallsAsError(readMessages(item), componentMap),
           error instanceof Error ? error.message : 'Unknown AG-UI run failure',
         ),
       }));
@@ -224,15 +282,29 @@ export async function runAgent(
       }
 
       interrupt = activeInterrupt;
-      messageStream.update((item) => ({
-        value: updateToolCall(
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
           readMessages(item),
           activeInterrupt.payload.toolCallId,
           {
             status: 'interrupt',
           },
-        ),
-      }));
+        );
+        const toolCall = findToolCall(
+          nextMessages,
+          activeInterrupt.payload.toolCallId,
+        );
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
   };
 
@@ -265,18 +337,9 @@ export async function runAgent(
   };
 }
 
-function isToolErrorResult(content: unknown): boolean {
-  const parsed = safeParseJson(content);
-  return (
-    !!parsed &&
-    typeof parsed === 'object' &&
-    'error' in parsed &&
-    typeof (parsed as { error?: unknown }).error === 'string'
-  );
-}
-
 function markPendingToolCallsAsError(
   messages: AgUiChatMessage[],
+  componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiChatMessage[] {
   return messages.reduce<AgUiChatMessage[]>((currentMessages, message) => {
     if (message.role !== 'assistant') {
@@ -284,15 +347,52 @@ function markPendingToolCallsAsError(
     }
 
     return message.toolCalls.reduce<AgUiChatMessage[]>(
-      (nextMessages, toolCall) =>
-        toolCall.status === 'pending'
-          ? updateToolCall(nextMessages, toolCall.id, {
-              status: 'error',
-            })
-          : nextMessages,
+      (nextMessages, toolCall) => {
+        if (toolCall.status !== 'pending') {
+          return nextMessages;
+        }
+
+        const updatedMessages = updateToolCall(nextMessages, toolCall.id, {
+          status: 'error',
+          error: 'Tool execution did not complete.',
+        });
+        const updatedToolCall = findToolCall(updatedMessages, toolCall.id);
+
+        return updatedToolCall
+          ? upsertActionWidgetForToolCall(
+              updatedMessages,
+              updatedToolCall,
+              componentMap,
+            )
+          : updatedMessages;
+      },
       currentMessages,
     );
   }, messages);
+}
+
+function findToolCall(messages: AgUiChatMessage[], toolCallId: string) {
+  for (const message of messages) {
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
+    if (toolCall) {
+      return toolCall;
+    }
+  }
+
+  return undefined;
+}
+
+function readToolErrorMessage(content: unknown): string | undefined {
+  return content &&
+    typeof content === 'object' &&
+    'error' in content &&
+    typeof (content as { error?: unknown }).error === 'string'
+    ? (content as { error: string }).error
+    : undefined;
 }
 
 function safeParseJson(content: unknown): unknown {
@@ -392,7 +492,7 @@ export async function runUntilSettled(
     });
 
     messageStream.update((item) => ({
-      value: markPendingToolCallsAsError(readMessages(item)),
+      value: markPendingToolCallsAsError(readMessages(item), componentMap),
     }));
 
     done = runResult.followUpToolCallIds.length === 0;

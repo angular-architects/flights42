@@ -15,7 +15,10 @@ import {
   type AgUiToolCall,
 } from '../ag-ui-types';
 import { readMessages, replaceMessage } from './messages';
-import { appendWidgetsFromPendingToolResult } from './widgets';
+import {
+  appendWidgetsFromPendingToolResult,
+  upsertActionWidgetForToolCall,
+} from './widgets';
 
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 type ToolMessage = Extract<Message, { role: 'tool' }>;
@@ -52,6 +55,7 @@ interface ExecuteToolOptions {
 
 interface RecordToolErrorOptions {
   agent: HttpAgent;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   pendingCall: PendingToolExecution;
   error: unknown;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -269,6 +273,7 @@ export async function executePendingTools(
     } catch (error) {
       recordToolError({
         agent,
+        componentMap,
         pendingCall,
         error,
         messageStream,
@@ -296,9 +301,24 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
   if (result === undefined) {
     addToolResultMessage(agent, pendingCall.toolCallId, { ok: true });
 
-    messageStream.update((item) => ({
-      value: completeToolCall(readMessages(item), pendingCall.toolCallId),
-    }));
+    messageStream.update((item) => {
+      const nextMessages = updateToolCall(
+        readMessages(item),
+        pendingCall.toolCallId,
+        {
+          status: 'complete',
+          result: { ok: true },
+          error: undefined,
+        },
+      );
+      const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
+
+      return {
+        value: toolCall
+          ? upsertActionWidgetForToolCall(nextMessages, toolCall, componentMap)
+          : nextMessages,
+      };
+    });
 
     return true;
   }
@@ -307,20 +327,36 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
 
   addToolResultMessage(agent, pendingCall.toolCallId, result);
 
-  messageStream.update((item) => ({
-    value: appendWidgetsFromPendingToolResult(
-      completeToolCall(readMessages(item), pendingCall.toolCallId),
-      pendingCall,
-      serializedResult,
-      componentMap,
-    ),
-  }));
+  messageStream.update((item) => {
+    const nextMessages = updateToolCall(
+      readMessages(item),
+      pendingCall.toolCallId,
+      {
+        status: 'complete',
+        result,
+        error: undefined,
+      },
+    );
+    const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
+    const messagesWithActionWidget = toolCall
+      ? upsertActionWidgetForToolCall(nextMessages, toolCall, componentMap)
+      : nextMessages;
+
+    return {
+      value: appendWidgetsFromPendingToolResult(
+        messagesWithActionWidget,
+        pendingCall,
+        serializedResult,
+        componentMap,
+      ),
+    };
+  });
 
   return true;
 }
 
 function recordToolError(options: RecordToolErrorOptions): void {
-  const { agent, pendingCall, error, messageStream } = options;
+  const { agent, pendingCall, error, messageStream, componentMap } = options;
   const message = formatToolErrorMessage(pendingCall.toolCallName, error);
 
   if (pendingCall.toolCallName === 'showComponents') {
@@ -340,9 +376,22 @@ function recordToolError(options: RecordToolErrorOptions): void {
   });
 
   messageStream.update((item) => ({
-    value: updateToolCall(readMessages(item), pendingCall.toolCallId, {
-      status: 'error',
-    }),
+    value: (() => {
+      const nextMessages = updateToolCall(
+        readMessages(item),
+        pendingCall.toolCallId,
+        {
+          status: 'error',
+          error: message,
+          result: { error: message },
+        },
+      );
+      const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
+
+      return toolCall
+        ? upsertActionWidgetForToolCall(nextMessages, toolCall, componentMap)
+        : nextMessages;
+    })(),
   }));
 }
 
@@ -365,6 +414,24 @@ function hasToolResult(messages: Message[], toolCallId: string): boolean {
   return messages.some(
     (message) => message.role === 'tool' && message.toolCallId === toolCallId,
   );
+}
+
+function findToolCall(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+): AgUiToolCall | undefined {
+  for (const message of messages) {
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
+    if (toolCall) {
+      return toolCall;
+    }
+  }
+
+  return undefined;
 }
 
 function collectAssistantToolCallIds(messages: Message[]): Set<string> {

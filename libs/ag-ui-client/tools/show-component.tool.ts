@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { AgUiRegisteredComponent, defineAgUiTool } from '../ag-ui-types';
+import {
+  type AgUiRegisteredComponent,
+  type AgUiResultRegisteredComponent,
+  defineAgUiTool,
+} from '../ag-ui-types';
 
 type AnyRegisteredComponent = AgUiRegisteredComponent<
   unknown,
@@ -8,13 +12,21 @@ type AnyRegisteredComponent = AgUiRegisteredComponent<
   string
 >;
 
-interface RegisteredComponentInput<TComponent extends AnyRegisteredComponent> {
+type AnyResultRegisteredComponent = AgUiResultRegisteredComponent<
+  unknown,
+  Record<string, unknown>,
+  string
+>;
+
+interface RegisteredComponentInput<
+  TComponent extends AnyResultRegisteredComponent,
+> {
   name: TComponent['name'];
   props: z.infer<TComponent['schema']>;
 }
 
 interface ShowComponentsToolArgs<
-  TComponents extends readonly AnyRegisteredComponent[],
+  TComponents extends readonly AnyResultRegisteredComponent[],
 > {
   components: RegisteredComponentInput<TComponents[number]>[];
 }
@@ -22,7 +34,7 @@ interface ShowComponentsToolArgs<
 type JsonSchema = Record<string, unknown>;
 
 function createToolDescription(
-  registeredComponents: readonly AnyRegisteredComponent[],
+  registeredComponents: readonly AnyResultRegisteredComponent[],
 ): string {
   const componentsDescription = registeredComponents
     .map((entry) => {
@@ -143,7 +155,7 @@ function createExampleFromSchema(schema: JsonSchema): unknown {
 }
 
 function createComponentSchema(
-  registeredComponents: readonly AnyRegisteredComponent[],
+  registeredComponents: readonly AnyResultRegisteredComponent[],
 ): z.ZodTypeAny {
   const publicComponents = registeredComponents.filter(
     (entry) => entry.clientOnly !== true,
@@ -176,11 +188,18 @@ function createComponentSchema(
   );
 }
 
+function isResultComponent(
+  component: AnyRegisteredComponent,
+): component is AnyResultRegisteredComponent {
+  return component.kind !== 'action';
+}
+
 export function createShowComponentsTool<
   const TComponents extends readonly AnyRegisteredComponent[],
 >(registeredComponents: TComponents) {
-  const componentSchema = createComponentSchema(registeredComponents);
-  const description = createToolDescription(registeredComponents);
+  const resultComponents = registeredComponents.filter(isResultComponent);
+  const componentSchema = createComponentSchema(resultComponents);
+  const description = createToolDescription(resultComponents);
 
   return defineAgUiTool({
     name: 'showComponents',
@@ -190,7 +209,7 @@ export function createShowComponentsTool<
         .array(componentSchema)
         .min(1)
         .describe('Component configs with name discriminator and props.'),
-    }) as z.ZodType<ShowComponentsToolArgs<TComponents>>,
+    }) as z.ZodType<ShowComponentsToolArgs<typeof resultComponents>>,
     registeredComponents,
     followUpAfterExecution: false,
     // Returned value is serialized for tool-result messages and for widget rendering in executeTool.
