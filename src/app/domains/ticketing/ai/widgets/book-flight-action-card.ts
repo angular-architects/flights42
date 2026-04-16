@@ -7,8 +7,9 @@ import {
   signal,
 } from '@angular/core';
 import {
-  type AgUiActionWidgetData,
-  defineAgUiComponent,
+  type AgUiActionCard,
+  type AgUiActionData,
+  defineActionCard,
 } from '@internal/ag-ui-client';
 
 import {
@@ -27,6 +28,11 @@ import {
 interface BookFlightInput {
   flightId: number;
 }
+
+type BookFlightActionData = AgUiActionData<
+  BookFlightInput,
+  FlightMutationResult
+>;
 
 @Component({
   selector: 'app-book-flight-action-card',
@@ -96,13 +102,10 @@ interface BookFlightInput {
     }
   `,
 })
-export class BookFlightActionCard {
+export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData> {
   private readonly bookingClient = inject(BookingClient);
 
-  readonly data =
-    input.required<
-      AgUiActionWidgetData<BookFlightInput, FlightMutationResult>
-    >();
+  readonly actionData = input.required<BookFlightActionData>();
 
   private readonly undoPending = signal(false);
   private readonly undoResult = signal<FlightMutationResult | undefined>(
@@ -121,8 +124,8 @@ export class BookFlightActionCard {
     getActionStatusLabel(
       this.undoPending(),
       this.undoResult(),
-      this.data().status,
-      this.data().error,
+      this.actionData().status,
+      this.actionData().error,
       this.result(),
     ),
   );
@@ -131,7 +134,7 @@ export class BookFlightActionCard {
     shouldShowUndo(
       this.undoPending(),
       this.undoResult(),
-      this.data().status,
+      this.actionData().status,
       this.result(),
     ),
   );
@@ -151,13 +154,13 @@ export class BookFlightActionCard {
   }
 
   private result(): FlightMutationResult | undefined {
-    const result = this.data().result;
+    const result = this.actionData().result;
     return isFlightMutationResult(result) ? result : undefined;
   }
 
   private flightId(): number {
     const result = this.result();
-    return result?.ok ? result.flight.id : this.data().input.flightId;
+    return result?.ok ? result.flight.id : this.actionData().input.flightId;
   }
 
   private flightDetails(): FlightMutationFlight | undefined {
@@ -175,11 +178,7 @@ function getBookFlightTitle(flightId: number): string {
   return `Book Flight #${flightId}`;
 }
 
-export const bookFlightActionCard = defineAgUiComponent({
-  kind: 'action',
-  name: 'bookFlightActionCard',
-  description:
-    'Shows booking progress and lets users undo a successful booking.',
-  component: BookFlightActionCard,
+export const bookFlightActionCard = defineActionCard({
   toolName: 'bookFlight',
+  component: BookFlightActionCard,
 });

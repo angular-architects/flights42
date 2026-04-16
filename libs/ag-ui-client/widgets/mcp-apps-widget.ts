@@ -203,7 +203,7 @@ const mcpAppsSchema = z.object({
 export const mcpAppsWidgetComponent = defineAgUiComponent({
   name: 'mcpAppsWidget',
   description: 'Renders an interactive MCP App inside an iframe.',
-  component: McpAppsWidgetComponent,
   clientOnly: true,
+  component: McpAppsWidgetComponent,
   schema: mcpAppsSchema as z.ZodType<{ data: AgUiMcpAppsSnapshotContent }>,
 });
