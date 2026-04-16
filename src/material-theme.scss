@@ -7,16 +7,27 @@
 
 html {
   height: 100%;
+
+  // Use violet as closest built-in M3 palette to brand blue (92,68,228)
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        primary: mat.$violet-palette,
+        secondary: mat.$magenta-palette,
       ),
-      typography: Roboto,
+      typography: 'Inter Tight',
       density: 0,
     )
   );
+
+  // Override system vars with exact brand colors (light mode)
+  --mat-sys-primary: rgb(92, 68, 228);
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: rgb(220, 215, 255);
+  --mat-sys-secondary: rgb(246, 55, 227);
+  --mat-sys-on-secondary: #ffffff;
+  --mat-sys-error: rgb(241, 22, 83);
+  --mat-sys-on-error: #ffffff;
 }
 
 body {
@@ -28,9 +39,9 @@ body {
   // Set a default background, font and text colors for the application using
   // Angular Material's system-level CSS variables. Learn more about these
   // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
+  background-color: #f8f8fa;
+  color: var(--color-black, #000);
+  font-family: var(--font-family);
 
   // Reset the user agent margin.
   margin: 0;
