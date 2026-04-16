@@ -1171,3 +1171,28 @@ app-tabbed-pane .pane .tabs-header.tabs-header {
     transform: rotate(360deg);
   }
 }
+
+form + A {
+  font-size: var(--font-size-tiny);
+}
+
+fieldset > DIV,
+form > DIV {
+  margin-top: 10px;
+}
+
+td.error-col app-validation-errors-pane {
+  position: relative;
+  top: 10px;
+}
+
+legend {
+  font-size: var(--font-size-sm);
+}
+
+.form-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
