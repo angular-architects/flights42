@@ -75,4 +75,12 @@ export class AssistantChat {
   protected stop(): void {
     this.chat?.stop();
   }
+
+  protected approveInterrupt(): void {
+    this.chat?.approveInterrupt();
+  }
+
+  protected rejectInterrupt(): void {
+    this.chat?.rejectInterrupt();
+  }
 }
