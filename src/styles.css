@@ -1196,3 +1196,7 @@ legend {
   gap: 6px;
   cursor: pointer;
 }
+
+.info {
+  margin-left: 5px;
+}
