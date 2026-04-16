@@ -10,13 +10,19 @@ import {
   type AgUiActionWidgetData,
   defineAgUiComponent,
 } from '@internal/ag-ui-client';
-import { format } from 'date-fns';
 
 import {
-  FlightMutationClient,
+  BookingClient,
   type FlightMutationFlight,
   type FlightMutationResult,
 } from '../../data/flight-mutation-client';
+import {
+  getActionStatusLabel,
+  getFlightContextText,
+  isFlightMutationResult,
+  shouldShowUndo,
+  toLoadFailedResult,
+} from './card-utils';
 
 interface CancelFlightInput {
   flightId: number;
@@ -91,7 +97,7 @@ interface CancelFlightInput {
   `,
 })
 export class CancelFlightActionCard {
-  private readonly mutationClient = inject(FlightMutationClient);
+  private readonly bookingClient = inject(BookingClient);
 
   readonly data =
     input.required<
@@ -103,64 +109,38 @@ export class CancelFlightActionCard {
     undefined,
   );
 
-  protected readonly titleText = computed(
-    () => `Cancel Flight #${this.flightId()}`,
+  protected readonly titleText = computed(() =>
+    getCancelFlightTitle(this.flightId()),
   );
 
-  protected readonly contextText = computed(() => {
-    const details = this.flightDetails();
-    return details
-      ? `${details.from} -> ${details.to}, ${formatDate(details.date)}`
-      : null;
-  });
+  protected readonly contextText = computed(() =>
+    getFlightContextText(this.flightDetails()),
+  );
 
-  protected readonly statusLabel = computed(() => {
-    if (this.undoPending()) {
-      return 'Undoing';
-    }
+  protected readonly statusLabel = computed(() =>
+    getActionStatusLabel(
+      this.undoPending(),
+      this.undoResult(),
+      this.data().status,
+      this.data().error,
+      this.result(),
+    ),
+  );
 
-    const undoResult = this.undoResult();
-    if (undoResult) {
-      return undoResult.ok ? 'Undone' : 'Failed';
-    }
-
-    const result = this.result();
-    switch (this.data().status) {
-      case 'interrupt':
-        return 'Waiting for approval';
-      case 'pending':
-        return 'Started';
-      case 'error':
-        return this.data().error ?? 'Failed';
-      case 'complete':
-        if (result?.ok) {
-          return 'Success';
-        }
-
-        if (result?.code === 'USER_CANCELLED') {
-          return 'Not approved';
-        }
-
-        return result?.message ?? 'Failed';
-    }
-  });
-
-  protected readonly showUndo = computed(() => {
-    if (this.undoPending() || this.undoResult()) {
-      return false;
-    }
-
-    const result = this.result();
-    return this.data().status === 'complete' && !!result?.ok;
-  });
+  protected readonly showUndo = computed(() =>
+    shouldShowUndo(
+      this.undoPending(),
+      this.undoResult(),
+      this.data().status,
+      this.result(),
+    ),
+  );
 
   protected async undo(): Promise<void> {
     this.undoPending.set(true);
 
     try {
-      this.undoResult.set(
-        await this.mutationClient.bookFlight(this.flightId()),
-      );
+      this.undoResult.set(await this.bookingClient.bookFlight(this.flightId()));
     } catch (error) {
       this.undoResult.set(toLoadFailedResult(error, this.flightId(), 'book'));
     } finally {
@@ -189,6 +169,10 @@ export class CancelFlightActionCard {
   }
 }
 
+function getCancelFlightTitle(flightId: number): string {
+  return `Cancel Flight #${flightId}`;
+}
+
 export const cancelFlightActionCard = defineAgUiComponent({
   kind: 'action',
   name: 'cancelFlightActionCard',
@@ -196,37 +180,4 @@ export const cancelFlightActionCard = defineAgUiComponent({
     'Shows cancellation progress and lets users undo a successful cancellation.',
   component: CancelFlightActionCard,
   toolName: 'cancelFlight',
-  clientOnly: true,
 });
-
-function isFlightMutationResult(value: unknown): value is FlightMutationResult {
-  if (!value || typeof value !== 'object' || !('ok' in value)) {
-    return false;
-  }
-
-  return typeof (value as { ok?: unknown }).ok === 'boolean';
-}
-
-function toLoadFailedResult(
-  error: unknown,
-  flightId: number,
-  action: 'book' | 'cancel',
-): FlightMutationResult {
-  return {
-    ok: false,
-    code: 'LOAD_FAILED',
-    message:
-      error instanceof Error
-        ? error.message
-        : `Could not ${action} flight ${flightId}.`,
-  };
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return format(date, 'dd.MM.yyyy HH:mm');
-}
