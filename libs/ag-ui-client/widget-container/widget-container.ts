@@ -22,6 +22,10 @@ export class WidgetContainerComponent {
 
   protected readonly widgetInputs = computed(() => {
     const widget = this.widget();
-    return widget.kind === 'action' ? { data: widget.data } : widget.props;
+    return widget.kind === 'action'
+      ? {
+          actionData: widget.data,
+        }
+      : widget.props;
   });
 }
