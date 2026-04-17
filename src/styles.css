@@ -649,6 +649,38 @@ input[type='button']:disabled {
   width: 48px;
 }
 
+/* Message widget (first/root text in showComponents Column): no vertical spacing */
+app-widget-container
+  a2ui-surface
+  > a2ui-column
+  > section.a2ui-column
+  > a2ui-text:first-child
+  > section.a2ui-text-body {
+  padding-block: 0 !important;
+  margin-block: 0 !important;
+  font-size: var(--font-size-sm) !important;
+  line-height: 1.35 !important;
+}
+
+app-widget-container
+  a2ui-surface
+  > a2ui-column
+  > section.a2ui-column
+  > a2ui-text:first-child
+  > section.a2ui-text-body
+  > p {
+  margin: 0 !important;
+  padding-block: 0 !important;
+  font-size: var(--font-size-sm) !important;
+  line-height: 1.35 !important;
+}
+
+/* Backward compatibility for older single-component surfaces. */
+app-widget-container a2ui-surface > a2ui-text p {
+  margin: 0 !important;
+  padding-block: 0 !important;
+}
+
 /* A2UI 0.8 fallback: text hint styles are not always applied reliably. */
 app-widget-container a2ui-surface a2ui-card h3 {
   font-size: 1.42rem !important;
@@ -1305,6 +1337,20 @@ legend {
   line-height: 1.1;
   cursor: pointer;
   margin-top: 10px;
+  transition:
+    background 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.a2ui-button:hover {
+  background: #5f62b0;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(73, 76, 148, 0.36);
+}
+
+.a2ui-button:hover .a2ui-md-p,
+.a2ui-button:hover p {
+  color: #ffffff;
 }
 
 .a2ui-column {

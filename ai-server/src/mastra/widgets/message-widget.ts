@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-
 import { z } from 'zod';
 
 import {
@@ -18,24 +17,20 @@ export const messageWidget = defineServerWidget({
     text: z.string().describe('Text to show to the user'),
   }),
   build: ({ text }): BuiltComponent => {
-    const instanceId = randomUUID();
-    const textId = `message-${instanceId}`;
-    const dataPath = `/messages/${instanceId}`;
-
+    const id = `message-${randomUUID()}`;
     return {
-      rootId: textId,
+      rootId: id,
       components: [
         {
-          id: textId,
-          component: 'Text',
-          text: { path: `${dataPath}/text` },
-          variant: 'body',
+          id,
+          component: {
+            Text: {
+              text: { literalString: text },
+              usageHint: 'body',
+            },
+          },
         },
       ],
-      dataModelUpdate: {
-        path: dataPath,
-        value: { text },
-      },
     };
   },
 });

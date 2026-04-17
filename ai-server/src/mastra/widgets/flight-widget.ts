@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-
 import { z } from 'zod';
 
 import {
@@ -43,78 +42,81 @@ export const flightWidget = defineServerWidget({
       .describe('Booking status of the flight.'),
   }),
   build: ({ flight, status }): BuiltComponent => {
-    const instanceId = `${flight.id}-${randomUUID().slice(0, 8)}`;
-    const prefix = `flight-${instanceId}`;
-    const dataPath = `/flights/${instanceId}`;
-
+    const prefix = `flight-${flight.id}-${randomUUID().slice(0, 8)}`;
     const cardId = `${prefix}-card`;
-    const columnId = `${prefix}-column`;
     const titleId = `${prefix}-title`;
     const flightNoId = `${prefix}-flight-no`;
     const dateId = `${prefix}-date`;
     const delayId = `${prefix}-delay`;
 
-    const columnChildren = [titleId, flightNoId, dateId, delayId];
-
+    const cardChildren = [titleId, flightNoId, dateId, delayId];
     const components: BuiltComponent['components'] = [
       {
         id: titleId,
-        component: 'Text',
-        text: { path: `${dataPath}/title` },
-        variant: 'h3',
+        component: {
+          Text: {
+            text: { literalString: `${flight.from} → ${flight.to}` },
+            usageHint: 'h3',
+          },
+        },
       },
       {
         id: flightNoId,
-        component: 'Text',
-        text: { path: `${dataPath}/flightNo` },
-        variant: 'caption',
+        component: {
+          Text: {
+            text: { literalString: `Flight #${flight.id}` },
+            usageHint: 'caption',
+          },
+        },
       },
       {
         id: dateId,
-        component: 'Text',
-        text: { path: `${dataPath}/date` },
-        variant: 'body',
+        component: {
+          Text: {
+            text: { literalString: `Date: ${formatFlightDate(flight.date)}` },
+            usageHint: 'body',
+          },
+        },
       },
       {
         id: delayId,
-        component: 'Text',
-        text: { path: `${dataPath}/delay` },
-        variant: 'body',
+        component: {
+          Text: {
+            text: { literalString: `Delay: ${flight.delay} min` },
+            usageHint: 'body',
+          },
+        },
       },
     ];
-    const dataValue: Record<string, unknown> = {
-      title: `${flight.from} -> ${flight.to}`,
-      flightNo: `Flight #${flight.id}`,
-      date: `Date: ${formatFlightDate(flight.date)}`,
-      delay: `Delay: ${flight.delay} min`,
-    };
 
     if (status === 'booked') {
       const buttonId = `${prefix}-checkin-btn`;
       const buttonLabelId = `${prefix}-checkin-label`;
-      columnChildren.push(buttonId);
+      cardChildren.push(buttonId);
 
       components.push({
         id: buttonLabelId,
-        component: 'Text',
-        text: { path: `${dataPath}/checkInLabel` },
-        variant: 'body',
+        component: {
+          Text: {
+            text: { literalString: 'Check in' },
+            usageHint: 'body',
+          },
+        },
       });
       components.push({
         id: buttonId,
-        component: 'Button',
-        child: buttonLabelId,
-        action: {
-          event: {
-            name: 'checkIn',
-            context: {
-              flightId: flight.id,
+        component: {
+          Button: {
+            child: buttonLabelId,
+            action: {
+              name: 'checkIn',
+              context: [
+                { key: 'flightId', value: { literalNumber: flight.id } },
+              ],
             },
           },
         },
       });
-
-      dataValue['checkInLabel'] = 'Check in';
     }
 
     return {
@@ -122,20 +124,14 @@ export const flightWidget = defineServerWidget({
       components: [
         {
           id: cardId,
-          component: 'Card',
-          child: columnId,
-        },
-        {
-          id: columnId,
-          component: 'Column',
-          children: columnChildren,
+          component: {
+            Card: {
+              children: { explicitList: cardChildren },
+            },
+          },
         },
         ...components,
       ],
-      dataModelUpdate: {
-        path: dataPath,
-        value: dataValue,
-      },
     };
   },
 });
