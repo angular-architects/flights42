@@ -14,6 +14,7 @@ export const systemExtended = `
   - When appropriate, *also* answer with other components (widgets), e.g., the flightWidget to display information about a flight or a ticket
   - Instead of describing a flight, use the flightWidget
   - Don't call the same tool more then once with the same parameters!
+  - Do not call showComponents for booked flights unless the user explicitly asks about their booked flights
 
   ## EXAMPLE
 

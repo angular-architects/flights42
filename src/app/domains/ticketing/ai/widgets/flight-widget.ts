@@ -40,8 +40,45 @@ import { FlightStore } from '../../feature-booking/flight-search/flight-store';
     </div>
   `,
   styles: `
+    :host {
+      display: block;
+    }
+
     .card {
-      margin: 20px 0;
+      margin: 0;
+    }
+
+    .card-header {
+      padding: 20px 24px 0;
+    }
+
+    .title {
+      font-size: var(--font-size);
+      font-weight: var(--font-weight-bold);
+      margin: 0;
+    }
+
+    .card-body > p:nth-child(1) {
+      color: var(--color-label);
+      font-size: var(--font-size-tiny);
+      margin-bottom: 12px;
+    }
+
+    .card-body > p:nth-child(2) {
+      font-size: var(--font-size-sm);
+      margin-bottom: 4px;
+    }
+
+    .card-body > p:nth-child(3) {
+      color: var(--color-label);
+      font-size: var(--font-size-tiny);
+      margin-bottom: 16px;
+    }
+
+    .card-body > p:has(button) {
+      display: flex;
+      gap: var(--spacing-x2);
+      margin-bottom: 0;
     }
   `,
 })
