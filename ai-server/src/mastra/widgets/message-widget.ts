@@ -17,20 +17,27 @@ export const messageWidget = defineServerWidget({
     text: z.string().describe('Text to show to the user'),
   }),
   build: ({ text }): BuiltComponent => {
-    const id = `message-${randomUUID()}`;
+    const instanceId = randomUUID();
+    const textId = `message-${instanceId}`;
+    const dataPath = `/messages/${instanceId}`;
+
     return {
-      rootId: id,
+      rootId: textId,
       components: [
         {
-          id,
+          id: textId,
           component: {
             Text: {
-              text: { literalString: text },
+              text: { path: `${dataPath}/text` },
               usageHint: 'body',
             },
           },
         },
       ],
+      dataModelUpdate: {
+        path: dataPath,
+        contents: [{ key: 'text', valueString: text }],
+      },
     };
   },
 });

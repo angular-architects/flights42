@@ -30,8 +30,10 @@ export const questionWidget = defineServerWidget({
       .describe('List of questions to ask the user.'),
   }),
   build: ({ questions }): BuiltComponent => {
-    const prefix = `question-${randomUUID().slice(0, 8)}`;
+    const instanceId = randomUUID().slice(0, 8);
+    const prefix = `question-${instanceId}`;
     const cardId = `${prefix}-card`;
+    const dataPath = `/forms/${instanceId}`;
 
     const cardChildren: string[] = [];
     const components: BuiltComponent['components'] = [];
@@ -44,8 +46,8 @@ export const questionWidget = defineServerWidget({
         id: fieldId,
         component: {
           TextField: {
-            text: { path: `/questions/${question.id}/answer` },
-            label: { literalString: question.question },
+            text: { path: `${dataPath}/questions/${question.id}/answer` },
+            label: { path: `${dataPath}/questions/${question.id}/question` },
           },
         },
       });
@@ -59,7 +61,7 @@ export const questionWidget = defineServerWidget({
       id: submitLabelId,
       component: {
         Text: {
-          text: { literalString: 'Submit' },
+          text: { path: `${dataPath}/submitLabel` },
           usageHint: 'body',
         },
       },
@@ -71,7 +73,9 @@ export const questionWidget = defineServerWidget({
           child: submitLabelId,
           action: {
             name: 'submitAnswer',
-            context: [{ key: 'questions', value: { path: '/questions' } }],
+            context: [
+              { key: 'questions', value: { path: `${dataPath}/questions` } },
+            ],
           },
         },
       },
@@ -91,15 +95,21 @@ export const questionWidget = defineServerWidget({
         ...components,
       ],
       dataModelUpdate: {
-        path: '/questions',
-        contents: questions.map((question) => ({
-          key: question.id,
-          valueMap: [
-            { key: 'id', valueString: question.id },
-            { key: 'question', valueString: question.question },
-            { key: 'answer', valueString: '' },
-          ],
-        })),
+        path: dataPath,
+        contents: [
+          { key: 'submitLabel', valueString: 'Submit' },
+          {
+            key: 'questions',
+            valueMap: questions.map((question) => ({
+              key: question.id,
+              valueMap: [
+                { key: 'id', valueString: question.id },
+                { key: 'question', valueString: question.question },
+                { key: 'answer', valueString: '' },
+              ],
+            })),
+          },
+        ],
       },
     };
   },

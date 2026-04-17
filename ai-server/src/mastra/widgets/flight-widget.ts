@@ -42,7 +42,10 @@ export const flightWidget = defineServerWidget({
       .describe('Booking status of the flight.'),
   }),
   build: ({ flight, status }): BuiltComponent => {
-    const prefix = `flight-${flight.id}-${randomUUID().slice(0, 8)}`;
+    const instanceId = `${flight.id}-${randomUUID().slice(0, 8)}`;
+    const prefix = `flight-${instanceId}`;
+    const dataPath = `/flights/${instanceId}`;
+
     const cardId = `${prefix}-card`;
     const titleId = `${prefix}-title`;
     const flightNoId = `${prefix}-flight-no`;
@@ -50,12 +53,13 @@ export const flightWidget = defineServerWidget({
     const delayId = `${prefix}-delay`;
 
     const cardChildren = [titleId, flightNoId, dateId, delayId];
+
     const components: BuiltComponent['components'] = [
       {
         id: titleId,
         component: {
           Text: {
-            text: { literalString: `${flight.from} → ${flight.to}` },
+            text: { path: `${dataPath}/title` },
             usageHint: 'h3',
           },
         },
@@ -64,7 +68,7 @@ export const flightWidget = defineServerWidget({
         id: flightNoId,
         component: {
           Text: {
-            text: { literalString: `Flight #${flight.id}` },
+            text: { path: `${dataPath}/flightNo` },
             usageHint: 'caption',
           },
         },
@@ -73,7 +77,7 @@ export const flightWidget = defineServerWidget({
         id: dateId,
         component: {
           Text: {
-            text: { literalString: `Date: ${formatFlightDate(flight.date)}` },
+            text: { path: `${dataPath}/date` },
             usageHint: 'body',
           },
         },
@@ -82,11 +86,18 @@ export const flightWidget = defineServerWidget({
         id: delayId,
         component: {
           Text: {
-            text: { literalString: `Delay: ${flight.delay} min` },
+            text: { path: `${dataPath}/delay` },
             usageHint: 'body',
           },
         },
       },
+    ];
+
+    const dataContents: { key: string; valueString: string }[] = [
+      { key: 'title', valueString: `${flight.from} → ${flight.to}` },
+      { key: 'flightNo', valueString: `Flight #${flight.id}` },
+      { key: 'date', valueString: `Date: ${formatFlightDate(flight.date)}` },
+      { key: 'delay', valueString: `Delay: ${flight.delay} min` },
     ];
 
     if (status === 'booked') {
@@ -98,7 +109,7 @@ export const flightWidget = defineServerWidget({
         id: buttonLabelId,
         component: {
           Text: {
-            text: { literalString: 'Check in' },
+            text: { path: `${dataPath}/checkInLabel` },
             usageHint: 'body',
           },
         },
@@ -117,6 +128,8 @@ export const flightWidget = defineServerWidget({
           },
         },
       });
+
+      dataContents.push({ key: 'checkInLabel', valueString: 'Check in' });
     }
 
     return {
@@ -132,6 +145,10 @@ export const flightWidget = defineServerWidget({
         },
         ...components,
       ],
+      dataModelUpdate: {
+        path: dataPath,
+        contents: dataContents,
+      },
     };
   },
 });
