@@ -36,6 +36,16 @@ export const DEFAULT_INTERNAL_TOOL_NAMES: readonly string[] = [
   RENDER_A2UI_TOOL_NAME,
 ];
 
+/**
+ * Tool names that are considered "internal" by default. When
+ * `hideInternal` is true (the default), their tool-call / tool-result
+ * events are not forwarded to the client. Any A2UI payloads they
+ * return are instead emitted as `ACTIVITY_SNAPSHOT` events.
+ */
+export const DEFAULT_INTERNAL_TOOL_NAMES: readonly string[] = [
+  SHOW_COMPONENTS_TOOL_NAME,
+];
+
 interface ExtendedLocalAgentOptions {
   agentId: string;
   agent: Agent;
@@ -499,9 +509,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
             return;
           }
 
-          // Each tool call gets its own parentMessageId so the client
-          // renders it as a separate chat message instead of grouping
-          // multiple tool calls under the same assistant message.
           const startEvent: BaseEvent = {
             type: EventType.TOOL_CALL_START,
             parentMessageId: randomUUID(),
@@ -692,12 +699,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 result: unknown;
               };
             };
-            const resolvedToolName = toolCallNames.get(
-              payload.payload.toolCallId,
-            );
             handlers.onToolResultPart({
               ...payload.payload,
-              toolName: resolvedToolName,
+              toolName: toolCallNames.get(payload.payload.toolCallId),
             });
             break;
           }
