@@ -36,7 +36,7 @@ export class ChatMessages {
     error: '⚡️',
   };
 
-  private hasContent(message: UiChatMessage): boolean {
+  private hasContent(message: AgUiChatMessage): boolean {
     const content = message.content as unknown;
 
     if (content == null) {

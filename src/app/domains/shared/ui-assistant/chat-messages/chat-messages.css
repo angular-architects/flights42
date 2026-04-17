@@ -5,8 +5,6 @@
 .bubble {
   display: flex;
   flex-direction: column;
-<<<<<<< HEAD
-<<<<<<< HEAD
   gap: 10px;
 }
 
@@ -26,42 +24,16 @@
   gap: 6px;
   padding: 0;
   width: fit-content;
-  font-size: 11px;
+  font-size: calc(var(--font-size-sm) - 1pt);
   line-height: 1.2;
 }
 
 .tool-call-label {
-  font-size: 11px;
+  font-size: calc(var(--font-size-sm) - 1pt);
   line-height: 1.2;
 }
 
 app-widget-container {
   display: block;
   margin: 0;
-=======
-  gap: 12px;
-=======
-  gap: 10px;
->>>>>>> 88a5fc6 (style: adjust chat style to new design)
-}
-
-.tool-call {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  width: fit-content;
-}
-
-.tool-call app-message {
-  font-size: 11px;
-}
-
-app-widget-container {
-  display: block;
-<<<<<<< HEAD
->>>>>>> 8c1c217 (refactor: rename events used in event api example)
-=======
-  margin: 0;
->>>>>>> 88a5fc6 (style: adjust chat style to new design)
 }

@@ -159,16 +159,12 @@
   border-radius: var(--radius);
   padding: 12px 14px;
   background: var(--assistant);
-  line-height: 1.4;
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
   overflow-wrap: anywhere;
   white-space: normal;
   max-width: 100%;
   width: fit-content;
-}
-
-:host ::ng-deep .bubble app-message {
-  font-size: var(--font-size-sm);
-  line-height: 1.35;
 }
 
 :host ::ng-deep .msg.user .bubble {
