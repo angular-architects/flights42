@@ -6,6 +6,10 @@ import { CoreMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
 import { Observable } from 'rxjs';
 
+import {
+  getMcpAppToolMetadata,
+  type McpAppToolMetadata,
+} from './mcp-apps-registry.js';
 import { Store } from './memory-store.js';
 import { defaultStore } from './memory-store.js';
 
@@ -54,6 +58,36 @@ function createToolCallCacheKey(
   toolCallId: string,
 ): string {
   return `${agentId}:${threadId}:${toolCallId}`;
+}
+
+function buildMcpAppsActivityContent(
+  metadata: McpAppToolMetadata,
+  toolInput: unknown,
+  result: unknown,
+): Record<string, unknown> {
+  const input = asRecord(toolInput) ?? {};
+  const resultRecord = asRecord(result);
+  const hasContentArray =
+    resultRecord !== undefined && Array.isArray(resultRecord['content']);
+
+  const shapedResult: Record<string, unknown> = hasContentArray
+    ? (resultRecord as Record<string, unknown>)
+    : {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result ?? null),
+          },
+        ],
+        structuredContent: resultRecord ?? result,
+      };
+
+  return {
+    serverId: metadata.serverId,
+    resourceUri: metadata.resourceUri,
+    toolInput: input,
+    result: shapedResult,
+  };
 }
 
 function readThoughtSignature(value: unknown): string | undefined {
@@ -344,6 +378,15 @@ export class ExtendedMastraAgent extends AbstractAgent {
           };
           observer.next(resultEvent);
         },
+        onActivitySnapshot: ({ messageId, activityType, content }) => {
+          const activityEvent: BaseEvent = {
+            type: EventType.ACTIVITY_SNAPSHOT,
+            messageId,
+            activityType,
+            content,
+          } as BaseEvent;
+          observer.next(activityEvent);
+        },
         onRunFinished: () => {
           const finishedEvent: BaseEvent = {
             type: EventType.RUN_FINISHED,
@@ -374,10 +417,19 @@ export class ExtendedMastraAgent extends AbstractAgent {
         toolCallId: string;
         result: unknown;
       }) => void;
+      onActivitySnapshot: (value: {
+        messageId: string;
+        activityType: string;
+        content: Record<string, unknown>;
+      }) => void;
       onRunFinished: () => void;
       onError: (error: unknown) => void;
     },
   ): Promise<void> {
+    const pendingToolCalls = new Map<
+      string,
+      { toolName: string; args: unknown }
+    >();
     const mastraMessages = convertAGUIMessagesToMastra(input.messages as never);
     const rehydratedToolResultNames = rehydrateToolResultNames(
       this.store,
@@ -433,6 +485,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
               input.threadId,
               payload.payload,
             );
+            pendingToolCalls.set(payload.payload.toolCallId, {
+              toolName: payload.payload.toolName,
+              args: payload.payload.args,
+            });
             handlers.onToolCallPart(payload.payload);
             break;
           }
@@ -444,6 +500,23 @@ export class ExtendedMastraAgent extends AbstractAgent {
               };
             };
             handlers.onToolResultPart(payload.payload);
+
+            const pending = pendingToolCalls.get(payload.payload.toolCallId);
+            if (pending) {
+              const metadata = getMcpAppToolMetadata(pending.toolName);
+              if (metadata) {
+                handlers.onActivitySnapshot({
+                  messageId: assistantMessageId,
+                  activityType: 'mcp-apps',
+                  content: buildMcpAppsActivityContent(
+                    metadata,
+                    pending.args,
+                    payload.payload.result,
+                  ),
+                });
+              }
+              pendingToolCalls.delete(payload.payload.toolCallId);
+            }
             break;
           }
           case 'error': {
