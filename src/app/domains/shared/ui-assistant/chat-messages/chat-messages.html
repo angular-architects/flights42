@@ -1,7 +1,9 @@
 <article class="msg assistant">
   <div class="avatar">🤖</div>
   <div>
-    <div class="bubble">Hi! How can I help you?</div>
+    <div class="bubble">
+      <app-message data="Hi! How can I help you?"></app-message>
+    </div>
     <div class="meta"></div>
   </div>
 </article>
@@ -11,15 +13,15 @@
     <div class="avatar">{{ message.icon }}</div>
     <div>
       <div class="bubble">
-        @if (message.role === 'assistant') {
+        @if (message.role === 'assistant' && message.hasContent) {
           <hb-render-message [message]="message" />
-        } @else {
+        } @else if (message.role !== 'assistant' && message.hasContent) {
           <app-message [data]="message.contentString"></app-message>
         }
 
         @for (toolCall of message.toolCalls; track toolCall.toolCallId) {
-          <div [title]="toolCall.args | json">
-            Tool Call: {{ toolCall.name }}
+          <div class="tool-call" [title]="toolCall.args | json">
+            <span class="tool-call-label">Tool Call: {{ toolCall.name }}</span>
             <app-tool-status
               class="ml-5"
               [pending]="toolCall.status === 'pending'" />
