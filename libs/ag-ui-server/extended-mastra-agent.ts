@@ -357,9 +357,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
             return;
           }
 
+          // Each tool call gets its own parentMessageId so the client
+          // renders it as a separate chat message instead of grouping
+          // multiple tool calls under the same assistant message.
           const startEvent: BaseEvent = {
             type: EventType.TOOL_CALL_START,
-            parentMessageId: initialMessageId,
+            parentMessageId: randomUUID(),
             toolCallId,
             toolCallName: toolName,
           };
