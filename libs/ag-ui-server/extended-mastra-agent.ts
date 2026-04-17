@@ -6,8 +6,19 @@ import { CoreMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
 import { Observable } from 'rxjs';
 
+import { SHOW_COMPONENTS_TOOL_NAME } from './create-show-components-tool.js';
 import { Store } from './memory-store.js';
 import { defaultStore } from './memory-store.js';
+
+/**
+ * Tool names that are considered "internal" by default. When
+ * `hideInternal` is true (the default), their tool-call / tool-result
+ * events are not forwarded to the client. Any A2UI payloads they
+ * return are instead emitted as `ACTIVITY_SNAPSHOT` events.
+ */
+export const DEFAULT_INTERNAL_TOOL_NAMES: readonly string[] = [
+  SHOW_COMPONENTS_TOOL_NAME,
+];
 
 interface ExtendedLocalAgentOptions {
   agentId: string;
@@ -15,6 +26,16 @@ interface ExtendedLocalAgentOptions {
   resourceId: string;
   requestContext?: RequestContext;
   store?: Store;
+  /**
+   * Hide `internalToolNames` tool calls/results from the AG-UI event
+   * stream. Defaults to `true`.
+   */
+  hideInternal?: boolean;
+  /**
+   * Tool names treated as internal. Defaults to
+   * `DEFAULT_INTERNAL_TOOL_NAMES` (i.e. `showComponents`).
+   */
+  internalToolNames?: readonly string[];
 }
 
 interface ClientToolDefinition {
@@ -274,6 +295,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly resourceId: string;
   readonly requestContext: RequestContext;
   readonly store: Store;
+  readonly hideInternal: boolean;
+  readonly internalToolNames: ReadonlySet<string>;
 
   constructor(options: ExtendedLocalAgentOptions) {
     super({ agentId: options.agentId });
@@ -282,6 +305,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.resourceId = options.resourceId;
     this.requestContext = options.requestContext ?? new RequestContext();
     this.store = options.store ?? defaultStore;
+    this.hideInternal = options.hideInternal ?? true;
+    this.internalToolNames = new Set(
+      options.internalToolNames ?? DEFAULT_INTERNAL_TOOL_NAMES,
+    );
   }
 
   override clone(): ExtendedMastraAgent {
@@ -291,7 +318,17 @@ export class ExtendedMastraAgent extends AbstractAgent {
       resourceId: this.resourceId,
       requestContext: this.requestContext,
       store: this.store,
+      hideInternal: this.hideInternal,
+      internalToolNames: [...this.internalToolNames],
     });
+  }
+
+  private isInternalTool(toolName: string | undefined): boolean {
+    return (
+      this.hideInternal &&
+      typeof toolName === 'string' &&
+      this.internalToolNames.has(toolName)
+    );
   }
 
   override run(input: RunAgentInput): ReturnType<AbstractAgent['run']> {
@@ -316,6 +353,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
           observer.next(textEvent);
         },
         onToolCallPart: ({ toolCallId, toolName, args }) => {
+          if (this.isInternalTool(toolName)) {
+            return;
+          }
+
           const startEvent: BaseEvent = {
             type: EventType.TOOL_CALL_START,
             parentMessageId: initialMessageId,
@@ -337,7 +378,41 @@ export class ExtendedMastraAgent extends AbstractAgent {
           };
           observer.next(endEvent);
         },
-        onToolResultPart: ({ toolCallId, result }) => {
+        onToolResultPart: ({ toolCallId, toolName, result }) => {
+          const a2uiPayload = extractA2uiSurfacePayload(result);
+          const internal = this.isInternalTool(toolName);
+
+          if (a2uiPayload) {
+            const snapshotEvent: BaseEvent = {
+              type: EventType.ACTIVITY_SNAPSHOT,
+              messageId: toolCallId,
+              activityType: 'a2ui-surface',
+              content: { operations: a2uiPayload.messages },
+            };
+            observer.next(snapshotEvent);
+
+            if (internal) {
+              return;
+            }
+
+            const resultEvent: BaseEvent = {
+              type: EventType.TOOL_CALL_RESULT,
+              toolCallId,
+              content: JSON.stringify({
+                ok: true,
+                surfaceId: a2uiPayload.surfaceId,
+              }),
+              messageId: randomUUID(),
+              role: 'tool',
+            };
+            observer.next(resultEvent);
+            return;
+          }
+
+          if (internal) {
+            return;
+          }
+
           const resultEvent: BaseEvent = {
             type: EventType.TOOL_CALL_RESULT,
             toolCallId,
@@ -375,6 +450,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       }) => void;
       onToolResultPart: (value: {
         toolCallId: string;
+        toolName?: string;
         result: unknown;
       }) => void;
       onRunFinished: () => void;
@@ -397,6 +473,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
     const clientTools = toClientTools(input.tools);
 
     this.requestContext.set('ag-ui', { context: input.context });
+
+    const toolCallNames = new Map<string, string>();
 
     try {
       const stream = await this.agent.stream(rehydratedMastraMessages, {
@@ -436,6 +514,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
               input.threadId,
               payload.payload,
             );
+            toolCallNames.set(
+              payload.payload.toolCallId,
+              payload.payload.toolName,
+            );
             handlers.onToolCallPart(payload.payload);
             break;
           }
@@ -446,7 +528,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 result: unknown;
               };
             };
-            handlers.onToolResultPart(payload.payload);
+            handlers.onToolResultPart({
+              ...payload.payload,
+              toolName: toolCallNames.get(payload.payload.toolCallId),
+            });
             break;
           }
           case 'error': {
@@ -468,6 +553,28 @@ export class ExtendedMastraAgent extends AbstractAgent {
   }
 }
 
+function extractA2uiSurfacePayload(
+  result: unknown,
+): { surfaceId: string; messages: unknown[] } | null {
+  if (!result || typeof result !== 'object') {
+    return null;
+  }
+  const candidate = result as {
+    surfaceId?: unknown;
+    messages?: unknown;
+  };
+  if (
+    typeof candidate.surfaceId !== 'string' ||
+    !Array.isArray(candidate.messages)
+  ) {
+    return null;
+  }
+  return {
+    surfaceId: candidate.surfaceId,
+    messages: candidate.messages,
+  };
+}
+
 export function getExtendedLocalAgent(options: {
   mastra: {
     getAgent: (agentId: string) => Agent | undefined;
@@ -476,6 +583,8 @@ export function getExtendedLocalAgent(options: {
   resourceId: string;
   requestContext?: RequestContext;
   store?: Store;
+  hideInternal?: boolean;
+  internalToolNames?: readonly string[];
 }): AbstractAgent {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
@@ -488,5 +597,7 @@ export function getExtendedLocalAgent(options: {
     resourceId: options.resourceId,
     requestContext: options.requestContext,
     store: options.store,
+    hideInternal: options.hideInternal,
+    internalToolNames: options.internalToolNames,
   });
 }

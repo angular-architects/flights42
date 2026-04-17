@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 import { buildA2UIFromBuilt, type BuiltComponent } from './widget-factory.js';
 
+export const SHOW_COMPONENTS_TOOL_NAME = 'showComponents';
+
 export interface ServerWidgetDefinition<
   TName extends string = string,
   TSchema extends z.ZodTypeAny = z.ZodTypeAny,
@@ -223,7 +225,7 @@ export function createShowComponentsTool<
   );
 
   return createTool({
-    id: 'showComponents',
+    id: SHOW_COMPONENTS_TOOL_NAME,
     description,
     inputSchema,
     execute: async (inputData: unknown) => {
