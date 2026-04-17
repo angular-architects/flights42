@@ -1,52 +1,73 @@
-import { Injectable, resource } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable, resource } from '@angular/core';
+import { firstValueFrom, map, Observable } from 'rxjs';
 
+import { ConfigService } from '../../shared/util-common/config-service';
+import { initialAircraft } from './aircraft';
 import { Flight } from './flight';
+
+interface BookedFlightDto {
+  id: number;
+  from: string;
+  to: string;
+  date: string;
+  delay: number;
+}
+
+interface BookingsResponse {
+  flights: BookedFlightDto[];
+}
+
+export interface BookingResult {
+  ok: boolean;
+  error?: string;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class TicketClient {
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
+
+  private get bookingsUrl() {
+    return `${this.configService.aiServerUrl}/bookings`;
+  }
+
   findTickets() {
     return resource({
-      loader: async () => {
-        return this.getTickets();
-      },
-      defaultValue: [],
+      loader: async () => firstValueFrom(this.find()),
+      defaultValue: [] as Flight[],
     });
   }
 
   find(): Observable<Flight[]> {
-    return of(this.getTickets());
+    return this.http
+      .get<BookingsResponse>(this.bookingsUrl)
+      .pipe(map((response) => response.flights.map(toFlight)));
   }
 
-  private getTickets(): Flight[] {
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const dayAfterTomorrow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-
-    return [
-      {
-        id: 1001,
-        from: 'Hamburg',
-        to: 'Graz',
-        date: tomorrow.toISOString(),
-        delayed: false,
-      },
-      {
-        id: 1002,
-        from: 'Vienna',
-        to: 'Berlin',
-        date: tomorrow.toISOString(),
-        delayed: true,
-      },
-      {
-        id: 1003,
-        from: 'Frankfurt',
-        to: 'Paris',
-        date: dayAfterTomorrow.toISOString(),
-        delayed: false,
-      },
-    ] as Flight[];
+  book(flightId: number): Observable<BookingResult> {
+    return this.http.post<BookingResult>(
+      `${this.bookingsUrl}/${flightId}`,
+      null,
+    );
   }
+
+  cancel(flightId: number): Observable<BookingResult> {
+    return this.http.delete<BookingResult>(`${this.bookingsUrl}/${flightId}`);
+  }
+}
+
+function toFlight(raw: BookedFlightDto): Flight {
+  return {
+    id: raw.id,
+    from: raw.from,
+    to: raw.to,
+    date: raw.date,
+    delay: raw.delay,
+    delayed: raw.delay > 0,
+    aircraft: initialAircraft,
+    prices: [],
+  };
 }

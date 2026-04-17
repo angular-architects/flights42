@@ -5,6 +5,11 @@ import { PinoLogger } from '@mastra/loggers';
 
 import { ticketingAgent } from './agents/ticketing-agent.js';
 import { agUiRouteHandler } from './routes/ag-ui-route.js';
+import {
+  bookFlightHandler,
+  cancelFlightHandler,
+  listBookingsHandler,
+} from './routes/bookings-route.js';
 
 export const mastra = new Mastra({
   agents: { ticketingAgent },
@@ -22,12 +27,24 @@ export const mastra = new Mastra({
     cors: {
       origin: '*',
       allowHeaders: ['Content-Type', 'Authorization'],
-      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     },
     apiRoutes: [
       registerApiRoute('/ag-ui/:agentId', {
         method: 'POST',
         handler: agUiRouteHandler,
+      }),
+      registerApiRoute('/bookings', {
+        method: 'GET',
+        handler: listBookingsHandler,
+      }),
+      registerApiRoute('/bookings/:flightId', {
+        method: 'POST',
+        handler: bookFlightHandler,
+      }),
+      registerApiRoute('/bookings/:flightId', {
+        method: 'DELETE',
+        handler: cancelFlightHandler,
       }),
     ],
   },

@@ -1,5 +1,6 @@
 {
   "baseUrl": "https://demo.angulararchitects.io/api",
   "agUiUrl": "http://localhost:3001/ag-ui/ticketingAgent",
+  "aiServerUrl": "http://localhost:3001",
   "model": "gpt-5.3"
 }
