@@ -27,6 +27,9 @@ export function appendA2uiSurfaceFromToolResult(
 
 /**
  * Handles AG-UI activity snapshots that contain A2UI surface operations.
+ *
+ * Always renders the widget as its own standalone assistant message so it
+ * is not accidentally attached to an unrelated tool-call bubble.
  */
 export function appendA2uiSurfaceFromActivitySnapshot(
   messages: AgUiChatMessage[],
@@ -43,7 +46,47 @@ export function appendA2uiSurfaceFromActivitySnapshot(
     return messages;
   }
 
-  return appendWidget(messages, messageId, widget);
+  return appendStandaloneWidget(messages, messageId, widget);
+}
+
+function appendStandaloneWidget(
+  messages: AgUiChatMessage[],
+  messageId: string,
+  widget: AgUiWidget,
+): AgUiChatMessage[] {
+  const existingIndex = messages.findIndex(
+    (message) => message.id === messageId,
+  );
+
+  if (existingIndex !== -1) {
+    const existing = messages[existingIndex];
+    if (existing.role !== 'assistant') {
+      return messages;
+    }
+
+    const hasWidget = existing.widgets.some((entry: AgUiWidget) =>
+      widgetsContentEqual(entry, widget),
+    );
+    if (hasWidget) {
+      return messages;
+    }
+
+    return replaceMessage(messages, existingIndex, {
+      ...existing,
+      widgets: [...existing.widgets, widget],
+    });
+  }
+
+  return [
+    ...messages,
+    {
+      id: messageId,
+      role: 'assistant',
+      content: '',
+      widgets: [widget],
+      toolCalls: [],
+    },
+  ];
 }
 
 function toA2uiWidgetFromToolResult(
