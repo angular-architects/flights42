@@ -1,17 +1,17 @@
 :host {
-  --bg: #f4f6fb;
-  --surface: #ffffff;
-  --surface-2: #eef1f6;
-  --text: #1a1d21;
-  --muted: #6a7480;
-  --accent: #1858ff;
-  --user: #2b5cff;
-  --assistant: #e9edff;
+  --bg: var(--color-background);
+  --surface: var(--color-white);
+  --surface-2: color-mix(in srgb, var(--color-primary) 6%, var(--color-white));
+  --text: var(--color-black);
+  --muted: var(--color-label);
+  --accent: var(--color-primary);
+  --user: var(--color-primary);
+  --assistant: var(--color-primary-lightest, #eeedfe);
   --border: rgba(0, 0, 0, 0.08);
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --radius: 12px;
+  --shadow: 0 20px 48px rgba(26, 29, 33, 0.12);
 }
 
-/* Toggle button */
 :host ::ng-deep .ai-toggle {
   position: fixed;
   right: 18px;
@@ -20,9 +20,9 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  background: var(--surface);
-  color: var(--text);
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--assistant));
+  color: var(--accent);
   border: 1px solid var(--border);
   border-radius: 999px;
   box-shadow: var(--shadow);
@@ -34,7 +34,6 @@
 
 :host ::ng-deep .ai-toggle:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
 }
 
 :host ::ng-deep .ai-toggle svg {
@@ -42,11 +41,10 @@
   height: 22px;
 }
 
-/* Backdrop */
 :host ::ng-deep .ai-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(18, 14, 34, 0.28);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -58,7 +56,6 @@
   pointer-events: auto;
 }
 
-/* Panel */
 :host ::ng-deep .ai-panel {
   position: fixed;
   top: 0;
@@ -83,15 +80,14 @@
   width: 420px;
 }
 
-/* Header */
 :host ::ng-deep .ai-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 14px;
+  padding: 18px 20px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  background: color-mix(in srgb, var(--surface) 92%, var(--assistant));
 }
 
 :host ::ng-deep .ai-title {
@@ -99,6 +95,7 @@
   align-items: center;
   gap: 10px;
   font-weight: 700;
+  color: var(--accent);
 }
 
 :host ::ng-deep .ai-title .status {
@@ -129,12 +126,11 @@
   background: var(--surface-2);
 }
 
-/* Messages */
 :host ::ng-deep .ai-messages {
   overflow-y: auto;
   max-width: 100%;
   overflow-x: hidden;
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -150,19 +146,18 @@
 :host ::ng-deep .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-size: 14px;
+  background: transparent;
+  border: 0;
+  font-size: 16px;
   margin-top: 5px;
 }
 
 :host ::ng-deep .bubble {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: var(--assistant);
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -171,8 +166,17 @@
   width: fit-content;
 }
 
+:host ::ng-deep .bubble.tool-only {
+  padding: 8px 14px 12px;
+}
+
+:host ::ng-deep .bubble app-message {
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
+}
+
 :host ::ng-deep .msg.user .bubble {
-  background: color-mix(in oklab, var(--user) 14%, var(--surface));
+  background: var(--assistant);
   color: var(--text);
 }
 
@@ -182,11 +186,10 @@
   color: var(--muted);
 }
 
-/* Composer */
 :host ::ng-deep .ai-composer {
   border-top: 1px solid var(--border);
-  padding: 12px;
-  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  padding: 14px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--assistant));
 }
 
 :host ::ng-deep .composer-inner {
@@ -197,7 +200,7 @@
 }
 
 :host ::ng-deep .composer-input {
-  background: var(--surface-2);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 10px 12px;
@@ -206,6 +209,10 @@
   max-height: 160px;
   color: var(--text);
   line-height: 1.35;
+}
+
+:host ::ng-deep .composer-input:focus {
+  border-color: color-mix(in srgb, var(--accent) 28%, white);
 }
 
 :host ::ng-deep .send-btn {
@@ -227,8 +234,4 @@
 
 :host ::ng-deep .msg > div {
   min-width: 0 !important;
-}
-
-#ai-composer {
-  margin-bottom: 0px;
 }

@@ -35,11 +35,34 @@ export class ChatMessages {
     error: '⚡️',
   };
 
+  private hasContent(message: UiChatMessage): boolean {
+    const content = message.content as unknown;
+
+    if (content == null) {
+      return false;
+    }
+
+    if (typeof content === 'string') {
+      return content.trim().length > 0;
+    }
+
+    if (
+      typeof content === 'object' &&
+      'ui' in content &&
+      Array.isArray((content as { ui: unknown[] }).ui)
+    ) {
+      return (content as { ui: unknown[] }).ui.length > 0;
+    }
+
+    return true;
+  }
+
   protected readonly messageModels = computed(() =>
     this.messages().map((message) => ({
       ...message,
-      // content: String(message.content),
-      contentString: String(message.content),
+      contentString:
+        typeof message.content === 'string' ? message.content : String(''),
+      hasContent: this.hasContent(message),
       icon: this.icons[message.role] || '❓',
       toolCalls: message.role === 'assistant' ? message.toolCalls : [],
     })),
