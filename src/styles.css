@@ -658,6 +658,8 @@ app-widget-container
   > section.a2ui-text-body {
   padding-block: 0 !important;
   margin-block: 0 !important;
+  font-size: var(--font-size-sm) !important;
+  line-height: 1.35 !important;
 }
 
 app-widget-container
@@ -669,6 +671,8 @@ app-widget-container
   > p {
   margin: 0 !important;
   padding-block: 0 !important;
+  font-size: var(--font-size-sm) !important;
+  line-height: 1.35 !important;
 }
 
 /* Backward compatibility for older single-component surfaces. */
@@ -1333,6 +1337,20 @@ legend {
   line-height: 1.1;
   cursor: pointer;
   margin-top: 10px;
+  transition:
+    background 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.a2ui-button:hover {
+  background: #5f62b0;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(73, 76, 148, 0.36);
+}
+
+.a2ui-button:hover .a2ui-md-p,
+.a2ui-button:hover p {
+  color: #ffffff;
 }
 
 .a2ui-column {
