@@ -32,17 +32,6 @@ const resultSchema = z.union([
   }),
 ]);
 
-const suspendSchema = z.object({
-  action: z.literal('book'),
-  flightId: z.number(),
-  flight: flightSchema,
-  message: z.string(),
-});
-
-const resumeSchema = z.object({
-  approved: z.boolean(),
-});
-
 export const bookFlightTool = createTool({
   id: 'bookFlight',
   description:
@@ -51,8 +40,15 @@ export const bookFlightTool = createTool({
     flightId: z.number().describe('The id of the flight to book.'),
   }),
   outputSchema: resultSchema,
-  suspendSchema,
-  resumeSchema,
+  suspendSchema: z.object({
+    action: z.literal('book'),
+    flightId: z.number(),
+    flight: flightSchema,
+    message: z.string(),
+  }),
+  resumeSchema: z.object({
+    approved: z.boolean(),
+  }),
   execute: async ({ flightId }, context) => {
     const resumeData = context?.agent?.resumeData;
     const suspend = context?.agent?.suspend;
