@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 
-const BOOKED_FLIGHTS_PATH = '/booked-flights';
+const BOOKINGS_PATH = '/bookings';
 
 export interface FlightMutationFlight {
   id: number;
@@ -39,26 +39,19 @@ export class BookingClient {
 
   bookFlight(flightId: number): Promise<FlightMutationResult> {
     return firstValueFrom(
-      this.http.post<FlightMutationResult>(this.bookFlightUrl(flightId), {}),
+      this.http.post<FlightMutationResult>(this.bookingUrl(flightId), {}),
     );
   }
 
   cancelFlight(flightId: number): Promise<FlightMutationResult> {
     return firstValueFrom(
-      this.http.post<FlightMutationResult>(this.cancelFlightUrl(flightId), {}),
+      this.http.delete<FlightMutationResult>(this.bookingUrl(flightId)),
     );
   }
 
-  private bookFlightUrl(flightId: number): string {
+  private bookingUrl(flightId: number): string {
     return new URL(
-      `${BOOKED_FLIGHTS_PATH}/${flightId}/book`,
-      this.config.agUiUrl,
-    ).toString();
-  }
-
-  private cancelFlightUrl(flightId: number): string {
-    return new URL(
-      `${BOOKED_FLIGHTS_PATH}/${flightId}/cancel`,
+      `${BOOKINGS_PATH}/${flightId}`,
       this.config.agUiUrl,
     ).toString();
   }

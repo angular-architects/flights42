@@ -8,23 +8,27 @@ import {
 } from '../data/booked-flights-store.js';
 import { formatFlightDate } from '../utils/format-date.js';
 
+const flightSchema = z.object({
+  id: z.number(),
+  from: z.string(),
+  to: z.string(),
+  date: z.string(),
+  delay: z.number(),
+});
+
 const resultSchema = z.union([
-  z.object({ ok: z.literal(true) }),
-  z.object({ ok: z.literal(false), error: z.string() }),
+  z.object({ ok: z.literal(true), flight: flightSchema }),
+  z.object({
+    ok: z.literal(false),
+    code: z.string(),
+    message: z.string(),
+  }),
 ]);
 
 const suspendSchema = z.object({
   action: z.literal('cancel'),
   flightId: z.number(),
-  flight: z
-    .object({
-      id: z.number(),
-      from: z.string(),
-      to: z.string(),
-      date: z.string(),
-      delay: z.number(),
-    })
-    .nullable(),
+  flight: flightSchema.nullable(),
   message: z.string(),
 });
 
@@ -49,19 +53,22 @@ export const cancelFlightTool = createTool({
     if (resumeData?.approved === false) {
       return {
         ok: false as const,
-        error: `Cancellation of flight ${flightId} was rejected by the user.`,
+        code: 'USER_CANCELLED',
+        message: `Cancellation of flight ${flightId} was cancelled by the user.`,
       };
     }
 
     if (!isBooked(flightId)) {
       return {
         ok: false as const,
-        error: `Flight ${flightId} is not booked.`,
+        code: 'NOT_BOOKED',
+        message: `Flight ${flightId} is not booked.`,
       };
     }
 
+    const flight = await fetchFlight(flightId).catch(() => null);
+
     if (resumeData?.approved !== true) {
-      const flight = await fetchFlight(flightId).catch(() => null);
       const flightContext = flight
         ? ` from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}`
         : '';
@@ -74,11 +81,19 @@ export const cancelFlightTool = createTool({
       });
       return {
         ok: false as const,
-        error: 'Awaiting user approval.',
+        code: 'AWAITING_APPROVAL',
+        message: 'Awaiting user approval.',
       };
     }
 
     removeBooking(flightId);
-    return { ok: true as const };
+    if (!flight) {
+      return {
+        ok: false as const,
+        code: 'NOT_FOUND',
+        message: `Flight ${flightId} could not be loaded after cancellation.`,
+      };
+    }
+    return { ok: true as const, flight };
   },
 });

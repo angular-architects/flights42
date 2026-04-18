@@ -20,12 +20,19 @@ export async function bookFlightHandler(
 ): Promise<Response> {
   const flightId = Number(c.req.param('flightId'));
   if (!Number.isFinite(flightId)) {
-    return c.json({ ok: false, error: 'Invalid flight id.' }, 400);
+    return c.json(
+      { ok: false, code: 'NOT_FOUND', message: 'Invalid flight id.' },
+      400,
+    );
   }
 
   if (isBooked(flightId)) {
     return c.json(
-      { ok: false, error: `Flight ${flightId} is already booked.` },
+      {
+        ok: false,
+        code: 'ALREADY_BOOKED',
+        message: `Flight ${flightId} is already booked.`,
+      },
       409,
     );
   }
@@ -33,13 +40,17 @@ export async function bookFlightHandler(
   const flight = await fetchFlight(flightId);
   if (!flight) {
     return c.json(
-      { ok: false, error: `Flight ${flightId} does not exist.` },
+      {
+        ok: false,
+        code: 'NOT_FOUND',
+        message: `Flight ${flightId} does not exist.`,
+      },
       404,
     );
   }
 
   addBooking(flightId);
-  return c.json({ ok: true });
+  return c.json({ ok: true, flight });
 }
 
 export async function cancelFlightHandler(
@@ -47,16 +58,37 @@ export async function cancelFlightHandler(
 ): Promise<Response> {
   const flightId = Number(c.req.param('flightId'));
   if (!Number.isFinite(flightId)) {
-    return c.json({ ok: false, error: 'Invalid flight id.' }, 400);
+    return c.json(
+      { ok: false, code: 'NOT_FOUND', message: 'Invalid flight id.' },
+      400,
+    );
   }
 
   if (!isBooked(flightId)) {
     return c.json(
-      { ok: false, error: `Flight ${flightId} is not booked.` },
+      {
+        ok: false,
+        code: 'NOT_BOOKED',
+        message: `Flight ${flightId} is not booked.`,
+      },
       404,
     );
   }
 
+  const flight = await fetchFlight(flightId).catch(() => null);
+
   removeBooking(flightId);
-  return c.json({ ok: true });
+
+  if (!flight) {
+    return c.json(
+      {
+        ok: false,
+        code: 'NOT_FOUND',
+        message: `Flight ${flightId} could not be loaded after cancellation.`,
+      },
+      404,
+    );
+  }
+
+  return c.json({ ok: true, flight });
 }

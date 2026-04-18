@@ -13,11 +13,11 @@ import {
 import {
   type AgUiChatMessage,
   type AgUiChatResourceRef,
-  type AgUiInterrupt,
-  type AgUiResumeRequest,
   type AgUiClientToolDefinition,
+  type AgUiInterrupt,
   type AgUiRegisteredComponent,
   type AgUiResourceOptions,
+  type AgUiResumeRequest,
 } from './ag-ui-types';
 import { runUntilSettled } from './ag-ui-utils/agents';
 import {
@@ -25,15 +25,8 @@ import {
   filterPublicMessages,
   readMessages,
 } from './ag-ui-utils/messages';
-import {
-  addToolResultMessage,
-  type PendingRun,
-  updateToolCall,
-} from './ag-ui-utils/tools';
-import {
-  readRegisteredComponents,
-  upsertActionWidgetForToolCall,
-} from './ag-ui-utils/widgets';
+import { type PendingRun } from './ag-ui-utils/tools';
+import { readRegisteredComponents } from './ag-ui-utils/widgets';
 
 interface StreamOptions {
   params: PendingRun | undefined;
@@ -107,44 +100,6 @@ export function agUiResource(
 
   let activeRunRequestId = '';
 
-  const dismissInterruptAsCancelled = (): void => {
-    const activeInterrupt = interrupt();
-    if (!activeInterrupt) {
-      return;
-    }
-
-    const cancelledResult = buildCancelledInterruptResult(activeInterrupt);
-    addToolResultMessage(
-      agent,
-      activeInterrupt.payload.toolCallId,
-      cancelledResult,
-    );
-
-    messageStream.update((item) => {
-      const nextMessages = updateToolCall(
-        readMessages(item),
-        activeInterrupt.payload.toolCallId,
-        {
-          status: 'complete',
-          result: cancelledResult,
-          error: undefined,
-        },
-      );
-      const toolCall = findToolCall(
-        nextMessages,
-        activeInterrupt.payload.toolCallId,
-      );
-
-      return {
-        value: toolCall
-          ? upsertActionWidgetForToolCall(nextMessages, toolCall, componentMap)
-          : nextMessages,
-      };
-    });
-
-    interrupt.set(null);
-  };
-
   const stream = async (streamOptions: StreamOptions) => {
     const { params, abortSignal } = streamOptions;
 
@@ -209,7 +164,7 @@ export function agUiResource(
       agent.abortRun();
     }
 
-    dismissInterruptAsCancelled();
+    interrupt.set(null);
 
     const userMessage = {
       id: randomUUID(),
@@ -242,7 +197,7 @@ export function agUiResource(
       return;
     }
 
-    dismissInterruptAsCancelled();
+    interrupt.set(null);
     pendingRun.set({ id: randomUUID() });
   };
 
@@ -291,37 +246,4 @@ export function agUiResource(
       agent.abortRun();
     },
   } satisfies AgUiChatResourceRef;
-}
-
-function findToolCall(messages: AgUiChatMessage[], toolCallId: string) {
-  for (const message of messages) {
-    if (message.role !== 'assistant') {
-      continue;
-    }
-
-    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
-    if (toolCall) {
-      return toolCall;
-    }
-  }
-
-  return undefined;
-}
-
-function buildCancelledInterruptResult(interrupt: AgUiInterrupt) {
-  const args = interrupt.payload.args;
-  const flightId =
-    args && typeof args === 'object' && 'flightId' in args
-      ? (args as { flightId?: unknown }).flightId
-      : undefined;
-  const idSuffix = typeof flightId === 'number' ? ` fuer Flug ${flightId}` : '';
-
-  return {
-    ok: false,
-    code: 'USER_CANCELLED',
-    message:
-      interrupt.payload.toolName === 'cancelFlight'
-        ? `Die Stornierung${idSuffix} wurde nicht bestaetigt.`
-        : `Die Buchung${idSuffix} wurde nicht bestaetigt.`,
-  };
 }

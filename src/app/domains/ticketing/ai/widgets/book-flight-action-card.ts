@@ -160,7 +160,9 @@ export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData
 
   private flightId(): number {
     const result = this.result();
-    return result?.ok ? result.flight.id : this.actionData().input.flightId;
+    return result?.ok
+      ? (result.flight?.id ?? this.actionData().input.flightId)
+      : this.actionData().input.flightId;
   }
 
   private flightDetails(): FlightMutationFlight | undefined {
@@ -179,6 +181,6 @@ function getBookFlightTitle(flightId: number): string {
 }
 
 export const bookFlightActionCard = defineActionCard({
-  toolName: 'bookFlight',
+  toolName: 'bookFlightTool',
   component: BookFlightActionCard,
 });
