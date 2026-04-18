@@ -16,12 +16,18 @@ const flightSchema = z.object({
   delay: z.number(),
 });
 
+// See bookFlightTool for format rationale (Mastra-compatible `result` string
+// plus additive domain data).
 const resultSchema = z.union([
-  z.object({ ok: z.literal(true), flight: flightSchema }),
+  z.object({
+    ok: z.literal(true),
+    result: z.string(),
+    flight: flightSchema,
+  }),
   z.object({
     ok: z.literal(false),
+    result: z.string(),
     code: z.string(),
-    message: z.string(),
   }),
 ]);
 
@@ -53,16 +59,16 @@ export const cancelFlightTool = createTool({
     if (resumeData?.approved === false) {
       return {
         ok: false as const,
+        result: `Cancellation of flight ${flightId} was cancelled by the user.`,
         code: 'USER_CANCELLED',
-        message: `Cancellation of flight ${flightId} was cancelled by the user.`,
       };
     }
 
     if (!isBooked(flightId)) {
       return {
         ok: false as const,
+        result: `Flight ${flightId} is not booked.`,
         code: 'NOT_BOOKED',
-        message: `Flight ${flightId} is not booked.`,
       };
     }
 
@@ -81,19 +87,25 @@ export const cancelFlightTool = createTool({
       });
       return {
         ok: false as const,
+        result: 'Awaiting user approval.',
         code: 'AWAITING_APPROVAL',
-        message: 'Awaiting user approval.',
       };
     }
 
     removeBooking(flightId);
+
     if (!flight) {
       return {
         ok: false as const,
+        result: `Flight ${flightId} could not be loaded after cancellation.`,
         code: 'NOT_FOUND',
-        message: `Flight ${flightId} could not be loaded after cancellation.`,
       };
     }
-    return { ok: true as const, flight };
+
+    return {
+      ok: true as const,
+      result: `Cancelled flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}.`,
+      flight,
+    };
   },
 });
