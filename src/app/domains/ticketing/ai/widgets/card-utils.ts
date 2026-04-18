@@ -72,10 +72,10 @@ export function getActionStatusLabel(
       }
 
       if (result?.code === 'USER_CANCELLED') {
-        return 'Not approved';
+        return 'Cancelled';
       }
 
-      return result?.message ?? 'Failed';
+      return 'Failed';
   }
 }
 
