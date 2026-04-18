@@ -21,7 +21,11 @@ export async function bookFlightHandler(
   const flightId = Number(c.req.param('flightId'));
   if (!Number.isFinite(flightId)) {
     return c.json(
-      { ok: false, code: 'NOT_FOUND', message: 'Invalid flight id.' },
+      {
+        ok: false,
+        result: 'Invalid flight id.',
+        code: 'NOT_FOUND',
+      },
       400,
     );
   }
@@ -30,8 +34,8 @@ export async function bookFlightHandler(
     return c.json(
       {
         ok: false,
+        result: `Flight ${flightId} is already booked.`,
         code: 'ALREADY_BOOKED',
-        message: `Flight ${flightId} is already booked.`,
       },
       409,
     );
@@ -42,15 +46,19 @@ export async function bookFlightHandler(
     return c.json(
       {
         ok: false,
+        result: `Flight ${flightId} does not exist.`,
         code: 'NOT_FOUND',
-        message: `Flight ${flightId} does not exist.`,
       },
       404,
     );
   }
 
   addBooking(flightId);
-  return c.json({ ok: true, flight });
+  return c.json({
+    ok: true,
+    result: `Booked flight ${flightId}.`,
+    flight,
+  });
 }
 
 export async function cancelFlightHandler(
@@ -59,7 +67,11 @@ export async function cancelFlightHandler(
   const flightId = Number(c.req.param('flightId'));
   if (!Number.isFinite(flightId)) {
     return c.json(
-      { ok: false, code: 'NOT_FOUND', message: 'Invalid flight id.' },
+      {
+        ok: false,
+        result: 'Invalid flight id.',
+        code: 'NOT_FOUND',
+      },
       400,
     );
   }
@@ -68,8 +80,8 @@ export async function cancelFlightHandler(
     return c.json(
       {
         ok: false,
+        result: `Flight ${flightId} is not booked.`,
         code: 'NOT_BOOKED',
-        message: `Flight ${flightId} is not booked.`,
       },
       404,
     );
@@ -83,12 +95,16 @@ export async function cancelFlightHandler(
     return c.json(
       {
         ok: false,
+        result: `Flight ${flightId} could not be loaded after cancellation.`,
         code: 'NOT_FOUND',
-        message: `Flight ${flightId} could not be loaded after cancellation.`,
       },
       404,
     );
   }
 
-  return c.json({ ok: true, flight });
+  return c.json({
+    ok: true,
+    result: `Cancelled flight ${flightId}.`,
+    flight,
+  });
 }

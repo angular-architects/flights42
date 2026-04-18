@@ -20,8 +20,8 @@ import {
 import {
   getActionStatusLabel,
   getFlightContextText,
-  isFlightMutationResult,
   shouldShowUndo,
+  toFlightMutationResult,
   toLoadFailedResult,
 } from './card-utils';
 
@@ -152,8 +152,7 @@ export class CancelFlightActionCard implements AgUiActionCard<CancelFlightAction
   }
 
   private result(): FlightMutationResult | undefined {
-    const result = this.actionData().result;
-    return isFlightMutationResult(result) ? result : undefined;
+    return toFlightMutationResult(this.actionData().result);
   }
 
   private flightId(): number {
