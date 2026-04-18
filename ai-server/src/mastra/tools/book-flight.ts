@@ -16,12 +16,19 @@ const flightSchema = z.object({
   delay: z.number(),
 });
 
+// Shape mirrors Mastra's tool-result convention (`result: string`) with
+// additive domain fields (`flight`, `code`), so our own returns and Mastra's
+// built-in decline string normalize into the same client type.
 const resultSchema = z.union([
-  z.object({ ok: z.literal(true), flight: flightSchema }),
+  z.object({
+    ok: z.literal(true),
+    result: z.string(),
+    flight: flightSchema,
+  }),
   z.object({
     ok: z.literal(false),
+    result: z.string(),
     code: z.string(),
-    message: z.string(),
   }),
 ]);
 
@@ -53,16 +60,16 @@ export const bookFlightTool = createTool({
     if (resumeData?.approved === false) {
       return {
         ok: false as const,
+        result: `Booking of flight ${flightId} was cancelled by the user.`,
         code: 'USER_CANCELLED',
-        message: `Booking of flight ${flightId} was cancelled by the user.`,
       };
     }
 
     if (isBooked(flightId)) {
       return {
         ok: false as const,
+        result: `Flight ${flightId} is already booked.`,
         code: 'ALREADY_BOOKED',
-        message: `Flight ${flightId} is already booked.`,
       };
     }
 
@@ -70,8 +77,8 @@ export const bookFlightTool = createTool({
     if (!flight) {
       return {
         ok: false as const,
+        result: `Flight ${flightId} does not exist.`,
         code: 'NOT_FOUND',
-        message: `Flight ${flightId} does not exist.`,
       };
     }
 
@@ -84,12 +91,16 @@ export const bookFlightTool = createTool({
       });
       return {
         ok: false as const,
+        result: 'Awaiting user approval.',
         code: 'AWAITING_APPROVAL',
-        message: 'Awaiting user approval.',
       };
     }
 
     addBooking(flightId);
-    return { ok: true as const, flight };
+    return {
+      ok: true as const,
+      result: `Booked flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}.`,
+      flight,
+    };
   },
 });

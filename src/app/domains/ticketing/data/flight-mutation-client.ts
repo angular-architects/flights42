@@ -21,15 +21,20 @@ export type FlightMutationFailureCode =
   | 'LOAD_FAILED'
   | 'USER_CANCELLED';
 
+// Shape aligned with Mastra's tool-result convention (`result: string`) so
+// both our own tool returns and Mastra's built-in decline ("Tool call was not
+// approved by the user") map onto the same type. Extra fields (`flight`,
+// `code`) are additive domain data.
 export type FlightMutationResult =
   | {
       ok: true;
+      result: string;
       flight: FlightMutationFlight;
     }
   | {
       ok: false;
+      result: string;
       code: FlightMutationFailureCode;
-      message: string;
     };
 
 @Injectable({ providedIn: 'root' })
