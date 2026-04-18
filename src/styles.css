@@ -51,6 +51,15 @@ form {
   margin-bottom: 20px;
 }
 
+fieldset > div,
+form > div {
+  margin-top: 10px;
+}
+
+form + a {
+  font-size: var(--font-size-tiny);
+}
+
 h1 {
   font-size: var(--font-size-h1);
   font-weight: var(--font-weight-bold);
@@ -111,6 +120,10 @@ label {
   letter-spacing: 0.5px;
   margin-bottom: 4px;
   text-transform: uppercase;
+}
+
+legend {
+  font-size: var(--font-size-sm);
 }
 
 markdown p {
@@ -376,6 +389,13 @@ input[type='button']:disabled {
   margin-top: 4px;
 }
 
+.form-check-label {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+}
+
 .form-group {
   margin-block: 1.25rem;
 }
@@ -413,6 +433,10 @@ input[type='button']:disabled {
   .hamburger-menu {
     display: inline;
   }
+}
+
+.info {
+  margin-left: 5px;
 }
 
 .label-error {
@@ -1148,6 +1172,11 @@ app-tabbed-pane .pane .tabs-header.tabs-header {
   gap: 0;
 }
 
+td.error-col app-validation-errors-pane {
+  position: relative;
+  top: 10px;
+}
+
 /* ══════════════════════════════════════════
    5. Keyframes
    ══════════════════════════════════════════ */
@@ -1170,33 +1199,4 @@ app-tabbed-pane .pane .tabs-header.tabs-header {
   to {
     transform: rotate(360deg);
   }
-}
-
-form + A {
-  font-size: var(--font-size-tiny);
-}
-
-fieldset > DIV,
-form > DIV {
-  margin-top: 10px;
-}
-
-td.error-col app-validation-errors-pane {
-  position: relative;
-  top: 10px;
-}
-
-legend {
-  font-size: var(--font-size-sm);
-}
-
-.form-check-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.info {
-  margin-left: 5px;
 }
