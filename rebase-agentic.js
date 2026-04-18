@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 const tasks = [
   { branch: 'a2ui', base: 'agentic' },
   { branch: 'mcp-apps', base: 'agentic' },
+  { branch: 'hitl', base: 'mcp-apps' },
 ];
 
 function run(cmd) {
