@@ -1051,18 +1051,27 @@ export class ExtendedMastraAgent extends AbstractAgent {
           return this.agent.approveToolCall({
             runId: interrupt.runId,
             toolCallId: interrupt.toolCallId,
+            memory: { thread: input.threadId, resource: this.resourceId },
+            clientTools,
+            requestContext: this.requestContext,
           });
         }
 
         return this.agent.declineToolCall({
           runId: interrupt.runId,
           toolCallId: interrupt.toolCallId,
+          memory: { thread: input.threadId, resource: this.resourceId },
+          clientTools,
+          requestContext: this.requestContext,
         });
       }
 
       return this.agent.resumeStream(input.resume?.payload, {
         runId: interrupt.runId,
         toolCallId: interrupt.toolCallId,
+        memory: { thread: input.threadId, resource: this.resourceId },
+        clientTools,
+        requestContext: this.requestContext,
       });
     }
 
