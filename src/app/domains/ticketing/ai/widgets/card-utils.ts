@@ -6,19 +6,25 @@ import {
   type FlightMutationResult,
 } from '../../data/flight-mutation-client';
 
-interface Result {
-  ok?: unknown;
-}
-
-export function isFlightMutationResult(
+export function toFlightMutationResult(
   value: unknown,
-): value is FlightMutationResult {
-  if (!value || typeof value !== 'object' || !('ok' in value)) {
-    return false;
+): FlightMutationResult | undefined {
+  // Mastra's built-in `requireApproval: true` decline streams a plain string
+  // ("Tool call was not approved by the user") as the tool result. Normalize
+  // it to our shape so the card can treat it like a user cancellation.
+  if (typeof value === 'string') {
+    return {
+      ok: false,
+      result: value,
+      code: 'USER_CANCELLED',
+    };
   }
 
-  const result = value as Result;
-  return typeof result.ok === 'boolean';
+  if (isStructuredResult(value)) {
+    return value;
+  }
+
+  return undefined;
 }
 
 export function toLoadFailedResult(
@@ -26,13 +32,15 @@ export function toLoadFailedResult(
   flightId: number,
   action: 'book' | 'cancel',
 ): FlightMutationResult {
+  const message =
+    error instanceof Error
+      ? error.message
+      : `Could not ${action} flight ${flightId}.`;
+
   return {
     ok: false,
+    result: message,
     code: 'LOAD_FAILED',
-    message:
-      error instanceof Error
-        ? error.message
-        : `Could not ${action} flight ${flightId}.`,
   };
 }
 
@@ -90,4 +98,13 @@ export function shouldShowUndo(
   }
 
   return status === 'complete' && !!result?.ok;
+}
+
+function isStructuredResult(value: unknown): value is FlightMutationResult {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const record = value as { ok?: unknown; result?: unknown };
+  return typeof record.ok === 'boolean' && typeof record.result === 'string';
 }
