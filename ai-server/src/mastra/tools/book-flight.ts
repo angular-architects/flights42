@@ -16,31 +16,19 @@ const flightSchema = z.object({
   delay: z.number(),
 });
 
-// Shape mirrors Mastra's tool-result convention (`result: string`) with
-// additive domain fields (`flight`, `code`).
 const resultSchema = z.union([
-  z.object({
-    ok: z.literal(true),
-    result: z.string(),
-    flight: flightSchema,
-  }),
+  z.object({ ok: z.literal(true), flight: flightSchema }),
   z.object({
     ok: z.literal(false),
-    result: z.string(),
     code: z.string(),
+    message: z.string(),
   }),
 ]);
 
 const suspendSchema = z.object({
   action: z.literal('book'),
   flightId: z.number(),
-  flight: z.object({
-    id: z.number(),
-    from: z.string(),
-    to: z.string(),
-    date: z.string(),
-    delay: z.number(),
-  }),
+  flight: flightSchema,
   message: z.string(),
 });
 
@@ -65,15 +53,16 @@ export const bookFlightTool = createTool({
     if (resumeData?.approved === false) {
       return {
         ok: false as const,
-        error: `Booking of flight ${flightId} was rejected by the user.`,
+        code: 'USER_CANCELLED',
+        message: `Booking of flight ${flightId} was cancelled by the user.`,
       };
     }
 
     if (isBooked(flightId)) {
       return {
         ok: false as const,
-        result: `Flight ${flightId} is already booked.`,
         code: 'ALREADY_BOOKED',
+        message: `Flight ${flightId} is already booked.`,
       };
     }
 
@@ -81,8 +70,8 @@ export const bookFlightTool = createTool({
     if (!flight) {
       return {
         ok: false as const,
-        result: `Flight ${flightId} does not exist.`,
         code: 'NOT_FOUND',
+        message: `Flight ${flightId} does not exist.`,
       };
     }
 
@@ -95,15 +84,12 @@ export const bookFlightTool = createTool({
       });
       return {
         ok: false as const,
-        error: 'Awaiting user approval.',
+        code: 'AWAITING_APPROVAL',
+        message: 'Awaiting user approval.',
       };
     }
 
     addBooking(flightId);
-    return {
-      ok: true as const,
-      result: `Booked flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}.`,
-      flight,
-    };
+    return { ok: true as const, flight };
   },
 });
