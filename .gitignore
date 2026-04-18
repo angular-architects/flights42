@@ -41,3 +41,8 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+.mastra
+flights42.db
+flights42.db-shm
+flights42.db-wal
