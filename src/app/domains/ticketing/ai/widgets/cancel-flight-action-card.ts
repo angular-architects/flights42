@@ -158,7 +158,9 @@ export class CancelFlightActionCard implements AgUiActionCard<CancelFlightAction
 
   private flightId(): number {
     const result = this.result();
-    return result?.ok ? result.flight.id : this.actionData().input.flightId;
+    return result?.ok
+      ? (result.flight?.id ?? this.actionData().input.flightId)
+      : this.actionData().input.flightId;
   }
 
   private flightDetails(): FlightMutationFlight | undefined {
@@ -177,6 +179,6 @@ function getCancelFlightTitle(flightId: number): string {
 }
 
 export const cancelFlightActionCard = defineActionCard({
-  toolName: 'cancelFlight',
+  toolName: 'cancelFlightTool',
   component: CancelFlightActionCard,
 });
