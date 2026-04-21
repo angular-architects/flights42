@@ -1,0 +1,54 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.miles-progress {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid #dbe3ff;
+  background: linear-gradient(180deg, #f7f9ff 0%, #ffffff 100%);
+  box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.35);
+}
+
+.eyebrow,
+.current,
+.remaining {
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #51607f;
+}
+
+.current {
+  margin-top: 0.35rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1c2640;
+}
+
+.remaining {
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  color: #52617f;
+}
+
+.track {
+  margin-top: 0.8rem;
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: #e4ebff;
+}
+
+.fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5665e8 0%, #6f7cff 100%);
+  transition: width 180ms ease-out;
+}

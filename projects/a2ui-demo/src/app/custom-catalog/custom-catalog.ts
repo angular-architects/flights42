@@ -6,19 +6,14 @@ import { z, type ZodTypeAny } from 'zod/v3';
 
 import { MilesProgress } from './miles-progress';
 
-const dynamicStringSchema = z.union([
-  z.string(),
-  z.object({ path: z.string() }).strict(),
-]);
-const dynamicNumberSchema = z.union([
-  z.number(),
+const dynamicObjectSchema = z.union([
+  z.record(z.unknown()),
   z.object({ path: z.string() }).strict(),
 ]);
 
 const milesProgressSchema = z
   .object({
-    label: dynamicStringSchema.optional(),
-    miles: dynamicNumberSchema.optional(),
+    passenger: dynamicObjectSchema.optional(),
     weight: z.number().optional(),
   })
   .strict() as unknown as ZodTypeAny;

@@ -180,8 +180,7 @@ export class App {
             {
               id: 'miles-progress',
               component: 'MilesProgress',
-              label: 'Miles Progress',
-              miles: { path: '/passenger/bonusMiles' },
+              passenger: { path: '/passenger' },
             },
             {
               id: 'select-button',
