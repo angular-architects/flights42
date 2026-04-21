@@ -45,7 +45,7 @@ h1 {
 }
 
 p {
-  margin: 0;
+  margin: 30px 0;
   color: var(--demo-subtle);
   line-height: 1.5;
 }
