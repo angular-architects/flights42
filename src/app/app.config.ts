@@ -1,4 +1,9 @@
-import { DEFAULT_CATALOG, provideA2UI } from '@a2ui/angular';
+import {
+  A2UI_RENDERER_CONFIG,
+  A2uiRendererService,
+  BasicCatalog,
+  provideMarkdownRenderer,
+} from '@a2ui/angular/v0_9';
 import {
   ApplicationConfig,
   inject,
@@ -7,11 +12,9 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHashbrown } from '@hashbrownai/angular';
-import { provideA2uiCatalog } from '@internal/ag-ui-client';
 import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 
-import { a2uiTheme } from './a2ui-theme';
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
 import { ticketingExtraComponents } from './domains/ticketing/ai/custom-catalog/ticketing-extra-components';
@@ -22,7 +25,14 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(ConfigService).load()),
     // provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes, withComponentInputBinding()),
-    provideA2UI({ catalog: DEFAULT_CATALOG, theme: a2uiTheme }),
+    {
+      provide: A2UI_RENDERER_CONFIG,
+      useValue: {
+        catalogs: [new BasicCatalog()],
+      },
+    },
+    provideMarkdownRenderer(async (markdown) => marked.parse(markdown)),
+    A2uiRendererService,
     provideHashbrown({
       baseUrl: 'http://localhost:3000/api/chat',
       emulateStructuredOutput: true,

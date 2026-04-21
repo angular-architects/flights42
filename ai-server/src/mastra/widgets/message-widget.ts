@@ -22,15 +22,16 @@ export const messageWidget = defineServerWidget({
       rootId: id,
       components: [
         {
-          id,
-          component: {
-            Text: {
-              text: { literalString: text },
-              usageHint: 'body',
-            },
-          },
+          id: textId,
+          component: 'Text',
+          text: { path: `${dataPath}/text` },
+          variant: 'body',
         },
       ],
+      dataModelUpdate: {
+        path: dataPath,
+        value: { text },
+      },
     };
   },
 });

@@ -1,17 +1,10 @@
-import { DecimalPipe } from '@angular/common';
+import type { BoundProperty } from '@a2ui/angular/v0_9';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   input,
 } from '@angular/core';
-
-import {
-  calcNextThreshold,
-  calcProgressPercent,
-  calcRemainingMiles,
-} from './miles-calc';
-import { initialContext, MilesProgressContext } from './miles-progress-context';
 
 @Component({
   selector: 'app-miles-progress',
@@ -33,14 +26,31 @@ import { initialContext, MilesProgressContext } from './miles-progress-context';
   styleUrl: './miles-progress.css',
 })
 export class MilesProgress {
-  readonly props = input<MilesProgressContext>(initialContext);
+  readonly props = input<Record<string, BoundProperty<unknown>>>({});
   readonly surfaceId = input.required<string>();
   readonly componentId = input.required<string>();
   readonly dataContextPath = input('/');
 
-  protected readonly passenger = computed(() => this.props().passenger.value());
-  protected readonly nextThreshold = computed(() =>
-    calcNextThreshold(this.passenger().bonusMiles),
+  protected readonly resolvedLabel = computed(() => {
+    const value = this.props()['label']?.value();
+    return typeof value === 'string' && value.length > 0
+      ? value
+      : 'Miles Progress';
+  });
+  protected readonly resolvedMiles = computed(() => {
+    const value = this.props()['miles']?.value();
+    return typeof value === 'number' ? value : 0;
+  });
+  protected readonly nextThreshold = computed(() => {
+    const currentMiles = this.resolvedMiles();
+    let threshold = Math.ceil(currentMiles / 100000) * 100000;
+    if (threshold === currentMiles) {
+      threshold += 100000;
+    }
+    return threshold || 100000;
+  });
+  protected readonly remainingMiles = computed(
+    () => this.nextThreshold() - this.resolvedMiles(),
   );
   protected readonly remainingMiles = computed(() =>
     calcRemainingMiles(this.nextThreshold(), this.passenger().bonusMiles),

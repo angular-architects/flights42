@@ -1,16 +1,9 @@
-import type { Types } from '@a2ui/lit/0.8';
 import { ResourceRef } from '@angular/core';
 import { z } from 'zod';
 
 export interface AgUiWidget {
   name: string;
-  /** Traditional Angular component embedding (e.g. showComponent payloads). */
-  component?: Type<unknown>;
-  props?: Record<string, unknown>;
-  /** A2UI surface embedding. */
-  a2uiSurfaceId?: string;
-  a2uiSurface?: Types.Surface | null;
-  a2uiMessages?: unknown[];
+  a2uiSurfaceId: string;
 }
 
 export interface AgUiToolCall {
