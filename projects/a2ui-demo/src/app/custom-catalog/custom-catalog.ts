@@ -3,7 +3,7 @@ import {
   BASIC_FUNCTIONS,
   BasicCatalogBase,
 } from '@a2ui/angular/v0_9';
-import { z, type ZodTypeAny } from 'zod/v3';
+import { z } from 'zod/v3';
 
 import { formatIdImplementation } from './format-id';
 import { MilesProgress } from './miles-progress';
