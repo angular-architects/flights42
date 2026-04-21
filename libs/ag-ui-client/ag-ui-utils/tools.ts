@@ -1,4 +1,4 @@
-import { MessageProcessor } from '@a2ui/angular';
+import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import { type HttpAgent, type Message, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -33,7 +33,7 @@ export interface PendingToolExecution {
 interface ExecutePendingToolsOptions {
   agent: HttpAgent;
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  processor: MessageProcessor;
+  renderer: A2uiRendererService;
   environmentInjector: EnvironmentInjector;
   pendingLocalCalls: PendingToolExecution[];
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -42,7 +42,7 @@ interface ExecutePendingToolsOptions {
 interface ExecuteToolOptions {
   agent: HttpAgent;
   tool: AgUiClientToolDefinition<never>;
-  processor: MessageProcessor;
+  renderer: A2uiRendererService;
   environmentInjector: EnvironmentInjector;
   pendingCall: PendingToolExecution;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
@@ -240,7 +240,7 @@ export async function executePendingTools(
   const {
     agent,
     toolMap,
-    processor,
+    renderer,
     environmentInjector,
     pendingLocalCalls,
     messageStream,
@@ -258,7 +258,7 @@ export async function executePendingTools(
       const sentToolResult = await executeTool({
         agent,
         tool,
-        processor,
+        renderer,
         environmentInjector,
         pendingCall,
         messageStream,
@@ -281,7 +281,7 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
   const {
     agent,
     tool,
-    processor,
+    renderer,
     environmentInjector,
     pendingCall,
     messageStream,
@@ -310,7 +310,7 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
       completeToolCall(readMessages(item), pendingCall.toolCallId),
       pendingCall.toolCallId,
       serializedResult,
-      processor,
+      renderer,
     ),
   }));
 

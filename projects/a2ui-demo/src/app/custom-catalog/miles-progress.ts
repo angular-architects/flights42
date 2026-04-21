@@ -1,20 +1,10 @@
-import { DynamicComponent } from '@a2ui/angular';
-import { type Primitives, type Types } from '@a2ui/lit/0.8';
+import type { BoundProperty } from '@a2ui/angular/v0_9';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   input,
 } from '@angular/core';
-
-interface MilesProgressProperties {
-  label: Primitives.StringValue | null;
-  miles: Primitives.NumberValue | null;
-}
-
-type MilesProgressNode = Types.AnyComponentNode & {
-  properties: MilesProgressProperties;
-};
 
 @Component({
   selector: 'app-miles-progress',
@@ -89,18 +79,20 @@ type MilesProgressNode = Types.AnyComponentNode & {
     }
   `,
 })
-export class MilesProgress extends DynamicComponent<MilesProgressNode> {
-  readonly label = input<MilesProgressProperties['label']>(null);
-  readonly miles = input<MilesProgressProperties['miles']>(null);
+export class MilesProgress {
+  readonly props = input<Record<string, BoundProperty<unknown>>>({});
+  readonly surfaceId = input.required<string>();
+  readonly componentId = input.required<string>();
+  readonly dataContextPath = input('/');
 
   protected readonly resolvedLabel = computed(() => {
-    const value = this.resolvePrimitive(this.label());
+    const value = this.props()['label']?.value();
     return typeof value === 'string' && value.length > 0
       ? value
       : 'Miles Progress';
   });
   protected readonly resolvedMiles = computed(() => {
-    const value = this.resolvePrimitive(this.miles());
+    const value = this.props()['miles']?.value();
     return typeof value === 'number' ? value : 0;
   });
   protected readonly nextThreshold = computed(() => {

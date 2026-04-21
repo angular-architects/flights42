@@ -38,7 +38,8 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "dependencies": {
-    "@a2ui/angular": "^0.8.3",
+    "@a2ui/angular": "^0.9.1",
+    "@a2ui/web_core": "^0.9.2",
     "@ag-ui/client": "^0.0.52",
     "@ag-ui/core": "^0.0.52",
     "@ag-ui/mastra": "1.0.0",

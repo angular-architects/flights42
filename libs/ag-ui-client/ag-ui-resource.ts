@@ -1,4 +1,4 @@
-import { MessageProcessor } from '@a2ui/angular';
+import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import { HttpAgent, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -41,7 +41,7 @@ export function agUiResource(
   const useServerMemory = options.useServerMemory ?? false;
   const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
-  const processor = inject(MessageProcessor);
+  const renderer = inject(A2uiRendererService);
   const createAgent = (): HttpAgent =>
     new HttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();
@@ -78,7 +78,7 @@ export function agUiResource(
       agent,
       tools,
       toolMap,
-      processor,
+      renderer,
       environmentInjector,
       runId: params.id,
       model: options.model,

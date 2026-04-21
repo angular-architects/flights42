@@ -1,5 +1,5 @@
-import { MessageProcessor } from '@a2ui/angular';
-import type { Types } from '@a2ui/lit/0.8';
+import { A2uiRendererService } from '@a2ui/angular/v0_9';
+import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 
 import {
   type AgUiChatMessage,
@@ -15,10 +15,10 @@ export function appendA2uiSurfaceFromToolResult(
   messages: AgUiChatMessage[],
   toolCallId: string,
   content: string,
-  processor: MessageProcessor,
+  renderer: A2uiRendererService,
 ): AgUiChatMessage[] {
   const parsed = safeParseJson(content);
-  const widget = toA2uiWidgetFromToolResult(parsed, toolCallId, processor);
+  const widget = toA2uiWidgetFromToolResult(parsed, toolCallId, renderer);
   if (!widget) {
     return messages;
   }
@@ -35,13 +35,9 @@ export function appendA2uiSurfaceFromActivitySnapshot(
   messages: AgUiChatMessage[],
   messageId: string,
   content: unknown,
-  processor: MessageProcessor,
+  renderer: A2uiRendererService,
 ): AgUiChatMessage[] {
-  const widget = toA2uiWidgetFromActivitySnapshot(
-    content,
-    messageId,
-    processor,
-  );
+  const widget = toA2uiWidgetFromActivitySnapshot(content, messageId, renderer);
   if (!widget) {
     return messages;
   }
@@ -92,7 +88,7 @@ function appendStandaloneWidget(
 function toA2uiWidgetFromToolResult(
   value: unknown,
   toolCallId: string,
-  processor: MessageProcessor,
+  renderer: A2uiRendererService,
 ): AgUiWidget | null {
   if (
     !value ||
@@ -106,20 +102,23 @@ function toA2uiWidgetFromToolResult(
 
   const result = value as {
     surfaceId: string;
-    messages: Types.ServerToClientMessage[];
+    messages: A2uiMessage[];
   };
-  processor.processMessages(result.messages);
+  renderer.processMessages(result.messages);
+  if (!renderer.surfaceGroup.getSurface(result.surfaceId)) {
+    return null;
+  }
+
   return {
     name: `a2ui_${toolCallId}`,
     a2uiSurfaceId: result.surfaceId,
-    a2uiSurface: processor.getSurfaces().get(result.surfaceId) ?? null,
   };
 }
 
 function toA2uiWidgetFromActivitySnapshot(
   value: unknown,
   messageId: string,
-  processor: MessageProcessor,
+  renderer: A2uiRendererService,
 ): AgUiWidget | null {
   if (
     !value ||
@@ -131,19 +130,18 @@ function toA2uiWidgetFromActivitySnapshot(
   }
 
   const result = value as {
-    operations: Types.ServerToClientMessage[];
+    operations: A2uiMessage[];
   };
-  processor.processMessages(result.operations);
+  renderer.processMessages(result.operations);
 
   const surfaceId = getRenderedSurfaceId(result.operations);
-  if (!surfaceId) {
+  if (!surfaceId || !renderer.surfaceGroup.getSurface(surfaceId)) {
     return null;
   }
 
   return {
     name: `a2ui_${messageId}`,
     a2uiSurfaceId: surfaceId,
-    a2uiSurface: processor.getSurfaces().get(surfaceId) ?? null,
   };
 }
 
@@ -221,23 +219,21 @@ function findLastAssistantMessageIndex(messages: AgUiChatMessage[]): number {
   return -1;
 }
 
-function getRenderedSurfaceId(
-  operations: Types.ServerToClientMessage[],
-): string | null {
+function getRenderedSurfaceId(operations: A2uiMessage[]): string | null {
   for (const operation of operations) {
-    if ('beginRendering' in operation && operation.beginRendering?.surfaceId) {
-      return operation.beginRendering.surfaceId;
-    }
-
-    if ('surfaceUpdate' in operation && operation.surfaceUpdate?.surfaceId) {
-      return operation.surfaceUpdate.surfaceId;
+    if ('createSurface' in operation && operation.createSurface.surfaceId) {
+      return operation.createSurface.surfaceId;
     }
 
     if (
-      'dataModelUpdate' in operation &&
-      operation.dataModelUpdate?.surfaceId
+      'updateComponents' in operation &&
+      operation.updateComponents.surfaceId
     ) {
-      return operation.dataModelUpdate.surfaceId;
+      return operation.updateComponents.surfaceId;
+    }
+
+    if ('updateDataModel' in operation && operation.updateDataModel.surfaceId) {
+      return operation.updateDataModel.surfaceId;
     }
   }
 

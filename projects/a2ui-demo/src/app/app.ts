@@ -1,12 +1,13 @@
-import { MessageProcessor, Surface } from '@a2ui/angular';
-import { Types } from '@a2ui/lit/0.8';
+import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
+import type { A2uiClientAction, A2uiMessage } from '@a2ui/web_core/v0_9';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
-  signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { customCatalog } from './custom-catalog/custom-catalog';
 
 interface Passenger {
   id: number;
@@ -18,15 +19,15 @@ interface Passenger {
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Surface],
+  imports: [SurfaceComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
-  private readonly processor = inject(MessageProcessor);
+  private readonly renderer = inject(A2uiRendererService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly surfaceId = 'passenger-card-surface';
-  protected readonly surface = signal<Types.Surface | undefined>(undefined);
 
   constructor() {
     this.render();
@@ -40,268 +41,180 @@ export class App {
       lastName: 'Miller',
       bonusMiles: 1200,
     };
-    this.processor.clearSurfaces();
-    this.processor.processMessages(this.createSurfaceMessages(passenger));
-    const surface = this.processor.getSurfaces().get(this.surfaceId);
-    this.surface.set(surface);
+    this.renderer.processMessages(this.createSurfaceMessages(passenger));
   }
 
-  private registerHandler() {
-    this.processor.events
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ message, completion }) => {
-        const action = message.userAction;
+  private registerHandler(): void {
+    const subscription = this.renderer.surfaceGroup.onAction.subscribe(
+      (action: A2uiClientAction) => {
         console.log('[A2UI Event]', action);
 
-        if (action && action.name === 'increaseMiles' && action.context) {
-          const passenger = action.context as unknown as Passenger;
-          const updateMessage = this.toUpdateMessage({
-            ...passenger,
-            bonusMiles: passenger.bonusMiles + 300,
-          });
-          const updates = [updateMessage];
-          completion.next(updates);
-          this.processor.processMessages(updates);
+        if (action.name !== 'increaseMiles') {
           return;
         }
 
-        completion.next([]);
-      });
+        const passenger = action.context as unknown as Passenger;
+        this.renderer.processMessages([
+          this.toUpdateMessage({
+            ...passenger,
+            bonusMiles: passenger.bonusMiles + 300,
+          }),
+        ]);
+      },
+    );
+
+    this.destroyRef.onDestroy(() => {
+      subscription.unsubscribe();
+    });
   }
 
-  private createSurfaceMessages(
-    passenger: Passenger,
-  ): Types.ServerToClientMessage[] {
+  private createSurfaceMessages(passenger: Passenger): A2uiMessage[] {
     return [
       {
-        surfaceUpdate: {
+        version: 'v0.9',
+        createSurface: {
+          surfaceId: this.surfaceId,
+          catalogId: customCatalog.id,
+        },
+      },
+      {
+        version: 'v0.9',
+        updateComponents: {
           surfaceId: this.surfaceId,
           components: [
             {
               id: 'root',
-              component: {
-                Column: {
-                  children: {
-                    explicitList: ['passenger-card', 'miles-progress'],
-                  },
-                },
-              },
+              component: 'Column',
+              children: ['passenger-card', 'miles-progress'],
             },
             {
               id: 'passenger-card',
-              component: {
-                Card: {
-                  children: {
-                    explicitList: ['headline', 'details', 'select-button'],
-                  },
-                },
-              },
+              component: 'Card',
+              children: ['headline', 'details', 'select-button'],
             },
             {
               id: 'headline',
-              component: {
-                Text: {
-                  text: { literalString: 'Passenger Card' },
-                  usageHint: 'h2',
-                },
-              },
+              component: 'Text',
+              text: 'Passenger Card',
+              variant: 'h2',
             },
             {
               id: 'details',
-              component: {
-                Row: {
-                  children: {
-                    explicitList: ['labels-column', 'values-column'],
-                  },
-                  alignment: 'start',
-                },
-              },
+              component: 'Row',
+              children: ['labels-column', 'values-column'],
+              align: 'flex-start',
             },
             {
               id: 'labels-column',
-              component: {
-                Column: {
-                  children: {
-                    explicitList: [
-                      'passenger-id-label',
-                      'passenger-first-name-label',
-                      'passenger-last-name-label',
-                      'passenger-bonus-miles-label',
-                    ],
-                  },
-                },
-              },
+              component: 'Column',
+              children: [
+                'passenger-id-label',
+                'passenger-first-name-label',
+                'passenger-last-name-label',
+                'passenger-bonus-miles-label',
+              ],
             },
             {
               id: 'values-column',
-              component: {
-                Column: {
-                  children: {
-                    explicitList: [
-                      'passenger-id-value',
-                      'passenger-first-name-value',
-                      'passenger-last-name-value',
-                      'passenger-bonus-miles-value',
-                    ],
-                  },
-                },
-              },
+              component: 'Column',
+              children: [
+                'passenger-id-value',
+                'passenger-first-name-value',
+                'passenger-last-name-value',
+                'passenger-bonus-miles-value',
+              ],
             },
             {
               id: 'passenger-id-label',
-              component: {
-                Text: {
-                  text: { literalString: 'ID: ' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: 'ID: ',
+              variant: 'body',
             },
             {
               id: 'passenger-id-value',
-              component: {
-                Text: {
-                  text: { path: '/passenger/id' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: { path: '/passenger/id' },
+              variant: 'body',
             },
             {
               id: 'passenger-first-name-label',
-              component: {
-                Text: {
-                  text: { literalString: 'First name: ' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: 'First name: ',
+              variant: 'body',
             },
             {
               id: 'passenger-first-name-value',
-              component: {
-                Text: {
-                  text: { path: '/passenger/firstName' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: { path: '/passenger/firstName' },
+              variant: 'body',
             },
             {
               id: 'passenger-last-name-label',
-              component: {
-                Text: {
-                  text: { literalString: 'Last name: ' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: 'Last name: ',
+              variant: 'body',
             },
             {
               id: 'passenger-last-name-value',
-              component: {
-                Text: {
-                  text: { path: '/passenger/lastName' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: { path: '/passenger/lastName' },
+              variant: 'body',
             },
             {
               id: 'passenger-bonus-miles-label',
-              component: {
-                Text: {
-                  text: { literalString: 'Bonus miles: ' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: 'Bonus miles: ',
+              variant: 'body',
             },
             {
               id: 'passenger-bonus-miles-value',
-              component: {
-                Text: {
-                  text: { path: '/passenger/bonusMiles' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: { path: '/passenger/bonusMiles' },
+              variant: 'body',
             },
             {
               id: 'miles-progress',
-              component: {
-                MilesProgress: {
-                  label: { literalString: 'Miles Progress' },
-                  miles: { path: '/passenger/bonusMiles' },
-                },
-              },
+              component: 'MilesProgress',
+              label: 'Miles Progress',
+              miles: { path: '/passenger/bonusMiles' },
             },
             {
               id: 'select-button',
-              component: {
-                Button: {
-                  child: 'select-button-label',
-                  action: {
-                    name: 'increaseMiles',
-                    context: [
-                      { key: 'id', value: { path: '/passenger/id' } },
-                      {
-                        key: 'firstName',
-                        value: { path: '/passenger/firstName' },
-                      },
-                      {
-                        key: 'lastName',
-                        value: { path: '/passenger/lastName' },
-                      },
-                      {
-                        key: 'bonusMiles',
-                        value: { path: '/passenger/bonusMiles' },
-                      },
-                    ],
+              component: 'Button',
+              child: 'select-button-label',
+              action: {
+                event: {
+                  name: 'increaseMiles',
+                  context: {
+                    id: { path: '/passenger/id' },
+                    firstName: { path: '/passenger/firstName' },
+                    lastName: { path: '/passenger/lastName' },
+                    bonusMiles: { path: '/passenger/bonusMiles' },
                   },
                 },
               },
             },
             {
               id: 'select-button-label',
-              component: {
-                Text: {
-                  text: { literalString: 'Increase Miles' },
-                  usageHint: 'body',
-                },
-              },
+              component: 'Text',
+              text: 'Increase Miles',
+              variant: 'body',
             },
           ],
         },
       },
-      {
-        dataModelUpdate: this.toUpdateMessage(passenger).dataModelUpdate,
-      },
-      {
-        beginRendering: {
-          surfaceId: this.surfaceId,
-          root: 'root',
-        },
-      },
+      this.toUpdateMessage(passenger),
     ];
   }
 
-  private toUpdateMessage(passenger: Passenger): Types.ServerToClientMessage {
+  private toUpdateMessage(passenger: Passenger): A2uiMessage {
     return {
-      dataModelUpdate: {
+      version: 'v0.9',
+      updateDataModel: {
         surfaceId: this.surfaceId,
         path: '/passenger',
-        contents: this.toValueMap(passenger),
+        value: passenger,
       },
     };
-  }
-
-  private toValueMap(passenger: Passenger): Types.ValueMap[] {
-    return [
-      this.toNumberValueMap('id', passenger.id),
-      this.toStringValueMap('firstName', passenger.firstName),
-      this.toStringValueMap('lastName', passenger.lastName),
-      this.toNumberValueMap('bonusMiles', passenger.bonusMiles),
-    ];
-  }
-
-  private toStringValueMap(key: string, value: string): Types.ValueMap {
-    return { key, valueString: value } as Types.ValueMap;
-  }
-
-  private toNumberValueMap(key: string, value: number): Types.ValueMap {
-    return { key, valueNumber: value } as Types.ValueMap;
   }
 }
