@@ -117,8 +117,25 @@ export const renderA2uiTool = createTool({
       ),
   }),
   execute: async (inputData: unknown) => {
-    const parsed = A2uiMessageListWrapperSchema.parse(inputData);
-    const messages = parsed.messages as A2uiMessage[];
+    let parsed: { messages: A2uiMessage[] };
+    try {
+      parsed = A2uiMessageListWrapperSchema.parse(inputData) as {
+        messages: A2uiMessage[];
+      };
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const issues = err.issues
+          .slice(0, 5)
+          .map((issue) => {
+            const path = issue.path.join('.') || '<root>';
+            return `${path}: ${issue.message}`;
+          })
+          .join('; ');
+        throw new Error(`renderA2ui: schema validation failed — ${issues}`);
+      }
+      throw err;
+    }
+    const messages = parsed.messages;
 
     if (messages.length === 0) {
       throw new Error('renderA2ui: messages array must not be empty');
