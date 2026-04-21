@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 import { SHOW_COMPONENTS_TOOL_NAME } from './create-show-components-tool.js';
 import { Store } from './memory-store.js';
 import { defaultStore } from './memory-store.js';
+import { RENDER_A2UI_TOOL_NAME } from './render-a2ui-tool.js';
 
 /**
  * Tool names that are considered "internal" by default. When
@@ -18,6 +19,7 @@ import { defaultStore } from './memory-store.js';
  */
 export const DEFAULT_INTERNAL_TOOL_NAMES: readonly string[] = [
   SHOW_COMPONENTS_TOOL_NAME,
+  RENDER_A2UI_TOOL_NAME,
 ];
 
 interface ExtendedLocalAgentOptions {

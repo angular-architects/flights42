@@ -1,4 +1,5 @@
 export * from './create-show-components-tool.js';
 export * from './extended-mastra-agent.js';
 export * from './memory-store.js';
+export * from './render-a2ui-tool.js';
 export * from './widget-factory.js';
