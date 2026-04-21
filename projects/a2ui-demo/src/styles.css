@@ -13,37 +13,48 @@ body {
     sans-serif;
 }
 
-/* A2UI theme classes used by the demo theme mapping. */
-.a2ui-card {
+/* A2UI theme: drive built-in Card/Button via exposed CSS variables so they
+ * win against Angular's view-encapsulated component styles. */
+a2ui-v09-surface {
+  --a2ui-card-padding: 0.9rem 1rem;
+  --a2ui-card-border: 1px solid #dbe3ff;
+  --a2ui-card-border-radius: 0.9rem;
+  --a2ui-card-background: #ffffff;
+  --a2ui-card-box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.4);
+  --a2ui-card-margin: 0;
+
+  --a2ui-button-padding: 0.35rem 1rem;
+  --a2ui-button-border-radius: 9999px;
+  --a2ui-button-border: none;
+  --a2ui-button-background: linear-gradient(90deg, #5665e8 0%, #6f7cff 100%);
+  --a2ui-button-box-shadow: 0 8px 20px -14px rgba(74, 88, 215, 0.7);
+  --a2ui-button-font-weight: 700;
+  --a2ui-button-margin: 0.8rem 0 0 0;
+
+  --a2ui-color-on-secondary: #ffffff;
+}
+
+a2ui-v09-surface .a2ui-card {
   width: 100%;
   box-sizing: border-box;
-  padding: 0 0.85rem 0.75rem;
-  border: 1px solid #dbe3ff;
-  border-radius: 0.9rem;
-  background: #ffffff;
-  box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.4);
   display: grid;
   gap: 0.2rem;
 }
 
-.a2ui-button {
-  border: none;
-  border-radius: 9999px;
-  padding: 0.35rem 0.85rem;
-  margin-top: 0.8rem;
-  background: linear-gradient(90deg, #5665e8 0%, #6f7cff 100%);
+a2ui-v09-surface .a2ui-button {
   color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 8px 20px -14px rgba(74, 88, 215, 0.7);
   cursor: pointer;
+  transition: filter 120ms ease-out;
 }
 
-.a2ui-button:hover {
-  filter: brightness(1.03);
+a2ui-v09-surface .a2ui-button:hover {
+  filter: brightness(1.05);
 }
 
-.a2ui-button .a2ui-text-body {
-  color: #ffffff;
+a2ui-v09-surface .a2ui-button p,
+a2ui-v09-surface .a2ui-button .a2ui-text-body {
+  color: #ffffff !important;
+  margin: 0;
 }
 
 .a2ui-column {
@@ -55,25 +66,54 @@ body {
   align-items: flex-start;
 }
 
-.a2ui-text-h2 {
+/* Row renders children inside <a2ui-v09-component-host>. Each inner column
+ * uses inline `width: 100%`. We shrink the first host (labels) to its content
+ * and let the second (values) consume the remaining space. */
+a2ui-v09-row > a2ui-v09-component-host {
+  display: block;
+}
+
+a2ui-v09-row > a2ui-v09-component-host:first-of-type {
+  flex: 0 0 auto;
+}
+
+a2ui-v09-row > a2ui-v09-component-host:first-of-type a2ui-v09-column {
+  width: auto !important;
+  white-space: nowrap;
+}
+
+a2ui-v09-row > a2ui-v09-component-host:last-of-type {
+  flex: 1 1 auto;
+}
+
+/* A2UI Text puts TWO classes on its span: `a2ui-text` + the variant name. */
+.a2ui-text.h2 {
   margin: 0;
   font-size: 1.2rem;
   font-weight: 700;
   color: #1c2640;
 }
 
-.a2ui-text-body {
+.a2ui-text.body {
   margin: 0;
   font-size: 0.95rem;
   color: #2b3755;
 }
 
-.a2ui-text-h2 p,
-.a2ui-text-body p {
+.a2ui-text.h2 p,
+.a2ui-text.body p {
   margin: 0;
 }
 
-.a2ui-row > :first-child .a2ui-text-body {
+/* Bold labels (first column of each details Row) */
+a2ui-v09-row > a2ui-v09-component-host:first-of-type .a2ui-text.body,
+a2ui-v09-row > a2ui-v09-component-host:first-of-type .a2ui-text.body p {
   font-weight: 700;
   color: #51607f;
+}
+
+/* Breathing room between the h2 headline and the details row */
+a2ui-v09-card .a2ui-text.h2 {
+  display: block;
+  margin-bottom: 0.6rem;
 }
