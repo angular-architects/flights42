@@ -1,9 +1,11 @@
 import {
   type AngularComponentImplementation,
+  BASIC_FUNCTIONS,
   BasicCatalogBase,
 } from '@a2ui/angular/v0_9';
 import { z, type ZodTypeAny } from 'zod/v3';
 
+import { formatIdImplementation } from './format-id';
 import { MilesProgress } from './miles-progress';
 
 const dynamicObjectSchema = z.union([
@@ -16,15 +18,16 @@ const milesProgressSchema = z
     passenger: dynamicObjectSchema.optional(),
     weight: z.number().optional(),
   })
-  .strict() as unknown as ZodTypeAny;
+  .strict();
 
-const milesProgressEntry: unknown = {
+const milesProgressEntry = {
   name: 'MilesProgress',
   component: MilesProgress,
   schema: milesProgressSchema,
-};
+} as unknown as AngularComponentImplementation;
 
 export const customCatalog = new BasicCatalogBase({
   id: 'https://example.com/catalogs/flights42-a2ui-demo',
-  extraComponents: [milesProgressEntry as AngularComponentImplementation],
+  extraComponents: [milesProgressEntry],
+  functions: [...BASIC_FUNCTIONS, formatIdImplementation],
 });

@@ -82,7 +82,13 @@ export function createSurfaceMessages(
           {
             id: 'passenger-id-value',
             component: 'Text',
-            text: { path: '/passenger/id' },
+            text: {
+              call: 'formatId',
+              args: {
+                value: { path: '/passenger/id' },
+              },
+              returnType: 'string',
+            },
             variant: 'body',
           },
           {
