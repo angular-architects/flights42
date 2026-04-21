@@ -30,7 +30,9 @@ export const appConfig: ApplicationConfig = {
         catalogs: [new BasicCatalog()],
       },
     },
-    provideMarkdownRenderer(async (markdown) => marked.parse(markdown)),
+    provideMarkdownRenderer(async (markdown) =>
+      marked.parse(String(markdown ?? '')),
+    ),
     A2uiRendererService,
     provideHashbrown({
       baseUrl: 'http://localhost:3000/api/chat',

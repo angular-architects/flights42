@@ -90,6 +90,11 @@ export class App {
             {
               id: 'passenger-card',
               component: 'Card',
+              child: 'passenger-card-column',
+            },
+            {
+              id: 'passenger-card-column',
+              component: 'Column',
               children: ['headline', 'details', 'select-button'],
             },
             {
