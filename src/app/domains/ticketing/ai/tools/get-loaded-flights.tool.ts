@@ -10,12 +10,8 @@ export const getLoadedFlightsTool = defineAgUiTool({
   description: `
 Returns the currently loaded/displayed flights (search/working set). This tool only returns data — it does not render UI.
 
-Finish with exactly one \`showComponents\` call.
-In that call, start with \`messageWidget\` for the short answer text.
-Use the registered \`flightWidget\` component from \`showComponents\` for each shown flight.
-Do not stop with messageWidget alone if concrete flights should be shown in the chat.
-Follow the exact \`showComponents\` schema and rules from that tool description.
-Use this tool when the user asks about the current flight list or search results, not for booked-flight / ticket questions (use the appropriate booked-flights flow instead).
+After calling this tool, finish the turn with exactly one \`renderA2ui\` call that shows the information the user asked for, based on the returned data.
+Use this tool when the user asks about the current flight list or search results (e.g. filtering, counting, grouping, comparing), not for booked-flight / ticket questions (use the appropriate booked-flights flow instead).
   `.trim(),
   execute: () => {
     const store = inject(FlightStore);
