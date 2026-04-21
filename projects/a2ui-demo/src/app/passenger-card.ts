@@ -118,7 +118,14 @@ export function createSurfaceMessages(
           {
             id: 'passenger-bonus-miles-value',
             component: 'Text',
-            text: { path: '/passenger/bonusMiles' },
+            text: {
+              call: 'formatNumber',
+              args: {
+                value: { path: '/passenger/bonusMiles' },
+                decimals: 0,
+              },
+              returnType: 'string',
+            },
             variant: 'body',
           },
           {
