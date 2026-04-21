@@ -1,15 +1,20 @@
-import { provideA2UI } from '@a2ui/angular';
+import { A2UI_RENDERER_CONFIG, A2uiRendererService } from '@a2ui/angular/v0_9';
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 
-import { a2uiDemoTheme } from './a2ui-demo-theme';
 import { customCatalog } from './custom-catalog/custom-catalog';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideA2UI({ catalog: customCatalog, theme: a2uiDemoTheme }),
+    {
+      provide: A2UI_RENDERER_CONFIG,
+      useValue: {
+        catalogs: [customCatalog],
+      },
+    },
+    A2uiRendererService,
   ],
 };

@@ -1,31 +1,35 @@
 import {
-  type Catalog,
-  type CatalogEntry,
-  DEFAULT_CATALOG,
-} from '@a2ui/angular';
-import { type Primitives, type Types } from '@a2ui/lit/0.8';
-import { inputBinding } from '@angular/core';
+  type AngularComponentImplementation,
+  BasicCatalogBase,
+} from '@a2ui/angular/v0_9';
+import { z, type ZodTypeAny } from 'zod/v3';
 
 import { MilesProgress } from './miles-progress';
 
-interface MilesProgressProperties {
-  label: Primitives.StringValue | null;
-  miles: Primitives.NumberValue | null;
-}
+const dynamicStringSchema = z.union([
+  z.string(),
+  z.object({ path: z.string() }).strict(),
+]);
+const dynamicNumberSchema = z.union([
+  z.number(),
+  z.object({ path: z.string() }).strict(),
+]);
 
-const milesProgressEntry: CatalogEntry<Types.AnyComponentNode> = {
-  type: () => MilesProgress,
-  bindings: (node) => {
-    const properties = node.properties as MilesProgressProperties;
+const milesProgressSchema = z
+  .object({
+    label: dynamicStringSchema.optional(),
+    miles: dynamicNumberSchema.optional(),
+    weight: z.number().optional(),
+  })
+  .strict() as unknown as ZodTypeAny;
 
-    return [
-      inputBinding('label', () => properties.label),
-      inputBinding('miles', () => properties.miles),
-    ];
-  },
+const milesProgressEntry: unknown = {
+  name: 'MilesProgress',
+  component: MilesProgress,
+  schema: milesProgressSchema,
 };
 
-export const customCatalog: Catalog = {
-  ...DEFAULT_CATALOG,
-  MilesProgress: milesProgressEntry,
-};
+export const customCatalog = new BasicCatalogBase({
+  id: 'https://example.com/catalogs/flights42-a2ui-demo',
+  extraComponents: [milesProgressEntry as AngularComponentImplementation],
+});

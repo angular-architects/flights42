@@ -33,49 +33,43 @@ export const questionWidget = defineServerWidget({
     const instanceId = randomUUID().slice(0, 8);
     const prefix = `question-${instanceId}`;
     const cardId = `${prefix}-card`;
+    const columnId = `${prefix}-column`;
     const dataPath = `/forms/${instanceId}`;
 
-    const cardChildren: string[] = [];
+    const columnChildren: string[] = [];
     const components: BuiltComponent['components'] = [];
 
     for (const question of questions) {
       const fieldId = `${prefix}-field-${question.id}`;
-      cardChildren.push(fieldId);
+      columnChildren.push(fieldId);
 
       components.push({
         id: fieldId,
-        component: {
-          TextField: {
-            text: { path: `${dataPath}/questions/${question.id}/answer` },
-            label: { path: `${dataPath}/questions/${question.id}/question` },
-          },
-        },
+        component: 'TextField',
+        value: { path: `${dataPath}/questions/${question.id}/answer` },
+        label: { path: `${dataPath}/questions/${question.id}/question` },
       });
     }
 
     const submitBtnId = `${prefix}-submit-btn`;
     const submitLabelId = `${prefix}-submit-label`;
-    cardChildren.push(submitBtnId);
+    columnChildren.push(submitBtnId);
 
     components.push({
       id: submitLabelId,
-      component: {
-        Text: {
-          text: { path: `${dataPath}/submitLabel` },
-          usageHint: 'body',
-        },
-      },
+      component: 'Text',
+      text: { path: `${dataPath}/submitLabel` },
+      variant: 'body',
     });
     components.push({
       id: submitBtnId,
-      component: {
-        Button: {
-          child: submitLabelId,
-          action: {
-            name: 'submitAnswer',
-            context: [
-              { key: 'questions', value: { path: `${dataPath}/questions` } },
-            ],
+      component: 'Button',
+      child: submitLabelId,
+      action: {
+        event: {
+          name: 'submitAnswer',
+          context: {
+            questions: { path: `${dataPath}/questions` },
           },
         },
       },
@@ -86,30 +80,31 @@ export const questionWidget = defineServerWidget({
       components: [
         {
           id: cardId,
-          component: {
-            Card: {
-              children: { explicitList: cardChildren },
-            },
-          },
+          component: 'Card',
+          child: columnId,
+        },
+        {
+          id: columnId,
+          component: 'Column',
+          children: columnChildren,
         },
         ...components,
       ],
       dataModelUpdate: {
         path: dataPath,
-        contents: [
-          { key: 'submitLabel', valueString: 'Submit' },
-          {
-            key: 'questions',
-            valueMap: questions.map((question) => ({
-              key: question.id,
-              valueMap: [
-                { key: 'id', valueString: question.id },
-                { key: 'question', valueString: question.question },
-                { key: 'answer', valueString: '' },
-              ],
-            })),
-          },
-        ],
+        value: {
+          submitLabel: 'Submit',
+          questions: Object.fromEntries(
+            questions.map((question) => [
+              question.id,
+              {
+                id: question.id,
+                question: question.question,
+                answer: '',
+              },
+            ]),
+          ),
+        },
       },
     };
   },

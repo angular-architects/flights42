@@ -651,10 +651,10 @@ input[type='button']:disabled {
 
 /* Message widget (first/root text in showComponents Column): no vertical spacing */
 app-widget-container
-  a2ui-surface
-  > a2ui-column
+  a2ui-v09-surface
+  > a2ui-v09-column
   > section.a2ui-column
-  > a2ui-text:first-child
+  > a2ui-v09-text:first-child
   > section.a2ui-text-body {
   padding-block: 0 !important;
   margin-block: 0 !important;
@@ -663,10 +663,10 @@ app-widget-container
 }
 
 app-widget-container
-  a2ui-surface
-  > a2ui-column
+  a2ui-v09-surface
+  > a2ui-v09-column
   > section.a2ui-column
-  > a2ui-text:first-child
+  > a2ui-v09-text:first-child
   > section.a2ui-text-body
   > p {
   margin: 0 !important;
@@ -676,35 +676,35 @@ app-widget-container
 }
 
 /* Backward compatibility for older single-component surfaces. */
-app-widget-container a2ui-surface > a2ui-text p {
+app-widget-container a2ui-v09-surface > a2ui-v09-text p {
   margin: 0 !important;
   padding-block: 0 !important;
 }
 
-/* A2UI 0.8 fallback: text hint styles are not always applied reliably. */
-app-widget-container a2ui-surface a2ui-card h3 {
+/* A2UI v0.9 fallback: text hint styles are not always applied reliably. */
+app-widget-container a2ui-v09-surface a2ui-v09-card h3 {
   font-size: 1.42rem !important;
   font-weight: 700 !important;
   line-height: 1.26 !important;
   margin: 0 !important;
 }
 
-app-widget-container a2ui-surface a2ui-card h5 {
+app-widget-container a2ui-v09-surface a2ui-v09-card h5 {
   font-size: 1rem !important;
   font-weight: 500 !important;
   line-height: 1.3 !important;
   margin: 0 !important;
 }
 
-app-widget-container a2ui-surface a2ui-card p {
+app-widget-container a2ui-v09-surface a2ui-v09-card p {
   margin: 0 !important;
 }
 
-app-widget-container a2ui-surface a2ui-card a2ui-divider hr {
+app-widget-container a2ui-v09-surface a2ui-v09-card a2ui-v09-divider hr {
   margin: 0.14rem 0 !important;
 }
 
-app-widget-container a2ui-surface a2ui-card a2ui-button p {
+app-widget-container a2ui-v09-surface a2ui-v09-card a2ui-v09-button p {
   color: #fff !important;
   font-weight: 700 !important;
   margin: 0 !important;
@@ -1307,50 +1307,55 @@ legend {
   margin-bottom: 0;
 }
 
-/* A2UI theme classes (mapped via app.config.ts -> theme.components). */
-.a2ui-card {
-  padding: 0.72rem 0.9rem;
-  border: 1px solid #dbe3ff;
-  border-radius: 1rem;
-  background: #ffffff;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
-  display: grid;
-  gap: 10px;
-  width: 250px;
-  min-width: 250px;
-  max-width: 250px;
-  box-sizing: border-box;
-  margin-top: 0;
-  margin-bottom: 0;
+/* A2UI theme: customize built-in Card & Button via exposed CSS variables
+ * so we don't fight Angular view-encapsulation specificity. */
+app-widget-container {
+  --a2ui-card-padding: 0.9rem 1rem;
+  --a2ui-card-border: 1px solid #dbe3ff;
+  --a2ui-card-border-radius: 1rem;
+  --a2ui-card-background: #ffffff;
+  --a2ui-card-box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+  --a2ui-card-margin: 0;
+
+  --a2ui-button-padding: 0.3rem 1rem;
+  --a2ui-button-border-radius: 9999px;
+  --a2ui-button-border: none;
+  --a2ui-button-background: #7476bf;
+  --a2ui-button-box-shadow: 0 3px 8px rgba(73, 76, 148, 0.28);
+  --a2ui-button-font-weight: 600;
+  --a2ui-button-margin: 0.4rem 0 0 0;
+
+  --a2ui-color-on-secondary: #ffffff;
 }
 
-.a2ui-button {
-  border: none;
-  border-radius: 9999px;
-  padding: 0.12rem 0.9rem;
-  min-height: unset;
-  background: #7476bf;
+/* Keep the card visually compact in the chat bubble */
+app-widget-container .a2ui-card {
+  display: grid;
+  gap: 0.45rem;
+  width: 250px;
+  box-sizing: border-box;
+}
+
+/* Button hover + forced white label (overrides default on-secondary color) */
+app-widget-container .a2ui-button {
   color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 3px 8px rgba(73, 76, 148, 0.28);
-  font-size: 1rem;
-  line-height: 1.1;
+  line-height: 1.15;
   cursor: pointer;
-  margin-top: 10px;
   transition:
-    background 120ms ease-out,
+    background-color 120ms ease-out,
     box-shadow 120ms ease-out;
 }
 
-.a2ui-button:hover {
-  background: #5f62b0;
-  color: #ffffff;
+app-widget-container .a2ui-button:hover {
+  background-color: #5f62b0;
   box-shadow: 0 4px 10px rgba(73, 76, 148, 0.36);
 }
 
-.a2ui-button:hover .a2ui-md-p,
-.a2ui-button:hover p {
-  color: #ffffff;
+app-widget-container .a2ui-button p,
+app-widget-container .a2ui-button .a2ui-md-p {
+  color: #ffffff !important;
+  font-weight: 600;
+  margin: 0;
 }
 
 .a2ui-column {
@@ -1358,7 +1363,7 @@ legend {
 }
 
 /* showComponents root stack spacing (between sibling components) */
-app-widget-container a2ui-surface > a2ui-column > section.a2ui-column {
+app-widget-container a2ui-v09-surface > a2ui-v09-column > section.a2ui-column {
   gap: 0.6rem;
 }
 

@@ -47,89 +47,73 @@ export const flightWidget = defineServerWidget({
     const dataPath = `/flights/${instanceId}`;
 
     const cardId = `${prefix}-card`;
+    const columnId = `${prefix}-column`;
     const titleId = `${prefix}-title`;
     const flightNoId = `${prefix}-flight-no`;
     const dateId = `${prefix}-date`;
     const delayId = `${prefix}-delay`;
 
-    const cardChildren = [titleId, flightNoId, dateId, delayId];
+    const columnChildren = [titleId, flightNoId, dateId, delayId];
 
     const components: BuiltComponent['components'] = [
       {
         id: titleId,
-        component: {
-          Text: {
-            text: { path: `${dataPath}/title` },
-            usageHint: 'h3',
-          },
-        },
+        component: 'Text',
+        text: { path: `${dataPath}/title` },
+        variant: 'h3',
       },
       {
         id: flightNoId,
-        component: {
-          Text: {
-            text: { path: `${dataPath}/flightNo` },
-            usageHint: 'caption',
-          },
-        },
+        component: 'Text',
+        text: { path: `${dataPath}/flightNo` },
+        variant: 'caption',
       },
       {
         id: dateId,
-        component: {
-          Text: {
-            text: { path: `${dataPath}/date` },
-            usageHint: 'body',
-          },
-        },
+        component: 'Text',
+        text: { path: `${dataPath}/date` },
+        variant: 'body',
       },
       {
         id: delayId,
-        component: {
-          Text: {
-            text: { path: `${dataPath}/delay` },
-            usageHint: 'body',
-          },
-        },
+        component: 'Text',
+        text: { path: `${dataPath}/delay` },
+        variant: 'body',
       },
     ];
-
-    const dataContents: { key: string; valueString: string }[] = [
-      { key: 'title', valueString: `${flight.from} → ${flight.to}` },
-      { key: 'flightNo', valueString: `Flight #${flight.id}` },
-      { key: 'date', valueString: `Date: ${formatFlightDate(flight.date)}` },
-      { key: 'delay', valueString: `Delay: ${flight.delay} min` },
-    ];
+    const dataValue: Record<string, unknown> = {
+      title: `${flight.from} -> ${flight.to}`,
+      flightNo: `Flight #${flight.id}`,
+      date: `Date: ${formatFlightDate(flight.date)}`,
+      delay: `Delay: ${flight.delay} min`,
+    };
 
     if (status === 'booked') {
       const buttonId = `${prefix}-checkin-btn`;
       const buttonLabelId = `${prefix}-checkin-label`;
-      cardChildren.push(buttonId);
+      columnChildren.push(buttonId);
 
       components.push({
         id: buttonLabelId,
-        component: {
-          Text: {
-            text: { path: `${dataPath}/checkInLabel` },
-            usageHint: 'body',
-          },
-        },
+        component: 'Text',
+        text: { path: `${dataPath}/checkInLabel` },
+        variant: 'body',
       });
       components.push({
         id: buttonId,
-        component: {
-          Button: {
-            child: buttonLabelId,
-            action: {
-              name: 'checkIn',
-              context: [
-                { key: 'flightId', value: { literalNumber: flight.id } },
-              ],
+        component: 'Button',
+        child: buttonLabelId,
+        action: {
+          event: {
+            name: 'checkIn',
+            context: {
+              flightId: flight.id,
             },
           },
         },
       });
 
-      dataContents.push({ key: 'checkInLabel', valueString: 'Check in' });
+      dataValue['checkInLabel'] = 'Check in';
     }
 
     return {
@@ -137,17 +121,19 @@ export const flightWidget = defineServerWidget({
       components: [
         {
           id: cardId,
-          component: {
-            Card: {
-              children: { explicitList: cardChildren },
-            },
-          },
+          component: 'Card',
+          child: columnId,
+        },
+        {
+          id: columnId,
+          component: 'Column',
+          children: columnChildren,
         },
         ...components,
       ],
       dataModelUpdate: {
         path: dataPath,
-        contents: dataContents,
+        value: dataValue,
       },
     };
   },
