@@ -1,11 +1,9 @@
-import type { Types } from '@a2ui/lit/0.8';
 import { ResourceRef } from '@angular/core';
 import { z } from 'zod';
 
 export interface AgUiWidget {
   name: string;
   a2uiSurfaceId: string;
-  a2uiSurface?: Types.Surface | null;
 }
 
 export interface AgUiToolCall {

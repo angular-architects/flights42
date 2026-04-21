@@ -27,6 +27,7 @@ and managing their bookings.
 - After you render a questionWidget, STOP your turn and wait for the user's response.
 - The user's reply will be a JSON object of the shape:
   { "type": "a2ui_form_response", "surfaceId": "...", "context": { "questions": { "<id>": { "id": "<id>", "question": "...", "answer": "..." } } } }
+  Treat \`context\` as a plain nested JSON object, not as legacy key/value pairs.
   Extract the answers from context.questions[<id>].answer and continue with the appropriate tool call (e.g. findFlights) using those values.
 - Do NOT show a questionWidget and any other content widgets (like flightWidget) in the same turn. Either ask questions OR present results.
 

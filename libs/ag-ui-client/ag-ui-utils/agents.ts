@@ -1,4 +1,4 @@
-import { MessageProcessor } from '@a2ui/angular';
+import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import {
   type AgentSubscriber,
   type HttpAgent,
@@ -37,7 +37,7 @@ export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  processor: MessageProcessor;
+  renderer: A2uiRendererService;
   runId: string;
   model?: string;
   useServerMemory?: boolean;
@@ -56,7 +56,7 @@ export async function runAgent(
     agent,
     tools,
     toolMap,
-    processor,
+    renderer,
     model,
     useServerMemory,
     messageStream,
@@ -153,7 +153,7 @@ export async function runAgent(
           messages,
           event.toolCallId,
           event.content,
-          processor,
+          renderer,
         );
         return {
           value: completeToolCall(withSurface, event.toolCallId),
@@ -171,7 +171,7 @@ export async function runAgent(
           messages,
           event.messageId,
           event.content,
-          processor,
+          renderer,
         );
 
         return {
@@ -228,7 +228,7 @@ export interface RunUntilSettledOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
-  processor: MessageProcessor;
+  renderer: A2uiRendererService;
   environmentInjector: EnvironmentInjector;
   runId: string;
   model?: string;
@@ -246,7 +246,7 @@ export async function runUntilSettled(
     agent,
     tools,
     toolMap,
-    processor,
+    renderer,
     environmentInjector,
     runId,
     model,
@@ -276,7 +276,7 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
-      processor,
+      renderer,
       runId: currentRunId,
       model,
       useServerMemory,
@@ -292,7 +292,7 @@ export async function runUntilSettled(
     await executePendingTools({
       agent,
       toolMap,
-      processor,
+      renderer,
       environmentInjector,
       pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,
