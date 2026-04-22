@@ -39,7 +39,7 @@ export async function agUiRouteHandler(
     ?.agentMode;
   const effectiveAgentId =
     mode === 'plan'
-      ? 'packagePlannerAgent'
+      ? 'planningAgent'
       : mode === 'execution'
         ? 'ticketingAgent'
         : (agentId ?? '');

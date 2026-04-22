@@ -5,6 +5,7 @@ import { Memory } from '@mastra/memory';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
+import { packageAgent } from './package-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
 // const hotelsMcpTools = await initMcpServer({
@@ -23,5 +24,6 @@ export const ticketingAgent = new Agent({
     cancelFlightTool,
     // ...hotelsMcpTools,
   },
+  agents: { packageAgent },
   memory: new Memory(),
 });
