@@ -1054,6 +1054,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             memory: { thread: input.threadId, resource: this.resourceId },
             clientTools,
             requestContext: this.requestContext,
+            abortSignal: this.abortSignal,
           });
         }
 
@@ -1063,6 +1064,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
           memory: { thread: input.threadId, resource: this.resourceId },
           clientTools,
           requestContext: this.requestContext,
+          abortSignal: this.abortSignal,
         });
       }
 
@@ -1072,6 +1074,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
         memory: { thread: input.threadId, resource: this.resourceId },
         clientTools,
         requestContext: this.requestContext,
+        abortSignal: this.abortSignal,
       });
     }
 
