@@ -77,6 +77,7 @@ export interface RunAgentOptions {
   resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
+  forwardedProps?: () => Record<string, unknown>;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
 }
 
@@ -96,6 +97,7 @@ export async function runAgent(
     componentMap,
     model,
     useServerMemory,
+    forwardedProps,
     messageStream,
   } = options;
   const { runId } = options;
@@ -326,11 +328,19 @@ export async function runAgent(
       : normalizeAgentMessagesForRun(agent.messages),
   );
 
+  const mergedForwardedProps: Record<string, unknown> = {
+    ...(model ? { modelHint: model } : {}),
+    ...(forwardedProps?.() ?? {}),
+  };
+
   await agent.runAgentCompat(
     {
       runId,
       tools: toolsToOffer,
-      forwardedProps: model ? { modelHint: model } : undefined,
+      forwardedProps:
+        Object.keys(mergedForwardedProps).length > 0
+          ? mergedForwardedProps
+          : undefined,
       resume: options.resume,
     },
     subscriber,
@@ -424,6 +434,7 @@ export interface RunUntilSettledOptions {
   resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
+  forwardedProps?: () => Record<string, unknown>;
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
@@ -444,6 +455,7 @@ export async function runUntilSettled(
     resume,
     model,
     useServerMemory,
+    forwardedProps,
     abortSignal,
     messageStream,
     maxLocalTurns,
@@ -474,6 +486,7 @@ export async function runUntilSettled(
       resume: turnCount === 1 ? resume : undefined,
       model,
       useServerMemory,
+      forwardedProps,
       messageStream,
     });
 

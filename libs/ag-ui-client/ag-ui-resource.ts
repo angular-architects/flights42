@@ -126,6 +126,7 @@ export function agUiResource(
       resume: params.resume,
       model: options.model,
       useServerMemory,
+      forwardedProps: options.forwardedProps,
       abortSignal,
       interrupt,
       messageStream,

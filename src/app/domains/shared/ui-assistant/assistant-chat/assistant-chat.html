@@ -41,6 +41,14 @@
         </div>
       </div>
       <div class="ai-actions">
+        <select
+          class="mode-select"
+          aria-label="Agent mode"
+          [value]="mode()"
+          (change)="setMode($any($event.target).value)">
+          <option value="plan">Plan</option>
+          <option value="execution">Execution</option>
+        </select>
         <button
           (click)="toggle()"
           class="icon-btn"

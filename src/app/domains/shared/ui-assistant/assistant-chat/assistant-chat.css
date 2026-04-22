@@ -106,7 +106,34 @@
 
 :host ::ng-deep .ai-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
+}
+
+:host ::ng-deep .mode-select {
+  height: 36px;
+  padding: 0 30px 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1l4 4 4-4' stroke='%23555' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+:host ::ng-deep .mode-select:hover {
+  background-color: var(--surface-2);
+}
+
+:host ::ng-deep .mode-select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 40%, white);
 }
 
 :host ::ng-deep .icon-btn {

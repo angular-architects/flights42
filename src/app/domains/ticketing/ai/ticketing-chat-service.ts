@@ -13,6 +13,7 @@ import {
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
+import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
@@ -28,6 +29,7 @@ export class TicketingChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
   private readonly injector = inject(EnvironmentInjector);
+  private readonly agentMode = inject(AgentModeService);
 
   private chat: AgUiChatResourceRef | null = null;
 
@@ -38,6 +40,7 @@ export class TicketingChatService {
           url: this.config.agUiUrl,
           model: this.config.model,
           useServerMemory: true,
+          forwardedProps: () => ({ agentMode: this.agentMode.mode() }),
           tools: [
             findFlightsTool,
             getLoadedFlightsTool,

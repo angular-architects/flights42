@@ -268,6 +268,7 @@ export interface AgUiResourceOptions {
   useServerMemory?: boolean;
   maxLocalTurns?: number;
   model?: string;
+  forwardedProps?: () => Record<string, unknown>;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
