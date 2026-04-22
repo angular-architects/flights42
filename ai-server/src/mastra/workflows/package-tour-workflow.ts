@@ -24,27 +24,37 @@ const hotelListSchema = z.object({
   hotels: z.array(hotelSchema),
 });
 
-const findOutboundFlightsStep = createStep({
-  id: 'findOutboundFlights',
-  description: 'Searches for flights from the origin city to the destination.',
-  inputSchema: packageInputSchema,
-  outputSchema: flightListSchema,
-  execute: async ({ inputData }) => {
-    const flights = await searchFlights(inputData.from, inputData.to);
-    return { flights };
-  },
-});
+function createFlightSearchStep(
+  id: 'findOutboundFlights' | 'findReturnFlights',
+  direction: 'outbound' | 'return',
+) {
+  return createStep({
+    id,
+    description:
+      direction === 'outbound'
+        ? 'Searches for flights from the origin city to the destination.'
+        : 'Searches for flights from the destination back to the origin.',
+    inputSchema: packageInputSchema,
+    outputSchema: flightListSchema,
+    execute: async ({ inputData }) => {
+      const [from, to] =
+        direction === 'outbound'
+          ? [inputData.from, inputData.to]
+          : [inputData.to, inputData.from];
+      return { flights: await searchFlights(from, to) };
+    },
+  });
+}
 
-const findReturnFlightsStep = createStep({
-  id: 'findReturnFlights',
-  description: 'Searches for flights from the destination back to the origin.',
-  inputSchema: packageInputSchema,
-  outputSchema: flightListSchema,
-  execute: async ({ inputData }) => {
-    const flights = await searchFlights(inputData.to, inputData.from);
-    return { flights };
-  },
-});
+const findOutboundFlightsStep = createFlightSearchStep(
+  'findOutboundFlights',
+  'outbound',
+);
+
+const findReturnFlightsStep = createFlightSearchStep(
+  'findReturnFlights',
+  'return',
+);
 
 const findHotelsStep = createStep({
   id: 'findHotels',
