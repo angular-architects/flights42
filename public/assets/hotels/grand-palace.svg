@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <defs>
+    <linearGradient id="palace-sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a" />
+      <stop offset="100%" stop-color="#fca5a5" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="480" fill="url(#palace-sky)" />
+  <rect y="360" width="800" height="120" fill="#d6d3d1" />
+  <rect x="170" y="170" width="460" height="190" rx="18" fill="#fff7ed" />
+  <rect x="230" y="120" width="340" height="70" rx="14" fill="#f59e0b" />
+  <rect x="365" y="80" width="70" height="55" rx="10" fill="#b45309" />
+  <g fill="#fdba74">
+    <rect x="220" y="220" width="48" height="72" rx="8" />
+    <rect x="290" y="220" width="48" height="72" rx="8" />
+    <rect x="360" y="220" width="48" height="72" rx="8" />
+    <rect x="430" y="220" width="48" height="72" rx="8" />
+    <rect x="500" y="220" width="48" height="72" rx="8" />
+  </g>
+  <rect x="355" y="285" width="90" height="75" rx="14" fill="#7c2d12" />
+  <g fill="#fef3c7">
+    <circle cx="260" cy="155" r="10" />
+    <circle cx="400" cy="130" r="12" />
+    <circle cx="540" cy="155" r="10" />
+  </g>
+  <text x="400" y="430" font-family="Arial, sans-serif" font-size="42" text-anchor="middle" fill="#7c2d12">
+    Grand Palace
+  </text>
+</svg>

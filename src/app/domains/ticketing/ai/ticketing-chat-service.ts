@@ -23,6 +23,7 @@ import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool'
 import { bookFlightActionCard } from './widgets/book-flight-action-card';
 import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { flightWidget } from './widgets/flight-widget';
+import { hotelWidget } from './widgets/hotel-widget';
 import { planWidget } from './widgets/plan-widget';
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +52,7 @@ export class TicketingChatService {
             createShowComponentsTool([
               messageWidget,
               flightWidget,
+              hotelWidget,
               planWidget,
               mcpAppsWidgetComponent,
               bookFlightActionCard,

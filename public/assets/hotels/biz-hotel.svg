@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <defs>
+    <linearGradient id="biz-sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8ec5fc" />
+      <stop offset="100%" stop-color="#e0c3fc" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="480" fill="url(#biz-sky)" />
+  <rect y="340" width="800" height="140" fill="#c7d2e3" />
+  <rect x="120" y="140" width="240" height="220" rx="12" fill="#f8fafc" />
+  <rect x="170" y="110" width="140" height="40" rx="10" fill="#2563eb" />
+  <rect x="400" y="100" width="280" height="260" rx="16" fill="#dbeafe" />
+  <g fill="#93c5fd">
+    <rect x="160" y="190" width="40" height="40" rx="6" />
+    <rect x="220" y="190" width="40" height="40" rx="6" />
+    <rect x="280" y="190" width="40" height="40" rx="6" />
+    <rect x="160" y="250" width="40" height="40" rx="6" />
+    <rect x="220" y="250" width="40" height="40" rx="6" />
+    <rect x="280" y="250" width="40" height="40" rx="6" />
+    <rect x="450" y="150" width="48" height="48" rx="8" />
+    <rect x="520" y="150" width="48" height="48" rx="8" />
+    <rect x="590" y="150" width="48" height="48" rx="8" />
+    <rect x="450" y="220" width="48" height="48" rx="8" />
+    <rect x="520" y="220" width="48" height="48" rx="8" />
+    <rect x="590" y="220" width="48" height="48" rx="8" />
+  </g>
+  <text x="400" y="430" font-family="Arial, sans-serif" font-size="42" text-anchor="middle" fill="#1e3a8a">
+    Biz Hotel
+  </text>
+</svg>
