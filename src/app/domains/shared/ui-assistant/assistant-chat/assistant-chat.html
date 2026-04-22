@@ -82,6 +82,25 @@
           class="composer-input"
           name="message"
           placeholder="Your Question ..." />
+        @if (chat.isLoading()) {
+          <button
+            type="button"
+            class="stop-btn"
+            (click)="stop()"
+            title="Aktuellen Run abbrechen"
+            aria-label="Aktuellen Run abbrechen">
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="6"
+                y="6"
+                width="12"
+                height="12"
+                rx="1.5"
+                fill="currentColor" />
+            </svg>
+            <span>Stop</span>
+          </button>
+        }
       </div>
     </form>
   </aside>

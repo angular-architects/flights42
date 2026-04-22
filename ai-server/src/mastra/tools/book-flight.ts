@@ -8,6 +8,24 @@ import {
 } from '../data/booked-flights-store.js';
 import { formatFlightDate } from '../utils/format-date.js';
 
+function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(timeout);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
 const flightSchema = z.object({
   id: z.number(),
   from: z.string(),
@@ -52,6 +70,7 @@ export const bookFlightTool = createTool({
   execute: async ({ flightId }, context) => {
     const resumeData = context?.agent?.resumeData;
     const suspend = context?.agent?.suspend;
+    const abortSignal = context?.abortSignal;
 
     if (resumeData?.approved === false) {
       return {
@@ -91,6 +110,8 @@ export const bookFlightTool = createTool({
         code: 'AWAITING_APPROVAL',
       };
     }
+
+    await abortableDelay(6000, abortSignal);
 
     addBooking(flightId);
     return {

@@ -397,6 +397,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly requestContext: RequestContext;
   readonly store: Store;
 
+  private abortSignal?: AbortSignal;
+
   constructor(options: ExtendedLocalAgentOptions) {
     super({ agentId: options.agentId });
     this.agentId = options.agentId;
@@ -404,6 +406,14 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.resourceId = options.resourceId;
     this.requestContext = options.requestContext ?? new RequestContext();
     this.store = options.store ?? defaultStore;
+  }
+
+  setAbortSignal(signal: AbortSignal | undefined): void {
+    this.abortSignal = signal;
+  }
+
+  getAbortSignal(): AbortSignal | undefined {
+    return this.abortSignal;
   }
 
   override clone(): ExtendedMastraAgent {
@@ -765,6 +775,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             memory: { thread: input.threadId, resource: this.resourceId },
             clientTools,
             requestContext: this.requestContext,
+            abortSignal: this.abortSignal,
           });
         }
 
@@ -774,6 +785,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
           memory: { thread: input.threadId, resource: this.resourceId },
           clientTools,
           requestContext: this.requestContext,
+          abortSignal: this.abortSignal,
         });
       }
 
@@ -783,6 +795,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
         memory: { thread: input.threadId, resource: this.resourceId },
         clientTools,
         requestContext: this.requestContext,
+        abortSignal: this.abortSignal,
       });
     }
 
@@ -791,6 +804,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       runId: input.runId,
       clientTools,
       requestContext: this.requestContext,
+      abortSignal: this.abortSignal,
     });
   }
 }
@@ -803,7 +817,7 @@ export function getExtendedLocalAgent(options: {
   resourceId: string;
   requestContext?: RequestContext;
   store?: Store;
-}): AbstractAgent {
+}): ExtendedMastraAgent {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
     throw new Error(`Agent ${options.agentId} not found`);
