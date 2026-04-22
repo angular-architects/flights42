@@ -70,7 +70,7 @@ export const bookFlightTool = createTool({
   execute: async ({ flightId }, context) => {
     const resumeData = context?.agent?.resumeData;
     const suspend = context?.agent?.suspend;
-    const abortSignal = context?.abortSignal;
+    // const abortSignal = context?.abortSignal;
 
     if (resumeData?.approved === false) {
       return {
@@ -111,7 +111,7 @@ export const bookFlightTool = createTool({
       };
     }
 
-    await abortableDelay(6000, abortSignal);
+    // await abortableDelay(6000, abortSignal);
 
     addBooking(flightId);
     return {
