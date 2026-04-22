@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { renderA2uiTool } from '../../../../libs/ag-ui-server/index.js';
+import { renderA2uiTool as renderA2ui } from '../../../../libs/ag-ui-server/index.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
@@ -16,7 +16,7 @@ export const ticketingAgent = new Agent({
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
-    renderA2ui: renderA2uiTool,
+    renderA2ui,
   },
   memory: new Memory(),
 });

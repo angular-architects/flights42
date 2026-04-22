@@ -7,12 +7,10 @@ const BASIC_CATALOG_ID =
 
 export interface BuiltComponent {
   rootId: string;
-  components: Array<
-    {
-      id: string;
-      component: string;
-    } & Record<string, unknown>
-  >;
+  components: ({
+    id: string;
+    component: string;
+  } & Record<string, unknown>)[];
   dataModelUpdate?: {
     path: string;
     value: unknown;
