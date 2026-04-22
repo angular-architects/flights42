@@ -10,7 +10,7 @@ export const getLoadedFlightsTool = defineAgUiTool({
   description: `
 Returns the currently loaded/displayed flights (search/working set). This tool only returns data — it does not render UI.
 
-After calling this tool, finish the turn with exactly one \`renderA2ui\` call that shows the information the user asked for, based on the returned data.
+After calling this tool, finish the turn with exactly one \`renderA2uiTool\` call that shows the information the user asked for, based on the returned data.
 Use this tool when the user asks about the current flight list or search results (e.g. filtering, counting, grouping, comparing), not for booked-flight / ticket questions (use the appropriate booked-flights flow instead).
   `.trim(),
   execute: () => {

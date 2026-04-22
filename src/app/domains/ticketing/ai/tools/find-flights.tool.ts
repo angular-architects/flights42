@@ -16,7 +16,7 @@ Remarks:
 - Do NOT summarize or list the found flights yourself.
 - For the search parameters, airport codes are NOT used but the city name. First letter in upper case.
 - Do not announce this tool call before executing it. The UI already shows that the tool is running.
-- Finish the turn with a single \`renderA2ui\` call that contains at most a short confirmation text (e.g. that matching flights are now shown). Do not render the found flights themselves.
+- Finish the turn with a single \`renderA2uiTool\` call that contains at most a short confirmation text (e.g. that matching flights are now shown). Do not render the found flights themselves.
     `.trim(),
   schema: z.object({
     from: z.string().describe('airport of departure'),

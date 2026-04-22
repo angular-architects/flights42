@@ -5,7 +5,7 @@ import {
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-export const RENDER_A2UI_TOOL_NAME = 'renderA2ui';
+export const RENDER_A2UI_TOOL_NAME = 'renderA2uiTool';
 
 type CreateSurfaceMsg = Extract<A2uiMessage, { createSurface: unknown }>;
 type UpdateComponentsMsg = Extract<A2uiMessage, { updateComponents: unknown }>;
@@ -30,7 +30,9 @@ function getMessageSurfaceId(message: A2uiMessage): string {
   if ('deleteSurface' in message) {
     return message.deleteSurface.surfaceId;
   }
-  throw new Error('renderA2ui: encountered message without recognizable type');
+  throw new Error(
+    'renderA2uiTool: encountered message without recognizable type',
+  );
 }
 
 function collectReferencedChildIds(components: ComponentEntry[]): string[] {
@@ -72,7 +74,7 @@ function validateReferentialIntegrity(messages: A2uiMessage[]): void {
     for (const referencedId of referenced) {
       if (!definedIds.has(referencedId)) {
         throw new Error(
-          `renderA2ui: component id "${referencedId}" is referenced via child/children but is not defined in updateComponents.components`,
+          `renderA2uiTool: component id "${referencedId}" is referenced via child/children but is not defined in updateComponents.components`,
         );
       }
     }
@@ -131,14 +133,14 @@ export const renderA2uiTool = createTool({
             return `${path}: ${issue.message}`;
           })
           .join('; ');
-        throw new Error(`renderA2ui: schema validation failed — ${issues}`);
+        throw new Error(`renderA2uiTool: schema validation failed — ${issues}`);
       }
       throw err;
     }
     const messages = parsed.messages;
 
     if (messages.length === 0) {
-      throw new Error('renderA2ui: messages array must not be empty');
+      throw new Error('renderA2uiTool: messages array must not be empty');
     }
 
     const createSurfaceMessages = messages.filter(
@@ -146,7 +148,7 @@ export const renderA2uiTool = createTool({
     );
     if (createSurfaceMessages.length !== 1) {
       throw new Error(
-        `renderA2ui: expected exactly one createSurface message, got ${createSurfaceMessages.length}`,
+        `renderA2uiTool: expected exactly one createSurface message, got ${createSurfaceMessages.length}`,
       );
     }
 
@@ -155,7 +157,7 @@ export const renderA2uiTool = createTool({
     );
     if (updateComponentsMessages.length !== 1) {
       throw new Error(
-        `renderA2ui: expected exactly one updateComponents message, got ${updateComponentsMessages.length}`,
+        `renderA2uiTool: expected exactly one updateComponents message, got ${updateComponentsMessages.length}`,
       );
     }
 
@@ -163,7 +165,7 @@ export const renderA2uiTool = createTool({
     for (const message of messages) {
       if (getMessageSurfaceId(message) !== surfaceId) {
         throw new Error(
-          `renderA2ui: all messages must share the same surfaceId (expected "${surfaceId}")`,
+          `renderA2uiTool: all messages must share the same surfaceId (expected "${surfaceId}")`,
         );
       }
     }
@@ -174,7 +176,7 @@ export const renderA2uiTool = createTool({
     ).some((component) => component['id'] === 'root');
     if (!rootDefined) {
       throw new Error(
-        'renderA2ui: updateComponents.components must define a component with id "root"',
+        'renderA2uiTool: updateComponents.components must define a component with id "root"',
       );
     }
 

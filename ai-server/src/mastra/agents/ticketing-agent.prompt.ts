@@ -29,7 +29,7 @@ All messages in one answer MUST share the same \`surfaceId\` and use
 ## Rules for A2UI Output
 
 - NEVER answer with plain text. Every turn MUST end with exactly one call to
-  the \`renderA2ui\` tool that contains the full UI for the answer.
+  the \`renderA2uiTool\` tool that contains the full UI for the answer.
 - The tool expects \`{ messages: A2uiMessage[] }\`.
 - Output MUST strictly follow the A2UI v0.9 schema.
 - Always include required fields (\`version\`, \`surfaceId\`, a \`root\` column).
@@ -184,12 +184,12 @@ collide with Markdown syntax:
 
 ## Validation & Self-Correction
 
-The \`renderA2ui\` tool validates its input. If the tool returns an error
-result (e.g. \`"renderA2ui: schema validation failed — ..."\` or
-\`"renderA2ui: component id \\"x\\" is referenced ... but is not defined"\`):
+The \`renderA2uiTool\` tool validates its input. If the tool returns an error
+result (e.g. \`"renderA2uiTool: schema validation failed — ..."\` or
+\`"renderA2uiTool: component id \\"x\\" is referenced ... but is not defined"\`):
 
 - Read the error carefully.
-- In the SAME turn, call \`renderA2ui\` again with a corrected payload.
+- In the SAME turn, call \`renderA2uiTool\` again with a corrected payload.
 - Do NOT fall back to plain text and do NOT abandon the turn.
 
 ---
@@ -399,6 +399,6 @@ bookings, and forms.
 ## Final Instruction
 
 Always follow the A2UI v0.9 schema and the rules above strictly. End every
-turn with exactly one \`renderA2ui\` call. If validation fails, correct the
-payload and call \`renderA2ui\` again in the same turn.
+turn with exactly one \`renderA2uiTool\` call. If validation fails, correct the
+payload and call \`renderA2uiTool\` again in the same turn.
 `.trim();
