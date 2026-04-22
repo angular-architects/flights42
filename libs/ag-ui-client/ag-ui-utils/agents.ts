@@ -20,6 +20,7 @@ import {
 } from '../ag-ui-types';
 import {
   appendErrorMessage,
+  friendlyErrorMessage,
   readMessages,
   upsertAssistantMessage,
 } from './messages';
@@ -259,10 +260,15 @@ export async function runAgent(
       }));
     },
     onRunErrorEvent: ({ event }) => {
+      const message =
+        event.code === 'abort'
+          ? 'Request was aborted.'
+          : event.message || 'Unknown AG-UI run error';
+
       messageStream.update((item) => ({
         value: appendErrorMessage(
           markPendingToolCallsAsError(readMessages(item), componentMap),
-          event.message || 'Unknown AG-UI run error',
+          message,
         ),
       }));
     },
@@ -270,7 +276,7 @@ export async function runAgent(
       messageStream.update((item) => ({
         value: appendErrorMessage(
           markPendingToolCallsAsError(readMessages(item), componentMap),
-          error instanceof Error ? error.message : 'Unknown AG-UI run failure',
+          friendlyErrorMessage(error, 'Unknown AG-UI run failure'),
         ),
       }));
     },

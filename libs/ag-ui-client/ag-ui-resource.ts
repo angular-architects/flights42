@@ -23,6 +23,7 @@ import { runUntilSettled } from './ag-ui-utils/agents';
 import {
   appendErrorMessage,
   filterPublicMessages,
+  friendlyErrorMessage,
   readMessages,
 } from './ag-ui-utils/messages';
 import { type PendingRun } from './ag-ui-utils/tools';
@@ -139,7 +140,7 @@ export function agUiResource(
         messageStream.update((item) => ({
           value: appendErrorMessage(
             readMessages(item),
-            error instanceof Error ? error.message : 'Unknown AG-UI error',
+            friendlyErrorMessage(error, 'Unknown AG-UI error'),
           ),
         }));
         isLoading.set(false);
@@ -244,6 +245,7 @@ export function agUiResource(
     reset,
     stop: () => {
       agent.abortRun();
+      isLoading.set(false);
     },
   } satisfies AgUiChatResourceRef;
 }

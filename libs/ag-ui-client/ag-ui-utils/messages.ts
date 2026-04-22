@@ -75,6 +75,26 @@ export function upsertAssistantMessage(
   });
 }
 
+export function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  if (error.name === 'AbortError') {
+    return true;
+  }
+  return /abort/i.test(error.message);
+}
+
+export function friendlyErrorMessage(error: unknown, fallback: string): string {
+  if (isAbortError(error)) {
+    return 'Request was aborted.';
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+}
+
 export function appendErrorMessage(
   messages: AgUiChatMessage[],
   errorMessage: string,
