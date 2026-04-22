@@ -13,6 +13,14 @@ const packageInputSchema = z.object({
   returnDate: z
     .string()
     .describe('Planned return flight date (ISO 8601, e.g. 2026-05-22).'),
+  minStars: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .describe(
+      'Minimum required hotel star rating. Typical mapping: 3 = budget, 4 = standard, 5 = premium. Values above 5 (e.g. 6 for "Superluxus"/"VIP") intentionally cannot be satisfied by the hotel catalog.',
+    ),
 });
 
 const flightListSchema = z.object({
@@ -86,16 +94,89 @@ const findHotelsStep = createStep({
   },
 });
 
+const afterParallelSchema = z.object({
+  findOutboundFlights: flightListSchema,
+  findReturnFlights: flightListSchema,
+  findHotels: hotelListSchema,
+});
+
+const afterEvaluationSchema = afterParallelSchema.extend({
+  hotelMatch: hotelSchema.nullable(),
+});
+
+const packageOutputSchema = afterEvaluationSchema;
+
+const evaluateHotelsStep = createStep({
+  id: 'evaluateHotels',
+  description:
+    "Picks the cheapest hotel whose star rating meets the user's minStars criterion, or null if none qualifies.",
+  inputSchema: afterParallelSchema,
+  outputSchema: afterEvaluationSchema,
+  execute: async ({ inputData, getInitData }) => {
+    const init = getInitData<z.infer<typeof packageInputSchema>>();
+    const candidates = [...inputData.findHotels.hotels].sort(
+      (a, b) => a.sterne - b.sterne,
+    );
+    const match =
+      candidates.find((hotel) => hotel.sterne >= init.minStars) ?? null;
+    return { ...inputData, hotelMatch: match };
+  },
+});
+
+const hotelMatchStateStep = createStep({
+  id: 'hotelMatchState',
+  description:
+    'Terminal state: a hotel matching the criterion was found. Passes the accumulated result through unchanged.',
+  inputSchema: afterEvaluationSchema,
+  outputSchema: packageOutputSchema,
+  execute: async ({ inputData }) => inputData,
+});
+
+const hotelFallbackStateStep = createStep({
+  id: 'hotelFallbackState',
+  description:
+    'Terminal state: no hotel matches the criterion. The travel agency will arrange the hotel booking manually. Flights are still proposed.',
+  inputSchema: afterEvaluationSchema,
+  outputSchema: packageOutputSchema,
+  execute: async ({ inputData }) => inputData,
+});
+
+const finalizeStep = createStep({
+  id: 'finalize',
+  description:
+    'Collapses the branch result (only one of the two terminal states ran) into a single workflow output.',
+  inputSchema: z.object({
+    hotelMatchState: packageOutputSchema.optional(),
+    hotelFallbackState: packageOutputSchema.optional(),
+  }),
+  outputSchema: packageOutputSchema,
+  execute: async ({ inputData }) => {
+    const result = inputData.hotelMatchState ?? inputData.hotelFallbackState;
+    if (!result) {
+      throw new Error('Package tour workflow ended without a terminal state.');
+    }
+    return result;
+  },
+});
+
 export const packageTourWorkflow = createWorkflow({
   id: 'packageTourWorkflow',
   description:
-    'Proposes a package tour (outbound flight, return flight, hotel) in parallel.',
+    'Proposes a package tour: searches outbound flights, return flights, and hotels in parallel, then branches based on whether a hotel matches the requested minimum star rating.',
   inputSchema: packageInputSchema,
-  outputSchema: z.object({
-    findOutboundFlights: flightListSchema,
-    findReturnFlights: flightListSchema,
-    findHotels: hotelListSchema,
-  }),
+  outputSchema: packageOutputSchema,
 })
   .parallel([findOutboundFlightsStep, findReturnFlightsStep, findHotelsStep])
+  .then(evaluateHotelsStep)
+  .branch([
+    [
+      async ({ inputData }) => inputData.hotelMatch !== null,
+      hotelMatchStateStep,
+    ],
+    [
+      async ({ inputData }) => inputData.hotelMatch === null,
+      hotelFallbackStateStep,
+    ],
+  ])
+  .then(finalizeStep)
   .commit();

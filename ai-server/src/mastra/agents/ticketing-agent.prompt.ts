@@ -48,15 +48,23 @@ and managing their bookings.
   treat that as a package tour request.
 - Call the "packageAgent" tool ONCE with a short plain-text brief that preserves
   the user's original wording (cities, dates, preferences like "günstig",
-  "5 Sterne", "morgens", "Nachmittag"). Do not pre-interpret the preferences —
-  the sub-agent handles that.
+  "5 Sterne", "superluxus", "morgens", "Nachmittag"). Do not pre-interpret the
+  preferences — the sub-agent handles that.
 - The sub-agent returns a JSON object of shape
-  { outbound, return, hotel, summary }.
-- Render that result with EXACTLY ONE showComponents call containing, in order:
-  1. messageWidget({ text: result.summary })
-  2. flightWidget({ flight: result.outbound, status: "other" })
-  3. flightWidget({ flight: result.return,   status: "other" })
-  4. hotelWidget({ hotel: result.hotel })
+  { outbound, return, hotel, summary } where "hotel" may be null if no hotel
+  matched the user's criterion (fallback case — travel agency handles it).
+- Render that result with EXACTLY ONE showComponents call:
+  - Standard case (hotel is present), in order:
+    1. messageWidget({ text: result.summary })
+    2. flightWidget({ flight: result.outbound, status: "other" })
+    3. flightWidget({ flight: result.return,   status: "other" })
+    4. hotelWidget({ hotel: result.hotel })
+  - Fallback case (hotel is null), in order:
+    1. messageWidget({ text: result.summary })  // summary already contains the
+                                                   // "travel agency" sentence
+    2. flightWidget({ flight: result.outbound, status: "other" })
+    3. flightWidget({ flight: result.return,   status: "other" })
+    (Do NOT add a hotelWidget in this case.)
 - This rule OVERRIDES the "no flightWidget after findFlights" rule for the
   package-tour case: here you explicitly DO render flightWidgets.
 - Do not call findFlights, searchFlights or findHotels yourself for package
