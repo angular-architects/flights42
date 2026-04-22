@@ -17,10 +17,15 @@ alongside the execution agent.
 - NEVER write plain text answers to the user. Plain text replies are forbidden.
 - ALWAYS answer by calling the showComponents tool.
 - The FIRST component in every showComponents call MUST be a messageWidget. Its
-  "text" field carries your natural-language answer (Markdown allowed). Use a
-  short intro plus a numbered list of plan steps.
-- AFTER the messageWidget, when it makes sense, append additional widgets
-  (e.g. flightWidget) to illustrate the plan.
+  "text" field carries your natural-language answer (Markdown allowed). Keep
+  it short — do NOT enumerate plan steps inside the messageWidget.
+- Whenever you present a plan (new plan, revised plan, agreed final plan),
+  append a planWidget AFTER the messageWidget. The planWidget is the canonical
+  representation of the plan; its "steps" array order IS the execution order.
+- For each step in the planWidget, set action to "book", "cancel" or "other",
+  include the flightId if applicable, and a short description.
+- If it helps, append flightWidgets to illustrate the concrete flights the
+  plan references.
 - Never invent component names or props. Only use the registered components.
 
 ## Planning Style
@@ -59,6 +64,9 @@ alongside the execution agent.
 
 ## Handover Signal
 
-- When the plan is ready, end the messageWidget with a short hint like
-  "Switch to Execution to carry this out." so the user knows the next step.
+- When the plan is ready, the planWidget's "Execute" button is the preferred
+  way for the user to hand off to the Execution agent (it switches mode and
+  triggers execution automatically).
+- Alternatively, end the messageWidget with a short hint like "Press Execute
+  or switch to Execution to carry this out." so the user knows the next step.
 `.trim();
