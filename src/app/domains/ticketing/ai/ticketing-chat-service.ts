@@ -5,8 +5,6 @@ import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { checkInAction } from './actions/check-in-action';
 import { submitAnswerAction } from './actions/submit-answer-action';
-import { TICKETING_CATALOG_ID } from './custom-catalog/custom-catalog';
-import { ticketingExtraComponents } from './custom-catalog/ticketing-extra-components';
 import { registerHandlers } from './register-handlers';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
@@ -31,13 +29,6 @@ export class TicketingChatService {
       getCurrentBasketTool,
       displayFlightDetailTool,
     ],
-    // NOTE: Demo-simplification. We send the *full* catalog descriptor.
-    // In production, send only the catalog id and make the server to load
-    // it from a registry with allowed catalogs to avoid injection attacks.
-    a2uiCatalog: {
-      id: TICKETING_CATALOG_ID,
-      components: ticketingExtraComponents,
-    },
   });
 
   constructor() {

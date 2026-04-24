@@ -23,6 +23,7 @@ import {
   readMessages,
 } from './ag-ui-utils/messages';
 import { type PendingRun } from './ag-ui-utils/tools';
+import { A2UI_CUSTOM_CATALOG } from './provide-a2ui-catalog';
 
 interface StreamOptions {
   params: PendingRun | undefined;
@@ -42,6 +43,8 @@ export function agUiResource(
   const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
   const renderer = inject(A2uiRendererService);
+  const a2uiCatalog =
+    inject(A2UI_CUSTOM_CATALOG, { optional: true }) ?? undefined;
   const createAgent = (): HttpAgent =>
     new HttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();
@@ -83,7 +86,7 @@ export function agUiResource(
       runId: params.id,
       model: options.model,
       useServerMemory,
-      a2uiCatalog: options.a2uiCatalog,
+      a2uiCatalog,
       abortSignal,
       messageStream,
       isLoading,

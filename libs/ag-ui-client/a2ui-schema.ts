@@ -39,3 +39,32 @@ export function createCustomComponent<
 ): CustomCatalogEntry<TName, TSchema> {
   return entry;
 }
+
+export type A2uiCustomCatalogReturnType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'array'
+  | 'object'
+  | 'any'
+  | 'void';
+
+export interface A2uiCustomCatalogFunction<
+  TName extends string = string,
+  TSchema extends z.ZodTypeAny = z.ZodTypeAny,
+> {
+  name: TName;
+  description: string;
+  returnType: A2uiCustomCatalogReturnType;
+  schema: TSchema;
+  execute: (args: z.infer<TSchema>) => unknown;
+}
+
+export function createCustomFunction<
+  const TName extends string,
+  const TSchema extends z.ZodTypeAny,
+>(
+  fn: A2uiCustomCatalogFunction<TName, TSchema>,
+): A2uiCustomCatalogFunction<TName, TSchema> {
+  return fn;
+}

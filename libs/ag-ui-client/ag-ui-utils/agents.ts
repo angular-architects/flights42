@@ -66,10 +66,33 @@ function buildCatalogContext(
     return acc;
   }, {});
 
+  const functions = (catalog.functions ?? []).reduce<
+    Record<string, { description: string; returnType: string; schema: unknown }>
+  >((acc, fn) => {
+    acc[fn.name] = {
+      description: fn.description,
+      returnType: fn.returnType,
+      schema: z.toJSONSchema(fn.schema),
+    };
+    return acc;
+  }, {});
+
+  const payload: {
+    catalogId: string;
+    components?: typeof components;
+    functions?: typeof functions;
+  } = { catalogId: catalog.id };
+  if (Object.keys(components).length > 0) {
+    payload.components = components;
+  }
+  if (Object.keys(functions).length > 0) {
+    payload.functions = functions;
+  }
+
   return [
     {
       description: A2UI_CATALOG_CONTEXT_DESCRIPTION,
-      value: JSON.stringify({ catalogId: catalog.id, components }),
+      value: JSON.stringify(payload),
     },
   ];
 }
