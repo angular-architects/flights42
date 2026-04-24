@@ -1,6 +1,8 @@
 import { ResourceRef, Type } from '@angular/core';
 import { z } from 'zod';
 
+import { type A2uiCustomCatalogFunction } from './a2ui-schema';
+
 export interface AgUiWidget {
   name: string;
   a2uiSurfaceId: string;
@@ -82,6 +84,7 @@ export interface A2uiCustomCatalogComponent {
 export interface A2uiCustomCatalog {
   id: string;
   components: A2uiCustomCatalogComponent[];
+  functions?: A2uiCustomCatalogFunction[];
 }
 
 export interface AgUiResourceOptions {
@@ -91,7 +94,6 @@ export interface AgUiResourceOptions {
   useServerMemory?: boolean;
   maxLocalTurns?: number;
   model?: string;
-  a2uiCatalog?: A2uiCustomCatalog;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
