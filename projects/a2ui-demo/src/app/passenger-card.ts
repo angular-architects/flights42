@@ -9,7 +9,103 @@ export interface Passenger {
   bonusMiles: number;
 }
 
-export function createSurfaceMessages(
+export function createSimpleCard(
+  surfaceId: string,
+  passenger: Passenger,
+): A2uiMessage[] {
+  return [
+    {
+      version: 'v0.9',
+      createSurface: {
+        surfaceId,
+        catalogId: customCatalog.id,
+      },
+    },
+    {
+      version: 'v0.9',
+      updateComponents: {
+        surfaceId,
+        components: [
+          { id: 'root', component: 'Card', child: 'content' },
+          {
+            id: 'content',
+            component: 'Column',
+            children: ['headline', 'name-row', 'miles-row', 'button'],
+          },
+          {
+            id: 'headline',
+            component: 'Text',
+            text: 'Passenger',
+            variant: 'h2',
+          },
+          {
+            id: 'name-row',
+            component: 'Row',
+            children: ['first-name', 'last-name'],
+          },
+          {
+            id: 'first-name',
+            component: 'Text',
+            text: { path: '/passenger/firstName' },
+            variant: 'body',
+          },
+          {
+            id: 'last-name',
+            component: 'Text',
+            text: { path: '/passenger/lastName' },
+            variant: 'body',
+          },
+          {
+            id: 'miles-row',
+            component: 'Row',
+            children: ['miles-label', 'miles-value'],
+          },
+          {
+            id: 'miles-label',
+            component: 'Text',
+            text: 'Miles:',
+            variant: 'caption',
+          },
+          {
+            id: 'miles-value',
+            component: 'Text',
+            text: { path: '/passenger/bonusMiles' },
+            variant: 'body',
+          },
+          {
+            id: 'button',
+            component: 'Button',
+            child: 'button-label',
+            action: {
+              event: {
+                name: 'increaseMiles',
+                context: {
+                  passenger: { path: '/passenger' },
+                },
+              },
+            },
+          },
+          {
+            id: 'button-label',
+            component: 'Text',
+            text: 'Increase Miles',
+            variant: 'body',
+          },
+        ],
+      },
+    },
+    {
+      version: 'v0.9',
+      updateDataModel: {
+        surfaceId,
+        path: '/passenger',
+        value: passenger,
+      },
+    },
+  ];
+}
+
+export function createPassengerCard(
   surfaceId: string,
   passenger: Passenger,
 ): A2uiMessage[] {
@@ -147,10 +243,7 @@ export function createSurfaceMessages(
               event: {
                 name: 'increaseMiles',
                 context: {
-                  id: { path: '/passenger/id' },
-                  firstName: { path: '/passenger/firstName' },
-                  lastName: { path: '/passenger/lastName' },
-                  bonusMiles: { path: '/passenger/bonusMiles' },
+                  passenger: { path: '/passenger' },
                 },
               },
             },
@@ -164,20 +257,13 @@ export function createSurfaceMessages(
         ],
       },
     },
-    toUpdateMessage(surfaceId, passenger),
-  ];
-}
-
-export function toUpdateMessage(
-  surfaceId: string,
-  passenger: Passenger,
-): A2uiMessage {
-  return {
-    version: 'v0.9',
-    updateDataModel: {
-      surfaceId,
-      path: '/passenger',
-      value: passenger,
+    {
+      version: 'v0.9',
+      updateDataModel: {
+        surfaceId,
+        path: '/passenger',
+        value: passenger,
+      },
     },
-  };
+  ];
 }

@@ -55,6 +55,11 @@ a2ui-v09-surface {
   margin-block: 1rem;
 }
 
+a2ui-v09-surface a2ui-v09-text p,
+a2ui-v09-surface a2ui-v09-text strong {
+  font-weight: normal;
+}
+
 .hint {
   font-size: 0.9rem;
 }

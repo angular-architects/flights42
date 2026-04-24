@@ -100,14 +100,38 @@ a2ui-v09-row > a2ui-v09-component-host:last-of-type {
   color: #2b3755;
 }
 
+/* The `caption` variant is repurposed as our generic "label" style:
+ * bold, muted color, inherited size. The renderer wraps caption text in
+ * markdown emphasis (`*...*`) → <em>, so we also neutralize the italic. */
+.a2ui-text.caption {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #51607f;
+}
+
+.a2ui-text.caption em {
+  font-style: normal;
+}
+
 .a2ui-text.h2 p,
-.a2ui-text.body p {
+.a2ui-text.body p,
+.a2ui-text.caption p {
   margin: 0;
 }
 
-/* Bold labels (first column of each details Row) */
-a2ui-v09-row > a2ui-v09-component-host:first-of-type .a2ui-text.body,
-a2ui-v09-row > a2ui-v09-component-host:first-of-type .a2ui-text.body p {
+/* Bold labels: only when the first column of a Row is an actual Column
+ * (our convention for a "labels column"). Rows whose first child is a plain
+ * Text (e.g., a passenger's first name) stay unstyled. */
+a2ui-v09-row
+  > a2ui-v09-component-host:first-of-type
+  a2ui-v09-column
+  .a2ui-text.body,
+a2ui-v09-row
+  > a2ui-v09-component-host:first-of-type
+  a2ui-v09-column
+  .a2ui-text.body
+  p {
   font-weight: 700;
   color: #51607f;
 }

@@ -7,11 +7,7 @@ import {
   inject,
 } from '@angular/core';
 
-import {
-  createSurfaceMessages,
-  type Passenger,
-  toUpdateMessage,
-} from './passenger-card';
+import { createSimpleCard, type Passenger } from './passenger-card';
 
 @Component({
   selector: 'app-root',
@@ -38,9 +34,7 @@ export class App {
       lastName: 'Miller',
       bonusMiles: 1200,
     };
-    this.renderer.processMessages(
-      createSurfaceMessages(this.surfaceId, passenger),
-    );
+    this.renderer.processMessages(createSimpleCard(this.surfaceId, passenger));
   }
 
   private registerHandler(): void {
@@ -52,12 +46,19 @@ export class App {
           return;
         }
 
-        const passenger = action.context as unknown as Passenger;
+        const passenger = action.context['passenger'] as Passenger;
         this.renderer.processMessages([
-          toUpdateMessage(this.surfaceId, {
-            ...passenger,
-            bonusMiles: passenger.bonusMiles + 300,
-          }),
+          {
+            version: 'v0.9',
+            updateDataModel: {
+              surfaceId: this.surfaceId,
+              path: '/passenger',
+              value: {
+                ...passenger,
+                bonusMiles: passenger.bonusMiles + 300,
+              },
+            },
+          },
         ]);
       },
     );
