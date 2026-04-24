@@ -1,0 +1,84 @@
+<section
+  class="ticket"
+  [attr.aria-label]="'Boarding pass for flight ' + ticketId()">
+  <div class="main-stub">
+    <header class="ticket-header">
+      <app-ticket-logo />
+      <span class="ticket-class">BOARDING PASS</span>
+    </header>
+
+    <div class="route">
+      <div class="city">
+        <span class="city-name">{{ from() }}</span>
+        <span class="city-label">FROM</span>
+      </div>
+
+      <div class="plane" aria-hidden="true">
+        <svg viewBox="0 0 48 16" xmlns="http://www.w3.org/2000/svg">
+          <line
+            x1="0"
+            y1="8"
+            x2="40"
+            y2="8"
+            stroke="currentColor"
+            stroke-width="1"
+            stroke-dasharray="2 2" />
+          <path d="M44 8 L32 2 L34 8 L32 14 Z" fill="currentColor" />
+        </svg>
+      </div>
+
+      <div class="city city-right">
+        <span class="city-name">{{ to() }}</span>
+        <span class="city-label">TO</span>
+      </div>
+    </div>
+
+    <dl class="meta">
+      <div class="meta-cell">
+        <dt>Date</dt>
+        <dd>{{ parsedDate() | date: 'yyyy-MM-dd' }}</dd>
+      </div>
+      <div class="meta-cell">
+        <dt>Boarding</dt>
+        <dd>{{ boardingTime() | date: 'HH:mm' }}</dd>
+      </div>
+      <div class="meta-cell">
+        <dt>Gate</dt>
+        <dd>{{ gate }}</dd>
+      </div>
+      <div class="meta-cell">
+        <dt>Seat</dt>
+        <dd>{{ seat }}</dd>
+      </div>
+    </dl>
+
+    @if (showDelay()) {
+      <p class="delay-badge">Delayed by {{ delay() }} min</p>
+    }
+
+    <div class="barcode-wrap">
+      <app-ticket-barcode [seed]="barcodeSeed()" />
+    </div>
+  </div>
+
+  <div class="perforation" aria-hidden="true"></div>
+
+  <div class="boarding-stub">
+    <div class="stub-info">
+      <dl class="stub-meta">
+        <div>
+          <dt>Flight</dt>
+          <dd>FL{{ ticketId() }}</dd>
+        </div>
+        <div>
+          <dt>Seat</dt>
+          <dd>{{ seat }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="qr-wrap">
+      <app-ticket-qr [seed]="qrSeed()" />
+    </div>
+  </div>
+</section>

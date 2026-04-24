@@ -682,6 +682,13 @@ app-widget-container a2ui-v09-surface > a2ui-v09-text p {
 }
 
 /* A2UI v0.9 fallback: text hint styles are not always applied reliably. */
+app-widget-container a2ui-v09-surface a2ui-v09-text h2 {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+}
+
 app-widget-container a2ui-v09-surface a2ui-v09-card h3 {
   font-size: 1.42rem !important;
   font-weight: 700 !important;

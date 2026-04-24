@@ -9,8 +9,10 @@ import {
   type ResourceStreamItem,
   type WritableSignal,
 } from '@angular/core';
+import { z } from 'zod';
 
 import {
+  type A2uiCustomCatalog,
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
 } from '../ag-ui-types';
@@ -33,6 +35,8 @@ import {
   appendA2uiSurfaceFromToolResult,
 } from './widgets';
 
+export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
+
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
@@ -41,7 +45,33 @@ export interface RunAgentOptions {
   runId: string;
   model?: string;
   useServerMemory?: boolean;
+  a2uiCatalog?: A2uiCustomCatalog;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+}
+
+function buildCatalogContext(
+  catalog: A2uiCustomCatalog | undefined,
+): { description: string; value: string }[] | undefined {
+  if (!catalog) {
+    return undefined;
+  }
+
+  const components = catalog.components.reduce<
+    Record<string, { description: string; schema: unknown }>
+  >((acc, entry) => {
+    acc[entry.name] = {
+      description: entry.description,
+      schema: z.toJSONSchema(entry.schema),
+    };
+    return acc;
+  }, {});
+
+  return [
+    {
+      description: A2UI_CATALOG_CONTEXT_DESCRIPTION,
+      value: JSON.stringify({ catalogId: catalog.id, components }),
+    },
+  ];
 }
 
 interface RunAgentResult {
@@ -59,6 +89,7 @@ export async function runAgent(
     renderer,
     model,
     useServerMemory,
+    a2uiCatalog,
     messageStream,
   } = options;
   const { runId } = options;
@@ -214,6 +245,7 @@ export async function runAgent(
       runId,
       tools: toolsToOffer,
       forwardedProps: model ? { modelHint: model } : undefined,
+      context: buildCatalogContext(a2uiCatalog),
     },
     subscriber,
   );
@@ -233,6 +265,7 @@ export interface RunUntilSettledOptions {
   runId: string;
   model?: string;
   useServerMemory?: boolean;
+  a2uiCatalog?: A2uiCustomCatalog;
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
@@ -251,6 +284,7 @@ export async function runUntilSettled(
     runId,
     model,
     useServerMemory,
+    a2uiCatalog,
     abortSignal,
     messageStream,
     maxLocalTurns,
@@ -280,6 +314,7 @@ export async function runUntilSettled(
       runId: currentRunId,
       model,
       useServerMemory,
+      a2uiCatalog,
       messageStream,
     });
 
