@@ -1,4 +1,8 @@
-import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
+import {
+  A2UI_RENDERER_CONFIG,
+  A2uiRendererService,
+  SurfaceComponent,
+} from '@a2ui/angular/v0_9';
 import type { A2uiClientAction } from '@a2ui/web_core/v0_9';
 import {
   ChangeDetectionStrategy,
@@ -7,7 +11,11 @@ import {
   inject,
 } from '@angular/core';
 
-import { createSimpleCard, type Passenger } from './passenger-card';
+import {
+  createPassengerCard,
+  // createSimpleCard,
+  type Passenger,
+} from './passenger-card';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +27,7 @@ import { createSimpleCard, type Passenger } from './passenger-card';
 export class App {
   private readonly renderer = inject(A2uiRendererService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly config = inject(A2UI_RENDERER_CONFIG);
 
   protected readonly surfaceId = 'passenger-card-surface';
 
@@ -34,7 +43,12 @@ export class App {
       lastName: 'Miller',
       bonusMiles: 1200,
     };
-    this.renderer.processMessages(createSimpleCard(this.surfaceId, passenger));
+    const messages = createPassengerCard(
+      this.surfaceId,
+      this.config.catalogs[0].id,
+      passenger,
+    );
+    this.renderer.processMessages(messages);
   }
 
   private registerHandler(): void {

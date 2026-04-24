@@ -5,20 +5,21 @@ import {
 } from '@a2ui/angular/v0_9';
 import {
   ApplicationConfig,
+  inject,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { marked } from 'marked';
 
-import { customCatalog } from './custom-catalog/custom-catalog';
+import { CustomCatalog } from './custom-catalog/custom-catalog';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     {
       provide: A2UI_RENDERER_CONFIG,
-      useValue: {
-        catalogs: [customCatalog],
-      },
+      useFactory: () => ({
+        catalogs: [inject(CustomCatalog)],
+      }),
     },
     provideMarkdownRenderer(async (markdown) =>
       marked.parse(String(markdown ?? '')),

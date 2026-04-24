@@ -1,7 +1,5 @@
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 
-import { customCatalog } from './custom-catalog/custom-catalog';
-
 export interface Passenger {
   id: number;
   firstName: string;
@@ -11,6 +9,7 @@ export interface Passenger {
 
 export function createSimpleCard(
   surfaceId: string,
+  catalogId: string,
   passenger: Passenger,
 ): A2uiMessage[] {
   return [
@@ -18,7 +17,7 @@ export function createSimpleCard(
       version: 'v0.9',
       createSurface: {
         surfaceId,
-        catalogId: customCatalog.id,
+        catalogId,
       },
     },
     {
@@ -69,7 +68,14 @@ export function createSimpleCard(
           {
             id: 'miles-value',
             component: 'Text',
-            text: { path: '/passenger/bonusMiles' },
+            text: {
+              call: 'formatNumber',
+              args: {
+                value: { path: '/passenger/bonusMiles' },
+                decimals: 0,
+              },
+              returnType: 'string',
+            },
             variant: 'body',
           },
           {
@@ -107,6 +113,7 @@ export function createSimpleCard(
 
 export function createPassengerCard(
   surfaceId: string,
+  catalogId: string,
   passenger: Passenger,
 ): A2uiMessage[] {
   return [
@@ -114,7 +121,7 @@ export function createPassengerCard(
       version: 'v0.9',
       createSurface: {
         surfaceId,
-        catalogId: customCatalog.id,
+        catalogId,
       },
     },
     {
