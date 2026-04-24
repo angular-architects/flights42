@@ -32,6 +32,8 @@ import {
 } from './tools';
 import { appendA2uiSurfaceFromToolResult } from './widgets';
 
+export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
+
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
@@ -98,6 +100,31 @@ function buildCatalogContext(
   ];
 }
 
+function buildCatalogContext(
+  catalog: A2uiCustomCatalog | undefined,
+): { description: string; value: string }[] | undefined {
+  if (!catalog) {
+    return undefined;
+  }
+
+  const components = catalog.components.reduce<
+    Record<string, { description: string; schema: unknown }>
+  >((acc, entry) => {
+    acc[entry.name] = {
+      description: entry.description,
+      schema: z.toJSONSchema(entry.schema),
+    };
+    return acc;
+  }, {});
+
+  return [
+    {
+      description: A2UI_CATALOG_CONTEXT_DESCRIPTION,
+      value: JSON.stringify({ catalogId: catalog.id, components }),
+    },
+  ];
+}
+
 interface RunAgentResult {
   pendingLocalCalls: PendingToolExecution[];
   followUpToolCallIds: string[];
@@ -113,6 +140,7 @@ export async function runAgent(
     renderer,
     model,
     useServerMemory,
+    a2uiCatalog,
     messageStream,
   } = options;
   const { runId } = options;
@@ -269,7 +297,7 @@ export async function runAgent(
     {
       runId,
       tools: toolsToOffer,
-      forwardedProps,
+      forwardedProps: model ? { modelHint: model } : undefined,
       context: buildCatalogContext(a2uiCatalog),
     },
     subscriber,

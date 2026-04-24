@@ -1,4 +1,4 @@
-import { ResourceRef } from '@angular/core';
+import { ResourceRef, Type } from '@angular/core';
 import { z } from 'zod';
 
 export interface AgUiWidget {
@@ -96,7 +96,6 @@ export interface A2uiCustomCatalogComponent {
 export interface A2uiCustomCatalog {
   id: string;
   components: A2uiCustomCatalogComponent[];
-  functions?: A2uiCustomCatalogFunction[];
 }
 
 export interface AgUiResourceOptions {
@@ -106,15 +105,7 @@ export interface AgUiResourceOptions {
   useServerMemory?: boolean;
   maxLocalTurns?: number;
   model?: string;
-  /**
-   * Optional provider for additional `forwardedProps` attached to every
-   * AG-UI run. The function is invoked once before each run so
-   * signal-backed values (e.g. a "prevent caching" toggle in the UI)
-   * are read fresh each time. Values are merged with the built-in
-   * `modelHint` (set from `model`); the built-in fields take
-   * precedence on key collisions.
-   */
-  forwardedProps?: () => Record<string, unknown>;
+  a2uiCatalog?: A2uiCustomCatalog;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {

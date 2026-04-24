@@ -1,15 +1,7 @@
 :host {
   display: block;
   width: 100%;
-  /* Fill the surrounding grid cell vertically so the ticket lines up with
-   * neighbouring tiles. The inner `.ticket` grid uses `min-height: 100%`
-   * to actually consume that height. */
-  height: 100%;
-  /* 16rem (~256px) lets the ticket fit into a single dashboard grid cell on
-   * the 2- and 3-column breakpoints while still preventing absurdly narrow
-   * layouts. The container query below switches to the horizontal hero
-   * layout once the cell exceeds 420px (e.g. inside the chat bubble). */
-  min-width: 16rem;
+  min-width: 18rem;
   container-type: inline-size;
   --ticket-bg: #ffffff;
   --ticket-stub-bg: linear-gradient(180deg, #f4f7ff 0%, #e8efff 100%);
@@ -26,11 +18,6 @@
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
-  /* Vertical layout: main stub takes all available space, perforation and
-   * boarding stub size to content. The horizontal hero layout (container
-   * query at the bottom of this file) overrides these tracks. */
-  grid-template-rows: 1fr auto auto;
-  min-height: 100%;
   background: var(--ticket-bg);
   border: 1px solid var(--ticket-border);
   border-radius: 1rem;
@@ -244,12 +231,7 @@
   justify-self: end;
 }
 
-/* The horizontal "hero" layout is only worth using when the container is
- * really wide — typical chat bubbles and dashboard grid cells (300–700px)
- * look better as a vertical boarding-pass. We therefore only switch to the
- * horizontal layout above 80rem (=1280px), which is essentially "use the
- * full width of an unconstrained page". */
-@container (min-width: 80rem) {
+@container (min-width: 420px) {
   .ticket {
     grid-template-columns: minmax(0, 2fr) auto minmax(0, 1fr);
   }
@@ -304,17 +286,4 @@
     height: 7rem;
     justify-self: center;
   }
-}
-
-/* Compact mode: Dynamic Dashboard only (see `showScanCodes` in ticket-widget.ts).
- * Hides barcode/QR for the first paint before `ngAfterViewInit`; chat is outside
- * `.dashboard-output`. */
-:host-context(.dashboard-output) .barcode-wrap,
-:host-context(.dashboard-output) .qr-wrap {
-  display: none !important;
-}
-
-:host-context(.dashboard-output) .boarding-stub {
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: start;
 }

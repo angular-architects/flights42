@@ -168,7 +168,7 @@ export function agUiResource(
       runId: params.id,
       model: options.model,
       useServerMemory,
-      a2uiCatalog,
+      a2uiCatalog: options.a2uiCatalog,
       abortSignal,
       messageStream,
       isLoading,

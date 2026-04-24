@@ -1,7 +1,11 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { createShowComponentsTool } from '../../../../libs/ag-ui-server/index.js';
+import {
+  catalogToPromptSection,
+  logSystemPromptIfEnabled,
+  renderA2uiTool,
+} from '../../../../libs/ag-ui-server/index.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
@@ -12,16 +16,25 @@ import {
 } from '../widgets/index.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
-const showComponents = createShowComponentsTool([
-  messageWidget,
-  flightWidget,
-  questionWidget,
-]);
+interface AgUiRuntimeContext {
+  context?: { description?: string; value?: string }[];
+}
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
   name: 'Flight42 Ticketing Assistant',
-  instructions: ticketingAgentPrompt,
+  instructions: ({ requestContext }) => {
+    const agUi = requestContext.get('ag-ui') as AgUiRuntimeContext | undefined;
+    const catalogSection = catalogToPromptSection(agUi?.context);
+
+    const fullPrompt = catalogSection
+      ? `${ticketingAgentPrompt}\n\n${catalogSection}`
+      : ticketingAgentPrompt;
+
+    logSystemPromptIfEnabled('ticketingAgent', fullPrompt);
+
+    return fullPrompt;
+  },
   model: 'openai/gpt-5.3-chat-latest',
   tools: {
     findBookedFlightsTool,
