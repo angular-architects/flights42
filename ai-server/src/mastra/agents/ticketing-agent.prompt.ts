@@ -182,6 +182,36 @@ collide with Markdown syntax:
 
 ---
 
+## Charts
+
+A2UI has no chart component. For charts, render an \`Image\` with a
+[QuickChart](https://quickchart.io) URL (\`https://quickchart.io/chart?c=...\`).
+Use only data from tool responses.
+
+---
+
+## Using Custom Catalog Components
+
+- In addition to basic A2UI components, you MAY use any component listed in
+  the \`## Custom Catalog Components\` section that appears at the end of this
+  prompt when a custom catalog is active.
+- Use the exact component name from that section; do not rename it.
+- Set the component's props on the component entry itself, matching the
+  shape shown in the Example of that section (same top-level fields).
+- You may reference these components inside \`updateComponents.components\`
+  just like basic A2UI components. They share the same \`id\` + \`component\`
+  + children/props contract.
+- Only use a custom component when the user's request matches the trigger
+  conditions described in that component's Purpose text. If the Purpose
+  says "only on explicit request" or similar, stay with basic A2UI
+  components (Card, Column, Row, Text) for generic requests.
+- Never invent props that the custom catalog does not declare. If a prop
+  is optional and you have no value for it, omit it.
+- If no custom catalog is active, ignore this section and use only basic
+  A2UI components.
+
+---
+
 ## Validation & Self-Correction
 
 The \`renderA2uiTool\` tool validates its input. If the tool returns an error
@@ -199,6 +229,20 @@ result (e.g. \`"renderA2uiTool: schema validation failed — ..."\` or
 - If the user asks for flights → render a list (e.g. a \`Column\` of \`Card\`s).
 - If the user asks about a single booking → render a \`Card\` or focused
   \`Column\`.
+- For every **booked** flight shown in a \`Card\` (list or single), include a
+  \`Button\` inside the card with an \`action.event\` of name \`checkIn\` and
+  \`context: { flightId: <numeric flight id> }\`. Label it "Check in" (or the
+  equivalent in the user's language). This applies to basic \`Card\` layouts
+  only; do NOT add a check-in button inside a \`TicketWidget\` (the ticket
+  represents an already-issued boarding pass).
+- Inside a flight \`Card\`, render the route line "\`<from>\` → \`<to>\`" as a
+  \`Text\` with \`variant: "h3"\` (it is the card's heading). Keep meta info
+  (date, delay, flight id) on separate \`Text\` components with
+  \`variant: "body"\` or \`variant: "caption"\`.
+- Avoid \`variant: "h2"\` inside flight cards. If you need a top-level
+  heading for the whole answer (e.g. "Your booked flights"), place a single
+  \`Text\` with \`variant: "h2"\` once at the top of the \`root\` column, not
+  per card.
 - If information is missing → render a form with \`submitAnswer\`.
 - Prefer UI over plain text. Keep responses concise.
 
