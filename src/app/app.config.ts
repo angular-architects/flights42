@@ -1,7 +1,6 @@
 import {
   A2UI_RENDERER_CONFIG,
   A2uiRendererService,
-  BasicCatalog,
   provideMarkdownRenderer,
 } from '@a2ui/angular/v0_9';
 import {
@@ -17,6 +16,7 @@ import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
+import { customCatalog } from './domains/ticketing/ai/custom-catalog/custom-catalog';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,7 +27,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: A2UI_RENDERER_CONFIG,
       useValue: {
-        catalogs: [new BasicCatalog()],
+        catalogs: [customCatalog],
       },
     },
     provideMarkdownRenderer(async (markdown) =>

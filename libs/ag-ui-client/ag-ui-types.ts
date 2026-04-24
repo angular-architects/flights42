@@ -1,4 +1,4 @@
-import { ResourceRef } from '@angular/core';
+import { ResourceRef, Type } from '@angular/core';
 import { z } from 'zod';
 
 export interface AgUiWidget {
@@ -72,6 +72,18 @@ export function defineAgUiTool(
   };
 }
 
+export interface A2uiCustomCatalogComponent {
+  name: string;
+  description: string;
+  component: Type<unknown>;
+  schema: z.ZodTypeAny;
+}
+
+export interface A2uiCustomCatalog {
+  id: string;
+  components: A2uiCustomCatalogComponent[];
+}
+
 export interface AgUiResourceOptions {
   url: string;
   tools: AgUiClientToolDefinition<never>[];
@@ -79,6 +91,7 @@ export interface AgUiResourceOptions {
   useServerMemory?: boolean;
   maxLocalTurns?: number;
   model?: string;
+  a2uiCatalog?: A2uiCustomCatalog;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
