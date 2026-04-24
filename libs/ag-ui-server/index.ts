@@ -1,3 +1,4 @@
+export * from './add-custom-catalog-instructions.js';
 export * from './catalog-to-prompt.js';
 export * from './create-show-components-tool.js';
 export * from './extended-mastra-agent.js';
