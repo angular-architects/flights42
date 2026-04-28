@@ -28,7 +28,7 @@ export const appConfig: ApplicationConfig = {
     // resolve the catalog id against its own trusted registry to avoid
     // prompt-injection attacks via untrusted component metadata.
     provideA2uiCatalog({
-      id: 'https://a2ui.org/specification/v0_9/basic_catalog.json',
+      id: 'https://angularArchitects.io/a2ui/v0_9/custom_catalog.json',
       components: ticketingExtraComponents,
       sendCatalogDescription: true,
     }),
