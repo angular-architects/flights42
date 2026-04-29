@@ -1,10 +1,7 @@
 import { Routes } from '@angular/router';
 import { loadRemoteModule } from '@angular-architects/native-federation';
 
-import {
-  WrapperComponent,
-  WrapperConfig,
-} from './domains/shared/ui-federation/wrapper.component';
+import { Wrapper, WrapperConfig } from './domains/shared/ui-federation/wrapper';
 import { About } from './shell/about/about';
 import { Home } from './shell/home/home';
 
@@ -25,7 +22,7 @@ export const routes: Routes = [
   },
   {
     path: 'svelte-app',
-    component: WrapperComponent,
+    component: Wrapper,
     data: {
       config: {
         remoteName: 'svelte-app',
