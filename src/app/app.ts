@@ -13,13 +13,12 @@ import {
   RouterOutlet,
 } from '@angular/router';
 
-import { FlightSearch } from './domains/ticketing/feature-booking/proto-flight-search-01/flight-search';
 import { Navbar } from './shell/navbar/navbar';
 import { Sidebar } from './shell/sidebar/sidebar';
 
 @Component({
   selector: 'app-root',
-  imports: [Navbar, Sidebar, RouterOutlet, FlightSearch],
+  imports: [Navbar, Sidebar, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

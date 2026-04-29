@@ -2,7 +2,7 @@ import { DatePipe, JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { initAircraft } from '../../data/aircraft';
+import { initialAircraft } from '../../data/aircraft';
 import { Flight } from '../../data/flight';
 
 @Component({
@@ -29,7 +29,7 @@ export class FlightSearch {
         date,
         delayed: false,
         delay: 0,
-        aircraft: { ...initAircraft },
+        aircraft: { ...initialAircraft },
         prices: [],
       },
       {
@@ -39,7 +39,7 @@ export class FlightSearch {
         date,
         delayed: false,
         delay: 0,
-        aircraft: { ...initAircraft },
+        aircraft: { ...initialAircraft },
         prices: [],
       },
       {
@@ -49,7 +49,7 @@ export class FlightSearch {
         date,
         delayed: false,
         delay: 0,
-        aircraft: { ...initAircraft },
+        aircraft: { ...initialAircraft },
         prices: [],
       },
     ]);

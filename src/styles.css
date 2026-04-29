@@ -334,7 +334,7 @@ input[type='button']:disabled {
   overflow: hidden;
 }
 
-.card.selected {
+.selected {
   background: var(--color-primary-lightest, #eeedfe);
   border-color: var(--color-primary, #3c3489);
 }
