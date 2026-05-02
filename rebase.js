@@ -13,9 +13,23 @@ const tasks = [
   { branch: 'ENT-signals-starter', base: 'ENT-signals-solution' },
 ];
 
+const args = process.argv.slice(2);
+const check = args.includes('--check');
+const doBuild = check || args.includes('--build');
+const doLint = check || args.includes('--lint');
+
 function run(cmd) {
   console.log(`\n> ${cmd}`);
   execSync(cmd, { stdio: 'inherit' });
+}
+
+function runSafe(cmd, branch, label) {
+  try {
+    run(cmd);
+  } catch {
+    console.error(`\n❌ ${label} failed on branch ${branch}. Aborting.`);
+    process.exit(1);
+  }
 }
 
 function main() {
@@ -51,6 +65,16 @@ function main() {
     run(`git rebase ${base}`);
 
     console.log(`✅ OK: ${branch} rebased on ${base}`);
+
+    if (doBuild) {
+      runSafe('npx ng build', branch, 'Build');
+      console.log(`✅ Build OK: ${branch}`);
+    }
+
+    if (doLint) {
+      runSafe('npx ng lint', branch, 'Lint');
+      console.log(`✅ Lint OK: ${branch}`);
+    }
   }
 
   // zurück zum Start-Branch
