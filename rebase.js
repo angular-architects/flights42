@@ -32,7 +32,35 @@ function runSafe(cmd, branch, label) {
   }
 }
 
+function parseSkipArgs(argv) {
+  const skips = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+
+    if (arg.startsWith('--skip=')) {
+      skips.push(arg.slice('--skip='.length));
+      continue;
+    }
+
+    if (arg !== '--skip') {
+      continue;
+    }
+
+    const value = argv[++i];
+    if (value && !value.startsWith('--')) {
+      skips.push(value);
+      continue;
+    }
+
+    console.error('❌ --skip benötigt einen Wert (z. B. --skip ENT-nf-sol).');
+    process.exit(1);
+  }
+  return skips;
+}
+
 function main() {
+  const skips = parseSkipArgs(args);
+
   // Sicherheitscheck: sauberes Working Tree
   try {
     const status = execSync('git status --porcelain', {
@@ -53,7 +81,16 @@ function main() {
     encoding: 'utf8',
   }).trim();
 
-  for (const { branch, base } of tasks) {
+  const filteredTasks = tasks.filter(({ branch }) => {
+    const match = skips.find((s) => branch.includes(s));
+    if (match) {
+      console.log(`⏭  Skip: ${branch} (matcht --skip ${match})`);
+      return false;
+    }
+    return true;
+  });
+
+  for (const { branch, base } of filteredTasks) {
     console.log(`\n==============================`);
     console.log(`Rebase: ${branch}  <-  ${base}`);
     console.log(`==============================`);
