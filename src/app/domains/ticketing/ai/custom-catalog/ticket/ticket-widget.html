@@ -56,9 +56,11 @@
       <p class="delay-badge">Delayed by {{ delay() }} min</p>
     }
 
-    <div class="barcode-wrap">
-      <app-ticket-barcode [seed]="barcodeSeed()" />
-    </div>
+    @if (showScanCodes()) {
+      <div class="barcode-wrap">
+        <app-ticket-barcode [seed]="barcodeSeed()" />
+      </div>
+    }
   </div>
 
   <div class="perforation" aria-hidden="true"></div>
@@ -77,8 +79,10 @@
       </dl>
     </div>
 
-    <div class="qr-wrap">
-      <app-ticket-qr [seed]="qrSeed()" />
-    </div>
+    @if (showScanCodes()) {
+      <div class="qr-wrap">
+        <app-ticket-qr [seed]="qrSeed()" />
+      </div>
+    }
   </div>
 </section>
