@@ -67,11 +67,15 @@ the same level as \`id\` and \`component\`.
 
 ### Text
 
-    { "id": "title",  "component": "Text", "text": "All flights",     "variant": "h3" }
+    { "id": "title",  "component": "Text", "text": "All flights",     "variant": "h2" }
     { "id": "amount", "component": "Text", "text": { "path": "/n" },  "variant": "body" }
 
 - \`text\` accepts a literal string or a path binding.
 - \`variant\` is one of \`"h1" | "h2" | "h3" | "h4" | "h5" | "caption" | "body"\`.
+- Use \`"h2"\` for the MAIN heading of a top-level \`Card\` tile (e.g.
+  "All flights", "My booked flights", "Rent a car"). Reserve \`"h3"\` for
+  sub-headings inside the same card (table column headers, per-item
+  titles inside list rows, etc.).
 
 ### Image
 
@@ -173,9 +177,18 @@ rules so the grid actually looks like a grid:
   break the layout.
 - The only allowed direct children of \`root\` besides ordinary \`Card\`
   tiles are:
-  - Exactly one \`TicketWidget\` (when tile 7 applies). It will
-    automatically span the full grid width — do NOT wrap it in a \`Card\`
-    or a \`Row\`.
+  - **Boarding passes (tile 7):** exactly **one** top-level \`Column\` with
+    \`id: "boarding-stack"\` (exact id — the client CSS relies on it). One
+    grid cell. Its \`children\` stack **all requested boarding passes** as
+    consecutive \`TicketWidget\`s, **one below the other** (soonest / most
+    relevant flight first). **Do not** add any \`Text\` heading above the
+    tickets (no "Boarding passes" title). **Never** wrap passes in a \`Card\`. **Never** emit each pass as its own top-level
+    item: do **not** place multiple \`TicketWidget\`s (or multiple
+    boarding-pass wrapper columns) as separate direct children of \`root\` —
+    that creates several dashboard columns. **Never** put a \`TicketWidget\`
+    as a bare direct child of \`root\`; **never** put \`TicketWidget\`
+    inside any \`Card\`. The only valid place for \`TicketWidget\` on this
+    surface is inside that single \`boarding-stack\` \`Column\`.
   - Optionally a single \`Row\` used as a "wide section" (the client
     forces such a top-level \`Row\` to span the full grid width). Use this
     only if you really need a horizontal layout that should be full-width
@@ -184,11 +197,103 @@ rules so the grid actually looks like a grid:
   (header row + data rows). The client lets those inner \`Row\`s use the
   agent's \`weight\` values normally — keep \`weight: 1\` on every cell of a
   table row.
+- **Cards must NEVER be nested.** A \`Card\` is a top-level tile only;
+  its body must be built from \`Column\` / \`Row\` / \`Text\` / \`Image\` /
+  \`Button\` / \`TextField\`, but NEVER from another \`Card\`. Do **not**
+  place \`TicketWidget\` inside a \`Card\`; boarding passes use the dedicated
+  root-level \`Column\` \`boarding-stack\` (tile 7). If a tile needs several
+  list-style items (booked flights, cars, hotels, …), use \`Row\`s per
+  "List Layouts inside a Card". **Exception for tile 7:** stack multiple
+  \`TicketWidget\`s as consecutive \`children\` of \`boarding-stack\` — do
+  not wrap each pass in an inner \`Card\` or \`Row\`.
 - Pick tile order yourself; the grid auto-flows them left-to-right,
   top-to-bottom in the order you list them under \`root\`.
 - Render only tiles the user actually asked for. Do not render an empty
   dashboard — if the user gave no usable instructions, render a single
   \`Card\` with a clarifying question (still via \`renderA2uiTool\`).
+
+---
+
+## List Layouts inside a Card
+
+Whenever a tile lists multiple items inside its \`Card\` body (booked
+flights, rental cars, hotels, weather entries, etc.) render the items as
+a vertical list of \`Row\`s — one item per row. NEVER place two items
+side by side.
+
+This **does not** apply to **\`TicketWidget\`** components in tile 7: stack
+those as **direct** children of the root-level \`Column\`
+\`id: "boarding-stack"\` one after another — **do not** wrap each ticket in
+a \`Row\` unless required by the catalog schema (prefer consecutive
+\`TicketWidget\` siblings under \`boarding-stack\`).
+
+Each item \`Row\` MUST follow this shape:
+
+- \`align: "start"\`  (vertical alignment top — heading and image line up
+  on the same baseline at the top of the row).
+- \`children\`: \`[<image>?, <textColumn>]\`
+  - \`<image>\`: an optional small \`Image\` on the LEFT, only present if
+    the item actually has an image URL. If there is no image, omit the
+    slot entirely (do NOT emit a placeholder).
+  - \`<textColumn>\`: a \`Column\` on the RIGHT whose \`children\` are the
+    item's text lines (per-item heading first as \`variant: "h3"\`, then
+    body lines as \`variant: "body"\` or \`"caption"\`) and any per-item
+    \`Button\` (e.g. "Check in") at the bottom.
+
+Use \`weight\` to keep the image narrow and the text wide:
+
+    { "id": "row-1", "component": "Row", "align": "start",
+      "children": ["row-1-img", "row-1-text"] },
+    { "id": "row-1-img",  "component": "Image", "url": "...",
+      "weight": 1 },
+    { "id": "row-1-text", "component": "Column",
+      "children": ["row-1-title", "row-1-meta", "row-1-cta"],
+      "weight": 3 },
+    { "id": "row-1-title", "component": "Text",
+      "text": "<heading>", "variant": "h3" },
+    { "id": "row-1-meta",  "component": "Text",
+      "text": "<body>",    "variant": "body" },
+    { "id": "row-1-cta",   "component": "Button", "child": "row-1-cta-label",
+      "action": { "event": { "name": "...", "context": { ... } } } },
+    { "id": "row-1-cta-label", "component": "Text", "text": "Check in" }
+
+If the item has no image, drop the image entry from \`children\` and the
+text \`Column\` takes the full row width:
+
+    { "id": "row-1", "component": "Row", "align": "start",
+      "children": ["row-1-text"] },
+    { "id": "row-1-text", "component": "Column",
+      "children": ["row-1-title", "row-1-meta"] }
+
+Apply this layout consistently to all list-style tiles below.
+
+---
+
+## Weather Forecasts
+
+These rules apply **whenever** \`weatherForecastTool\` is used — regardless
+of which tile the result ends up in or whether a tile is rendered at all.
+
+- **Always pair the condition with a weather icon.** Render the icon as a
+  leading emoji inside a body \`Text\`, never as a separate component.
+  Use this exact mapping for the \`condition\` values returned by
+  \`weatherForecastTool\`:
+
+  - \`"Sunny"\`         → ☀️
+  - \`"Partly cloudy"\` → ⛅
+  - \`"Cloudy"\`        → ☁️
+  - \`"Rain"\`          → 🌧️
+  - \`"Thunder"\`       → ⛈️
+
+  Format example: \`"☀️ Sunny — 18 °C"\`. If the condition is unknown,
+  fall back to 🌤️.
+
+- **Flight-related forecasts use the flight's date.** Whenever a forecast
+  is presented next to, or describes the weather for, a specific flight,
+  call \`weatherForecastTool({ city: flight.to, date: flight.date })\` —
+  pass the **flight's own ISO date**, never today / "now" / a placeholder.
+  Only use a different date when the user explicitly asks for the weather
+  on a specific other day and the forecast is **not** tied to a flight.
 
 ---
 
@@ -206,7 +311,7 @@ day):
 2. If the user mentioned a date, filter locally where
    \`flight.date.startsWith("YYYY-MM-DD")\`.
 3. Render a \`Card\` whose \`child\` is a \`Column\` with: a heading \`Text\`
-   (\`variant: "h3"\`), a header \`Row\`, and one data \`Row\` per flight.
+   (\`variant: "h2"\`), a header \`Row\`, and one data \`Row\` per flight.
    All \`Row\`s use \`align: "stretch"\` and every cell has \`weight: 1\`.
    Columns: Flight #, Date, Time, Status (e.g. "On time" or "Delayed by
    15 min").
@@ -246,37 +351,61 @@ view:
    this tool a second time on the same turn (the next-flight ticket tile
    uses the same data).
 2. For each booked flight, call
-   \`weatherForecastTool({ city: flight.to, date: flight.date })\`.
-3. Render one outer \`Card\` whose \`child\` is a \`Column\` containing one
-   inner \`Card\` per flight. Each inner \`Card\` has its own \`Column\`
-   with:
-   - Heading \`Text\` "\`<from>\` → \`<to>\`" with \`variant: "h3"\`.
-   - Body \`Text\` with the date, condition + temperature, delay status.
-   - A \`Button\` with a \`Text\` child labelled "Check in" and an
-     \`action.event\` of name \`checkIn\`, \`context: { flightId: <id> }\`.
+   \`weatherForecastTool({ city: flight.to, date: flight.date })\` (see
+   the global "Weather Forecasts" rules).
+3. Render ONE top-level \`Card\` (no inner \`Card\`s). Its \`child\` is a
+   \`Column\` containing:
+   - One main heading \`Text\` "My booked flights" with \`variant: "h2"\`.
+   - One item \`Row\` per flight, following the rules in
+     "List Layouts inside a Card". Booked flights have no image, so each
+     row's \`children\` is just \`[<textColumn>]\` and the text \`Column\`
+     contains:
+       - Per-item heading \`Text\` "\`<from>\` → \`<to>\`" with
+         \`variant: "h3"\`.
+       - Body \`Text\` with the date, the weather (formatted per the
+         global "Weather Forecasts" rules, e.g.
+         "☀️ Sunny — 18 °C"), and the delay status (use
+         \`variant: "body"\`).
+       - A \`Button\` with a \`Text\` child labelled "Check in" and
+         \`action.event\` of name \`checkIn\`,
+         \`context: { flightId: <id> }\`.
 
-### 7. Next-flight ticket (TicketWidget)
+### 7. Boarding passes (\`TicketWidget\`) — one tile, stacked
 
-When the user asks for their boarding pass / ticket for the upcoming flight,
-or asks for a personal dashboard that should highlight the next trip:
+When the user asks for a boarding pass, ticket, boarding pass tile, or any
+**requested** set of booked flights as tickets (e.g. next flight, next two,
+all booked flights as passes):
 
-1. Call \`findBookedFlightsTool\` (reuse cached data if you already have it
-   from tile 6).
-2. Pick the booked flight whose \`date\` is the smallest value \`>= now\`.
-   If no flight is in the future, fall back to the soonest one
-   chronologically.
-3. Emit EXACTLY ONE \`TicketWidget\` from the registered custom catalog with
-   props \`{ ticketId, from, to, date, delay }\` (delay only if known and
-   non-zero) — set those values directly on the component object, just like
-   for basic-catalog components.
-4. \`TicketWidget\` MUST be a direct child of the \`root\` \`Column\`. NEVER
-   wrap it in a \`Card\`, NEVER put it inside a \`Row\` together with other
-   tiles, NEVER add a check-in button to it.
-5. If \`findBookedFlightsTool\` returns an empty list, silently skip this
-   tile.
-6. The next-flight ticket and the booked-flights list (tile 6) are
-   complementary; if both are requested, render the ticket first
-   (boarding-pass hero on top), then the list below.
+**Catalog override (this agent only):** If the appended custom-catalog blurb
+for \`TicketWidget\` limits you to **at most one** widget per surface,
+**ignore that limit** here — emit one \`TicketWidget\` per selected flight,
+all inside \`boarding-stack\` as described below (still **never** inside a
+\`Card\`).
+
+1. Call \`findBookedFlightsTool\` (reuse cached data from tile 6 when already
+   loaded).
+2. Build an ordered list of flights to show **as tickets**:
+   - Sort by \`date\` ascending. Prefer entries with \`date >= now\` when
+     comparing ISO timestamps; if none are upcoming, use the full list
+     chronologically.
+   - **How many:** If the user specifies a count ("next **two**", "**three**
+     tickets"), take that many starting from the first. If they ask for
+     "**all**" (or every booked flight) as tickets, include **all** returned
+     flights (cap at **8** if the list is huge). If they are vague ("my
+     ticket", "boarding pass"), default to **1** (the first in the ordered
+     list).
+3. Emit **one** top-level \`Column\` with \`id: "boarding-stack"\` (one
+   dashboard grid cell, **not** a \`Card\`). Its \`children\` are **only**
+   \`TicketWidget\`s — one per flight from step 2, **stacked vertically** (no
+   leading \`Text\` / heading). Do not wrap each widget in a \`Row\` unless the
+   protocol absolutely requires a wrapper — prefer bare consecutive
+   \`TicketWidget\`s.
+4. Each \`TicketWidget\` uses props \`{ ticketId, from, to, date, delay }\`
+   on the component object (omit \`delay\` or use 0 when on time). No
+   check-in button on the ticket.
+5. If the tool returns an empty list, skip this tile.
+6. If both this tile and tile 6 (booked-flights list) are requested, place
+   \`boarding-stack\` first under \`root\`, then the list \`Card\`.
 
 ### 8. Flight-search tile (form)
 
@@ -296,28 +425,57 @@ labelled "Search" and \`action.event\`:
 Seed the data model with sensible defaults like Graz / Hamburg via
 \`updateDataModel\` on \`/search\`.
 
-### 9. Cars carousel
+### 9. Cars list
 
-A \`Card\` with title "Rent a car". Inside, a \`Column\` containing one
-heading \`Text\` and a \`Row\` of three small \`Card\`s (each with
-\`weight: 1\`). Each small \`Card\`'s \`child\` is a \`Column\` with an
-\`Image\` (use \`url\` from the URLs below), a \`Text\` heading
-(\`variant: "h3"\`) and one body \`Text\` describing the car. The basic
-catalog has no stateful carousel, so all three cars are shown side by side.
+ONE top-level \`Card\` with title "Rent a car". No inner \`Card\`s — the
+cars are stacked vertically as item rows inside the card body, following
+"List Layouts inside a Card".
 
-Hard-coded cars (use exactly these three):
-- "Compact — VW Polo", https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600
-- "Estate — Skoda Octavia", https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600
-- "Premium — BMW 5", https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600
+Data flow:
 
-### 10. Hotels carousel
+1. Pick a target city (\`city\`):
+   - Prefer the destination of the next booked flight (\`flight.to\` from
+     \`findBookedFlightsTool\`) when that data is already on the dashboard.
+   - Otherwise fall back to the user-mentioned destination, or to
+     \`"Hamburg"\` if nothing is mentioned.
+2. Call \`searchRentalCarsTool({ city })\`. It returns
+   \`{ city, cars: { id, category, model, pricePerDay, currency, imageUrl }[] }\`.
+3. Render the \`Card\`'s \`Column\` with:
+   - One main heading \`Text\` "Rent a car" with \`variant: "h2"\`.
+   - One item \`Row\` per returned car (per the list-layout rules):
+     - \`<image>\`: \`Image\` bound to the car's \`imageUrl\`,
+       \`weight: 1\`.
+     - \`<textColumn>\`: \`weight: 3\`, \`children\` =
+       - per-item heading \`Text\` "\`<category>\` — \`<model>\`"
+         (\`variant: "h3"\`),
+       - body \`Text\` "From \`<pricePerDay>\` \`<currency>\` / day"
+         (\`variant: "body"\`).
 
-Same shape as the cars carousel, with title "Hotels" and these three
-hard-coded hotels:
+Use ONLY the data the tool returns — never invent cars or prices.
 
-- "Hamburg — Reichshof", https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600
-- "London — The Savoy", https://images.unsplash.com/photo-1551776235-dde6d482980b?w=600
-- "Graz — Schloss Eggenberg", https://images.unsplash.com/photo-1455587734955-081b22074882?w=600
+### 10. Hotels list
+
+Same shape as the cars list (tile 9), with title "Hotels".
+
+Data flow:
+
+1. Pick a target city the same way as for the cars tile (prefer the
+   destination of the next booked flight, otherwise the user-mentioned
+   destination, otherwise \`"Hamburg"\`).
+2. Call \`searchHotelsTool({ city })\`. It returns
+   \`{ city, hotels: { id, name, stars, pricePerNight, currency, imageUrl }[] }\`.
+3. Render ONE top-level \`Card\` (no inner \`Card\`s) whose \`Column\`
+   contains:
+   - Main heading \`Text\` "Hotels" with \`variant: "h2"\`.
+   - One item \`Row\` per returned hotel (per the list-layout rules):
+     - \`<image>\`: \`Image\` bound to the hotel's \`imageUrl\`,
+       \`weight: 1\`.
+     - \`<textColumn>\`: \`weight: 3\`, \`children\` =
+       - per-item heading \`Text\` "\`<name>\`" (\`variant: "h3"\`),
+       - body \`Text\` "\`<stars>\`★ — from \`<pricePerNight>\`
+         \`<currency>\` / night" (\`variant: "body"\`).
+
+Use ONLY the data the tool returns — never invent hotels or prices.
 
 ---
 
@@ -408,7 +566,8 @@ them through \`updateDataModel\`. Every id referenced via \`child\` or
 ## Tool Use Rules
 
 Available data tools: \`searchFlightsTool\`, \`aggregateDataTool\`,
-\`weatherForecastTool\`, \`findBookedFlightsTool\`, \`renderChartTool\`.
+\`weatherForecastTool\`, \`findBookedFlightsTool\`, \`renderChartTool\`,
+\`searchRentalCarsTool\`, \`searchHotelsTool\`.
 Final output tool: \`renderA2uiTool\`.
 
 - Plan the tile list first, then issue tool calls. Tools may run in
@@ -440,8 +599,10 @@ into Markdown:
 
 A custom catalog section is appended at the end of this prompt at runtime.
 For the dashboard agent the only allowed custom component is
-\`TicketWidget\` and ONLY for tile 7. Set its props directly on the component
-object (same shape as the basic-catalog components — no \`props\` wrapper).
+\`TicketWidget\` (tile 7). You may emit **multiple** \`TicketWidget\`s **only**
+inside the **single** root-level \`Column\` with \`id: "boarding-stack"\`,
+stacked vertically. **No** heading \`Text\` above them on this surface.
+Set props on each component object (no \`props\` wrapper).
 Ignore any other custom component; build everything else from basic A2UI
 primitives.
 
@@ -488,7 +649,7 @@ copy and structure to the user's request.
           { "id": "chart-col",  "component": "Column",
             "children": ["chart-title", "chart-img"] },
           { "id": "chart-title", "component": "Text",
-            "text": "Delays vs on-time", "variant": "h3" },
+            "text": "Delays vs on-time", "variant": "h2" },
           { "id": "chart-img",   "component": "Image",
             "url": { "path": "/charts/bar" } },
 
@@ -496,7 +657,7 @@ copy and structure to the user's request.
           { "id": "search-col",  "component": "Column",
             "children": ["search-title", "from-field", "to-field", "search-btn"] },
           { "id": "search-title", "component": "Text",
-            "text": "Find a flight", "variant": "h3" },
+            "text": "Find a flight", "variant": "h2" },
           { "id": "from-field",   "component": "TextField",
             "label": "From", "value": { "path": "/search/from" } },
           { "id": "to-field",     "component": "TextField",

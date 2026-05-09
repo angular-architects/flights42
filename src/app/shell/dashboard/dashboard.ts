@@ -100,6 +100,7 @@ export class Dashboard {
     if (!content) {
       return;
     }
+    this.clearRenderedSurfaces();
     this.chat.reset();
     this.synthesizedWidgets.set({});
     this.chat.sendMessage({ role: 'user', content });
@@ -115,9 +116,24 @@ export class Dashboard {
   }
 
   protected reset(): void {
+    this.clearRenderedSurfaces();
     this.chat.reset();
     this.synthesizedWidgets.set({});
     this.message.set('');
+  }
+
+  // The renderer's SurfaceGroupModel holds surfaces across runs. When a new
+  // generation re-uses the same `surfaceId` (or even just re-adds the same
+  // component ids inside an already-known surface), the renderer throws
+  // "already exists". Drop every previous surface before kicking off a new
+  // generation so the next run starts from a clean slate.
+  private clearRenderedSurfaces(): void {
+    const surfaceIds = Array.from(
+      this.renderer.surfaceGroup.surfacesMap.keys(),
+    );
+    for (const id of surfaceIds) {
+      this.renderer.surfaceGroup.deleteSurface(id);
+    }
   }
 
   private absorbA2uiTextFallback(messages: AgUiChatMessage[]): void {
