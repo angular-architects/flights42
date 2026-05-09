@@ -481,6 +481,11 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
     const toolCallNames = new Map<string, string>();
 
+    let textChars = 0;
+    let renderToolCalled = false;
+    let renderToolSucceeded = false;
+    let renderToolFailed = false;
+
     try {
       const stream = await this.agent.stream(rehydratedMastraMessages, {
         memory: { thread: input.threadId, resource: this.resourceId },
@@ -488,6 +493,18 @@ export class ExtendedMastraAgent extends AbstractAgent {
         clientTools,
         requestContext: this.requestContext,
       });
+
+      const summarizeRun = async (): Promise<void> => {
+        await this.logRunSummary({
+          runId: input.runId,
+          threadId: input.threadId,
+          stream,
+          textChars,
+          renderToolCalled,
+          renderToolSucceeded,
+          renderToolFailed,
+        });
+      };
 
       for await (const chunk of stream.fullStream) {
         switch ((chunk as { type?: string }).type) {
@@ -498,6 +515,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             const payload = chunk as { payload?: { text?: string } };
             const text = payload.payload?.text;
             if (typeof text === 'string' && text.length > 0) {
+              textChars += text.length;
               // One stable id per run so TEXT_MESSAGE_CHUNK coalesces into a single assistant
               // message (matches TOOL_CALL_START parentMessageId).
               handlers.onTextPart(text, assistantMessageId);
@@ -523,6 +541,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
               payload.payload.toolCallId,
               payload.payload.toolName,
             );
+            if (payload.payload.toolName === RENDER_A2UI_TOOL_NAME) {
+              renderToolCalled = true;
+            }
             handlers.onToolCallPart(payload.payload);
             break;
           }
@@ -533,28 +554,137 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 result: unknown;
               };
             };
+            const resolvedToolName = toolCallNames.get(
+              payload.payload.toolCallId,
+            );
+            if (resolvedToolName === RENDER_A2UI_TOOL_NAME) {
+              if (extractA2uiSurfacePayload(payload.payload.result)) {
+                renderToolSucceeded = true;
+              } else {
+                renderToolFailed = true;
+              }
+            }
             handlers.onToolResultPart({
               ...payload.payload,
-              toolName: toolCallNames.get(payload.payload.toolCallId),
+              toolName: resolvedToolName,
             });
             break;
           }
           case 'error': {
             const payload = chunk as { payload: { error: string } };
+            await summarizeRun();
             handlers.onError(new Error(payload.payload.error));
             return;
           }
           case 'finish': {
+            await summarizeRun();
             handlers.onRunFinished();
             return;
           }
         }
       }
 
+      await summarizeRun();
       handlers.onRunFinished();
     } catch (error) {
       handlers.onError(error);
     }
+  }
+
+  private async logRunSummary(args: {
+    runId: string;
+    threadId: string;
+    stream: { usage?: Promise<unknown> };
+    textChars: number;
+    renderToolCalled: boolean;
+    renderToolSucceeded: boolean;
+    renderToolFailed: boolean;
+  }): Promise<void> {
+    const {
+      runId,
+      threadId,
+      stream,
+      textChars,
+      renderToolCalled,
+      renderToolSucceeded,
+      renderToolFailed,
+    } = args;
+
+    const expectsA2uiSurface = this.internalToolNames.has(
+      RENDER_A2UI_TOOL_NAME,
+    );
+
+    const tag = `[ag-ui][agent=${this.agentId}][run=${runId}][thread=${threadId}]`;
+
+    if (expectsA2uiSurface && !renderToolSucceeded) {
+      if (renderToolCalled && renderToolFailed) {
+        console.warn(
+          `${tag} renderA2uiTool returned no valid A2UI surface (likely a schema validation error); the dashboard will not render.`,
+        );
+      } else if (textChars > 0) {
+        console.warn(
+          `${tag} run finished without a renderA2uiTool call but streamed ${textChars} text characters — the answer was sent as plain text instead of an A2UI surface.`,
+        );
+      } else {
+        console.warn(
+          `${tag} run finished without a renderA2uiTool call and without text output — no surface was rendered.`,
+        );
+      }
+    }
+
+    const usage = await readUsage(stream);
+    if (usage) {
+      const cacheRatio =
+        usage.inputTokens && usage.cachedInputTokens !== undefined
+          ? ` (${Math.round((usage.cachedInputTokens / usage.inputTokens) * 100)}% cached)`
+          : '';
+      console.info(
+        `${tag} usage: input=${usage.inputTokens ?? '?'}` +
+          `${usage.cachedInputTokens !== undefined ? `, cached=${usage.cachedInputTokens}${cacheRatio}` : ''}` +
+          `, output=${usage.outputTokens ?? '?'}` +
+          `${usage.reasoningTokens ? `, reasoning=${usage.reasoningTokens}` : ''}` +
+          `, total=${usage.totalTokens ?? '?'}`,
+      );
+    }
+  }
+}
+
+interface UsageSummary {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  reasoningTokens?: number;
+  cachedInputTokens?: number;
+}
+
+async function readUsage(stream: {
+  usage?: Promise<unknown>;
+}): Promise<UsageSummary | undefined> {
+  const usagePromise = stream.usage;
+  if (
+    !usagePromise ||
+    typeof (usagePromise as Promise<unknown>).then !== 'function'
+  ) {
+    return undefined;
+  }
+  try {
+    const raw = (await usagePromise) as UnknownRecord | undefined;
+    if (!raw) {
+      return undefined;
+    }
+    const num = (key: string): number | undefined => {
+      const value = raw[key];
+      return typeof value === 'number' ? value : undefined;
+    };
+    return {
+      inputTokens: num('inputTokens'),
+      outputTokens: num('outputTokens'),
+      totalTokens: num('totalTokens'),
+      reasoningTokens: num('reasoningTokens'),
+      cachedInputTokens: num('cachedInputTokens'),
+    };
+  } catch {
+    return undefined;
   }
 }
 

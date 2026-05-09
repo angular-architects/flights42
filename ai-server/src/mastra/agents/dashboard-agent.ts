@@ -8,6 +8,7 @@ import {
 import { aggregateDataTool } from '../tools/aggregate-data.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
 import { renderChartTool } from '../tools/render-chart.js';
+import { renderFlightChartTool } from '../tools/render-flight-chart.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { searchHotelsTool } from '../tools/search-hotels.js';
 import { searchRentalCarsTool } from '../tools/search-rental-cars.js';
@@ -28,6 +29,7 @@ export const dashboardAgent = new Agent({
     weatherForecastTool,
     findBookedFlightsTool,
     renderChartTool,
+    renderFlightChartTool,
     searchRentalCarsTool,
     searchHotelsTool,
     renderA2uiTool,

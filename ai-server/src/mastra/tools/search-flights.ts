@@ -27,6 +27,44 @@ function normaliseDelay(raw: RawFlight): number {
   return raw.delayed ? 15 : 0;
 }
 
+export interface FlightRecord {
+  id: number;
+  from: string;
+  to: string;
+  date: string;
+  delay: number;
+}
+
+/**
+ * Fetches and normalises flights between two cities. Shared with
+ * composite tools (e.g. `renderFlightChartTool`) so they don't have to
+ * call `searchFlightsTool` through the LLM just to grab the same data.
+ */
+export async function fetchFlights(
+  from: string,
+  to: string,
+): Promise<FlightRecord[]> {
+  const params = new URLSearchParams({ from, to });
+  const response = await fetch(`${FLIGHT_API_BASE}?${params.toString()}`, {
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `searchFlights: backend responded with status ${response.status}`,
+    );
+  }
+
+  const raw = (await response.json()) as RawFlight[];
+  return raw.map((entry) => ({
+    id: entry.id,
+    from: entry.from,
+    to: entry.to,
+    date: entry.date,
+    delay: normaliseDelay(entry),
+  }));
+}
+
 export const searchFlightsTool = createTool({
   id: 'searchFlights',
   description: [
@@ -42,26 +80,7 @@ export const searchFlightsTool = createTool({
     flights: z.array(flightSchema),
   }),
   execute: async ({ from, to }) => {
-    const params = new URLSearchParams({ from, to });
-    const response = await fetch(`${FLIGHT_API_BASE}?${params.toString()}`, {
-      headers: { Accept: 'application/json' },
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `searchFlights: backend responded with status ${response.status}`,
-      );
-    }
-
-    const raw = (await response.json()) as RawFlight[];
-    const flights = raw.map((entry) => ({
-      id: entry.id,
-      from: entry.from,
-      to: entry.to,
-      date: entry.date,
-      delay: normaliseDelay(entry),
-    }));
-
+    const flights = await fetchFlights(from, to);
     return { flights };
   },
 });

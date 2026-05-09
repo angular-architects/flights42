@@ -209,13 +209,34 @@ unavailable). Set \`align: "stretch"\` on the rows.
 
 ---
 
-## Charts (\`renderChartTool\`)
+## Charts
 
-A2UI has no chart component. Call \`renderChartTool\` and embed the
-returned URL in an \`Image\`.
+A2UI has no chart component. Call a chart tool and embed the returned
+URL in an \`Image\`.
 
-1. After computing aggregates (usually with \`aggregateDataTool\` — one
-   call per chart, short expression, filtered data under \`data\`), call
+### Preferred: \`renderFlightChartTool\` (one round-trip)
+
+For the standard delay-related tiles (on-time vs. delayed share,
+delays per day) use \`renderFlightChartTool\`. It fetches the flights,
+aggregates them, and renders the chart in a single call:
+
+    { "from": "Graz", "to": "Hamburg",
+      "type": "delayShare" | "delaysPerDay",
+      "chartType": "bar" | "pie",
+      "date": "2026-04-11",  // optional, ISO date prefix YYYY-MM-DD
+      "title": "..." }
+
+Returns \`{ url, stats }\`. Use \`url\` as-is in an \`updateDataModel\`,
+and feel free to surface numbers from \`stats\` next to the chart
+without an extra aggregation call.
+
+### Fallback: \`aggregateDataTool\` + \`renderChartTool\` (custom aggregation)
+
+For non-standard aggregations (custom groupings, ratios, percentages,
+or charts that are not about delays):
+
+1. After computing aggregates with \`aggregateDataTool\` — one call
+   per chart, short expression, filtered data under \`data\` — call
    \`renderChartTool\` with:
 
        { "type": "bar" | "pie",
@@ -228,11 +249,12 @@ returned URL in an \`Image\`.
    - Bar: all \`datasets[*].data\` arrays have the same length as
      \`labels\`; multiple datasets render as grouped bars with a legend.
 
-2. The tool returns a SHORT URL like
-   \`http://localhost:3001/charts/<id>.svg\`. Put it AS-IS as the value
-   of an \`updateDataModel\` (e.g. path \`/charts/bar\`). Do not alter,
-   shorten, or expand it. NEVER hand-build \`data:image/svg+xml;...\`
-   URLs and NEVER use external chart services.
+2. Both \`renderFlightChartTool\` and \`renderChartTool\` return a
+   SHORT URL like \`http://localhost:3001/charts/<id>.svg\`. Put it
+   AS-IS as the value of an \`updateDataModel\` (e.g. path
+   \`/charts/bar\`). Do not alter, shorten, or expand it. NEVER
+   hand-build \`data:image/svg+xml;...\` URLs and NEVER use external
+   chart services.
 
 3. Bind via:
 
@@ -290,14 +312,33 @@ this section as a starting point, not a closed set.
 
 Available data tools: \`searchFlightsTool\`, \`aggregateDataTool\`,
 \`weatherForecastTool\`, \`findBookedFlightsTool\`, \`renderChartTool\`,
-\`searchRentalCarsTool\`, \`searchHotelsTool\`. Final output:
-\`renderA2uiTool\`.
+\`renderFlightChartTool\`, \`searchRentalCarsTool\`, \`searchHotelsTool\`.
+Final output: \`renderA2uiTool\`.
 
 Workflow: plan the tile list first, then issue tool calls (in parallel
 when their inputs do not depend on each other). Reuse
 \`findBookedFlightsTool\` results across tiles in the same turn. Once all
 data tools have returned, compose the surface and emit a single
 \`renderA2uiTool\` call.
+
+### Batching tool calls (latency)
+
+Each LLM round-trip costs latency. Whenever multiple data tool calls
+have no dependency on each other, issue them **all in the same step**
+rather than serializing one after another. Concretely:
+
+- Independent \`searchFlightsTool\` calls (e.g. one per direction) go
+  in the same step.
+- Independent \`renderFlightChartTool\` calls (different directions or
+  different aggregations) go in the same step.
+- \`findBookedFlightsTool\` + \`searchRentalCarsTool\` +
+  \`searchHotelsTool\` for the same dashboard go in the same step.
+- \`weatherForecastTool\` calls per booked flight go in the same step
+  once \`findBookedFlightsTool\` has returned.
+
+A typical "Graz⇄Hamburg flights with delay charts and booked flights"
+dashboard should resolve in roughly two batched data-tool steps plus
+the final \`renderA2uiTool\`, not eight serial steps.
 
 ### Flights table (A → B, optional date)
 
@@ -317,15 +358,18 @@ saying so.
 
 ### Charts (on-time vs. delayed, delays per day, …)
 
-1. \`searchFlightsTool({ from, to })\` (filter by day if needed).
-2. \`aggregateDataTool\` with an expression like
-   \`{ "delayed": $count(data[delay > 0]),
-       "onTime":  $count(data[delay = 0]) }\`
-   — pass the filtered array under \`data\`. For per-day breakdowns,
-   group by date prefix.
-3. \`renderChartTool\` with \`type: "bar"\` (grouped) or \`type: "pie"\`
-   (single dataset). Bind the returned URL into an \`Image\` via a
-   data-model path like \`/charts/<key>\`.
+For the standard delay charts, ONE \`renderFlightChartTool\` call
+replaces the old \`searchFlights\` + \`aggregateData\` + \`renderChart\`
+chain:
+
+- "On-time vs. delayed share":
+  \`renderFlightChartTool({ from, to, type: "delayShare", chartType: "pie" | "bar", date? })\`
+- "Delays per day":
+  \`renderFlightChartTool({ from, to, type: "delaysPerDay", chartType: "bar" })\`
+
+Bind the returned \`url\` into an \`Image\` via a data-model path like
+\`/charts/<key>\`. For non-standard aggregations, use the fallback
+documented above (\`aggregateDataTool\` + \`renderChartTool\`).
 
 ### Booked-flights list (with weather, check-in)
 

@@ -40,6 +40,42 @@ function rememberChart(svg: string): string {
   return id;
 }
 
+export interface FlightChartDataset {
+  label?: string;
+  data: number[];
+  color?: string;
+}
+
+export interface BuildAndCacheChartArgs {
+  type: 'bar' | 'pie';
+  title?: string;
+  labels: string[];
+  datasets: FlightChartDataset[];
+}
+
+/**
+ * Renders a chart SVG with the same shapes the public `renderChartTool`
+ * produces, caches it, and returns the short HTTP URL the client can
+ * embed in an `Image` component. Shared with composite tools (e.g.
+ * `renderFlightChartTool`) to avoid an extra LLM round-trip per chart.
+ */
+export function buildAndCacheChartUrl(args: BuildAndCacheChartArgs): string {
+  const svg =
+    args.type === 'bar'
+      ? renderBarChart({
+          labels: args.labels,
+          datasets: args.datasets,
+          title: args.title,
+        })
+      : renderPieChart({
+          labels: args.labels,
+          datasets: args.datasets,
+          title: args.title,
+        });
+  const id = rememberChart(svg);
+  return `${CHART_BASE_URL}/charts/${id}.svg`;
+}
+
 export function getCachedChartSvg(id: string): string | undefined {
   return chartCache.get(id);
 }
