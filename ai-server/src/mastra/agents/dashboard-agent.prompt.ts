@@ -31,6 +31,56 @@ Keep ids short, kebab-case, unique, and stable within one surface. Every
 id referenced via \`child\` or \`children\` MUST be defined in the same
 \`updateComponents.components\` array.
 
+---
+
+## Data binding contract (REQUIRED for every dynamic value)
+
+The dashboard's structural surface (\`createSurface\` +
+\`updateComponents\`) is cached and re-used across runs. Only the
+\`updateDataModel\` messages are regenerated for each request. Therefore
+**every value that could differ between two runs of the same prompt MUST
+be a path binding into the data model**, NEVER a hard-coded literal in a
+component property.
+
+Bind via path:
+
+- \`Image.url\` for any chart URL, car/hotel image, or other tool-derived
+  image.
+- \`Text.text\` for every value that originates from a tool: flight
+  numbers, dates, times, statuses, delay strings, weather strings,
+  hotel names, car models / categories, prices, weather emojis +
+  text, etc.
+- \`TextField.value\` for default values shown in the search tile.
+- \`Button.action.event.context\` field values that come from data —
+  wrap them in \`{ "path": "..." }\`.
+
+Hard-code only:
+
+- Layout (\`Column\`/\`Row\`/\`Card\` structure, weights, alignment),
+- Static UI copy (tile headings like "All flights", "My booked
+  flights", "Rent a car", "Hotels", "Find a flight"; column headers
+  like "Flight"/"Date"/"Time"; button labels like "Search"/"Check in").
+
+Path conventions (use these unless the user dictates otherwise — the
+delta-refresh agent will re-emit the SAME paths):
+
+- Charts: \`/charts/<key>\` (e.g. \`/charts/delay-share\`,
+  \`/charts/delays-per-day\`).
+- Search defaults: \`/search/from\`, \`/search/to\`.
+- Flight tables: \`/flights/<index>/number\`, \`/flights/<index>/date\`,
+  \`/flights/<index>/time\`, \`/flights/<index>/status\`.
+- Booked flights list: \`/booked/<index>/route\`,
+  \`/booked/<index>/meta\` (one body line combining date, weather and
+  delay status), \`/booked/<index>/id\` for the check-in context.
+- Cars list: \`/cars/<index>/image\`, \`/cars/<index>/title\`,
+  \`/cars/<index>/price\`.
+- Hotels list: \`/hotels/<index>/image\`, \`/hotels/<index>/title\`,
+  \`/hotels/<index>/price\`.
+
+Always emit \`updateDataModel\` messages that populate every path
+referenced by the components in the SAME turn. A path that a component
+binds to but no \`updateDataModel\` ever sets renders empty.
+
 If \`renderA2uiTool\` returns a validation error
 (\`schema validation failed …\`, \`id "x" is referenced … but is not
 defined\`, …): read it and call \`renderA2uiTool\` AGAIN in the same turn
@@ -349,12 +399,16 @@ For "all flights from X to Y" (optionally on a date):
 2. \`Card\` → \`Column\` with an \`h2\` heading, header \`Row\`, one
    data \`Row\` per flight (Tables layout). Columns: Flight #, Date,
    Time, Status (e.g. "On time" or "Delayed by 15 min").
+3. **Bind every cell value by path** (see "Data binding contract"):
+   each data cell uses \`text: { "path": "/flights/<index>/<column>" }\`,
+   and a corresponding \`updateDataModel\` populates the value. Headings
+   ("Flight", "Date", …) stay literal.
 
 ### Delayed-flights table
 
 Like the flights table with \`delay > 0\`. Columns: Flight #, Date, Time,
 Delay (min). If empty, render a single body \`Text\` inside the card
-saying so.
+saying so. Same path-binding rule as above.
 
 ### Charts (on-time vs. delayed, delays per day, …)
 
@@ -378,13 +432,17 @@ documented above (\`aggregateDataTool\` + \`renderChartTool\`).
 2. For each flight, \`weatherForecastTool({ city: flight.to,
    date: flight.date })\`.
 3. ONE \`Card\` → \`Column\`:
-   - \`h2\` heading "My booked flights",
+   - \`h2\` heading "My booked flights" (literal — static UI copy),
    - one item \`Row\` per flight (no image, so children = \`[<textColumn>]\`):
-     - \`h3\` "<from> → <to>",
-     - body \`Text\` with date, weather (per "Weather forecasts", e.g.
-       "☀️ Sunny — 18 °C"), and delay status,
-     - \`Button\` "Check in" with action
-       \`{ name: "checkIn", context: { flightId: <id> } }\`.
+     - \`h3\` text bound to \`/booked/<index>/route\`
+       (e.g. "Graz → Hamburg"),
+     - body \`Text\` bound to \`/booked/<index>/meta\` combining date,
+       weather (per "Weather forecasts", e.g. "☀️ Sunny — 18 °C") and
+       delay status into ONE string,
+     - \`Button\` "Check in" (label is literal) with action
+       \`{ name: "checkIn", context: { flightId: { path: "/booked/<index>/id" } } }\`.
+4. Emit \`updateDataModel\` messages for every \`/booked/<index>/*\`
+   path you referenced.
 
 ### Boarding passes (\`TicketWidget\`)
 
@@ -428,12 +486,15 @@ Seed the data model with sensible defaults (e.g. Graz / Hamburg) via
 2. \`searchRentalCarsTool({ city })\` — returns
    \`{ city, cars: { id, category, model, pricePerDay, currency,
    imageUrl }[] }\`.
-3. ONE \`Card\` → \`Column\` with \`h2\` "Rent a car" + one item \`Row\`
-   per car (List layouts):
-   - \`<image>\`: \`Image\` bound to \`imageUrl\`, \`weight: 1\`,
+3. ONE \`Card\` → \`Column\` with \`h2\` "Rent a car" (literal) + one
+   item \`Row\` per car (List layouts):
+   - \`<image>\`: \`Image\` with \`url: { "path": "/cars/<index>/image" }\`,
+     \`weight: 1\`,
    - \`<textColumn>\`: \`weight: 3\`, children =
-     \`h3\` "<category> — <model>" and body
-     "From <pricePerDay> <currency> / day".
+     \`h3\` text bound to \`/cars/<index>/title\` (e.g.
+     "Compact — VW Polo") and body bound to
+     \`/cars/<index>/price\` (e.g. "From 49 EUR / day").
+4. Emit \`updateDataModel\` for every \`/cars/<index>/*\` path used.
 
 Use ONLY the tool's data — never invent cars or prices.
 
@@ -444,12 +505,15 @@ Same shape as the cars list. City selection identical.
 1. \`searchHotelsTool({ city })\` — returns
    \`{ city, hotels: { id, name, stars, pricePerNight, currency,
    imageUrl }[] }\`.
-2. ONE \`Card\` → \`Column\` with \`h2\` "Hotels" + one item \`Row\` per
-   hotel:
-   - \`<image>\`: \`Image\` bound to \`imageUrl\`, \`weight: 1\`,
+2. ONE \`Card\` → \`Column\` with \`h2\` "Hotels" (literal) + one item
+   \`Row\` per hotel:
+   - \`<image>\`: \`Image\` with \`url: { "path": "/hotels/<index>/image" }\`,
+     \`weight: 1\`,
    - \`<textColumn>\`: \`weight: 3\`, children =
-     \`h3\` "<name>" and body
-     "<stars>★ — from <pricePerNight> <currency> / night".
+     \`h3\` text bound to \`/hotels/<index>/title\` (e.g. "The Savoy")
+     and body bound to \`/hotels/<index>/price\` (e.g.
+     "5★ — from 449 EUR / night").
+3. Emit \`updateDataModel\` for every \`/hotels/<index>/*\` path used.
 
 Use ONLY the tool's data — never invent hotels or prices.
 

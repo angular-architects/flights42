@@ -4,6 +4,7 @@ export * from './create-show-components-tool.js';
 export * from './extended-mastra-agent.js';
 export * from './log-prompt.js';
 export * from './memory-store.js';
+export * from './render-a2ui-data-tool.js';
 export * from './render-a2ui-tool.js';
 export * from './schema-example.js';
 export * from './widget-factory.js';

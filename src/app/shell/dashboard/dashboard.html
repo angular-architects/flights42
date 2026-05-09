@@ -25,6 +25,14 @@
     @if (hasOutput()) {
       <button type="button" (click)="reset()">Reset</button>
     }
+    <label class="prevent-caching">
+      <input
+        type="checkbox"
+        name="preventCaching"
+        [checked]="preventCaching()"
+        (change)="preventCaching.set($any($event.target).checked)" />
+      Prevent caching
+    </label>
   </div>
 </form>
 
