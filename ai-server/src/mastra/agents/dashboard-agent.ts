@@ -1,27 +1,42 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { model } from '../config.js';
 import {
-  RENDER_DASHBOARD_TOOL_NAME,
-  renderDashboardTool,
-} from '../tools/render-dashboard.js';
+  addCustomCatalogInstructions,
+  renderA2uiTool,
+} from '../../../../libs/ag-ui-server/index.js';
+import { aggregateDataTool } from '../tools/aggregate-data.js';
+import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
+import { renderChartTool } from '../tools/render-chart.js';
+import { searchFlightsTool } from '../tools/search-flights.js';
+import { weatherForecastTool } from '../tools/weather-forecast.js';
 import { dashboardAgentPrompt } from './dashboard-agent.prompt.js';
 
 export const dashboardAgent = new Agent({
   id: 'dashboardAgent',
   name: 'Flight42 Dashboard Composer',
-  instructions: dashboardAgentPrompt,
-  model,
-  // The object key — not the tool's `id` — is what Mastra sends to the
-  // LLM as the function name. Keeping them aligned with
-  // `RENDER_DASHBOARD_TOOL_NAME` ensures the route handler's
-  // `TOOL_CALL_*` filter matches the agent's emitted events.
-  tools: { [RENDER_DASHBOARD_TOOL_NAME]: renderDashboardTool },
-  // The agent's only job is to issue ONE renderDashboard tool call;
-  // the route intercepts its args and renders the surface. We don't
-  // need a follow-up LLM step to process the (intentionally empty)
-  // tool result, so the loop ends after step 1.
-  defaultOptions: { maxSteps: 1 },
+  instructions: addCustomCatalogInstructions({
+    systemInstructions: dashboardAgentPrompt,
+    log: false,
+  }),
+  model: 'openai/gpt-5.3-chat-latest',
+  tools: {
+    searchFlightsTool,
+    aggregateDataTool,
+    weatherForecastTool,
+    findBookedFlightsTool,
+    renderChartTool,
+    renderA2uiTool,
+  },
+  // A typical dashboard request issues many tool calls before the final
+  // `renderA2uiTool`: searchFlights, several aggregateData runs, one or two
+  // renderChart calls, optionally weatherForecast and findBookedFlights, and
+  // finally renderA2uiTool. Mastra's default step limit is 5, which makes
+  // the agent stop right before the rendering step and produces an empty
+  // dashboard. `defaultOptions` is the option bag for the new
+  // `agent.stream()` / `agent.generate()` APIs in Mastra >= 1.x; the
+  // `*Legacy` variants only apply to `streamLegacy()` / `generateLegacy()`
+  // and are silently ignored by the AG-UI route.
+  defaultOptions: { maxSteps: 20 },
   memory: new Memory(),
 });

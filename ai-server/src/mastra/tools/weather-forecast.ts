@@ -19,40 +19,6 @@ function pickTemperature(seed: number): number {
   return (seed % 25) + 5 - 5;
 }
 
-export interface WeatherForecast {
-  city: string;
-  date: string;
-  condition: string;
-  temperatureC: number;
-}
-
-/**
- * Pure helper, shared with the dashboard DSL compiler so the weather
- * tile does not need an LLM round-trip per booked flight.
- */
-export function weatherForecast(city: string, date: string): WeatherForecast {
-  const day = date.slice(0, 10);
-  const seed = hashString(`${city.toLowerCase()}|${day}`);
-  return {
-    city,
-    date: day,
-    condition: pickCondition(seed),
-    temperatureC: pickTemperature(seed),
-  };
-}
-
-const WEATHER_ICON_BY_CONDITION: Record<string, string> = {
-  Sunny: '☀️',
-  'Partly cloudy': '⛅',
-  Cloudy: '☁️',
-  Rain: '🌧️',
-  Thunder: '⛈️',
-};
-
-export function weatherIconFor(condition: string): string {
-  return WEATHER_ICON_BY_CONDITION[condition] ?? '🌤️';
-}
-
 export const weatherForecastTool = createTool({
   id: 'weatherForecast',
   description: [
@@ -72,5 +38,14 @@ export const weatherForecastTool = createTool({
     condition: z.string(),
     temperatureC: z.number(),
   }),
-  execute: async ({ city, date }) => weatherForecast(city, date),
+  execute: async ({ city, date }) => {
+    const day = date.slice(0, 10);
+    const seed = hashString(`${city.toLowerCase()}|${day}`);
+    return {
+      city,
+      date: day,
+      condition: pickCondition(seed),
+      temperatureC: pickTemperature(seed),
+    };
+  },
 });

@@ -8,9 +8,7 @@ import {
   SensitiveDataFilter,
 } from '@mastra/observability';
 
-import { checkinAgent } from './agents/checkin-agent.js';
 import { dashboardAgent } from './agents/dashboard-agent.js';
-import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
 import { agUiRouteHandler } from './routes/ag-ui-route.js';
 import {
@@ -19,16 +17,9 @@ import {
   listBookingsHandler,
 } from './routes/bookings-route.js';
 import { getChartHandler } from './routes/charts-route.js';
-import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
-import { getDashboardImageHandler } from './routes/images-route.js';
 
 export const mastra = new Mastra({
-  agents: {
-    ticketingAgent,
-    dashboardAgent,
-    reportingAgent,
-    checkinAgent,
-  },
+  agents: { ticketingAgent, dashboardAgent },
   storage: new LibSQLStore({
     id: 'flights42-storage',
     url: 'file:./flights42.db',
@@ -82,10 +73,6 @@ export const mastra = new Mastra({
       registerApiRoute('/charts/:id', {
         method: 'GET',
         handler: getChartHandler,
-      }),
-      registerApiRoute('/images/:category/:filename', {
-        method: 'GET',
-        handler: getDashboardImageHandler,
       }),
     ],
   },
