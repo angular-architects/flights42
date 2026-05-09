@@ -15,6 +15,33 @@ interface RequestMessage {
   readonly content?: unknown;
 }
 
+export interface DashboardCacheEntry {
+  /**
+   * Surface-shaping operations: `createSurface` + `updateComponents`.
+   * Re-emitted as-is on every cache hit so the renderer rebuilds the
+   * component tree.
+   */
+  structural: unknown[];
+  /**
+   * Initial `updateDataModel` operations from the original turn. Used as
+   * a template for the delta-refresh agent: it sees these paths and
+   * re-emits them with fresh values.
+   */
+  dataModel: unknown[];
+  /**
+   * The surface id used by `structural` and `dataModel`. Convenience
+   * cache; could also be derived from the operations list.
+   */
+  surfaceId: string;
+}
+
+interface MaybeOperation {
+  readonly createSurface?: { readonly surfaceId?: unknown };
+  readonly updateComponents?: { readonly surfaceId?: unknown };
+  readonly updateDataModel?: unknown;
+  readonly deleteSurface?: unknown;
+}
+
 export function computeDashboardRequestHash(
   messages: readonly RequestMessage[],
 ): string {
@@ -40,11 +67,11 @@ export async function dashboardCacheExists(hash: string): Promise<boolean> {
 
 export async function readDashboardCache(
   hash: string,
-): Promise<unknown[] | null> {
+): Promise<DashboardCacheEntry | null> {
   try {
     const raw = await readFile(getCacheFilePath(hash), 'utf-8');
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? parsed : null;
+    return toCacheEntry(parsed);
   } catch (err) {
     if (isNotFoundError(err)) {
       return null;
@@ -56,13 +83,80 @@ export async function readDashboardCache(
 export async function writeDashboardCache(
   hash: string,
   operations: readonly unknown[],
-): Promise<void> {
+): Promise<DashboardCacheEntry | null> {
+  const entry = splitA2uiOperations(operations);
+  if (!entry) {
+    return null;
+  }
   await mkdir(CACHE_DIR, { recursive: true });
   await writeFile(
     getCacheFilePath(hash),
-    JSON.stringify(operations, null, 2),
+    JSON.stringify(entry, null, 2),
     'utf-8',
   );
+  return entry;
+}
+
+/**
+ * Splits a fresh A2UI operations array into the structural part
+ * (`createSurface` + `updateComponents`) and the initial data-model
+ * part (`updateDataModel`). Returns `null` when the operations don't
+ * contain a `createSurface` (in which case caching makes no sense).
+ */
+export function splitA2uiOperations(
+  operations: readonly unknown[],
+): DashboardCacheEntry | null {
+  const structural: unknown[] = [];
+  const dataModel: unknown[] = [];
+  let surfaceId: string | null = null;
+
+  for (const op of operations) {
+    if (!op || typeof op !== 'object') {
+      continue;
+    }
+    const candidate = op as MaybeOperation;
+    if (candidate.createSurface) {
+      structural.push(op);
+      const id = candidate.createSurface.surfaceId;
+      if (typeof id === 'string') {
+        surfaceId = id;
+      }
+      continue;
+    }
+    if (candidate.updateComponents) {
+      structural.push(op);
+      continue;
+    }
+    if (candidate.updateDataModel) {
+      dataModel.push(op);
+      continue;
+    }
+  }
+
+  if (!surfaceId || structural.length === 0) {
+    return null;
+  }
+
+  return { structural, dataModel, surfaceId };
+}
+
+function toCacheEntry(value: unknown): DashboardCacheEntry | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const candidate = value as Partial<DashboardCacheEntry>;
+  if (
+    !Array.isArray(candidate.structural) ||
+    !Array.isArray(candidate.dataModel) ||
+    typeof candidate.surfaceId !== 'string'
+  ) {
+    return null;
+  }
+  return {
+    structural: candidate.structural,
+    dataModel: candidate.dataModel,
+    surfaceId: candidate.surfaceId,
+  };
 }
 
 function getCacheFilePath(hash: string): string {

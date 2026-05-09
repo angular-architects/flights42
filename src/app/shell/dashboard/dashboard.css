@@ -32,9 +32,25 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .prompt-actions button {
+  cursor: pointer;
+}
+
+.prevent-caching {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: rgba(15, 23, 42, 0.75);
+  cursor: pointer;
+  user-select: none;
+}
+
+.prevent-caching input[type='checkbox'] {
   cursor: pointer;
 }
 

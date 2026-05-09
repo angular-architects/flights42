@@ -43,12 +43,14 @@ export class Dashboard {
   private readonly renderer = inject(A2uiRendererService);
 
   protected readonly message = signal('');
+  protected readonly preventCaching = signal(false);
 
   protected readonly chat = agUiResource({
     url: this.config.agUiUrlFor('dashboardAgent'),
     model: this.config.model,
     useServerMemory: false,
     tools: [submitFlightSearchTool],
+    forwardedProps: () => ({ preventCaching: this.preventCaching() }),
   });
 
   // Fallback for runs where the agent emitted the A2UI payload as plain
