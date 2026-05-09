@@ -1,6 +1,8 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { AI_SERVER_PUBLIC_URL } from './public-url.js';
+
 interface HotelTemplate {
   name: string;
   stars: 3 | 4 | 5;
@@ -8,31 +10,36 @@ interface HotelTemplate {
   imageUrl: string;
 }
 
+// Image URLs point at the ai-server's local optimized webp assets
+// (800×450, q=80). See `ai-server/public/images/hotels/` and the
+// `/images/:category/:filename` route registered in `mastra/index.ts`.
+const HOTEL_IMG_LOBBY = `${AI_SERVER_PUBLIC_URL}/images/hotels/hotel-lobby.webp`;
+const HOTEL_IMG_LUXURY = `${AI_SERVER_PUBLIC_URL}/images/hotels/hotel-luxury.webp`;
+const HOTEL_IMG_EXTERIOR = `${AI_SERVER_PUBLIC_URL}/images/hotels/hotel-exterior.webp`;
+const HOTEL_IMG_INTERIOR = `${AI_SERVER_PUBLIC_URL}/images/hotels/hotel-interior.webp`;
+
 // Curated, hard-coded hotel sets for the cities our demo flies to. Unknown
 // cities fall back to a generic list whose ordering varies per city seed so
 // the dashboard at least looks plausible.
 const HOTELS_BY_CITY: Record<string, readonly HotelTemplate[]> = {
   hamburg: [
     {
-      name: 'Reichshof Hamburg',
+      name: 'Hafenpark Hamburg',
       stars: 4,
       basePrice: 159,
-      imageUrl:
-        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600',
+      imageUrl: HOTEL_IMG_LOBBY,
     },
     {
       name: 'Hotel Atlantic Kempinski',
       stars: 5,
       basePrice: 289,
-      imageUrl:
-        'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600',
+      imageUrl: HOTEL_IMG_LUXURY,
     },
     {
       name: 'Motel One Alster',
       stars: 3,
       basePrice: 89,
-      imageUrl:
-        'https://images.unsplash.com/photo-1455587734955-081b22074882?w=600',
+      imageUrl: HOTEL_IMG_EXTERIOR,
     },
   ],
   london: [
@@ -40,22 +47,19 @@ const HOTELS_BY_CITY: Record<string, readonly HotelTemplate[]> = {
       name: 'The Savoy',
       stars: 5,
       basePrice: 449,
-      imageUrl:
-        'https://images.unsplash.com/photo-1551776235-dde6d482980b?w=600',
+      imageUrl: HOTEL_IMG_INTERIOR,
     },
     {
       name: 'The Hoxton Shoreditch',
       stars: 4,
       basePrice: 219,
-      imageUrl:
-        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600',
+      imageUrl: HOTEL_IMG_LOBBY,
     },
     {
       name: 'Premier Inn County Hall',
       stars: 3,
       basePrice: 119,
-      imageUrl:
-        'https://images.unsplash.com/photo-1455587734955-081b22074882?w=600',
+      imageUrl: HOTEL_IMG_EXTERIOR,
     },
   ],
   graz: [
@@ -63,22 +67,19 @@ const HOTELS_BY_CITY: Record<string, readonly HotelTemplate[]> = {
       name: 'Schloss Eggenberg Boutique',
       stars: 4,
       basePrice: 149,
-      imageUrl:
-        'https://images.unsplash.com/photo-1455587734955-081b22074882?w=600',
+      imageUrl: HOTEL_IMG_EXTERIOR,
     },
     {
       name: 'Hotel Wiesler',
       stars: 4,
       basePrice: 179,
-      imageUrl:
-        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600',
+      imageUrl: HOTEL_IMG_LOBBY,
     },
     {
       name: 'B&B Hotel Graz',
       stars: 3,
       basePrice: 79,
-      imageUrl:
-        'https://images.unsplash.com/photo-1551776235-dde6d482980b?w=600',
+      imageUrl: HOTEL_IMG_INTERIOR,
     },
   ],
 };
@@ -88,20 +89,19 @@ const FALLBACK_HOTELS: readonly HotelTemplate[] = [
     name: 'Grand Plaza Hotel',
     stars: 5,
     basePrice: 259,
-    imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600',
+    imageUrl: HOTEL_IMG_LOBBY,
   },
   {
     name: 'Riverside Boutique',
     stars: 4,
     basePrice: 169,
-    imageUrl: 'https://images.unsplash.com/photo-1551776235-dde6d482980b?w=600',
+    imageUrl: HOTEL_IMG_INTERIOR,
   },
   {
     name: 'City Inn Express',
     stars: 3,
     basePrice: 89,
-    imageUrl:
-      'https://images.unsplash.com/photo-1455587734955-081b22074882?w=600',
+    imageUrl: HOTEL_IMG_EXTERIOR,
   },
 ];
 
