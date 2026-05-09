@@ -37,6 +37,17 @@ import {
 
 export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
 
+function buildForwardedProps(
+  model: string | undefined,
+  extras: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  const merged: Record<string, unknown> = { ...(extras ?? {}) };
+  if (model) {
+    merged['modelHint'] = model;
+  }
+  return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
 export interface RunAgentOptions {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
@@ -47,6 +58,12 @@ export interface RunAgentOptions {
   useServerMemory?: boolean;
   a2uiCatalog?: A2uiCustomCatalog;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+  /**
+   * Caller-supplied extra fields merged into the run's `forwardedProps`.
+   * The built-in `modelHint` (set from `model`) takes precedence on
+   * conflicting keys.
+   */
+  extraForwardedProps?: Record<string, unknown>;
 }
 
 function buildCatalogContext(
@@ -114,6 +131,7 @@ export async function runAgent(
     useServerMemory,
     a2uiCatalog,
     messageStream,
+    extraForwardedProps,
   } = options;
   const { runId } = options;
 
@@ -263,11 +281,13 @@ export async function runAgent(
       : normalizeAgentMessagesForRun(agent.messages),
   );
 
+  const forwardedProps = buildForwardedProps(model, extraForwardedProps);
+
   await agent.runAgent(
     {
       runId,
       tools: toolsToOffer,
-      forwardedProps: model ? { modelHint: model } : undefined,
+      forwardedProps,
       context: buildCatalogContext(a2uiCatalog),
     },
     subscriber,
@@ -293,6 +313,12 @@ export interface RunUntilSettledOptions {
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
   maxLocalTurns: number;
+  /**
+   * Caller-supplied extra fields merged into every `forwardedProps`
+   * payload of the runs spawned for this turn (initial run + tool
+   * follow-ups). See `RunAgentOptions.extraForwardedProps`.
+   */
+  extraForwardedProps?: Record<string, unknown>;
 }
 
 export async function runUntilSettled(
@@ -311,6 +337,7 @@ export async function runUntilSettled(
     abortSignal,
     messageStream,
     maxLocalTurns,
+    extraForwardedProps,
   } = options;
 
   let done = false;
@@ -339,6 +366,7 @@ export async function runUntilSettled(
       useServerMemory,
       a2uiCatalog,
       messageStream,
+      extraForwardedProps,
     });
 
     if (useServerMemory) {
