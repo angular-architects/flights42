@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import {
   type AgUiChatMessage,
   agUiResource,
+  type AgUiToolCall,
   type AgUiWidget,
   WidgetContainerComponent,
 } from '@internal/ag-ui-client';
@@ -80,6 +81,34 @@ export class Dashboard {
     return errorMessage?.content ?? null;
   });
 
+  // All tool calls produced since the current run started, in the order they
+  // were invoked. We rebuild this list every time the message stream changes
+  // because `chat.reset()` (called from `submit()`/`reset()`) clears the
+  // stream, so a fresh run starts from an empty list automatically.
+  protected readonly allToolCalls = computed<AgUiToolCall[]>(() => {
+    const messages = this.chat.value();
+    return messages.flatMap((message) =>
+      message.role === 'assistant' ? message.toolCalls : [],
+    );
+  });
+
+  // Status indicator: while the agent is running, show the most recent
+  // pending tool call so the user knows which tool is currently executing.
+  // If a tool is being executed we name it; otherwise we fall back to
+  // "Thinking ..." while loading and "Ready" once the run is finished.
+  protected readonly currentStatus = computed<string>(() => {
+    const toolCalls = this.allToolCalls();
+    for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
+      const toolCall = toolCalls[i];
+      if (toolCall.status === 'pending' && toolCall.name) {
+        return `Running tool: ${toolCall.name}`;
+      }
+    }
+    return this.chat.isLoading() ? 'Thinking ...' : 'Ready';
+  });
+
+  protected readonly showToolDetails = signal(false);
+
   constructor() {
     registerHandlers({
       checkIn: (action) => checkInAction(action),
@@ -103,6 +132,7 @@ export class Dashboard {
     this.clearRenderedSurfaces();
     this.chat.reset();
     this.synthesizedWidgets.set({});
+    this.showToolDetails.set(false);
     this.chat.sendMessage({ role: 'user', content });
   }
 
@@ -119,7 +149,26 @@ export class Dashboard {
     this.clearRenderedSurfaces();
     this.chat.reset();
     this.synthesizedWidgets.set({});
+    this.showToolDetails.set(false);
     this.message.set('');
+  }
+
+  protected toggleToolDetails(): void {
+    this.showToolDetails.update((value) => !value);
+  }
+
+  protected formatToolArgs(args: unknown): string {
+    if (args === undefined || args === null) {
+      return '';
+    }
+    if (typeof args === 'string') {
+      return args;
+    }
+    try {
+      return JSON.stringify(args, null, 2);
+    } catch {
+      return String(args);
+    }
   }
 
   // The renderer's SurfaceGroupModel holds surfaces across runs. When a new

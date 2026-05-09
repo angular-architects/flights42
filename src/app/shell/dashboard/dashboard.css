@@ -43,6 +43,173 @@
   margin: 1rem 0;
 }
 
+/* The wait indicator and tool-status chip render side-by-side; give the
+ * indicator some breathing room before the chip. */
+:host .ai-wait-indicator {
+  margin-right: 20px;
+}
+
+/* --- Tool transparency status pill ---------------------------------------- */
+
+.tool-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.5rem 0 1rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: rgba(15, 23, 42, 0.85);
+}
+
+.tool-status-text {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.tool-status-toggle {
+  background: transparent;
+  border: none;
+  color: var(--color-primary, #1d4ed8);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.tool-status-toggle:focus-visible {
+  outline: 2px solid var(--color-primary, #1d4ed8);
+  outline-offset: 2px;
+}
+
+/* --- Tool call details layer --------------------------------------------- */
+
+.tool-details-layer {
+  position: fixed;
+  top: 4rem;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  width: min(28rem, calc(100vw - 3rem));
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px -16px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.tool-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.tool-details-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.tool-details-close {
+  background: transparent;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+}
+
+.tool-details-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.6rem 1.1rem 1.1rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  counter-reset: tool-step;
+}
+
+.tool-details-item {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-top: 0.6rem;
+  background: #fff;
+}
+
+.tool-details-item:first-child {
+  margin-top: 0;
+}
+
+.tool-details-item[data-status='pending'] {
+  border-color: rgba(59, 130, 246, 0.45);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tool-details-item[data-status='error'] {
+  border-color: rgba(220, 38, 38, 0.45);
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.tool-details-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tool-details-item-head::before {
+  counter-increment: tool-step;
+  content: counter(tool-step) '.';
+  color: rgba(15, 23, 42, 0.5);
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.4rem;
+}
+
+.tool-details-name {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-weight: 600;
+  flex: 1 1 auto;
+  word-break: break-all;
+}
+
+.tool-details-status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.tool-details-item[data-status='pending'] .tool-details-status {
+  color: #1d4ed8;
+}
+
+.tool-details-item[data-status='complete'] .tool-details-status {
+  color: #15803d;
+}
+
+.tool-details-item[data-status='error'] .tool-details-status {
+  color: #b91c1c;
+}
+
+.tool-details-args {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.6rem;
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 14rem;
+  overflow: auto;
+}
+
 .dashboard-output {
   display: block;
   width: 100%;
