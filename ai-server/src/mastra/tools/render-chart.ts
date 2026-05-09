@@ -1,6 +1,8 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { AI_SERVER_PUBLIC_URL } from './public-url.js';
+
 const PALETTE = [
   '#3b82f6',
   '#f97316',
@@ -73,16 +75,12 @@ export function buildAndCacheChartUrl(args: BuildAndCacheChartArgs): string {
           title: args.title,
         });
   const id = rememberChart(svg);
-  return `${CHART_BASE_URL}/charts/${id}.svg`;
+  return `${AI_SERVER_PUBLIC_URL}/charts/${id}.svg`;
 }
 
 export function getCachedChartSvg(id: string): string | undefined {
   return chartCache.get(id);
 }
-
-const CHART_BASE_URL = (
-  process.env['AI_SERVER_PUBLIC_URL'] ?? 'http://localhost:3001'
-).replace(/\/+$/, '');
 
 const datasetSchema = z.object({
   label: z
@@ -131,7 +129,7 @@ export const renderChartTool = createTool({
         : renderPieChart({ labels, datasets, title });
     const id = rememberChart(svg);
     return {
-      url: `${CHART_BASE_URL}/charts/${id}.svg`,
+      url: `${AI_SERVER_PUBLIC_URL}/charts/${id}.svg`,
     };
   },
 });

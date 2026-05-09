@@ -14,6 +14,7 @@ import {
 } from './routes/bookings-route.js';
 import { getChartHandler } from './routes/charts-route.js';
 import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
+import { getDashboardImageHandler } from './routes/images-route.js';
 
 export const mastra = new Mastra({
   agents: { ticketingAgent, dashboardAgent, dashboardDataAgent },
@@ -57,6 +58,10 @@ export const mastra = new Mastra({
       registerApiRoute('/charts/:id', {
         method: 'GET',
         handler: getChartHandler,
+      }),
+      registerApiRoute('/images/:category/:filename', {
+        method: 'GET',
+        handler: getDashboardImageHandler,
       }),
     ],
   },

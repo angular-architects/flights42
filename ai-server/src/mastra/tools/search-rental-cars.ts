@@ -1,6 +1,8 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { AI_SERVER_PUBLIC_URL } from './public-url.js';
+
 interface CarTemplate {
   category: string;
   models: readonly string[];
@@ -12,27 +14,28 @@ interface CarTemplate {
 // picked deterministically per city so the same dashboard request yields the
 // same listing across re-renders, but different cities still produce a bit of
 // variety. Images stay constant per category to keep the carousel coherent.
+//
+// Image URLs point at the ai-server's local optimized webp assets
+// (800×450, q=80). See `ai-server/public/images/cars/` and the
+// `/images/:category/:filename` route registered in `mastra/index.ts`.
 const CAR_TEMPLATES: readonly CarTemplate[] = [
   {
     category: 'Compact',
     models: ['VW Polo', 'Opel Corsa', 'Renault Clio'],
     basePrice: 39,
-    imageUrl:
-      'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600',
+    imageUrl: `${AI_SERVER_PUBLIC_URL}/images/cars/car-compact.webp`,
   },
   {
     category: 'Estate',
     models: ['Skoda Octavia', 'VW Passat Variant', 'Ford Mondeo Turnier'],
     basePrice: 69,
-    imageUrl:
-      'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600',
+    imageUrl: `${AI_SERVER_PUBLIC_URL}/images/cars/car-estate.webp`,
   },
   {
     category: 'Premium',
     models: ['BMW 5', 'Mercedes E-Class', 'Audi A6'],
     basePrice: 119,
-    imageUrl:
-      'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600',
+    imageUrl: `${AI_SERVER_PUBLIC_URL}/images/cars/car-premium.webp`,
   },
 ];
 
