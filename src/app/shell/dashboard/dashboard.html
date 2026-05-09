@@ -1,0 +1,47 @@
+<h1>Dynamic Dashboard</h1>
+
+<form class="prompt-form" (submit)="$event.preventDefault(); submit()">
+  <textarea
+    class="prompt-input"
+    [(ngModel)]="message"
+    name="prompt"
+    rows="5"
+    placeholder="Describe your dashboard..."></textarea>
+
+  <div class="prompt-actions">
+    <button type="submit" [disabled]="chat.isLoading()">Generate</button>
+    <button
+      type="button"
+      [disabled]="chat.isLoading()"
+      (click)="useExamplePrompt(0)">
+      Example #1
+    </button>
+    <button
+      type="button"
+      [disabled]="chat.isLoading()"
+      (click)="useExamplePrompt(1)">
+      Example #2
+    </button>
+    @if (hasOutput()) {
+      <button type="button" (click)="reset()">Reset</button>
+    }
+  </div>
+</form>
+
+@if (chat.isLoading()) {
+  <div class="ai-wait-indicator">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+}
+
+@if (errorMessage(); as error) {
+  <p class="dashboard-error">{{ error }}</p>
+}
+
+<section class="dashboard-output">
+  @for (widget of widgets(); track widget.a2uiSurfaceId) {
+    <app-widget-container [widget]="widget" />
+  }
+</section>

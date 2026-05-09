@@ -1,10 +1,199 @@
-import { Component } from '@angular/core';
+import { A2uiRendererService } from '@a2ui/angular/v0_9';
+import type { A2uiMessage } from '@a2ui/web_core/v0_9';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import {
+  type AgUiChatMessage,
+  agUiResource,
+  type AgUiWidget,
+  WidgetContainerComponent,
+} from '@internal/ag-ui-client';
 
-import { NextFlightsModule } from '../../domains/ticketing/feature-next-flights/next-flights.module';
+import { ConfigService } from '../../domains/shared/util-common/config-service';
+import { checkInAction } from '../../domains/ticketing/ai/actions/check-in-action';
+import { registerHandlers } from '../../domains/ticketing/ai/register-handlers';
+import { dashboardFlightSearchAction } from './actions/dashboard-flight-search-action';
+import { examplePrompts } from './example-prompts';
+import { submitFlightSearchTool } from './tools/submit-flight-search.tool';
+
+interface ParsedA2uiSurface {
+  surfaceId: string;
+  messages: A2uiMessage[];
+}
 
 @Component({
   selector: 'app-dashboard',
-  imports: [NextFlightsModule],
-  template: `<app-next-flights />`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, WidgetContainerComponent],
+  templateUrl: './dashboard.html',
+  styleUrl: './dashboard.css',
 })
-export class Dashboard {}
+export class Dashboard {
+  private readonly config = inject(ConfigService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly renderer = inject(A2uiRendererService);
+
+  protected readonly message = signal('');
+
+  protected readonly chat = agUiResource({
+    url: this.config.agUiUrlFor('dashboardAgent'),
+    model: this.config.model,
+    useServerMemory: false,
+    tools: [submitFlightSearchTool],
+  });
+
+  // Fallback for runs where the agent emitted the A2UI payload as plain
+  // assistant text instead of calling `renderA2uiTool`. We parse the text and
+  // feed it through the renderer so the dashboard still appears.
+  private readonly synthesizedWidgets = signal<Record<string, AgUiWidget>>({});
+
+  protected readonly widgets = computed<AgUiWidget[]>(() => {
+    const messages = this.chat.value();
+    const synthesized = this.synthesizedWidgets();
+    return messages.flatMap((message) => {
+      if (message.role !== 'assistant') {
+        return [];
+      }
+      if (message.widgets.length > 0) {
+        return message.widgets;
+      }
+      const fallback = synthesized[message.id];
+      return fallback ? [fallback] : [];
+    });
+  });
+
+  protected readonly hasOutput = computed(
+    () => this.widgets().length > 0 || this.errorMessage() !== null,
+  );
+
+  protected readonly errorMessage = computed<string | null>(() => {
+    const messages = this.chat.value();
+    const errorMessage = messages.find((message) => message.role === 'error');
+    return errorMessage?.content ?? null;
+  });
+
+  constructor() {
+    registerHandlers({
+      checkIn: (action) => checkInAction(action),
+      dashboardFlightSearch: (action) => dashboardFlightSearchAction(action),
+    });
+
+    effect(() => {
+      this.absorbA2uiTextFallback(this.chat.value());
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.chat.dispose();
+    });
+  }
+
+  protected submit(): void {
+    const content = this.message().trim();
+    if (!content) {
+      return;
+    }
+    this.chat.reset();
+    this.synthesizedWidgets.set({});
+    this.chat.sendMessage({ role: 'user', content });
+  }
+
+  protected useExamplePrompt(index: number): void {
+    const prompt = examplePrompts[index];
+    if (!prompt) {
+      return;
+    }
+    this.message.set(prompt);
+    this.submit();
+  }
+
+  protected reset(): void {
+    this.chat.reset();
+    this.synthesizedWidgets.set({});
+    this.message.set('');
+  }
+
+  private absorbA2uiTextFallback(messages: AgUiChatMessage[]): void {
+    const current = this.synthesizedWidgets();
+    let next: Record<string, AgUiWidget> | null = null;
+
+    for (const message of messages) {
+      if (message.role !== 'assistant') {
+        continue;
+      }
+      if (message.widgets.length > 0) {
+        continue;
+      }
+      if (current[message.id]) {
+        continue;
+      }
+      const surface = this.tryParseA2uiSurface(message.content);
+      if (!surface) {
+        continue;
+      }
+
+      this.renderer.processMessages(surface.messages);
+      if (!this.renderer.surfaceGroup.getSurface(surface.surfaceId)) {
+        continue;
+      }
+
+      next ??= { ...current };
+      next[message.id] = {
+        name: `a2ui_${message.id}`,
+        a2uiSurfaceId: surface.surfaceId,
+      };
+    }
+
+    if (next) {
+      this.synthesizedWidgets.set(next);
+    }
+  }
+
+  private tryParseA2uiSurface(content: string): ParsedA2uiSurface | null {
+    if (!content || !content.includes('"messages"')) {
+      return null;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      return null;
+    }
+
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !('messages' in parsed) ||
+      !Array.isArray((parsed as { messages?: unknown }).messages)
+    ) {
+      return null;
+    }
+
+    const list = (parsed as { messages: A2uiMessage[] }).messages;
+    let surfaceId: string | null = null;
+    for (const op of list) {
+      if (op && typeof op === 'object' && 'createSurface' in op) {
+        const value = (op as { createSurface?: { surfaceId?: string } })
+          .createSurface;
+        if (value?.surfaceId) {
+          surfaceId = value.surfaceId;
+          break;
+        }
+      }
+    }
+
+    if (!surfaceId) {
+      return null;
+    }
+
+    return { surfaceId, messages: list };
+  }
+}

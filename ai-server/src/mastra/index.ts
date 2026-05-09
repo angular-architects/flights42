@@ -4,6 +4,7 @@ import { LibSQLStore } from '@mastra/libsql';
 import { PinoLogger } from '@mastra/loggers';
 
 import { checkinAgent } from './agents/checkin-agent.js';
+import { dashboardAgent } from './agents/dashboard-agent.js';
 import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
 import { agUiRouteHandler } from './routes/ag-ui-route.js';
@@ -12,12 +13,14 @@ import {
   cancelFlightHandler,
   listBookingsHandler,
 } from './routes/bookings-route.js';
+import { getChartHandler } from './routes/charts-route.js';
 
 export const mastra = new Mastra({
   agents: {
     ticketingAgent,
     reportingAgent,
     checkinAgent,
+    dashboardAgent,
   },
   storage: new LibSQLStore({
     id: 'flights42-storage',
@@ -51,6 +54,10 @@ export const mastra = new Mastra({
       registerApiRoute('/bookings/:flightId', {
         method: 'DELETE',
         handler: cancelFlightHandler,
+      }),
+      registerApiRoute('/charts/:id', {
+        method: 'GET',
+        handler: getChartHandler,
       }),
     ],
   },
