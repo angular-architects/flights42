@@ -36,17 +36,16 @@
   </div>
 </form>
 
-@if (chat.isLoading()) {
-  <div class="ai-wait-indicator">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-}
-
 @if (chat.isLoading() || allToolCalls().length > 0) {
   <div class="tool-status">
     <span class="tool-status-text">{{ currentStatus() }}</span>
+    @if (chat.isLoading()) {
+      <div class="ai-wait-indicator tool-status-dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    }
     @if (allToolCalls().length > 0) {
       <button
         type="button"

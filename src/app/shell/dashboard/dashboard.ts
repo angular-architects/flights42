@@ -97,7 +97,9 @@ export class Dashboard {
   // Status indicator: while the agent is running, show the most recent
   // pending tool call so the user knows which tool is currently executing.
   // If a tool is being executed we name it; otherwise we fall back to
-  // "Thinking ..." while loading and "Ready" once the run is finished.
+  // "Thinking" while loading and "Ready" once the run is finished. The
+  // bouncing-dots animation is rendered inline next to the label by the
+  // template instead of being baked into the string.
   protected readonly currentStatus = computed<string>(() => {
     const toolCalls = this.allToolCalls();
     for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
@@ -106,7 +108,7 @@ export class Dashboard {
         return `Running tool: ${toolCall.name}`;
       }
     }
-    return this.chat.isLoading() ? 'Thinking ...' : 'Ready';
+    return this.chat.isLoading() ? 'Thinking' : 'Ready';
   });
 
   protected readonly showToolDetails = signal(false);
