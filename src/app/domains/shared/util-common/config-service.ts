@@ -32,6 +32,13 @@ export class ConfigService {
     return this._agUiUrl;
   }
 
+  agUiUrlFor(agentId: string): string {
+    const lastSlash = this._agUiUrl.lastIndexOf('/');
+    const base =
+      lastSlash >= 0 ? this._agUiUrl.slice(0, lastSlash) : this._agUiUrl;
+    return `${base}/${agentId}`;
+  }
+
   get aiServerUrl() {
     return this._aiServerUrl;
   }

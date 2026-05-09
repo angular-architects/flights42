@@ -1,0 +1,237 @@
+:host {
+  display: block;
+  padding: 1rem 1.5rem 2rem;
+  --dashboard-grid-gap: 1.25rem;
+  --dashboard-card-radius: 12px;
+  --dashboard-card-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --dashboard-card-border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.prompt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.prompt-input {
+  font: inherit;
+  padding: 0.75rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prompt-actions button {
+  cursor: pointer;
+}
+
+.dashboard-error {
+  color: #b00020;
+  margin: 1rem 0;
+}
+
+.dashboard-output {
+  display: block;
+  width: 100%;
+}
+
+.dashboard-output app-widget-container {
+  display: block;
+  width: 100%;
+}
+
+/* --- A2UI surface → CSS grid override --------------------------------------
+ *
+ * The dashboard agent produces an A2UI surface whose root is always a
+ * Column. By default that Column is `display: flex; flex-direction: column`
+ * which stacks all tiles vertically. We override the root Column to behave
+ * as a 3-column responsive CSS grid; each direct child becomes a grid cell.
+ *
+ * Selectors look at the surface DOM tree (component-host wrappers have
+ * `display: contents`, so they don't form layout boxes but still appear in
+ * the DOM and can be matched via `>`).
+ * ------------------------------------------------------------------------- */
+
+/* The root column = the only `a2ui-v09-column` that lives directly under a
+ * surface. */
+.dashboard-output
+  ::ng-deep
+  a2ui-v09-surface
+  > a2ui-v09-component-host
+  > a2ui-v09-column {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, auto);
+  gap: var(--dashboard-grid-gap) !important;
+  width: 100%;
+  align-items: stretch !important;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-output
+    ::ng-deep
+    a2ui-v09-surface
+    > a2ui-v09-component-host
+    > a2ui-v09-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboard-output
+    ::ng-deep
+    a2ui-v09-surface
+    > a2ui-v09-component-host
+    > a2ui-v09-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The TicketWidget hero and any standalone top-level Row span the full grid
+ * width (since the contract says they should appear as wide sections). */
+.dashboard-output
+  ::ng-deep
+  a2ui-v09-surface
+  > a2ui-v09-component-host
+  > a2ui-v09-column
+  > a2ui-v09-component-host
+  > app-ticket-widget,
+.dashboard-output
+  ::ng-deep
+  a2ui-v09-surface
+  > a2ui-v09-component-host
+  > a2ui-v09-column
+  > a2ui-v09-component-host
+  > ticket-widget,
+.dashboard-output
+  ::ng-deep
+  a2ui-v09-surface
+  > a2ui-v09-component-host
+  > a2ui-v09-column
+  > a2ui-v09-component-host
+  > a2ui-v09-row {
+  grid-column: 1 / -1;
+}
+
+/* --- Tile sizing safety net -----------------------------------------------
+ *
+ * Cards, images, rows and other A2UI host elements default to display:inline
+ * (because they're unknown HTML element names). That makes them collapse to
+ * their content width inside grid cells. Forcing block-level + width:100%
+ * makes every tile fill its grid cell regardless of the agent's exact tree.
+ * ------------------------------------------------------------------------- */
+
+.dashboard-output ::ng-deep a2ui-v09-card,
+.dashboard-output ::ng-deep a2ui-v09-image,
+.dashboard-output ::ng-deep a2ui-v09-text-field,
+.dashboard-output ::ng-deep a2ui-v09-button,
+.dashboard-output ::ng-deep a2ui-v09-text {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* The host of a Card is a flex column so the inner card body can fill its
+ * height and the card grows to its grid cell. */
+.dashboard-output ::ng-deep a2ui-v09-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Card chrome (the actual inner box). Strip the default A2UI margin and use
+ * our own visuals. */
+.dashboard-output ::ng-deep .a2ui-card {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  border-radius: var(--dashboard-card-radius);
+  box-shadow: var(--dashboard-card-shadow);
+  border: var(--dashboard-card-border);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+/* Columns inside a tile fill the tile width. */
+.dashboard-output ::ng-deep .a2ui-card a2ui-v09-column {
+  width: 100%;
+  gap: 0.5rem;
+}
+
+/* Charts/images in a tile fill the available width. */
+.dashboard-output ::ng-deep a2ui-v09-image,
+.dashboard-output ::ng-deep .a2ui-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Table-style rows inside cards: defensive defaults so columns share width
+ * even when the agent forgets `weight`. The Angular renderer sets an inline
+ * `style.flex` from the agent's `weight`, which beats this rule when set. */
+.dashboard-output ::ng-deep .a2ui-card a2ui-v09-row {
+  width: 100%;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.dashboard-output
+  ::ng-deep
+  .a2ui-card
+  a2ui-v09-row
+  > a2ui-v09-component-host
+  > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Standalone top-level Rows (full-width sections) lay their cards out in a
+ * row that fills the grid; cards inside flex equally. */
+.dashboard-output
+  ::ng-deep
+  a2ui-v09-surface
+  > a2ui-v09-component-host
+  > a2ui-v09-column
+  > a2ui-v09-component-host
+  > a2ui-v09-row {
+  width: 100%;
+  align-items: stretch;
+  gap: var(--dashboard-grid-gap);
+}
+
+.dashboard-output
+  ::ng-deep
+  a2ui-v09-surface
+  > a2ui-v09-component-host
+  > a2ui-v09-column
+  > a2ui-v09-component-host
+  > a2ui-v09-row
+  > a2ui-v09-component-host
+  > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Headings inside cards: tighter default spacing so titles don't dominate. */
+.dashboard-output ::ng-deep .a2ui-text h2,
+.dashboard-output ::ng-deep .a2ui-text h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.dashboard-output ::ng-deep .a2ui-button {
+  margin: 0.25rem 0 0;
+  align-self: flex-start;
+}
