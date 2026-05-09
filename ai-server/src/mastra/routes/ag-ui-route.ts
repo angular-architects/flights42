@@ -2,7 +2,6 @@ import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
 import { getExtendedLocalAgent } from '../../../../libs/ag-ui-server/index.js';
-
 import { parseRunAgentInput, streamAgentEvents } from './ag-ui-stream.js';
 
 export async function agUiRouteHandler(
