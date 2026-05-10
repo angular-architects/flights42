@@ -65,73 +65,33 @@ export class ReportingPage {
     tools: [this.renderChartTool],
   });
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const messages = this.chat.value();
-    const errorMessage = messages.find((message) => message.role === 'error');
-    return errorMessage?.content ?? null;
-  });
+  protected readonly errorMessage = computed<string | null>(() =>
+    getErrorMessage(this.chat.value()),
+  );
 
-  // Latest assistant text (used as the short confirmation underneath the
-  // chart). The agent is instructed to reply with a single short sentence
-  // after the tool calls.
-  protected readonly assistantMessage = computed<string>(() => {
-    const messages = this.chat.value();
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-      const message = messages[i];
-      if (message.role === 'assistant' && message.content.trim().length > 0) {
-        return message.content;
-      }
-    }
-    return '';
-  });
+  protected readonly assistantMessage = computed<string>(() =>
+    getAssistantMessage(this.chat.value()),
+  );
 
-  // All tool calls produced since the current run started, in the order they
-  // were invoked. Mirrors the dashboard's `allToolCalls` so the same
-  // status-chip + tool-details rendering can be reused. `chat.reset()` (called
-  // from `submit()`) clears the message stream, so a fresh run automatically
-  // starts from an empty list.
-  protected readonly allToolCalls = computed<AgUiToolCall[]>(() => {
-    const messages = this.chat.value();
-    return messages.flatMap((message) =>
-      message.role === 'assistant' ? message.toolCalls : [],
-    );
-  });
+  protected readonly allToolCalls = computed<AgUiToolCall[]>(() =>
+    getAllToolCalls(this.chat.value()),
+  );
 
-  // While the agent is running, surface the most recent pending tool call so
-  // the user knows which tool is currently executing. Falls back to
-  // "Thinking" while loading and "Ready" once finished — same logic as the
-  // dashboard so the chip looks identical across the app.
-  protected readonly currentStatus = computed<string>(() => {
-    const toolCalls = this.allToolCalls();
-    for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
-      const toolCall = toolCalls[i];
-      if (toolCall.status === 'pending' && toolCall.name) {
-        return `Running tool: ${toolCall.name}`;
-      }
-    }
-    return this.chat.isLoading() ? 'Thinking' : 'Ready';
-  });
+  protected readonly currentStatus = computed<string>(() =>
+    getCurrentStatus(this.allToolCalls(), this.chat.isLoading()),
+  );
 
   protected readonly showToolDetails = signal(false);
 
-  // The most recent `executeJavaScript` snippet the agent ran on the
-  // server. Used by the bottom "Details" button to render the generated
-  // source code as a formatted block. `null` while the run is still
-  // pending or no `executeJavaScript` call has happened yet.
-  protected readonly latestJavaScriptCode = computed<string | null>(() => {
-    const toolCalls = this.allToolCalls();
-    for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
-      const code = this.getJavaScriptCode(toolCalls[i]);
-      if (code) {
-        return code;
-      }
-    }
-    return null;
-  });
+  protected readonly latestJavaScriptCode = computed<string | null>(() =>
+    getLatestJavaScriptCode(this.allToolCalls()),
+  );
 
   protected readonly showCodeDetails = signal(false);
 
   protected readonly hasChart = computed(() => this.chartData().length > 0);
+  protected readonly formatToolArgs = formatToolArgs;
+  protected readonly getJavaScriptCode = extractJavaScriptCodeFromToolCall;
 
   constructor() {
     afterRenderEffect(() => {
@@ -140,14 +100,10 @@ export class ReportingPage {
       const canvas = canvasElm?.nativeElement;
 
       if (canvas && data.length > 0) {
-        this.renderChart(data, canvas);
+        renderChart(data, canvas);
       }
     });
 
-    // One-shot diagnostic so the dynamic "Details" button can be debugged
-    // from the browser console: whenever the agent finishes a turn, log the
-    // assembled tool-call list so we can see what `executeJavaScript`'s
-    // args actually look like.
     effect(() => {
       if (this.chat.isLoading()) {
         return;
@@ -159,31 +115,6 @@ export class ReportingPage {
     });
 
     this.destroyRef.onDestroy(() => this.chat.dispose());
-  }
-
-  private renderChart(data: DataItem[], canvas: HTMLCanvasElement): void {
-    const chart = new Chart(canvas, {
-      type: 'bar',
-      options: {
-        responsive: true,
-        indexAxis: 'y',
-        plugins: {
-          legend: {
-            display: false,
-          },
-        },
-      },
-      data: {
-        labels: data.map((item) => item.name),
-        datasets: [
-          {
-            backgroundColor: CHART_COLORS,
-            data: data.map((item) => item.value),
-          },
-        ],
-      },
-    });
-    chart.render();
   }
 
   protected submit(): void {
@@ -207,56 +138,6 @@ export class ReportingPage {
     this.showCodeDetails.update((value) => !value);
   }
 
-  protected formatToolArgs(args: unknown): string {
-    if (args === undefined || args === null) {
-      return '';
-    }
-    if (typeof args === 'string') {
-      return args;
-    }
-    try {
-      return JSON.stringify(args, null, 2);
-    } catch {
-      return String(args);
-    }
-  }
-
-  // The agent's JS-sandbox tool sends the actual snippet it ran on the
-  // server inside `args.code`. We deliberately look it up by ARG SHAPE
-  // (any object with a non-empty string `code`) rather than by tool name,
-  // because Mastra/AG-UI may surface the tool either via its `id`
-  // (`executeJavaScript`) or via its registration key
-  // (`executeJavaScriptTool`) depending on the adapter version. The
-  // shape-based check is also future-proof if the tool is ever renamed.
-  protected getJavaScriptCode(toolCall: AgUiToolCall): string | null {
-    const args = this.coerceArgsObject(toolCall.args);
-    if (!args) {
-      return null;
-    }
-    const code = (args as { code?: unknown }).code;
-    if (typeof code === 'string' && code.length > 0) {
-      return code;
-    }
-    return null;
-  }
-
-  private coerceArgsObject(args: unknown): Record<string, unknown> | null {
-    if (args && typeof args === 'object') {
-      return args as Record<string, unknown>;
-    }
-    if (typeof args === 'string' && args.trim().length > 0) {
-      try {
-        const parsed: unknown = JSON.parse(args);
-        if (parsed && typeof parsed === 'object') {
-          return parsed as Record<string, unknown>;
-        }
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-
   protected useExamplePrompt(index: number): void {
     const prompt = examplePrompts[index];
     if (!prompt) {
@@ -265,4 +146,126 @@ export class ReportingPage {
     this.message.set(prompt);
     this.submit();
   }
+}
+
+function getErrorMessage(
+  messages: readonly { role: string; content: string }[],
+): string | null {
+  const errorMessage = messages.find((message) => message.role === 'error');
+  return errorMessage?.content ?? null;
+}
+
+function getAssistantMessage(
+  messages: readonly { role: string; content: string }[],
+): string {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (message.role === 'assistant' && message.content.trim().length > 0) {
+      return message.content;
+    }
+  }
+  return '';
+}
+
+function getAllToolCalls(
+  messages: readonly { role: string; toolCalls?: AgUiToolCall[] }[],
+): AgUiToolCall[] {
+  return messages.flatMap((message) =>
+    message.role === 'assistant' ? (message.toolCalls ?? []) : [],
+  );
+}
+
+function getCurrentStatus(
+  toolCalls: readonly AgUiToolCall[],
+  isLoading: boolean,
+): string {
+  for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
+    const toolCall = toolCalls[i];
+    if (toolCall.status === 'pending' && toolCall.name) {
+      return `Running tool: ${toolCall.name}`;
+    }
+  }
+  return isLoading ? 'Thinking' : 'Ready';
+}
+
+function getLatestJavaScriptCode(
+  toolCalls: readonly AgUiToolCall[],
+): string | null {
+  for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
+    const code = extractJavaScriptCodeFromToolCall(toolCalls[i]);
+    if (code) {
+      return code;
+    }
+  }
+  return null;
+}
+
+function renderChart(data: DataItem[], canvas: HTMLCanvasElement): void {
+  const chart = new Chart(canvas, {
+    type: 'bar',
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+    },
+    data: {
+      labels: data.map((item) => item.name),
+      datasets: [
+        {
+          backgroundColor: CHART_COLORS,
+          data: data.map((item) => item.value),
+        },
+      ],
+    },
+  });
+  chart.render();
+}
+
+function formatToolArgs(args: unknown): string {
+  if (args === undefined || args === null) {
+    return '';
+  }
+  if (typeof args === 'string') {
+    return args;
+  }
+  try {
+    return JSON.stringify(args, null, 2);
+  } catch {
+    return String(args);
+  }
+}
+
+function extractJavaScriptCodeFromToolCall(
+  toolCall: AgUiToolCall,
+): string | null {
+  const args = coerceArgsObject(toolCall.args);
+  if (!args) {
+    return null;
+  }
+  const code = (args as { code?: unknown }).code;
+  if (typeof code === 'string' && code.length > 0) {
+    return code;
+  }
+  return null;
+}
+
+function coerceArgsObject(args: unknown): Record<string, unknown> | null {
+  if (args && typeof args === 'object') {
+    return args as Record<string, unknown>;
+  }
+  if (typeof args === 'string' && args.trim().length > 0) {
+    try {
+      const parsed: unknown = JSON.parse(args);
+      if (parsed && typeof parsed === 'object') {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }

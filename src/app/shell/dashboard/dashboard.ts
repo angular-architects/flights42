@@ -53,63 +53,27 @@ export class Dashboard {
     forwardedProps: () => ({ preventCaching: this.preventCaching() }),
   });
 
-  // Fallback for runs where the agent emitted the A2UI payload as plain
-  // assistant text instead of calling `renderA2uiTool`. We parse the text and
-  // feed it through the renderer so the dashboard still appears.
   private readonly synthesizedWidgets = signal<Record<string, AgUiWidget>>({});
 
-  protected readonly widgets = computed<AgUiWidget[]>(() => {
-    const messages = this.chat.value();
-    const synthesized = this.synthesizedWidgets();
-    return messages.flatMap((message) => {
-      if (message.role !== 'assistant') {
-        return [];
-      }
-      if (message.widgets.length > 0) {
-        return message.widgets;
-      }
-      const fallback = synthesized[message.id];
-      return fallback ? [fallback] : [];
-    });
-  });
-
-  protected readonly hasOutput = computed(
-    () => this.widgets().length > 0 || this.errorMessage() !== null,
+  protected readonly widgets = computed<AgUiWidget[]>(() =>
+    collectWidgets(this.chat.value(), this.synthesizedWidgets()),
   );
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const messages = this.chat.value();
-    const errorMessage = messages.find((message) => message.role === 'error');
-    return errorMessage?.content ?? null;
-  });
+  protected readonly hasOutput = computed(() =>
+    hasOutput(this.widgets(), this.errorMessage()),
+  );
 
-  // All tool calls produced since the current run started, in the order they
-  // were invoked. We rebuild this list every time the message stream changes
-  // because `chat.reset()` (called from `submit()`/`reset()`) clears the
-  // stream, so a fresh run starts from an empty list automatically.
-  protected readonly allToolCalls = computed<AgUiToolCall[]>(() => {
-    const messages = this.chat.value();
-    return messages.flatMap((message) =>
-      message.role === 'assistant' ? message.toolCalls : [],
-    );
-  });
+  protected readonly errorMessage = computed<string | null>(() =>
+    extractErrorMessage(this.chat.value()),
+  );
 
-  // Status indicator: while the agent is running, show the most recent
-  // pending tool call so the user knows which tool is currently executing.
-  // If a tool is being executed we name it; otherwise we fall back to
-  // "Thinking" while loading and "Ready" once the run is finished. The
-  // bouncing-dots animation is rendered inline next to the label by the
-  // template instead of being baked into the string.
-  protected readonly currentStatus = computed<string>(() => {
-    const toolCalls = this.allToolCalls();
-    for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
-      const toolCall = toolCalls[i];
-      if (toolCall.status === 'pending' && toolCall.name) {
-        return `Running tool: ${toolCall.name}`;
-      }
-    }
-    return this.chat.isLoading() ? 'Thinking' : 'Ready';
-  });
+  protected readonly allToolCalls = computed<AgUiToolCall[]>(() =>
+    collectToolCalls(this.chat.value()),
+  );
+
+  protected readonly currentStatus = computed<string>(() =>
+    deriveCurrentStatus(this.allToolCalls(), this.chat.isLoading()),
+  );
 
   protected readonly showToolDetails = signal(false);
 
@@ -162,24 +126,9 @@ export class Dashboard {
   }
 
   protected formatToolArgs(args: unknown): string {
-    if (args === undefined || args === null) {
-      return '';
-    }
-    if (typeof args === 'string') {
-      return args;
-    }
-    try {
-      return JSON.stringify(args, null, 2);
-    } catch {
-      return String(args);
-    }
+    return formatToolArgs(args);
   }
 
-  // The renderer's SurfaceGroupModel holds surfaces across runs. When a new
-  // generation re-uses the same `surfaceId` (or even just re-adds the same
-  // component ids inside an already-known surface), the renderer throws
-  // "already exists". Drop every previous surface before kicking off a new
-  // generation so the next run starts from a clean slate.
   private clearRenderedSurfaces(): void {
     const surfaceIds = Array.from(
       this.renderer.surfaceGroup.surfacesMap.keys(),
@@ -203,7 +152,7 @@ export class Dashboard {
       if (current[message.id]) {
         continue;
       }
-      const surface = this.tryParseA2uiSurface(message.content);
+      const surface = tryParseA2uiSurface(message.content);
       if (!surface) {
         continue;
       }
@@ -224,45 +173,106 @@ export class Dashboard {
       this.synthesizedWidgets.set(next);
     }
   }
+}
 
-  private tryParseA2uiSurface(content: string): ParsedA2uiSurface | null {
-    if (!content || !content.includes('"messages"')) {
-      return null;
+function collectWidgets(
+  messages: AgUiChatMessage[],
+  synthesized: Record<string, AgUiWidget>,
+): AgUiWidget[] {
+  return messages.flatMap((message) => {
+    if (message.role !== 'assistant') {
+      return [];
     }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      return null;
+    if (message.widgets.length > 0) {
+      return message.widgets;
     }
+    const fallback = synthesized[message.id];
+    return fallback ? [fallback] : [];
+  });
+}
 
-    if (
-      !parsed ||
-      typeof parsed !== 'object' ||
-      !('messages' in parsed) ||
-      !Array.isArray((parsed as { messages?: unknown }).messages)
-    ) {
-      return null;
+function hasOutput(
+  widgets: AgUiWidget[],
+  errorMessage: string | null,
+): boolean {
+  return widgets.length > 0 || errorMessage !== null;
+}
+
+function extractErrorMessage(messages: AgUiChatMessage[]): string | null {
+  const errorMessage = messages.find((message) => message.role === 'error');
+  return errorMessage?.content ?? null;
+}
+
+function collectToolCalls(messages: AgUiChatMessage[]): AgUiToolCall[] {
+  return messages.flatMap((message) =>
+    message.role === 'assistant' ? message.toolCalls : [],
+  );
+}
+
+function deriveCurrentStatus(
+  toolCalls: AgUiToolCall[],
+  isLoading: boolean,
+): string {
+  for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
+    const toolCall = toolCalls[i];
+    if (toolCall.status === 'pending' && toolCall.name) {
+      return `Running tool: ${toolCall.name}`;
     }
+  }
+  return isLoading ? 'Thinking' : 'Ready';
+}
 
-    const list = (parsed as { messages: A2uiMessage[] }).messages;
-    let surfaceId: string | null = null;
-    for (const op of list) {
-      if (op && typeof op === 'object' && 'createSurface' in op) {
-        const value = (op as { createSurface?: { surfaceId?: string } })
-          .createSurface;
-        if (value?.surfaceId) {
-          surfaceId = value.surfaceId;
-          break;
-        }
+function formatToolArgs(args: unknown): string {
+  if (args === undefined || args === null) {
+    return '';
+  }
+  if (typeof args === 'string') {
+    return args;
+  }
+  try {
+    return JSON.stringify(args, null, 2);
+  } catch {
+    return String(args);
+  }
+}
+
+function tryParseA2uiSurface(content: string): ParsedA2uiSurface | null {
+  if (!content || !content.includes('"messages"')) {
+    return null;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return null;
+  }
+
+  if (
+    !parsed ||
+    typeof parsed !== 'object' ||
+    !('messages' in parsed) ||
+    !Array.isArray((parsed as { messages?: unknown }).messages)
+  ) {
+    return null;
+  }
+
+  const list = (parsed as { messages: A2uiMessage[] }).messages;
+  let surfaceId: string | null = null;
+  for (const op of list) {
+    if (op && typeof op === 'object' && 'createSurface' in op) {
+      const value = (op as { createSurface?: { surfaceId?: string } })
+        .createSurface;
+      if (value?.surfaceId) {
+        surfaceId = value.surfaceId;
+        break;
       }
     }
-
-    if (!surfaceId) {
-      return null;
-    }
-
-    return { surfaceId, messages: list };
   }
+
+  if (!surfaceId) {
+    return null;
+  }
+
+  return { surfaceId, messages: list };
 }
