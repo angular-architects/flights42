@@ -208,7 +208,7 @@ const finalizeStep = createStep({
 export const packageTourWorkflow = createWorkflow({
   id: 'packageTourWorkflow',
   description:
-    'Proposes a multi-stop package tour: searches flights for all legs, finds hotels for all destination cities, then finalizes the result.',
+    'Proposes a multi-stop package tour: searches flights for all legs, then finds hotels for all destination cities, then finalizes the result.',
   inputSchema: packageInputSchema,
   outputSchema: packageOutputSchema,
 })

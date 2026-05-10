@@ -68,59 +68,144 @@
   cursor: pointer;
 }
 
-.status-bar {
+.step-tracker-row {
   display: flex;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.step-tracker {
+  display: flex;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.step-node {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  margin: 0.5rem 0 1rem;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  min-width: 4rem;
 }
 
-.status-pill {
-  display: inline-flex;
+.step-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.8rem;
-  background: rgba(15, 23, 42, 0.05);
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 999px;
-  font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.85);
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
 }
 
-.status-text {
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+.step-node[data-state='upcoming'] .step-icon {
+  border-color: rgba(15, 23, 42, 0.2);
+  color: rgba(15, 23, 42, 0.3);
+  background: transparent;
 }
 
-.status-pill .status-dots {
-  align-items: center;
-  gap: 0.25rem;
-  margin: 0;
+.step-node[data-state='active'] .step-icon {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.07);
 }
 
-.status-pill .status-dots span {
-  width: 0.4rem;
-  height: 0.4rem;
+.step-node[data-state='done'] .step-icon {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.07);
 }
 
-.workflow-step {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.4rem 0.8rem;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  border-radius: 999px;
-  font-size: 0.85rem;
+.step-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s;
 }
 
-.workflow-step-label {
-  color: rgba(15, 23, 42, 0.6);
+.step-node[data-state='upcoming'] .step-label {
+  color: rgba(15, 23, 42, 0.3);
 }
 
-.workflow-step-value {
-  font-weight: var(--font-weight-bold);
-  color: #1d4ed8;
+.step-node[data-state='active'] .step-label {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.step-node[data-state='done'] .step-label {
+  color: #16a34a;
+}
+
+.step-connector {
+  flex: 1 1 0%;
+  height: 2px;
+  min-width: 2.5rem;
+  margin-top: 0.9rem;
+  background: rgba(15, 23, 42, 0.12);
+  transition: background 0.3s;
+}
+
+.step-connector.done {
+  background: #16a34a;
+}
+
+.step-spinner {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid rgba(37, 99, 235, 0.2);
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: step-spin 0.7s linear infinite;
+}
+
+@keyframes step-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.step-more-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  height: 1.75rem;
+  line-height: 1.75rem;
+  margin-top: calc(0.5rem - 5px);
+  min-width: 3.5rem;
+  padding: 0 0.75rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.step-more-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.step-more-btn:not(:disabled):hover {
+  border-color: rgba(15, 23, 42, 0.3);
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.step-more-btn:focus-visible {
+  outline: 2px solid var(--color-primary, #1d4ed8);
+  outline-offset: 2px;
 }
 
 .status-toggle {
@@ -335,7 +420,9 @@
 }
 
 @media (min-width: 1200px) {
-  .planner-output {
+  .step-tracker-row,
+  .planner-output,
+  .planner-error {
     max-width: 50%;
   }
 }
@@ -368,7 +455,7 @@
 
 .flight-cell {
   flex: 1 1 0;
-  min-height: 160px;
+  min-height: 205px;
   display: flex;
   flex-direction: column;
 }

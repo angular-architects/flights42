@@ -30,15 +30,24 @@ const DURATION_OPTIONS = [
 ] as const;
 
 const WORKFLOW_STEP_LABELS: Record<string, string> = {
-  findOutboundFlights: 'Searching outbound flights',
-  findReturnFlights: 'Searching return flights',
-  findHotels: 'Searching hotels',
-  evaluateHotels: 'Evaluating hotels',
-  hotelMatchState: 'Matching hotel found',
-  hotelFallbackState: 'No matching hotel — travel agency takes over',
-  finalize: 'Finalizing result',
-  showComponents: 'Rendering UI',
+  findFlights: 'Flights',
+  findHotels: 'Hotels',
+  finalize: 'Travel Plan',
 };
+
+const PIPELINE_STEPS = [
+  { id: 'findFlights', label: 'Flights' },
+  { id: 'findHotels', label: 'Hotels' },
+  { id: '_plan', label: 'Travel Plan' },
+] as const;
+
+type PipelineStepState = 'upcoming' | 'active' | 'done';
+
+interface PipelineStep {
+  id: string;
+  label: string;
+  state: PipelineStepState;
+}
 
 @Component({
   selector: 'app-travel-planner-page',
@@ -126,6 +135,14 @@ export class TravelPlannerPage {
       this.widgets().length,
     );
   });
+
+  protected readonly stepPipeline = computed<PipelineStep[]>(() =>
+    buildPipeline(
+      this.workflowSteps(),
+      this.chat.isLoading(),
+      this.widgets().length > 0,
+    ),
+  );
 
   protected readonly showToolDetails = signal(false);
 
@@ -292,4 +309,39 @@ function formatToolArgsValue(args: unknown): string {
 
 function readStepLabel(name: string, labels: Record<string, string>): string {
   return labels[name] ?? name;
+}
+
+function buildPipeline(
+  steps: AgUiWorkflowStep[],
+  isLoading: boolean,
+  hasWidgets: boolean,
+): PipelineStep[] {
+  const statusMap = new Map<string, string>();
+  for (const step of steps) {
+    statusMap.set(step.name, step.status);
+  }
+
+  const sequentialIds = ['findFlights', 'findHotels'];
+  const allSequentialDone = sequentialIds.every(
+    (id) => statusMap.get(id) === 'complete',
+  );
+  const firstIncomplete = sequentialIds.find(
+    (id) => statusMap.get(id) !== 'complete',
+  );
+  const finalizeStarted =
+    statusMap.has('finalize') || (allSequentialDone && isLoading);
+
+  return PIPELINE_STEPS.map(({ id, label }) => {
+    if (id === '_plan') {
+      if (!isLoading && hasWidgets) return { id, label, state: 'done' };
+      if (finalizeStarted) return { id, label, state: 'active' };
+      return { id, label, state: 'upcoming' };
+    }
+    const status = statusMap.get(id);
+    if (status === 'complete') return { id, label, state: 'done' };
+    if (status === 'pending') return { id, label, state: 'active' };
+    if (isLoading && id === firstIncomplete)
+      return { id, label, state: 'active' };
+    return { id, label, state: 'upcoming' };
+  });
 }

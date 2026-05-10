@@ -54,31 +54,41 @@
   </div>
 </form>
 
-@if (chat.isLoading() || workflowSteps().length > 0 || toolCalls().length > 0) {
-  <div class="status-bar">
-    <div class="status-pill">
-      <span class="status-text">{{ currentStatus() }}</span>
-      @if (chat.isLoading()) {
-        <div class="ai-wait-indicator status-dots" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
+@if (chat.isLoading() || workflowSteps().length > 0) {
+  <div class="step-tracker-row">
+    <div class="step-tracker">
+      @for (
+        step of stepPipeline();
+        track step.id;
+        let i = $index;
+        let last = $last
+      ) {
+        <div class="step-node" [attr.data-state]="step.state">
+          <div class="step-icon">
+            @if (step.state === 'done') {
+              ✓
+            } @else if (step.state === 'active') {
+              <span class="step-spinner"></span>
+            } @else {
+              {{ i + 1 }}
+            }
+          </div>
+          <span class="step-label">{{ step.label }}</span>
         </div>
+        @if (!last) {
+          <div
+            class="step-connector"
+            [class.done]="step.state === 'done'"></div>
+        }
       }
     </div>
-
-    @if (currentWorkflowStep(); as step) {
-      <div class="workflow-step">
-        <span class="workflow-step-label">Current workflow step:</span>
-        <span class="workflow-step-value">{{ step }}</span>
-      </div>
-    }
-
-    @if (workflowSteps().length > 0 || toolCalls().length > 0) {
-      <button type="button" class="status-toggle" (click)="toggleToolDetails()">
-        {{ showToolDetails() ? 'Less' : 'More details' }}
-      </button>
-    }
+    <button
+      type="button"
+      class="step-more-btn"
+      [disabled]="workflowSteps().length === 0 && toolCalls().length === 0"
+      (click)="toggleToolDetails()">
+      {{ showToolDetails() ? 'Less' : 'More' }}
+    </button>
   </div>
 }
 
