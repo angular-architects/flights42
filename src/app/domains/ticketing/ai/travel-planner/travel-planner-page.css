@@ -340,6 +340,12 @@
   gap: 1.25rem;
 }
 
+@media (min-width: 1200px) {
+  .planner-output {
+    max-width: 50%;
+  }
+}
+
 .trip-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -368,7 +374,7 @@
 
 .flight-cell {
   flex: 1 1 0;
-  min-height: 0;
+  min-height: 160px;
   display: flex;
   flex-direction: column;
 }
