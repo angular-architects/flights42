@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   signal,
 } from '@angular/core';
@@ -50,7 +49,7 @@ const WORKFLOW_STEP_LABELS: Record<string, string> = {
 })
 export class TravelPlannerPage {
   private readonly config = inject(ConfigService);
-  private readonly destroyRef = inject(DestroyRef);
+
   private readonly fb = inject(FormBuilder);
 
   protected readonly durations = DURATION_OPTIONS;
@@ -129,10 +128,6 @@ export class TravelPlannerPage {
   });
 
   protected readonly showToolDetails = signal(false);
-
-  constructor() {
-    this.destroyRef.onDestroy(() => this.chat.destroy());
-  }
 
   protected submit(): void {
     if (this.form.invalid || this.chat.isLoading()) {

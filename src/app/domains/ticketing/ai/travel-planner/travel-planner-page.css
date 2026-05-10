@@ -68,12 +68,6 @@
   cursor: pointer;
 }
 
-@media (max-width: 900px) {
-  .form-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 .status-bar {
   display: flex;
   flex-wrap: wrap;
