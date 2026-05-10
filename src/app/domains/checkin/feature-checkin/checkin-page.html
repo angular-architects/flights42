@@ -24,22 +24,45 @@
           <label for="lastName">Last Name</label>
           <input formControlName="lastName" id="lastName" />
         </div>
-        <div>
-          <label for="email">Email Address</label>
-          <input formControlName="email" id="email" />
-          @if (passengerGroup.controls.email.invalid) {
-            <div>{{ passengerGroup.controls.email.errors | json }}</div>
-          }
-        </div>
-
-        <fieldset class="signal-form">
-          <div>
+        <div class="contact-fields-row">
+          <div class="contact-field">
+            <label for="email">Email Address</label>
+            <input formControlName="email" id="email" />
+            <div class="phone-number-hint">
+              We send the ticket to this address
+            </div>
+            @if (passengerGroup.controls.email.invalid) {
+              <div>{{ passengerGroup.controls.email.errors | json }}</div>
+            }
+          </div>
+          <div class="contact-field">
             <label for="phoneNumber">Phone</label>
             <input formControlName="phoneNumber" id="phoneNumber" />
-            Full Number: {{ fullPhoneNumber() }}
+            <div class="phone-number-hint">
+              Full Number: {{ fullPhoneNumber() }}
+            </div>
             @if (passengerGroup.controls.phoneNumber.invalid) {
               <div>{{ passengerGroup.controls.phoneNumber.errors | json }}</div>
             }
+          </div>
+        </div>
+
+        <fieldset formGroupName="passport" class="passport-fields">
+          <div class="passport-field">
+            <label for="passportNumber">Passport Number</label>
+            <input formControlName="passportNumber" id="passportNumber" />
+          </div>
+          <div class="passport-field">
+            <label for="issuedOn">Issued on</label>
+            <input formControlName="issuedOn" id="issuedOn" />
+          </div>
+          <div class="passport-field">
+            <label for="validUntil">Valid until</label>
+            <input formControlName="validUntil" id="validUntil" />
+          </div>
+          <div class="passport-field">
+            <label for="issuingAuthority">Issuing Authority</label>
+            <input formControlName="issuingAuthority" id="issuingAuthority" />
           </div>
         </fieldset>
       </fieldset>
@@ -70,14 +93,40 @@
   </div>
 
   <section class="ticket-upload">
-    <label class="ticket-upload__label" for="ticketImage">Ticket scannen</label>
+    <span class="ticket-upload__label">Scan ticket/ID</span>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="openDocumentPicker(ticketImageInput)">
+      Select Document
+    </button>
+    <span class="ticket-upload__filename">{{ selectedDocumentName() }}</span>
     <input
+      #ticketImageInput
+      class="ticket-upload__input-hidden"
       id="ticketImage"
       type="file"
       accept="image/png,image/jpeg"
       (change)="onTicketFileSelected($event)" />
     @if (extractionStatusLine()) {
-      <p class="ticket-upload__status">{{ extractionStatusLine() }}</p>
+      <p class="ticket-upload__status">
+        {{ extractionStatusLine() }}
+        @if (isAnalyzingDocument()) {
+          <span class="ai-wait-indicator tool-status-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        }
+      </p>
+    }
+    @if (documentPreviewUrl()) {
+      <div class="document-preview">
+        <img
+          [src]="documentPreviewUrl()"
+          alt="Uploaded document preview"
+          class="document-preview__image" />
+      </div>
     }
   </section>
 </div>

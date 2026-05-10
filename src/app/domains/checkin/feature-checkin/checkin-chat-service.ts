@@ -47,7 +47,7 @@ export class CheckinChatService {
     if (!file.type.startsWith('image/')) {
       this.ticketStore.setStatus(
         'error',
-        'Bitte eine Bilddatei auswählen (PNG oder JPEG).',
+        'Please select an image file (PNG or JPEG).',
       );
       return;
     }
@@ -64,7 +64,7 @@ export class CheckinChatService {
         content: [
           {
             type: 'text',
-            text: 'Hier ist mein Ticket. Bitte extrahiere die relevanten Felder.',
+            text: 'Here is my ticket or ID document. Please extract the relevant fields.',
           },
           {
             type: 'image',
@@ -81,7 +81,7 @@ export class CheckinChatService {
         'error',
         error instanceof Error
           ? error.message
-          : 'Das Ticket konnte nicht verarbeitet werden.',
+          : 'The ticket could not be processed.',
       );
     }
   }
@@ -139,8 +139,7 @@ export class CheckinChatService {
     return new Promise((resolve, reject) => {
       const image = new Image();
       image.onload = () => resolve(image);
-      image.onerror = () =>
-        reject(new Error('Bild konnte nicht geladen werden.'));
+      image.onerror = () => reject(new Error('The image could not be loaded.'));
       image.src = src;
     });
   }
@@ -160,7 +159,7 @@ export class CheckinChatService {
     canvas.height = targetHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      throw new Error('Canvas wird in diesem Browser nicht unterstützt.');
+      throw new Error('Canvas is not supported in this browser.');
     }
     ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
     return { canvas, scaled: scale < 1 };
@@ -172,14 +171,13 @@ export class CheckinChatService {
       reader.onload = () => {
         const result = reader.result;
         if (typeof result !== 'string') {
-          reject(new Error('Datei konnte nicht gelesen werden.'));
+          reject(new Error('The file could not be read.'));
           return;
         }
         const commaIndex = result.indexOf(',');
         resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
       };
-      reader.onerror = () =>
-        reject(new Error('Datei konnte nicht gelesen werden.'));
+      reader.onerror = () => reject(new Error('The file could not be read.'));
       reader.readAsDataURL(file);
     });
   }
