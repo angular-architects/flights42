@@ -129,7 +129,7 @@
       @if (flightWidgets().length > 0) {
         <div class="flights-stack">
           @for (widget of flightWidgets(); track widget.id) {
-            <div class="planner-tile" data-widget="flightWidget">
+            <div class="flight-cell" data-widget="flightWidget">
               <app-widget-container [widget]="widget" />
             </div>
           }
