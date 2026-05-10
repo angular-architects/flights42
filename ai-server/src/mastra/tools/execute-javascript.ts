@@ -6,7 +6,7 @@ import {
 } from 'quickjs-emscripten';
 import { z } from 'zod';
 
-import { type Flight, searchFlights } from './search-flights.js';
+import { fetchFlights, type FlightRecord } from './search-flights.js';
 
 const dataItemSchema = z.object({
   name: z.string(),
@@ -54,7 +54,7 @@ class SubmitResultMissingError extends Error {
  */
 function marshalFlights(
   context: QuickJSContext,
-  flights: readonly Flight[],
+  flights: readonly FlightRecord[],
 ): QuickJSHandle {
   const arrayHandle = context.newArray();
 
@@ -147,7 +147,7 @@ async function runInSandboxInner(code: string): Promise<unknown> {
         const to = context.getString(toHandle);
         const deferred = context.newPromise();
 
-        searchFlights(from, to).then(
+        fetchFlights(from, to).then(
           (flights) => {
             const arrayHandle = marshalFlights(context, flights);
             deferred.resolve(arrayHandle);

@@ -1,6 +1,5 @@
 import { Agent } from '@mastra/core/agent';
 
-import { model } from '../config.js';
 import { executeJavaScriptTool } from '../tools/execute-javascript.js';
 
 const reportingAgentPrompt = `
@@ -67,7 +66,7 @@ For every user request:
 5. Call \`renderChart\` with \`{ title, data }\` using the data the
    server returned.
 6. Reply with one short sentence confirming the chart is ready (e.g.
-   "Here is your chart").
+   "Hier ist dein Diagramm.").
 
 ## Sandbox rules — read carefully
 
@@ -111,14 +110,14 @@ Your tool calls:
      ]);
    \` })\`
 2. \`renderChart({ title: "Average delay: Graz → Hamburg vs Graz → Vienna", data: <data from step 1> })\`
-3. Reply: "Here is your chart"
+3. Reply: "Hier ist dein Diagramm."
 `.trim();
 
 export const reportingAgent = new Agent({
   id: 'reportingAgent',
   name: 'Flight42 Reporting Assistant',
   instructions: reportingAgentPrompt,
-  model,
+  model: 'openai/gpt-5.3-chat-latest',
   tools: {
     executeJavaScript: executeJavaScriptTool,
   },

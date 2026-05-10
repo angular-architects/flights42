@@ -4,7 +4,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -42,15 +41,12 @@ export class CheckinPage {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly formBuilder = inject(FormBuilder);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly checkinChat = inject(CheckinChatService);
   protected readonly ticketStore = inject(CheckinTicketStore);
 
   private readonly inputs = viewChildren<ElementRef>('input');
 
   protected readonly showNextFlights = signal(false);
-  protected readonly documentPreviewUrl = signal<string | undefined>(undefined);
-  protected readonly selectedDocumentName = signal('No document selected');
 
   protected readonly fullPhoneNumber = computed(
     () => '+43 ' + this.phoneNumber.sourceValue(),
@@ -85,12 +81,6 @@ export class CheckinPage {
     email: 'me@here.com',
     address: this.address,
     phoneNumber: this.phoneNumber,
-    passport: this.formBuilder.nonNullable.group({
-      passportNumber: '',
-      issuedOn: '',
-      validUntil: '',
-      issuingAuthority: '',
-    }),
   });
 
   protected readonly checkinFormModel = signal({
@@ -115,28 +105,21 @@ export class CheckinPage {
     const status = this.ticketStore.status();
     const isLoading = this.checkinChat.chat.isLoading();
     if (status === 'uploading') {
-      return 'Preparing image...';
+      return 'Bild wird vorbereitet…';
     }
     if (status === 'analyzing' || (status === 'idle' && isLoading)) {
-      return 'Analyzing document...';
+      return 'Ticket wird ausgewertet…';
     }
     if (status === 'filled') {
-      return 'Fields prefilled - please review.';
+      return 'Felder vorausgefüllt – bitte prüfen.';
     }
     if (status === 'error') {
       return (
-        this.ticketStore.errorMessage() ?? 'The ticket could not be analyzed.'
+        this.ticketStore.errorMessage() ??
+        'Das Ticket konnte nicht ausgewertet werden.'
       );
     }
     return '';
-  });
-
-  protected readonly isAnalyzingDocument = computed(() => {
-    const status = this.ticketStore.status();
-    return (
-      status === 'analyzing' ||
-      (status === 'idle' && this.checkinChat.chat.isLoading())
-    );
   });
 
   constructor() {
@@ -163,10 +146,6 @@ export class CheckinPage {
         console.log('[checkin] extracted ticket', ticket);
       }
     });
-
-    this.destroyRef.onDestroy(() => {
-      this.revokeDocumentPreviewUrl();
-    });
   }
 
   protected onTicketFileSelected(event: Event): void {
@@ -175,35 +154,9 @@ export class CheckinPage {
     if (!file) {
       return;
     }
-    this.selectedDocumentName.set(file.name);
-    this.setDocumentPreview(file);
     void this.checkinChat.submitTicketImage(file);
     // Allow re-uploading the same file by clearing the native value.
     input.value = '';
-  }
-
-  protected openDocumentPicker(inputElement: HTMLInputElement): void {
-    inputElement.click();
-  }
-
-  private setDocumentPreview(file: File): void {
-    if (
-      typeof URL === 'undefined' ||
-      typeof URL.createObjectURL !== 'function'
-    ) {
-      return;
-    }
-    this.revokeDocumentPreviewUrl();
-    this.documentPreviewUrl.set(URL.createObjectURL(file));
-  }
-
-  private revokeDocumentPreviewUrl(): void {
-    const currentPreviewUrl = this.documentPreviewUrl();
-    if (!currentPreviewUrl || typeof URL === 'undefined') {
-      return;
-    }
-    URL.revokeObjectURL(currentPreviewUrl);
-    this.documentPreviewUrl.set(undefined);
   }
 
   private bindExtractedTicketToForm(): void {
@@ -223,12 +176,6 @@ export class CheckinPage {
           firstName: string;
           lastName: string;
           email: string;
-          passport: {
-            passportNumber?: string;
-            issuedOn?: string;
-            validUntil?: string;
-            issuingAuthority?: string;
-          };
         }> = {};
         if (typeof passenger.firstName === 'string' && passenger.firstName) {
           patch.firstName = passenger.firstName;
@@ -238,43 +185,6 @@ export class CheckinPage {
         }
         if (typeof passenger.email === 'string' && passenger.email) {
           patch.email = passenger.email;
-        }
-        const passportPatch: {
-          passportNumber?: string;
-          issuedOn?: string;
-          validUntil?: string;
-          issuingAuthority?: string;
-        } = {};
-        if (
-          passenger.passport &&
-          typeof passenger.passport.passportNumber === 'string' &&
-          passenger.passport.passportNumber
-        ) {
-          passportPatch.passportNumber = passenger.passport.passportNumber;
-        }
-        if (
-          passenger.passport &&
-          typeof passenger.passport.issuedOn === 'string' &&
-          passenger.passport.issuedOn
-        ) {
-          passportPatch.issuedOn = passenger.passport.issuedOn;
-        }
-        if (
-          passenger.passport &&
-          typeof passenger.passport.validUntil === 'string' &&
-          passenger.passport.validUntil
-        ) {
-          passportPatch.validUntil = passenger.passport.validUntil;
-        }
-        if (
-          passenger.passport &&
-          typeof passenger.passport.issuingAuthority === 'string' &&
-          passenger.passport.issuingAuthority
-        ) {
-          passportPatch.issuingAuthority = passenger.passport.issuingAuthority;
-        }
-        if (Object.keys(passportPatch).length > 0) {
-          patch.passport = passportPatch;
         }
         if (Object.keys(patch).length > 0) {
           this.passengerGroup.patchValue(patch);
