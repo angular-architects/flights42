@@ -24,18 +24,25 @@ export const config: SheriffConfig = {
   depRules: {
     root: '*',
 
-    'domain:*': [sameTag, 'domain:shared'],
+    'domain:*': [sameTag, 'domain:shared', 'root'],
 
-    'type:ai': ['type:ai', 'type:feature', 'type:ui', 'type:data', 'type:util'],
+    'type:ai': [
+      'type:ai',
+      'type:feature',
+      'type:ui',
+      'type:data',
+      'type:util',
+      'root',
+    ],
 
-    'type:feature': ['type:ui', 'type:data', 'type:util'],
-    'type:ui': ['type:ui', 'type:data', 'type:util'],
-    'type:data': ['type:util'],
-    'type:util': [],
+    'type:feature': ['type:ui', 'type:data', 'type:util', 'root'],
+    'type:ui': ['type:ui', 'type:data', 'type:util', 'root'],
+    'type:data': ['type:util', 'root'],
+    'type:util': ['root'],
 
     'lib:*': '*',
 
     testing: '*',
-    '*': ['testing', 'lib:*'],
+    '*': ['testing', 'lib:*', 'root'],
   },
 };
