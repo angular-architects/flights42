@@ -75,9 +75,17 @@ export async function dashboardAgUiRouteHandler(
   const cacheKey = computeDashboardRequestHash(input.messages);
 
   if (!preventCaching) {
-    const cached = await tryServeFromCache(c, cacheKey, input);
-    if (cached) {
-      return cached;
+    const entry = await tryReadDashboardCache(cacheKey);
+    if (entry) {
+      return streamSSE(c, async (sse) => {
+        await streamDeltaDashboard({
+          sse,
+          mastra: mastraInstance,
+          requestContext,
+          input,
+          entry,
+        });
+      });
     }
   }
 
@@ -94,42 +102,13 @@ export async function dashboardAgUiRouteHandler(
     let capturedSpec: DashboardSpec | undefined;
 
     await streamAgentEvents(sse, agent, input, {
-      onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
-        const e = event as BaseEvent & {
-          toolCallId?: string;
-          toolCallName?: string;
-          delta?: string;
-        };
-
-        if (
-          e.type === EventType.TOOL_CALL_START &&
-          e.toolCallName === RENDER_DASHBOARD_TOOL_NAME &&
-          typeof e.toolCallId === 'string'
-        ) {
-          renderToolCallId = e.toolCallId;
-          argsBuffer = '';
-          return;
-        }
-
-        if (
-          e.type === EventType.TOOL_CALL_ARGS &&
-          e.toolCallId === renderToolCallId &&
-          typeof e.delta === 'string'
-        ) {
-          argsBuffer += e.delta;
-          return;
-        }
-
-        if (
-          e.type === EventType.TOOL_CALL_END &&
-          e.toolCallId === renderToolCallId
-        ) {
-          const { events, spec } = await handleRenderToolCallEnd(argsBuffer);
-          if (spec) {
-            capturedSpec = spec;
-          }
-          return events;
-        }
+      onA2uiSurface: (operations) => {
+        void writeDashboardCache(cacheKey, operations).catch((err: unknown) => {
+          console.error(
+            `Failed to write dashboard cache (hash=${cacheKey}):`,
+            err,
+          );
+        });
       },
     });
 

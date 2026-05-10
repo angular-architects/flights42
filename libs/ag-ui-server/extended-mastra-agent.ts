@@ -699,6 +699,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 result: unknown;
               };
             };
+            const resolvedToolName = toolCallNames.get(
+              payload.payload.toolCallId,
+            );
             handlers.onToolResultPart({
               ...payload.payload,
               toolName: toolCallNames.get(payload.payload.toolCallId),

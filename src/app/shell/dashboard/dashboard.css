@@ -1,17 +1,24 @@
 :host {
   display: block;
-  padding: 1rem 1.5rem 2rem;
   --dashboard-grid-gap: 1.25rem;
   --dashboard-card-radius: 12px;
   --dashboard-card-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
   --dashboard-card-border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
+/* Prompt form rendered as a card so the search criteria area matches the
+ * Reporting page (which gets the same look via the global
+ * `app-reporting-page form` rule in styles.css). Padding, border, radius
+ * and margin are mirrored so both pages line up visually. */
 .prompt-form {
+  background: var(--color-white);
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
+  padding: 20px 24px;
 }
 
 .prompt-input {

@@ -1,6 +1,5 @@
 import { Agent } from '@mastra/core/agent';
 
-import { model } from '../config.js';
 import { executeJavaScriptTool } from '../tools/execute-javascript.js';
 
 const reportingAgentPrompt = `
@@ -118,7 +117,7 @@ export const reportingAgent = new Agent({
   id: 'reportingAgent',
   name: 'Flight42 Reporting Assistant',
   instructions: reportingAgentPrompt,
-  model,
+  model: 'openai/gpt-5.3-chat-latest',
   tools: {
     executeJavaScript: executeJavaScriptTool,
   },

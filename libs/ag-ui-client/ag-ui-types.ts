@@ -1,7 +1,24 @@
+import { type InputContentPart, type UserMessage } from '@ag-ui/core';
 import { ResourceRef, Type } from '@angular/core';
 import { z } from 'zod';
 
 import { type A2uiCustomCatalogFunction } from './a2ui-schema';
+
+/**
+ * Re-export of the AG-UI core `InputContentPart` discriminated union
+ * (text / image / audio / video / document / binary). Mirrors the array
+ * variant of `UserMessage.content` so consumers of this lib can build
+ * multimodal user messages without importing from `@ag-ui/core` directly.
+ */
+export type UserMessageContentPart = InputContentPart;
+
+/**
+ * Content that `agUiResource.sendMessage` accepts for `role: 'user'`.
+ * Mirrors `UserMessage['content']` from `@ag-ui/core`: either a plain
+ * string or an array of typed content parts (text + image / audio /
+ * video / document / binary).
+ */
+export type UserMessageContent = UserMessage['content'];
 
 export interface AgUiWidget {
   name: string;
