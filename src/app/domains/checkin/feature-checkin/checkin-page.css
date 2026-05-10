@@ -26,8 +26,86 @@
   font-weight: 600;
 }
 
+.ticket-upload__filename {
+  color: #555;
+}
+
+.ticket-upload__input-hidden {
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
 .ticket-upload__status {
   margin: 0;
   color: #555;
-  font-style: italic;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticket-upload__status .tool-status-dots {
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.ticket-upload__status .tool-status-dots span {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.document-preview {
+  flex-basis: 100%;
+  margin-top: 8px;
+}
+
+.document-preview__image {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #d6d6d6;
+  background: #fff;
+}
+
+.contact-fields-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.contact-field {
+  min-width: 0;
+}
+
+.phone-number-hint {
+  margin-top: 10px;
+}
+
+.passport-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.passport-field {
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .passport-fields {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+  }
+}
+
+@media (min-width: 820px) {
+  .contact-fields-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
 }

@@ -16,6 +16,20 @@ export const TicketInfoSchema = z.object({
       firstName: z.string().optional(),
       lastName: z.string().optional(),
       email: z.string().optional(),
+      passport: z
+        .object({
+          passportNumber: z.string().optional(),
+          issuedOn: z
+            .string()
+            .describe('Issue date in YYYY-MM-DD format if visible')
+            .optional(),
+          validUntil: z
+            .string()
+            .describe('Expiry date in YYYY-MM-DD format if visible')
+            .optional(),
+          issuingAuthority: z.string().optional(),
+        })
+        .optional(),
     })
     .optional(),
   flight: z
