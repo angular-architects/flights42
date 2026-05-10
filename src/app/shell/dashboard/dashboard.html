@@ -9,7 +9,9 @@
     placeholder="Describe your dashboard..."></textarea>
 
   <div class="prompt-actions">
-    <button type="submit" [disabled]="chat.isLoading()">Generate</button>
+    <button type="submit" class="btn-primary" [disabled]="chat.isLoading()">
+      Generate
+    </button>
     <button
       type="button"
       [disabled]="chat.isLoading()"

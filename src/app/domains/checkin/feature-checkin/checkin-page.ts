@@ -19,7 +19,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 // import { NextFlightsModule } from '../../ticketing/api';
+import { CheckinChatService } from './checkin-chat-service';
 import { CheckinDialogComponent } from './checkin-dialog';
+import { CheckinTicketStore } from './checkin-ticket-store';
 
 @Component({
   selector: 'app-checkin-page',
@@ -39,6 +41,8 @@ export class CheckinPage {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly checkinChat = inject(CheckinChatService);
+  protected readonly ticketStore = inject(CheckinTicketStore);
 
   private readonly inputs = viewChildren<ElementRef>('input');
 
@@ -95,16 +99,97 @@ export class CheckinPage {
 
   private readonly ticketId = signal<number | undefined>(undefined);
 
+  protected readonly extractedTicket = this.ticketStore.extractedTicket;
+
+  protected readonly extractionStatusLine = computed(() => {
+    const status = this.ticketStore.status();
+    const isLoading = this.checkinChat.chat.isLoading();
+    if (status === 'uploading') {
+      return 'Bild wird vorbereitet…';
+    }
+    if (status === 'analyzing' || (status === 'idle' && isLoading)) {
+      return 'Ticket wird ausgewertet…';
+    }
+    if (status === 'filled') {
+      return 'Felder vorausgefüllt – bitte prüfen.';
+    }
+    if (status === 'error') {
+      return (
+        this.ticketStore.errorMessage() ??
+        'Das Ticket konnte nicht ausgewertet werden.'
+      );
+    }
+    return '';
+  });
+
   constructor() {
     this.initValidators();
     this.connectRouterParams();
     this.initForm();
+    this.bindExtractedTicketToForm();
 
     const street = this.passengerGroup.controls.address.get('street');
     console.log('street', street);
 
     effect(() => {
       console.log('expertMode', this.expertMode());
+    });
+
+    // Replaces the previous "Erkannte Ticketdaten" summary card. The
+    // form-prefill effect still runs in `bindExtractedTicketToForm()`; this
+    // effect just gives developers a single line in the console showing the
+    // raw ticket the agent extracted, which is useful for debugging without
+    // taking any visual real estate.
+    effect(() => {
+      const ticket = this.extractedTicket();
+      if (ticket) {
+        console.log('[checkin] extracted ticket', ticket);
+      }
+    });
+  }
+
+  protected onTicketFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    void this.checkinChat.submitTicketImage(file);
+    // Allow re-uploading the same file by clearing the native value.
+    input.value = '';
+  }
+
+  private bindExtractedTicketToForm(): void {
+    effect(() => {
+      const ticket = this.extractedTicket();
+      if (!ticket) {
+        return;
+      }
+
+      if (typeof ticket.ticketId === 'string' && ticket.ticketId.length > 0) {
+        this.checkinForm.ticketId().value.set(ticket.ticketId);
+      }
+
+      const passenger = ticket.passenger;
+      if (passenger) {
+        const patch: Partial<{
+          firstName: string;
+          lastName: string;
+          email: string;
+        }> = {};
+        if (typeof passenger.firstName === 'string' && passenger.firstName) {
+          patch.firstName = passenger.firstName;
+        }
+        if (typeof passenger.lastName === 'string' && passenger.lastName) {
+          patch.lastName = passenger.lastName;
+        }
+        if (typeof passenger.email === 'string' && passenger.email) {
+          patch.email = passenger.email;
+        }
+        if (Object.keys(patch).length > 0) {
+          this.passengerGroup.patchValue(patch);
+        }
+      }
     });
   }
 

@@ -1,9 +1,33 @@
-/* .signal-form {
-  border: solid 2px green;
-  padding: 20px;
+/* Layout: single column flow. The "Erkannte Ticketdaten" aside that
+ * previously occupied a second column has been removed; the layout still
+ * uses a grid container so that each direct child (form + upload) shares
+ * the same column width and the ticket-upload control visually matches the
+ * width of the form fields above it. */
+.checkin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
 }
 
-.reactive-form {
-  border: dotted 3px darkred;
-  padding: 20px;
-} */
+.ticket-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0;
+  border: 1px dashed #b5b5b5;
+  border-radius: 8px;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+
+.ticket-upload__label {
+  font-weight: 600;
+}
+
+.ticket-upload__status {
+  margin: 0;
+  color: #555;
+  font-style: italic;
+}

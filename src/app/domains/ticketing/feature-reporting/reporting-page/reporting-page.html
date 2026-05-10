@@ -1,49 +1,114 @@
 <h1>Reporting</h1>
 
-<form>
-  <div>
-    <input
-      [(ngModel)]="message"
-      name="input"
-      placeholder="Describe your chart..." />
-  </div>
-  <div>
-    <button (click)="submit()">Generate</button>
-    <button type="button" (click)="useExamplePrompt(0)">Example #1</button>
-    <button type="button" (click)="useExamplePrompt(1)">Example #2</button>
+<form class="prompt-form" (submit)="$event.preventDefault(); submit()">
+  <textarea
+    class="prompt-input"
+    [(ngModel)]="message"
+    name="prompt"
+    rows="5"
+    placeholder="Describe your chart..."></textarea>
+
+  <div class="prompt-actions">
+    <button type="submit" [disabled]="chat.isLoading()">Generate</button>
+    <button
+      type="button"
+      [disabled]="chat.isLoading()"
+      (click)="useExamplePrompt(0)">
+      Example #1
+    </button>
+    <button
+      type="button"
+      [disabled]="chat.isLoading()"
+      (click)="useExamplePrompt(1)">
+      Example #2
+    </button>
   </div>
 </form>
 
-@if (generator.isLoading()) {
-  <div class="ai-wait-indicator">
-    <span></span>
-    <span></span>
-    <span></span>
+@if (chat.isLoading() || allToolCalls().length > 0) {
+  <div class="tool-status">
+    <span class="tool-status-text">{{ currentStatus() }}</span>
+    @if (chat.isLoading()) {
+      <div class="ai-wait-indicator tool-status-dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    }
+    @if (allToolCalls().length > 0) {
+      <button
+        type="button"
+        class="tool-status-toggle"
+        (click)="toggleToolDetails()">
+        {{ showToolDetails() ? 'Less' : 'More' }}
+      </button>
+    }
   </div>
-} @else if (generator.hasValue() && generator.value()?.type === 'error') {
-  <div class="">Error: {{ generator.value()?.message }}</div>
-} @else if (generator.error()) {
-  <div class="">Error: {{ generator.error() | json }}</div>
 }
-@if (generator.hasValue()) {
-  <div class="mb-30">{{ generator.value()?.message }}</div>
+
+@if (showToolDetails() && allToolCalls().length > 0) {
+  <div class="tool-details-layer" role="dialog" aria-label="Tool call details">
+    <header class="tool-details-header">
+      <h2>Tool calls</h2>
+      <button
+        type="button"
+        class="tool-details-close"
+        (click)="toggleToolDetails()">
+        Less
+      </button>
+    </header>
+    <ol class="tool-details-list">
+      @for (toolCall of allToolCalls(); track toolCall.id) {
+        <li class="tool-details-item" [attr.data-status]="toolCall.status">
+          <div class="tool-details-item-head">
+            <span class="tool-details-name">{{ toolCall.name }}</span>
+            <span class="tool-details-status">{{ toolCall.status }}</span>
+          </div>
+          @if (formatToolArgs(toolCall.args); as argsText) {
+            @if (argsText.length > 0) {
+              <pre class="tool-details-args">{{ argsText }}</pre>
+            }
+          }
+        </li>
+      }
+    </ol>
+  </div>
+}
+
+@if (errorMessage(); as error) {
+  <p class="reporting-error">{{ error }}</p>
+}
+
+@if (hasChart()) {
+  @if (chartTitle(); as title) {
+    <h2>{{ title }}</h2>
+  }
 
   <div class="chart-wrapper">
     <canvas #chart></canvas>
   </div>
 
-  <button (click)="regenerate()" class="btn btn-default mt-20">
-    Regenerate
-  </button>
+  @if (assistantMessage(); as text) {
+    <p class="mt-20">{{ text }}</p>
+  }
 
-  <button (click)="toggleDetails()" class="btn btn-default">Details</button>
-}
-@if (showDetails()) {
-  <div class="mt-20">
-    <h2>Data</h2>
-    <pre>{{ data() | json }}</pre>
+  <section class="code-details">
+    <button
+      type="button"
+      class="code-details-toggle"
+      [attr.aria-expanded]="showCodeDetails()"
+      (click)="toggleCodeDetails()">
+      {{ showCodeDetails() ? 'Details ausblenden' : 'Details' }}
+    </button>
 
-    <h2>Generated Code</h2>
-    <pre>{{ generator.value()?.code ?? 'no code generated' }}</pre>
-  </div>
+    @if (showCodeDetails()) {
+      @if (latestJavaScriptCode(); as code) {
+        <pre class="code-details-block"><code>{{ code }}</code></pre>
+      } @else {
+        <p class="code-details-empty">
+          Kein generierter JavaScript-Code für diesen Run gefunden.
+        </p>
+      }
+    }
+  </section>
 }

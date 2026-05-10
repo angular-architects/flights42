@@ -1,7 +1,24 @@
+import { type InputContentPart, type UserMessage } from '@ag-ui/core';
 import { ResourceRef, Type } from '@angular/core';
 import { z } from 'zod';
 
 import { type A2uiCustomCatalogFunction } from './a2ui-schema';
+
+/**
+ * Re-export of the AG-UI core `InputContentPart` discriminated union
+ * (text / image / audio / video / document / binary). Mirrors the array
+ * variant of `UserMessage.content` so consumers of this lib can build
+ * multimodal user messages without importing from `@ag-ui/core` directly.
+ */
+export type UserMessageContentPart = InputContentPart;
+
+/**
+ * Content that `agUiResource.sendMessage` accepts for `role: 'user'`.
+ * Mirrors `UserMessage['content']` from `@ag-ui/core`: either a plain
+ * string or an array of typed content parts (text + image / audio /
+ * video / document / binary).
+ */
+export type UserMessageContent = UserMessage['content'];
 
 export interface AgUiWidget {
   name: string;
@@ -15,12 +32,26 @@ export interface AgUiToolCall {
   status: 'pending' | 'complete' | 'error';
 }
 
+/**
+ * `attachments` describes non-text parts of a user message (e.g.
+ * uploaded images) that should be surfaced to the renderer as a
+ * lightweight badge while the structured payload travels separately to
+ * the agent. `content` keeps the textual placeholder used for display.
+ */
+export interface AgUiChatMessageAttachment {
+  type: 'image' | 'audio' | 'video' | 'document' | 'binary';
+  mimeType?: string;
+  /** Optional short label for the badge, e.g. file name. */
+  label?: string;
+}
+
 export interface AgUiChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'error';
   content: string;
   widgets: AgUiWidget[];
   toolCalls: AgUiToolCall[];
+  attachments?: AgUiChatMessageAttachment[];
 }
 
 type ToolExecuteFn<TArgs> = {
@@ -106,7 +137,7 @@ export interface AgUiResourceOptions {
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
-  sendMessage: (message: { role: 'user'; content: string }) => void;
+  sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;

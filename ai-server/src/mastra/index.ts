@@ -3,8 +3,10 @@ import { registerApiRoute } from '@mastra/core/server';
 import { LibSQLStore } from '@mastra/libsql';
 import { PinoLogger } from '@mastra/loggers';
 
+import { checkinAgent } from './agents/checkin-agent.js';
 import { dashboardAgent } from './agents/dashboard-agent.js';
 import { dashboardDataAgent } from './agents/dashboard-data-agent.js';
+import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
 import { agUiRouteHandler } from './routes/ag-ui-route.js';
 import {
@@ -17,7 +19,13 @@ import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
 import { getDashboardImageHandler } from './routes/images-route.js';
 
 export const mastra = new Mastra({
-  agents: { ticketingAgent, dashboardAgent, dashboardDataAgent },
+  agents: {
+    ticketingAgent,
+    dashboardAgent,
+    dashboardDataAgent,
+    reportingAgent,
+    checkinAgent,
+  },
   storage: new LibSQLStore({
     id: 'flights42-storage',
     url: 'file:./flights42.db',
