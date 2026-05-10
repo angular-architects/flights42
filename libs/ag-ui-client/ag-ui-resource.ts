@@ -202,7 +202,7 @@ export function agUiResource(
     pendingRun.set({ id: randomUUID() });
   };
 
-  const resumeInterrupt = (approved: boolean): void => {
+  const resumeInterrupt = (payload: unknown): void => {
     const activeInterrupt = interrupt();
     if (!activeInterrupt) {
       return;
@@ -213,7 +213,7 @@ export function agUiResource(
       id: randomUUID(),
       resume: {
         interruptId: activeInterrupt.id,
-        payload: { approved },
+        payload,
       },
     });
   };

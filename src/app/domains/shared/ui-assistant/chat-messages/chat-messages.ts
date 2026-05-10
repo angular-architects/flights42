@@ -29,11 +29,14 @@ export class ChatMessages {
   readonly messages = input.required<AgUiChatMessage[]>();
   readonly interrupt = input<AgUiInterrupt | null>(null);
   readonly pending = input<boolean>(false);
-  readonly resumeInterrupt = output<boolean>();
+  readonly resumeInterrupt = output<unknown>();
   protected readonly showIndicator = computed(() => this.pending());
   protected readonly interruptModel = computed(() =>
     toInterruptModel(this.interrupt()),
   );
+
+  protected readonly approvePayload: unknown = { approved: true };
+  protected readonly rejectPayload: unknown = { approved: false };
 
   protected readonly icons = {
     user: '💬',
@@ -77,8 +80,16 @@ export class ChatMessages {
   );
 }
 
+interface InterruptOption {
+  id: string;
+  label: string;
+  payload: unknown;
+  variant?: 'primary' | 'default' | 'danger';
+}
+
 interface InterruptPayload {
   message?: string | undefined;
+  options?: InterruptOption[] | undefined;
 }
 
 interface InterruptModel {
@@ -86,6 +97,7 @@ interface InterruptModel {
   reason: AgUiInterrupt['reason'];
   payload: AgUiInterrupt['payload'];
   message: string;
+  options: InterruptOption[];
 }
 
 function toInterruptModel(
@@ -105,6 +117,9 @@ function toInterruptModel(
       typeof suspendPayload?.message === 'string'
         ? suspendPayload.message
         : `Tool Call: ${interrupt.payload.toolName}`,
+    options: Array.isArray(suspendPayload?.options)
+      ? suspendPayload.options
+      : [],
   };
 }
 

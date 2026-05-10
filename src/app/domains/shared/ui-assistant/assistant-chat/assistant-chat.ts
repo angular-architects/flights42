@@ -76,7 +76,7 @@ export class AssistantChat {
     this.chat?.stop();
   }
 
-  protected resumeInterrupt(approved: boolean): void {
-    this.chat?.resumeInterrupt(approved);
+  protected resumeInterrupt(payload: unknown): void {
+    this.chat?.resumeInterrupt(payload);
   }
 }
