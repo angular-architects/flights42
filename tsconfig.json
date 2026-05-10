@@ -16,7 +16,8 @@
     "module": "preserve",
     "paths": {
       "@internal/ag-ui-client": ["./libs/ag-ui-client/index.ts"],
-      "@internal/ag-ui-client/*": ["./libs/ag-ui-client/*"]
+      "@internal/ag-ui-client/*": ["./libs/ag-ui-client/*"],
+      "@flights42/feature-flags": ["./feature-flags.ts"]
     }
   },
   "angularCompilerOptions": {

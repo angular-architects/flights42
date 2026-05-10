@@ -4,6 +4,7 @@ import {
   Injectable,
   runInInjectionContext,
 } from '@angular/core';
+import { USE_ACTION_CARDS } from '@flights42/feature-flags';
 import {
   type AgUiChatResourceRef,
   agUiResource,
@@ -23,6 +24,10 @@ import { bookFlightActionCard } from './widgets/book-flight-action-card';
 import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { flightWidget } from './widgets/flight-widget';
 
+const ACTION_CARDS = USE_ACTION_CARDS
+  ? [bookFlightActionCard, cancelFlightActionCard]
+  : [];
+
 @Injectable({ providedIn: 'root' })
 export class TicketingChatService {
   private readonly config = inject(ConfigService);
@@ -33,6 +38,13 @@ export class TicketingChatService {
 
   public init(): void {
     if (!this.chat) {
+      const components = [
+        messageWidget,
+        flightWidget,
+        mcpAppsWidgetComponent,
+        ...ACTION_CARDS,
+      ];
+
       this.chat = runInInjectionContext(this.injector, () =>
         agUiResource({
           url: this.config.agUiUrl,
@@ -44,13 +56,7 @@ export class TicketingChatService {
             toggleFlightSelectionTool,
             getCurrentBasketTool,
             displayFlightDetailTool,
-            createShowComponentsTool([
-              messageWidget,
-              flightWidget,
-              mcpAppsWidgetComponent,
-              bookFlightActionCard,
-              cancelFlightActionCard,
-            ]),
+            createShowComponentsTool(components),
           ],
         }),
       );
