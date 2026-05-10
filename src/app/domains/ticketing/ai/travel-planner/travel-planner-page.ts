@@ -8,8 +8,10 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
+  type AgUiChatMessage,
   agUiResource,
   type AgUiToolCall,
+  type AgUiWidgetInstance,
   type AgUiWorkflowStep,
   createShowComponentsTool,
   WidgetContainerComponent,
@@ -70,40 +72,31 @@ export class TravelPlannerPage {
   });
 
   protected readonly widgets = computed(() =>
-    this.chat
-      .value()
-      .filter((message) => message.role === 'assistant')
-      .flatMap((message) => message.widgets),
+    selectAssistantWidgets(this.chat.value()),
   );
 
   protected readonly messageWidgets = computed(() =>
-    this.widgets().filter((widget) => widget.name === 'messageWidget'),
+    selectWidgetsByName(this.widgets(), 'messageWidget'),
   );
 
   protected readonly flightWidgets = computed(() =>
-    this.widgets().filter((widget) => widget.name === 'flightWidget'),
+    selectWidgetsByName(this.widgets(), 'flightWidget'),
   );
 
   protected readonly hotelWidgets = computed(() =>
-    this.widgets().filter((widget) => widget.name === 'hotelWidget'),
+    selectWidgetsByName(this.widgets(), 'hotelWidget'),
   );
 
-  protected readonly otherWidgets = computed(() => {
-    const known = new Set(['messageWidget', 'flightWidget', 'hotelWidget']);
-    return this.widgets().filter((widget) => !known.has(widget.name));
-  });
+  protected readonly otherWidgets = computed(() =>
+    selectOtherWidgets(this.widgets()),
+  );
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const error = this.chat.value().find((message) => message.role === 'error');
-    return error?.content ?? null;
-  });
+  protected readonly errorMessage = computed<string | null>(() =>
+    readErrorMessage(this.chat.value()),
+  );
 
   protected readonly toolCalls = computed<AgUiToolCall[]>(() =>
-    this.chat
-      .value()
-      .filter((message) => message.role === 'assistant')
-      .flatMap((message) => message.toolCalls)
-      .filter((toolCall) => toolCall.name !== 'showComponents'),
+    selectVisibleToolCalls(this.chat.value()),
   );
 
   /**
@@ -112,61 +105,27 @@ export class TravelPlannerPage {
    * small extra section below the step timeline so they aren't lost.
    */
   protected readonly topLevelToolCalls = computed<AgUiToolCall[]>(() =>
-    this.toolCalls().filter(
-      (toolCall) =>
-        !toolCall.stepName && !toolCall.name.startsWith('workflow-'),
-    ),
+    selectTopLevelToolCalls(this.toolCalls()),
   );
 
   protected readonly workflowSteps = computed<AgUiWorkflowStep[]>(() =>
-    this.chat
-      .value()
-      .filter((message) => message.role === 'assistant')
-      .flatMap((message) => message.workflowSteps),
+    selectWorkflowSteps(this.chat.value()),
   );
 
   protected readonly toolCallsByStep = computed<Map<string, AgUiToolCall[]>>(
-    () => {
-      const map = new Map<string, AgUiToolCall[]>();
-      for (const toolCall of this.toolCalls()) {
-        const key = toolCall.stepName;
-        if (!key) {
-          continue;
-        }
-        const list = map.get(key);
-        if (list) {
-          list.push(toolCall);
-        } else {
-          map.set(key, [toolCall]);
-        }
-      }
-      return map;
-    },
+    () => groupToolCallsByStep(this.toolCalls()),
   );
 
   protected readonly currentWorkflowStep = computed<string | null>(() => {
-    const steps = this.workflowSteps();
-    for (let i = steps.length - 1; i >= 0; i -= 1) {
-      const step = steps[i];
-      if (step.status === 'pending') {
-        return WORKFLOW_STEP_LABELS[step.name] ?? step.name;
-      }
-    }
-    return null;
+    return readCurrentWorkflowStep(this.workflowSteps(), WORKFLOW_STEP_LABELS);
   });
 
   protected readonly currentStatus = computed<string>(() => {
-    const step = this.currentWorkflowStep();
-    if (step) {
-      return step;
-    }
-    if (this.chat.isLoading()) {
-      return 'Building travel plan';
-    }
-    if (this.widgets().length > 0) {
-      return 'Done';
-    }
-    return 'Ready';
+    return readCurrentStatus(
+      this.currentWorkflowStep(),
+      this.chat.isLoading(),
+      this.widgets().length,
+    );
   });
 
   protected readonly showToolDetails = signal(false);
@@ -211,21 +170,11 @@ export class TravelPlannerPage {
   }
 
   protected formatToolArgs(args: unknown): string {
-    if (args === undefined || args === null) {
-      return '';
-    }
-    if (typeof args === 'string') {
-      return args;
-    }
-    try {
-      return JSON.stringify(args, null, 2);
-    } catch {
-      return String(args);
-    }
+    return formatToolArgsValue(args);
   }
 
   protected stepLabel(name: string): string {
-    return WORKFLOW_STEP_LABELS[name] ?? name;
+    return readStepLabel(name, WORKFLOW_STEP_LABELS);
   }
 
   protected hasWorkflowSteps(): boolean {
@@ -235,4 +184,117 @@ export class TravelPlannerPage {
   protected toolCallsFor(stepName: string): AgUiToolCall[] {
     return this.toolCallsByStep().get(stepName) ?? [];
   }
+}
+
+function selectAssistantWidgets(
+  messages: AgUiChatMessage[],
+): AgUiWidgetInstance[] {
+  return messages
+    .filter((message) => message.role === 'assistant')
+    .flatMap((message) => message.widgets);
+}
+
+function selectWidgetsByName(
+  widgets: AgUiWidgetInstance[],
+  name: string,
+): AgUiWidgetInstance[] {
+  return widgets.filter((widget) => widget.name === name);
+}
+
+function selectOtherWidgets(
+  widgets: AgUiWidgetInstance[],
+): AgUiWidgetInstance[] {
+  const known = new Set(['messageWidget', 'flightWidget', 'hotelWidget']);
+  return widgets.filter((widget) => !known.has(widget.name));
+}
+
+function readErrorMessage(messages: AgUiChatMessage[]): string | null {
+  const error = messages.find((message) => message.role === 'error');
+  return error?.content ?? null;
+}
+
+function selectVisibleToolCalls(messages: AgUiChatMessage[]): AgUiToolCall[] {
+  return messages
+    .filter((message) => message.role === 'assistant')
+    .flatMap((message) => message.toolCalls)
+    .filter((toolCall) => toolCall.name !== 'showComponents');
+}
+
+function selectTopLevelToolCalls(toolCalls: AgUiToolCall[]): AgUiToolCall[] {
+  return toolCalls.filter(
+    (toolCall) => !toolCall.stepName && !toolCall.name.startsWith('workflow-'),
+  );
+}
+
+function selectWorkflowSteps(messages: AgUiChatMessage[]): AgUiWorkflowStep[] {
+  return messages
+    .filter((message) => message.role === 'assistant')
+    .flatMap((message) => message.workflowSteps);
+}
+
+function groupToolCallsByStep(
+  toolCalls: AgUiToolCall[],
+): Map<string, AgUiToolCall[]> {
+  const map = new Map<string, AgUiToolCall[]>();
+  for (const toolCall of toolCalls) {
+    const key = toolCall.stepName;
+    if (!key) {
+      continue;
+    }
+    const list = map.get(key);
+    if (list) {
+      list.push(toolCall);
+    } else {
+      map.set(key, [toolCall]);
+    }
+  }
+  return map;
+}
+
+function readCurrentWorkflowStep(
+  steps: AgUiWorkflowStep[],
+  labels: Record<string, string>,
+): string | null {
+  for (let i = steps.length - 1; i >= 0; i -= 1) {
+    const step = steps[i];
+    if (step.status === 'pending') {
+      return labels[step.name] ?? step.name;
+    }
+  }
+  return null;
+}
+
+function readCurrentStatus(
+  currentWorkflowStep: string | null,
+  isLoading: boolean,
+  widgetCount: number,
+): string {
+  if (currentWorkflowStep) {
+    return currentWorkflowStep;
+  }
+  if (isLoading) {
+    return 'Building travel plan';
+  }
+  if (widgetCount > 0) {
+    return 'Done';
+  }
+  return 'Ready';
+}
+
+function formatToolArgsValue(args: unknown): string {
+  if (args === undefined || args === null) {
+    return '';
+  }
+  if (typeof args === 'string') {
+    return args;
+  }
+  try {
+    return JSON.stringify(args, null, 2);
+  } catch {
+    return String(args);
+  }
+}
+
+function readStepLabel(name: string, labels: Record<string, string>): string {
+  return labels[name] ?? name;
 }
