@@ -2,7 +2,7 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
 import { runSandbox } from '../utils/sandbox.js';
-import { searchFlights } from './search-flights.js';
+import { fetchFlights } from './search-flights.js';
 
 const dataItemSchema = z.object({
   name: z.string(),
@@ -69,7 +69,7 @@ export const executeJavaScriptTool = createTool({
     await runSandbox(code, {
       functions: {
         loadFlights: (from: string, to: string) => {
-          return searchFlights(from, to);
+          return fetchFlights(from, to);
         },
         submitResult: (items: z.infer<typeof dataItemsSchema>) => {
           captured = items;

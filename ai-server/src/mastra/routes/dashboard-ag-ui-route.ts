@@ -48,9 +48,6 @@ export async function dashboardAgUiRouteHandler(
   if (!preventCaching) {
     const entry = await tryReadDashboardCache(cacheKey);
     if (entry) {
-      console.info(
-        `[dashboard-cache] delta hit for hash=${cacheKey} (run=${input.runId})`,
-      );
       return streamSSE(c, async (sse) => {
         await streamDeltaDashboard({
           sse,
@@ -63,12 +60,6 @@ export async function dashboardAgUiRouteHandler(
     }
   }
 
-  if (preventCaching) {
-    console.info(
-      `[dashboard-cache] bypass-read for hash=${cacheKey} (run=${input.runId}); cache will be refreshed on success`,
-    );
-  }
-
   const agent = getExtendedLocalAgent({
     mastra: mastraInstance,
     agentId: DASHBOARD_AGENT_ID,
@@ -79,25 +70,12 @@ export async function dashboardAgUiRouteHandler(
   return streamSSE(c, async (sse) => {
     await streamAgentEvents(sse, agent, input, {
       onA2uiSurface: (operations) => {
-        void writeDashboardCache(cacheKey, operations).then(
-          (entry) => {
-            if (entry) {
-              console.info(
-                `[dashboard-cache] stored hash=${cacheKey} (run=${input.runId}, ${entry.structural.length} structural / ${entry.dataModel.length} data ops)`,
-              );
-            } else {
-              console.warn(
-                `[dashboard-cache] could not split operations for hash=${cacheKey}; cache entry not written`,
-              );
-            }
-          },
-          (err: unknown) => {
-            console.warn(
-              `[dashboard-cache] failed to write hash=${cacheKey}:`,
-              err,
-            );
-          },
-        );
+        void writeDashboardCache(cacheKey, operations).catch((err: unknown) => {
+          console.error(
+            `Failed to write dashboard cache (hash=${cacheKey}):`,
+            err,
+          );
+        });
       },
     });
   });
@@ -171,7 +149,7 @@ async function tryReadDashboardCache(
   try {
     return await readDashboardCache(hash);
   } catch (err) {
-    console.warn(`[dashboard-cache] failed to read hash=${hash}:`, err);
+    console.error(`Failed to read dashboard cache (hash=${hash}):`, err);
     return null;
   }
 }

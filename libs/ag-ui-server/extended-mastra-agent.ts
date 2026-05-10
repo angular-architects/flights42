@@ -1,4 +1,18 @@
-import { BaseEvent, RunAgentInput } from '@ag-ui/client';
+// Multimodal note (Part 2 / checkin agent):
+//
+// `convertAGUIMessagesToMastra` from `@ag-ui/mastra` (1.0.0) **strips
+// non-text content parts from user messages** — internally it filters
+// `content` parts down to those with `type === 'text'` and joins their
+// text fields with newlines. Verified against
+// `node_modules/@ag-ui/mastra/dist/index.mjs` (function `q`):
+//   `Array.isArray(e) ? e.filter(t => t.type === 'text').map(t => t.text.trim())...`
+//
+// To support AG-UI's native multimodal `UserMessage` content parts
+// (image / audio / video / document / binary) we run the bridge
+// normally and then re-hydrate non-text user parts from the original
+// `RunAgentInput.messages` into the produced `CoreMessage[]`. We do
+// this here (1-file fallback) instead of forking the bridge.
+import { BaseEvent, Message, RunAgentInput } from '@ag-ui/client';
 import { AbstractAgent, EventType, randomUUID } from '@ag-ui/client';
 import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
 import { Agent } from '@mastra/core/agent';
@@ -275,6 +289,132 @@ function rehydrateToolResultNames(
   return nextMessages;
 }
 
+/**
+ * AI-SDK v4 user content part shape produced by our re-hydration. We
+ * keep the shape inline (rather than importing from a deep `ai` path)
+ * because Mastra re-exports `CoreMessage` and the LLM accepts these
+ * standard parts unchanged.
+ */
+type CoreUserContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: string | URL; mimeType?: string }
+  | {
+      type: 'file';
+      data: string | URL;
+      mimeType: string;
+    };
+
+function isAgUiUserMessage(
+  message: Message,
+): message is Extract<Message, { role: 'user' }> {
+  return message.role === 'user';
+}
+
+function agUiPartToCorePart(part: unknown): CoreUserContentPart | null {
+  if (!part || typeof part !== 'object') {
+    return null;
+  }
+  const record = part as Record<string, unknown>;
+  if (record['type'] === 'text') {
+    const text = record['text'];
+    return typeof text === 'string' && text.length > 0
+      ? { type: 'text', text }
+      : null;
+  }
+
+  // image / audio / video / document / binary all share the same
+  // `{ source: { type: 'data' | 'url', value, mimeType? } }` shape in
+  // AG-UI core. We map images to AI-SDK `ImagePart` and the rest to
+  // `FilePart` (audio/video/files) — the OpenAI provider with vision
+  // (`gpt-5.3-chat-latest`) consumes ImagePart natively.
+  const source = record['source'];
+  if (!source || typeof source !== 'object') {
+    return null;
+  }
+  const sourceRecord = source as Record<string, unknown>;
+  const sourceType = sourceRecord['type'];
+  const value = sourceRecord['value'];
+  const mimeType = sourceRecord['mimeType'];
+  if (typeof value !== 'string' || !value) {
+    return null;
+  }
+
+  let resolvedImage: string | URL;
+  try {
+    resolvedImage = sourceType === 'url' ? new URL(value) : value;
+  } catch {
+    resolvedImage = value;
+  }
+
+  if (record['type'] === 'image') {
+    return {
+      type: 'image',
+      image: resolvedImage,
+      mimeType: typeof mimeType === 'string' ? mimeType : undefined,
+    };
+  }
+
+  // Treat audio/video/document/binary as opaque files. Most providers
+  // ignore non-image attachments, but we forward them so vision-capable
+  // multimodal models (and future providers) can pick them up.
+  if (typeof mimeType !== 'string' || !mimeType) {
+    return null;
+  }
+  return {
+    type: 'file',
+    data: resolvedImage,
+    mimeType,
+  };
+}
+
+/**
+ * Walk the produced `CoreMessage[]` in parallel with the original
+ * AG-UI `Message[]` and rewrite each user message whose AG-UI content
+ * was an array (containing non-text parts) into a Mastra/AI-SDK-style
+ * multipart user message. String-only AG-UI user messages are left
+ * untouched.
+ */
+function injectMultimodalUserParts(
+  agUiMessages: readonly Message[],
+  mastraMessages: CoreMessage[],
+): CoreMessage[] {
+  if (agUiMessages.length !== mastraMessages.length) {
+    return mastraMessages;
+  }
+
+  return mastraMessages.map((mastraMessage, index) => {
+    const original = agUiMessages[index];
+    if (
+      !mastraMessage ||
+      mastraMessage.role !== 'user' ||
+      !isAgUiUserMessage(original) ||
+      !Array.isArray(original.content)
+    ) {
+      return mastraMessage;
+    }
+
+    const parts: CoreUserContentPart[] = [];
+    for (const part of original.content) {
+      const corePart = agUiPartToCorePart(part);
+      if (corePart) {
+        parts.push(corePart);
+      }
+    }
+
+    if (parts.length === 0) {
+      return mastraMessage;
+    }
+
+    // Force `unknown` cast: AI-SDK's `UserContent` is a strict union,
+    // but Mastra accepts these parts at runtime; the bridge would have
+    // produced the same shape if it supported images.
+    return {
+      role: 'user',
+      content: parts,
+    } as unknown as CoreMessage;
+  });
+}
+
 function toClientTools(
   tools: RunAgentInput['tools'],
 ): Record<string, ClientToolDefinition> {
@@ -463,9 +603,13 @@ export class ExtendedMastraAgent extends AbstractAgent {
     },
   ): Promise<void> {
     const mastraMessages = convertAGUIMessagesToMastra(input.messages as never);
+    const multimodalMessages = injectMultimodalUserParts(
+      input.messages as readonly Message[],
+      mastraMessages as CoreMessage[],
+    );
     const rehydratedToolResultNames = rehydrateToolResultNames(
       this.store,
-      mastraMessages as CoreMessage[],
+      multimodalMessages,
       this.agentId,
       input.threadId,
     );
@@ -481,30 +625,28 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
     const toolCallNames = new Map<string, string>();
 
-    let textChars = 0;
-    let renderToolCalled = false;
-    let renderToolSucceeded = false;
-    let renderToolFailed = false;
-
     try {
-      const stream = await this.agent.stream(rehydratedMastraMessages, {
-        memory: { thread: input.threadId, resource: this.resourceId },
+      // Only pass `memory` for agents that actually have memory configured.
+      // Mastra emits a runtime warning ("No memory is configured but
+      // resourceId and threadId were passed in args") when `memory` is
+      // supplied to a memory-less agent — its own internal check uses
+      // `hasOwnMemory()` (see `@mastra/core/dist/agent/agent.d.ts`), so
+      // we mirror that here.
+      const baseStreamOptions = {
         runId: input.runId,
         clientTools,
         requestContext: this.requestContext,
-      });
-
-      const summarizeRun = async (): Promise<void> => {
-        await this.logRunSummary({
-          runId: input.runId,
-          threadId: input.threadId,
-          stream,
-          textChars,
-          renderToolCalled,
-          renderToolSucceeded,
-          renderToolFailed,
-        });
       };
+
+      const stream = await this.agent.stream(
+        rehydratedMastraMessages,
+        this.agent.hasOwnMemory()
+          ? {
+              ...baseStreamOptions,
+              memory: { thread: input.threadId, resource: this.resourceId },
+            }
+          : baseStreamOptions,
+      );
 
       for await (const chunk of stream.fullStream) {
         switch ((chunk as { type?: string }).type) {
@@ -515,7 +657,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
             const payload = chunk as { payload?: { text?: string } };
             const text = payload.payload?.text;
             if (typeof text === 'string' && text.length > 0) {
-              textChars += text.length;
               // One stable id per run so TEXT_MESSAGE_CHUNK coalesces into a single assistant
               // message (matches TOOL_CALL_START parentMessageId).
               handlers.onTextPart(text, assistantMessageId);
@@ -541,9 +682,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
               payload.payload.toolCallId,
               payload.payload.toolName,
             );
-            if (payload.payload.toolName === RENDER_A2UI_TOOL_NAME) {
-              renderToolCalled = true;
-            }
             handlers.onToolCallPart(payload.payload);
             break;
           }
@@ -557,13 +695,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
             const resolvedToolName = toolCallNames.get(
               payload.payload.toolCallId,
             );
-            if (resolvedToolName === RENDER_A2UI_TOOL_NAME) {
-              if (extractA2uiSurfacePayload(payload.payload.result)) {
-                renderToolSucceeded = true;
-              } else {
-                renderToolFailed = true;
-              }
-            }
             handlers.onToolResultPart({
               ...payload.payload,
               toolName: resolvedToolName,
@@ -572,119 +703,20 @@ export class ExtendedMastraAgent extends AbstractAgent {
           }
           case 'error': {
             const payload = chunk as { payload: { error: string } };
-            await summarizeRun();
             handlers.onError(new Error(payload.payload.error));
             return;
           }
           case 'finish': {
-            await summarizeRun();
             handlers.onRunFinished();
             return;
           }
         }
       }
 
-      await summarizeRun();
       handlers.onRunFinished();
     } catch (error) {
       handlers.onError(error);
     }
-  }
-
-  private async logRunSummary(args: {
-    runId: string;
-    threadId: string;
-    stream: { usage?: Promise<unknown> };
-    textChars: number;
-    renderToolCalled: boolean;
-    renderToolSucceeded: boolean;
-    renderToolFailed: boolean;
-  }): Promise<void> {
-    const {
-      runId,
-      threadId,
-      stream,
-      textChars,
-      renderToolCalled,
-      renderToolSucceeded,
-      renderToolFailed,
-    } = args;
-
-    const expectsA2uiSurface = this.internalToolNames.has(
-      RENDER_A2UI_TOOL_NAME,
-    );
-
-    const tag = `[ag-ui][agent=${this.agentId}][run=${runId}][thread=${threadId}]`;
-
-    if (expectsA2uiSurface && !renderToolSucceeded) {
-      if (renderToolCalled && renderToolFailed) {
-        console.warn(
-          `${tag} renderA2uiTool returned no valid A2UI surface (likely a schema validation error); the dashboard will not render.`,
-        );
-      } else if (textChars > 0) {
-        console.warn(
-          `${tag} run finished without a renderA2uiTool call but streamed ${textChars} text characters — the answer was sent as plain text instead of an A2UI surface.`,
-        );
-      } else {
-        console.warn(
-          `${tag} run finished without a renderA2uiTool call and without text output — no surface was rendered.`,
-        );
-      }
-    }
-
-    const usage = await readUsage(stream);
-    if (usage) {
-      const cacheRatio =
-        usage.inputTokens && usage.cachedInputTokens !== undefined
-          ? ` (${Math.round((usage.cachedInputTokens / usage.inputTokens) * 100)}% cached)`
-          : '';
-      console.info(
-        `${tag} usage: input=${usage.inputTokens ?? '?'}` +
-          `${usage.cachedInputTokens !== undefined ? `, cached=${usage.cachedInputTokens}${cacheRatio}` : ''}` +
-          `, output=${usage.outputTokens ?? '?'}` +
-          `${usage.reasoningTokens ? `, reasoning=${usage.reasoningTokens}` : ''}` +
-          `, total=${usage.totalTokens ?? '?'}`,
-      );
-    }
-  }
-}
-
-interface UsageSummary {
-  inputTokens?: number;
-  outputTokens?: number;
-  totalTokens?: number;
-  reasoningTokens?: number;
-  cachedInputTokens?: number;
-}
-
-async function readUsage(stream: {
-  usage?: Promise<unknown>;
-}): Promise<UsageSummary | undefined> {
-  const usagePromise = stream.usage;
-  if (
-    !usagePromise ||
-    typeof (usagePromise as Promise<unknown>).then !== 'function'
-  ) {
-    return undefined;
-  }
-  try {
-    const raw = (await usagePromise) as UnknownRecord | undefined;
-    if (!raw) {
-      return undefined;
-    }
-    const num = (key: string): number | undefined => {
-      const value = raw[key];
-      return typeof value === 'number' ? value : undefined;
-    };
-    return {
-      inputTokens: num('inputTokens'),
-      outputTokens: num('outputTokens'),
-      totalTokens: num('totalTokens'),
-      reasoningTokens: num('reasoningTokens'),
-      cachedInputTokens: num('cachedInputTokens'),
-    };
-  } catch {
-    return undefined;
   }
 }
 
