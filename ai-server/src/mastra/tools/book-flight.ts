@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { USE_APPROVAL } from '../../../../feature-flags.js';
 import {
   addBooking,
   fetchFlight,
@@ -97,7 +98,7 @@ export const bookFlightTool = createTool({
       };
     }
 
-    if (resumeData?.approved !== true) {
+    if (USE_APPROVAL && resumeData?.approved !== true) {
       await suspend?.({
         action: 'book',
         flightId,
