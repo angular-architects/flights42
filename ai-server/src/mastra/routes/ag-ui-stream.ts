@@ -17,6 +17,18 @@ export interface CreateAgUiEventStreamOptions {
    * full operation list.
    */
   transformA2uiOperations?: (operations: unknown[]) => unknown[];
+  /**
+   * Hook fired right before an `a2ui-surface` `ACTIVITY_SNAPSHOT` is
+   * forwarded. Returned events are written to the SSE stream first, in
+   * the order returned, then the snapshot itself. Used by the dashboard
+   * route to surface the compiler's data fetches as synthetic AG-UI
+   * tool-call events so the user retains the same "tool calls" insight
+   * they had before the DSL refactor (when each fetch was an individual
+   * LLM tool call).
+   */
+  injectBeforeA2uiSurface?: (
+    operations: readonly unknown[],
+  ) => readonly BaseEvent[];
 }
 
 export type ParseRunAgentInputResult =
@@ -80,6 +92,12 @@ export async function streamAgentEvents(
           event,
           options.transformA2uiOperations,
         );
+        const ops = readA2uiSurfaceOperations(transformed);
+        if (ops && options.injectBeforeA2uiSurface) {
+          for (const injected of options.injectBeforeA2uiSurface(ops)) {
+            enqueueEvent(injected);
+          }
+        }
         tryCaptureA2uiSurface(transformed, options.onA2uiSurface);
         enqueueEvent(transformed);
       },
