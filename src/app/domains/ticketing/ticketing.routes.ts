@@ -4,6 +4,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from '../shared/util-auth/auth.guard';
 import { exitGuard } from '../shared/util-common/exit.guard';
 import { TicketingChatService } from './ai/ticketing-chat-service';
+import { TravelPlannerPage } from './ai/travel-planner/travel-planner-page';
 import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advanced-flight-edit';
 import { BookingNavigation } from './feature-booking/booking-navigation';
 import { FlightEdit } from './feature-booking/flight-edit/flight-edit';
@@ -78,6 +79,10 @@ export const bookingRoutes: Routes = [
   {
     path: 'reporting',
     component: ReportingPage,
+  },
+  {
+    path: 'travel-planner',
+    component: TravelPlannerPage,
   },
 ];
 

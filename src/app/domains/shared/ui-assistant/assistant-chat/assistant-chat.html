@@ -41,6 +41,14 @@
         </div>
       </div>
       <div class="ai-actions">
+        <select
+          class="mode-select"
+          aria-label="Agent mode"
+          [value]="mode()"
+          (change)="setMode($any($event.target).value)">
+          <option value="plan">Plan</option>
+          <option value="execution">Execution</option>
+        </select>
         <button
           (click)="toggle()"
           class="icon-btn"
@@ -65,6 +73,8 @@
       #messagesContainer>
       <app-chat-messages
         [messages]="chat.value()"
+        [interrupt]="chat.interrupt()"
+        (resumeInterrupt)="resumeInterrupt($event)"
         [pending]="chat.isLoading()" />
     </section>
 
@@ -80,6 +90,25 @@
           class="composer-input"
           name="message"
           placeholder="Your Question ..." />
+        @if (chat.isLoading()) {
+          <button
+            type="button"
+            class="stop-btn"
+            (click)="stop()"
+            title="Aktuellen Run abbrechen"
+            aria-label="Aktuellen Run abbrechen">
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="6"
+                y="6"
+                width="12"
+                height="12"
+                rx="1.5"
+                fill="currentColor" />
+            </svg>
+            <span>Stop</span>
+          </button>
+        }
       </div>
     </form>
   </aside>

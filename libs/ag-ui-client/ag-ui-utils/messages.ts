@@ -29,8 +29,9 @@ export function filterPublicMessages(
     const hasContent = message.content.trim().length > 0;
     const hasToolCalls = filteredToolCalls.length > 0;
     const hasWidgets = message.widgets.length > 0;
+    const hasWorkflowSteps = message.workflowSteps.length > 0;
 
-    if (!hasContent && !hasToolCalls && !hasWidgets) {
+    if (!hasContent && !hasToolCalls && !hasWidgets && !hasWorkflowSteps) {
       return [];
     }
 
@@ -60,6 +61,7 @@ export function upsertAssistantMessage(
         content,
         widgets: [],
         toolCalls: [],
+        workflowSteps: [],
       },
     ];
   }
@@ -75,6 +77,26 @@ export function upsertAssistantMessage(
   });
 }
 
+export function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  if (error.name === 'AbortError') {
+    return true;
+  }
+  return /abort/i.test(error.message);
+}
+
+export function friendlyErrorMessage(error: unknown, fallback: string): string {
+  if (isAbortError(error)) {
+    return 'Request was aborted.';
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+}
+
 export function appendErrorMessage(
   messages: AgUiChatMessage[],
   errorMessage: string,
@@ -87,6 +109,7 @@ export function appendErrorMessage(
       content: errorMessage,
       widgets: [],
       toolCalls: [],
+      workflowSteps: [],
     },
   ];
 }

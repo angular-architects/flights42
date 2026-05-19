@@ -1,77 +1,132 @@
 <h1>Check-in</h1>
 
-@if (checkinForm().invalid()) {
-  <div class="validation-errors">Please correct the validation errors!</div>
-}
-
-<form class="small-form" class="signal-form">
-  <div>
-    <label for="flightId">Ticket Id</label>
-    <input [formField]="checkinForm.ticketId" id="flightId" />
-    @if (checkinForm.ticketId().invalid()) {
-      <div>{{ checkinForm.ticketId().errorSummary() | json }}</div>
+<div class="checkin-layout">
+  <div class="checkin-layout__form">
+    @if (checkinForm().invalid()) {
+      <div class="validation-errors">Please correct the validation errors!</div>
     }
-  </div>
 
-  <fieldset [formGroup]="passengerGroup" class="reactive-form">
-    <div>
-      <label for="firstName">First Name</label>
-      <input formControlName="firstName" id="firstName" />
-    </div>
-    <div>
-      <label for="lastName">Last Name</label>
-      <input formControlName="lastName" id="lastName" />
-    </div>
-    <div>
-      <label for="email">Email Address</label>
-      <input formControlName="email" id="email" />
-      @if (passengerGroup.controls.email.invalid) {
-        <div>{{ passengerGroup.controls.email.errors | json }}</div>
-      }
-    </div>
-
-    <fieldset class="signal-form">
+    <form class="small-form" class="signal-form">
       <div>
-        <label for="phoneNumber">Phone</label>
-        <input formControlName="phoneNumber" id="phoneNumber" />
-        Full Number: {{ fullPhoneNumber() }}
-        <!-- {{ this.phoneNumber.sourceValue() }} -->
-        @if (passengerGroup.controls.phoneNumber.invalid) {
-          <div>{{ passengerGroup.controls.phoneNumber.errors | json }}</div>
+        <label for="flightId">Ticket Id</label>
+        <input [formField]="checkinForm.ticketId" id="flightId" />
+        @if (checkinForm.ticketId().invalid()) {
+          <div>{{ checkinForm.ticketId().errorSummary() | json }}</div>
         }
       </div>
-    </fieldset>
-  </fieldset>
 
-  <div>
-    <div class="checkbox">
-      <label>
-        <input type="checkbox" [formField]="checkinForm.conditionsAccepted" />
-        I accept the general conditions of carriage
-      </label>
-      @if (checkinForm.conditionsAccepted().invalid()) {
-        <div>{{ checkinForm.conditionsAccepted().errorSummary() | json }}</div>
-      }
-    </div>
+      <fieldset [formGroup]="passengerGroup" class="reactive-form">
+        <div>
+          <label for="firstName">First Name</label>
+          <input formControlName="firstName" id="firstName" />
+        </div>
+        <div>
+          <label for="lastName">Last Name</label>
+          <input formControlName="lastName" id="lastName" />
+        </div>
+        <div class="contact-fields-row">
+          <div class="contact-field">
+            <label for="email">Email Address</label>
+            <input formControlName="email" id="email" />
+            <div class="phone-number-hint">
+              We send the ticket to this address
+            </div>
+            @if (passengerGroup.controls.email.invalid) {
+              <div>{{ passengerGroup.controls.email.errors | json }}</div>
+            }
+          </div>
+          <div class="contact-field">
+            <label for="phoneNumber">Phone</label>
+            <input formControlName="phoneNumber" id="phoneNumber" />
+            <div class="phone-number-hint">
+              Full Number: {{ fullPhoneNumber() }}
+            </div>
+            @if (passengerGroup.controls.phoneNumber.invalid) {
+              <div>{{ passengerGroup.controls.phoneNumber.errors | json }}</div>
+            }
+          </div>
+        </div>
+
+        <fieldset formGroupName="passport" class="passport-fields">
+          <div class="passport-field">
+            <label for="passportNumber">Passport Number</label>
+            <input formControlName="passportNumber" id="passportNumber" />
+          </div>
+          <div class="passport-field">
+            <label for="issuedOn">Issued on</label>
+            <input formControlName="issuedOn" id="issuedOn" />
+          </div>
+          <div class="passport-field">
+            <label for="validUntil">Valid until</label>
+            <input formControlName="validUntil" id="validUntil" />
+          </div>
+          <div class="passport-field">
+            <label for="issuingAuthority">Issuing Authority</label>
+            <input formControlName="issuingAuthority" id="issuingAuthority" />
+          </div>
+        </fieldset>
+      </fieldset>
+
+      <div>
+        <div class="checkbox">
+          <label>
+            <input
+              type="checkbox"
+              [formField]="checkinForm.conditionsAccepted" />
+            I accept the general conditions of carriage
+          </label>
+          @if (checkinForm.conditionsAccepted().invalid()) {
+            <div>
+              {{ checkinForm.conditionsAccepted().errorSummary() | json }}
+            </div>
+          }
+        </div>
+      </div>
+
+      <div [routerLink]="[]" id="confirmation">
+        <button (click)="checkin()" type="button">Check-in</button>
+        <button (click)="navigateToNextFlights()" type="button">
+          Next Flights
+        </button>
+      </div>
+    </form>
   </div>
 
-  <div [routerLink]="[]" id="confirmation">
-    <button (click)="checkin()" type="button">Check-in</button>
-    <button (click)="navigateToNextFlights()" type="button">
-      Next Flights
+  <section class="ticket-upload">
+    <span class="ticket-upload__label">Scan ticket/ID</span>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="openDocumentPicker(ticketImageInput)">
+      Select Document
     </button>
-  </div>
-</form>
-
-<!-- <p class="mb-20">
-  <a
-    (click)="toggleNextFlights()"
-    (keypress.enter)="toggleNextFlights()"
-    tabindex="0">
-    Toggle Next Flights
-  </a>
-</p>
-
-@if (showNextFlights()) {
-  <app-next-flights />
-} -->
+    <span class="ticket-upload__filename">{{ selectedDocumentName() }}</span>
+    <input
+      #ticketImageInput
+      class="ticket-upload__input-hidden"
+      id="ticketImage"
+      type="file"
+      accept="image/png,image/jpeg"
+      (change)="onTicketFileSelected($event)" />
+    @if (extractionStatusLine()) {
+      <p class="ticket-upload__status">
+        {{ extractionStatusLine() }}
+        @if (isAnalyzingDocument()) {
+          <span class="ai-wait-indicator tool-status-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        }
+      </p>
+    }
+    @if (documentPreviewUrl()) {
+      <div class="document-preview">
+        <img
+          [src]="documentPreviewUrl()"
+          alt="Uploaded document preview"
+          class="document-preview__image" />
+      </div>
+    }
+  </section>
+</div>

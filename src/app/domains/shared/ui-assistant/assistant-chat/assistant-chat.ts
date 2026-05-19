@@ -8,6 +8,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { AgUiChatResourceRef } from '@internal/ag-ui-client';
 
+import {
+  AgentMode,
+  AgentModeService,
+} from '../../util-common/agent-mode-service';
 import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
@@ -20,6 +24,9 @@ import { ChatRegistry } from '../chat-registry';
 })
 export class AssistantChat {
   private chatRegistry = inject(ChatRegistry);
+  private agentMode = inject(AgentModeService);
+
+  protected mode = this.agentMode.mode;
 
   private composerInput =
     viewChild<ElementRef<HTMLInputElement>>('composerInput');
@@ -70,5 +77,17 @@ export class AssistantChat {
     const message = this.message();
     this.message.set('');
     this.chat?.sendMessage({ role: 'user', content: message });
+  }
+
+  protected stop(): void {
+    this.chat?.stop();
+  }
+
+  protected resumeInterrupt(approved: boolean): void {
+    this.chat?.resumeInterrupt(approved);
+  }
+
+  protected setMode(mode: AgentMode): void {
+    this.agentMode.mode.set(mode);
   }
 }

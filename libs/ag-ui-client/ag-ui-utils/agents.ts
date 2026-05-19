@@ -1,5 +1,7 @@
 import {
   type AgentSubscriber,
+  type BaseEvent,
+  EventType,
   type HttpAgent,
   randomUUID,
 } from '@ag-ui/client';
@@ -12,15 +14,18 @@ import {
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
+  type AgUiInterrupt,
   type AgUiRegisteredComponent,
+  type AgUiResumeRequest,
+  type AgUiWorkflowStep,
 } from '../ag-ui-types';
 import {
   appendErrorMessage,
+  friendlyErrorMessage,
   readMessages,
   upsertAssistantMessage,
 } from './messages';
 import {
-  completeToolCall,
   executePendingTools,
   keepToolCallMessages,
   normalizeAgentMessagesForRun,
@@ -28,31 +33,127 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
+import {
+  upsertActionWidgetForToolCall,
+  upsertWidgetFromActivitySnapshot,
+} from './widgets';
+
+interface RunAgentCompatParameters {
+  runId?: string;
+  tools?: RunAgentInputTool[];
+  context?: unknown;
+  forwardedProps?: Record<string, unknown>;
+  abortController?: AbortController;
+  resume?: AgUiResumeRequest;
+}
+
+interface RunAgentInputTool {
+  name: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
+}
+
+interface InterruptAwareHttpAgent extends HttpAgent {
+  runAgentCompat(
+    parameters?: RunAgentCompatParameters,
+    subscriber?: AgentSubscriber,
+  ): Promise<{
+    result: unknown;
+    newMessages: unknown[];
+  }>;
+}
+
+interface InterruptAwareRunFinishedEvent extends BaseEvent {
+  type: EventType.RUN_FINISHED;
+  outcome?: 'success' | 'interrupt';
+  interrupt?: AgUiInterrupt;
+}
 
 export interface RunAgentOptions {
-  agent: HttpAgent;
+  agent: InterruptAwareHttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
+  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
+  forwardedProps?: () => Record<string, unknown>;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
 }
 
 interface RunAgentResult {
   pendingLocalCalls: PendingToolExecution[];
   followUpToolCallIds: string[];
+  interrupt: AgUiInterrupt | null;
 }
 
 export async function runAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { agent, tools, toolMap, model, useServerMemory, messageStream } =
-    options;
+  const {
+    agent,
+    tools,
+    toolMap,
+    componentMap,
+    model,
+    useServerMemory,
+    forwardedProps,
+    messageStream,
+  } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
   const followUpToolCallIds: string[] = [];
+  let interrupt: AgUiInterrupt | null = null;
+
+  // Workflow steps arrive as STEP_STARTED / STEP_FINISHED with only `stepName`.
+  // Track them on a synthetic per-run "workflow" message so the UI can render
+  // progress without coupling to a specific tool call.
+  const workflowMessageId = `workflow-steps:${runId}`;
+  let workflowMessageInitialized = false;
+  const ensureWorkflowMessage = (
+    messages: AgUiChatMessage[],
+  ): AgUiChatMessage[] => {
+    if (workflowMessageInitialized) {
+      return messages;
+    }
+    workflowMessageInitialized = true;
+    return [
+      ...messages,
+      {
+        id: workflowMessageId,
+        role: 'assistant',
+        content: '',
+        widgets: [],
+        toolCalls: [],
+        workflowSteps: [],
+      },
+    ];
+  };
+  const updateWorkflowSteps = (
+    messages: AgUiChatMessage[],
+    update: (steps: AgUiWorkflowStep[]) => AgUiWorkflowStep[],
+  ): AgUiChatMessage[] => {
+    const ensured = ensureWorkflowMessage(messages);
+    const index = ensured.findIndex(
+      (message) => message.id === workflowMessageId,
+    );
+    if (index === -1) {
+      return ensured;
+    }
+    const message = ensured[index];
+    if (message.role !== 'assistant') {
+      return ensured;
+    }
+    const nextSteps = update(message.workflowSteps);
+    if (nextSteps === message.workflowSteps) {
+      return ensured;
+    }
+    const next = [...ensured];
+    next[index] = { ...message, workflowSteps: nextSteps };
+    return next;
+  };
 
   const subscriber: AgentSubscriber = {
     onTextMessageStartEvent: ({ event }) => {
@@ -88,38 +189,116 @@ export async function runAgent(
         ),
       }));
     },
+    onStepStartedEvent: ({ event }) => {
+      const stepName = (event as { stepName?: string }).stepName;
+      if (!stepName) {
+        return;
+      }
+      messageStream.update((item) => ({
+        value: updateWorkflowSteps(readMessages(item), (steps) => {
+          if (steps.some((step) => step.name === stepName)) {
+            return steps;
+          }
+          return [...steps, { name: stepName, status: 'pending' }];
+        }),
+      }));
+    },
+    onStepFinishedEvent: ({ event }) => {
+      const stepName = (event as { stepName?: string }).stepName;
+      if (!stepName) {
+        return;
+      }
+      messageStream.update((item) => ({
+        value: updateWorkflowSteps(readMessages(item), (steps) => {
+          const index = steps.findIndex((step) => step.name === stepName);
+          if (index === -1) {
+            return [...steps, { name: stepName, status: 'complete' }];
+          }
+          if (steps[index].status === 'complete') {
+            return steps;
+          }
+          const next = [...steps];
+          next[index] = { ...next[index], status: 'complete' };
+          return next;
+        }),
+      }));
+    },
     onToolCallStartEvent: ({ event }) => {
+      // The server may attach an optional `stepName` field when the call was
+      // emitted from inside a workflow step (via the AG-UI bridge). AG-UI's
+      // `BaseEvent` strips unknown fields off its TS surface, so we read it
+      // through a typed shadow.
+      const stepName = (event as { stepName?: unknown }).stepName;
+
       messageStream.update((item) => {
         const messages = readMessages(item);
+        const toolCall = {
+          id: event.toolCallId,
+          name: event.toolCallName,
+          args: {},
+          status: 'pending' as const,
+          ...(typeof stepName === 'string' && stepName.length > 0
+            ? { stepName }
+            : {}),
+        };
 
         return {
-          value: upsertToolCall(messages, {
-            id: event.toolCallId,
-            name: event.toolCallName,
-            args: {},
-            status: 'pending',
-          }),
+          value: upsertActionWidgetForToolCall(
+            upsertToolCall(messages, toolCall),
+            toolCall,
+            componentMap,
+          ),
         };
       });
     },
     onToolCallArgsEvent: ({ event, toolCallName, partialToolCallArgs }) => {
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: partialToolCallArgs,
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: partialToolCallArgs,
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: normalizedToolCallArgs,
-          status: 'pending',
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: normalizedToolCallArgs,
+            status: 'pending',
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
 
       const toolDefinition = toolMap.get(toolCallName);
       if (!toolDefinition) {
@@ -137,25 +316,95 @@ export async function runAgent(
       }
     },
     onToolCallResultEvent: ({ event }) => {
+      const result = safeParseJson(event.content);
+      const error = readToolErrorMessage(result);
+
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            status: error ? 'error' : 'complete',
+            result,
+            error,
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
+    },
+    onActivitySnapshotEvent: ({ event }) => {
       messageStream.update((item) => ({
-        value: completeToolCall(readMessages(item), event.toolCallId),
+        value: upsertWidgetFromActivitySnapshot(
+          readMessages(item),
+          event.messageId,
+          event.activityType,
+          event.content,
+          componentMap,
+        ),
       }));
     },
     onRunErrorEvent: ({ event }) => {
+      const message =
+        event.code === 'abort'
+          ? 'Request was aborted.'
+          : event.message || 'Unknown AG-UI run error';
+
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          readMessages(item),
-          event.message || 'Unknown AG-UI run error',
+          markPendingToolCallsAsError(readMessages(item), componentMap),
+          message,
         ),
       }));
     },
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          readMessages(item),
-          error instanceof Error ? error.message : 'Unknown AG-UI run failure',
+          markPendingToolCallsAsError(readMessages(item), componentMap),
+          friendlyErrorMessage(error, 'Unknown AG-UI run failure'),
         ),
       }));
+    },
+    onRunFinishedEvent: ({ event }) => {
+      const interruptEvent = event as InterruptAwareRunFinishedEvent;
+      const activeInterrupt = interruptEvent.interrupt;
+      if (interruptEvent.outcome !== 'interrupt' || !activeInterrupt) {
+        return;
+      }
+
+      interrupt = activeInterrupt;
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          activeInterrupt.payload.toolCallId,
+          {
+            status: 'interrupt',
+          },
+        );
+        const toolCall = findToolCall(
+          nextMessages,
+          activeInterrupt.payload.toolCallId,
+        );
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+              )
+            : nextMessages,
+        };
+      });
     },
   };
 
@@ -171,11 +420,20 @@ export async function runAgent(
       : normalizeAgentMessagesForRun(agent.messages),
   );
 
-  await agent.runAgent(
+  const mergedForwardedProps: Record<string, unknown> = {
+    ...(model ? { modelHint: model } : {}),
+    ...(forwardedProps?.() ?? {}),
+  };
+
+  await agent.runAgentCompat(
     {
       runId,
       tools: toolsToOffer,
-      forwardedProps: model ? { modelHint: model } : undefined,
+      forwardedProps:
+        Object.keys(mergedForwardedProps).length > 0
+          ? mergedForwardedProps
+          : undefined,
+      resume: options.resume,
     },
     subscriber,
   );
@@ -183,18 +441,92 @@ export async function runAgent(
   return {
     pendingLocalCalls,
     followUpToolCallIds,
+    interrupt,
   };
 }
 
+function markPendingToolCallsAsError(
+  messages: AgUiChatMessage[],
+  componentMap: Map<string, AgUiRegisteredComponent>,
+): AgUiChatMessage[] {
+  return messages.reduce<AgUiChatMessage[]>((currentMessages, message) => {
+    if (message.role !== 'assistant') {
+      return currentMessages;
+    }
+
+    return message.toolCalls.reduce<AgUiChatMessage[]>(
+      (nextMessages, toolCall) => {
+        if (toolCall.status !== 'pending') {
+          return nextMessages;
+        }
+
+        const updatedMessages = updateToolCall(nextMessages, toolCall.id, {
+          status: 'error',
+          error: 'Tool execution did not complete.',
+        });
+        const updatedToolCall = findToolCall(updatedMessages, toolCall.id);
+
+        return updatedToolCall
+          ? upsertActionWidgetForToolCall(
+              updatedMessages,
+              updatedToolCall,
+              componentMap,
+            )
+          : updatedMessages;
+      },
+      currentMessages,
+    );
+  }, messages);
+}
+
+function findToolCall(messages: AgUiChatMessage[], toolCallId: string) {
+  for (const message of messages) {
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
+    if (toolCall) {
+      return toolCall;
+    }
+  }
+
+  return undefined;
+}
+
+function readToolErrorMessage(content: unknown): string | undefined {
+  return content &&
+    typeof content === 'object' &&
+    'error' in content &&
+    typeof (content as { error?: unknown }).error === 'string'
+    ? (content as { error: string }).error
+    : undefined;
+}
+
+function safeParseJson(content: unknown): unknown {
+  if (typeof content !== 'string') {
+    return content;
+  }
+
+  try {
+    return JSON.parse(content);
+  } catch {
+    return content;
+  }
+}
+
 export interface RunUntilSettledOptions {
-  agent: HttpAgent;
+  agent: InterruptAwareHttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   environmentInjector: EnvironmentInjector;
   runId: string;
+  interrupt: WritableSignal<AgUiInterrupt | null>;
+  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
+  forwardedProps?: () => Record<string, unknown>;
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
@@ -211,8 +543,11 @@ export async function runUntilSettled(
     componentMap,
     environmentInjector,
     runId,
+    interrupt,
+    resume,
     model,
     useServerMemory,
+    forwardedProps,
     abortSignal,
     messageStream,
     maxLocalTurns,
@@ -238,11 +573,19 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
+      componentMap,
       runId: currentRunId,
+      resume: turnCount === 1 ? resume : undefined,
       model,
       useServerMemory,
+      forwardedProps,
       messageStream,
     });
+
+    if (runResult.interrupt) {
+      interrupt.set(runResult.interrupt);
+      break;
+    }
 
     if (useServerMemory) {
       agent.setMessages(
@@ -258,6 +601,10 @@ export async function runUntilSettled(
       pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,
     });
+
+    messageStream.update((item) => ({
+      value: markPendingToolCallsAsError(readMessages(item), componentMap),
+    }));
 
     done = runResult.followUpToolCallIds.length === 0;
     currentRunId = randomUUID();
