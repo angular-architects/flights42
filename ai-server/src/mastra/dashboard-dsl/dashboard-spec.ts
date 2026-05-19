@@ -73,6 +73,19 @@ export const dashboardTileSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('weatherList'),
   }),
+  // Pre-computed chart tile. Used in the "multi-step charts" comparison
+  // mode, where the LLM chains `searchFlights` + `aggregateData` +
+  // `renderChart` itself and embeds the resulting chart URL here. The
+  // server only renders the tile — it does NOT recompute the chart.
+  z.object({
+    type: z.literal('chartImage'),
+    title: z.string().describe('Card title shown above the chart.'),
+    chartUrl: z
+      .string()
+      .describe(
+        'Short HTTP URL returned by the `renderChart` tool, e.g. `http://localhost:3001/charts/<id>.svg`.',
+      ),
+  }),
 ]);
 
 export const dashboardSpecSchema = z.object({

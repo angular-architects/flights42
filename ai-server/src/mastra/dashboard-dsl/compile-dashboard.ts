@@ -207,6 +207,8 @@ function buildTile(
       return buildHotels(idx, tile, data, surfaceId, dataSteps);
     case 'weatherList':
       return buildWeatherList(idx, data, surfaceId, dataSteps);
+    case 'chartImage':
+      return chartTile(idx, surfaceId, tile.title, tile.chartUrl);
   }
 }
 

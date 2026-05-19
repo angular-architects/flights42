@@ -35,6 +35,14 @@
         (change)="preventCaching.set($any($event.target).checked)" />
       Prevent caching
     </label>
+    <label class="prevent-caching">
+      <input
+        type="checkbox"
+        name="multiStepCharts"
+        [checked]="multiStepCharts()"
+        (change)="multiStepCharts.set($any($event.target).checked)" />
+      Multi-step charts (slow)
+    </label>
   </div>
 </form>
 

@@ -33,13 +33,18 @@ export interface DashboardCacheEntry {
 
 export function computeDashboardRequestHash(
   messages: readonly RequestMessage[],
+  modeKey = 'fast',
 ): string {
   const userTexts = messages
     .filter((message) => message.role === 'user')
     .map((message) => extractText(message.content))
     .filter((text) => text.length > 0);
 
-  return createHash('sha256').update(userTexts.join('\n---\n')).digest('hex');
+  // Mode is part of the hash so cached fast-mode specs (which use
+  // `delayShareChart` / `delaysPerDayChart`) cannot be replayed for a
+  // slow-mode request (which uses `chartImage` tiles) and vice versa.
+  const payload = `${modeKey}\n===\n${userTexts.join('\n---\n')}`;
+  return createHash('sha256').update(payload).digest('hex');
 }
 
 export async function dashboardCacheExists(hash: string): Promise<boolean> {

@@ -28,7 +28,8 @@ import {
   streamAgentEvents,
 } from './ag-ui-stream.js';
 
-const DASHBOARD_AGENT_ID = 'dashboardAgent';
+const DASHBOARD_FAST_AGENT_ID = 'dashboardAgent';
+const DASHBOARD_SLOW_AGENT_ID = 'dashboardSlowAgent';
 
 export async function dashboardAgUiRouteHandler(
   c: ContextWithMastra,
@@ -43,7 +44,11 @@ export async function dashboardAgUiRouteHandler(
 
   const { input } = parsed;
   const preventCaching = isPreventCachingRequested(input);
-  const cacheKey = computeDashboardRequestHash(input.messages);
+  const multiStepCharts = isMultiStepChartsRequested(input);
+  const cacheKey = computeDashboardRequestHash(
+    input.messages,
+    multiStepCharts ? 'slow' : 'fast',
+  );
 
   if (!preventCaching) {
     const entry = await tryReadDashboardCache(cacheKey);
@@ -59,10 +64,13 @@ export async function dashboardAgUiRouteHandler(
   // exactly the visibility we want in the dashboard's "tool calls"
   // panel. The compiler's data fetches are surfaced separately via
   // `injectBeforeA2uiSurface` below.
+  const agentId = multiStepCharts
+    ? DASHBOARD_SLOW_AGENT_ID
+    : DASHBOARD_FAST_AGENT_ID;
   const agent = getExtendedLocalAgent({
     mastra: mastraInstance,
-    agentId: DASHBOARD_AGENT_ID,
-    resourceId: DASHBOARD_AGENT_ID,
+    agentId,
+    resourceId: agentId,
     requestContext,
   });
 
@@ -231,11 +239,19 @@ function readSurfaceIdFromOperations(
 }
 
 function isPreventCachingRequested(input: RunAgentInput): boolean {
+  return readBooleanProp(input, 'preventCaching');
+}
+
+function isMultiStepChartsRequested(input: RunAgentInput): boolean {
+  return readBooleanProp(input, 'multiStepCharts');
+}
+
+function readBooleanProp(input: RunAgentInput, name: string): boolean {
   const props = input.forwardedProps;
   if (!props || typeof props !== 'object') {
     return false;
   }
-  const value = (props as { preventCaching?: unknown }).preventCaching;
+  const value = (props as Record<string, unknown>)[name];
   if (typeof value === 'boolean') {
     return value;
   }

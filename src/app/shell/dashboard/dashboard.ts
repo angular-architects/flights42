@@ -44,13 +44,17 @@ export class Dashboard {
 
   protected readonly message = signal('');
   protected readonly preventCaching = signal(false);
+  protected readonly multiStepCharts = signal(false);
 
   protected readonly chat = agUiResource({
     url: this.config.agUiUrlFor('dashboardAgent'),
     model: this.config.model,
     useServerMemory: false,
     tools: [submitFlightSearchTool],
-    forwardedProps: () => ({ preventCaching: this.preventCaching() }),
+    forwardedProps: () => ({
+      preventCaching: this.preventCaching(),
+      multiStepCharts: this.multiStepCharts(),
+    }),
   });
 
   private readonly synthesizedWidgets = signal<Record<string, AgUiWidget>>({});
