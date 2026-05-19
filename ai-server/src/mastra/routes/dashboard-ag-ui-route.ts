@@ -1,21 +1,21 @@
+import { EventType, randomUUID, type RunAgentInput } from '@ag-ui/client';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
 import {
   DEFAULT_INTERNAL_TOOL_NAMES,
   getExtendedLocalAgent,
-  RENDER_A2UI_DATA_TOOL_NAME,
 } from '../../../../libs/ag-ui-server/index.js';
-import {
-  DASHBOARD_DATA_REFRESH_CONTEXT_KEY,
-  type DashboardDataRefreshContext,
-} from '../agents/dashboard-data-agent.js';
+import { compileDashboard } from '../dashboard-dsl/compile-dashboard.js';
+import type { DashboardSpec } from '../dashboard-dsl/dashboard-spec.js';
+import { consumeRecordedSpec } from '../dashboard-dsl/spec-channel.js';
 import {
   computeDashboardRequestHash,
   type DashboardCacheEntry,
   readDashboardCache,
   writeDashboardCache,
 } from '../cache/dashboard-cache.js';
+import { RENDER_DASHBOARD_TOOL_NAME } from '../tools/render-dashboard.js';
 import {
   parseRunAgentInput,
   type SseWriter,
@@ -23,11 +23,10 @@ import {
 } from './ag-ui-stream.js';
 
 const DASHBOARD_AGENT_ID = 'dashboardAgent';
-const DASHBOARD_DATA_AGENT_ID = 'dashboardDataAgent';
 
-const DATA_AGENT_INTERNAL_TOOL_NAMES: readonly string[] = [
+const DASHBOARD_INTERNAL_TOOL_NAMES: readonly string[] = [
   ...DEFAULT_INTERNAL_TOOL_NAMES,
-  RENDER_A2UI_DATA_TOOL_NAME,
+  RENDER_DASHBOARD_TOOL_NAME,
 ];
 
 export async function dashboardAgUiRouteHandler(
@@ -49,13 +48,7 @@ export async function dashboardAgUiRouteHandler(
     const entry = await tryReadDashboardCache(cacheKey);
     if (entry) {
       return streamSSE(c, async (sse) => {
-        await streamDeltaDashboard({
-          sse,
-          mastra: mastraInstance,
-          requestContext,
-          input,
-          entry,
-        });
+        await streamCachedDashboard(sse, input, entry.spec);
       });
     }
   }
@@ -65,69 +58,99 @@ export async function dashboardAgUiRouteHandler(
     agentId: DASHBOARD_AGENT_ID,
     resourceId: DASHBOARD_AGENT_ID,
     requestContext,
+    internalToolNames: DASHBOARD_INTERNAL_TOOL_NAMES,
   });
 
   return streamSSE(c, async (sse) => {
+    let capturedSurfaceId: string | undefined;
+
     await streamAgentEvents(sse, agent, input, {
       onA2uiSurface: (operations) => {
-        void writeDashboardCache(cacheKey, operations).catch((err: unknown) => {
-          console.error(
-            `Failed to write dashboard cache (hash=${cacheKey}):`,
-            err,
-          );
-        });
+        capturedSurfaceId ??= readSurfaceIdFromOperations(operations);
       },
     });
+
+    if (!capturedSurfaceId) {
+      return;
+    }
+    const recordedSpec = consumeRecordedSpec(capturedSurfaceId);
+    if (!recordedSpec) {
+      return;
+    }
+    try {
+      await writeDashboardCache(cacheKey, recordedSpec);
+    } catch (err) {
+      console.error(`Failed to write dashboard cache (hash=${cacheKey}):`, err);
+    }
   });
 }
 
-async function streamDeltaDashboard(args: {
-  sse: SseWriter;
-  mastra: Parameters<typeof getExtendedLocalAgent>[0]['mastra'];
-  requestContext: NonNullable<
-    Parameters<typeof getExtendedLocalAgent>[0]['requestContext']
-  >;
-  input: Parameters<typeof streamAgentEvents>[2];
-  entry: DashboardCacheEntry;
-}): Promise<void> {
-  const { sse, mastra, requestContext, input, entry } = args;
-
-  const refreshContext: DashboardDataRefreshContext = {
-    surfaceId: entry.surfaceId,
-    dataModelOps: entry.dataModel,
-  };
-  requestContext.set(DASHBOARD_DATA_REFRESH_CONTEXT_KEY, refreshContext);
-
-  const dataAgent = getExtendedLocalAgent({
-    mastra,
-    agentId: DASHBOARD_DATA_AGENT_ID,
-    resourceId: DASHBOARD_DATA_AGENT_ID,
-    requestContext,
-    internalToolNames: DATA_AGENT_INTERNAL_TOOL_NAMES,
+async function streamCachedDashboard(
+  sse: SseWriter,
+  input: RunAgentInput,
+  spec: DashboardSpec,
+): Promise<void> {
+  await sse.writeSSE({
+    data: JSON.stringify({
+      type: EventType.RUN_STARTED,
+      threadId: input.threadId,
+      runId: input.runId,
+    }),
   });
 
-  // Merge the cached structural ops into the FIRST a2ui-surface snapshot
-  // emitted by the data agent. The agent only produces `updateDataModel`
-  // ops, so without the prepended structural ops the client would have
-  // no surface to apply them to. Doing the merge once (instead of
-  // emitting two separate snapshots) means the renderer creates exactly
-  // one widget container for the dashboard, avoiding the
-  // empty-then-populated double render.
-  let merged = false;
-  await streamAgentEvents(sse, dataAgent, input, {
-    transformA2uiOperations: (operations) => {
-      if (merged) {
-        return operations;
-      }
-      merged = true;
-      return [...entry.structural, ...operations];
-    },
+  try {
+    const compiled = await compileDashboard(spec);
+    const operations = [...compiled.structural, ...compiled.dataModel];
+    await sse.writeSSE({
+      data: JSON.stringify({
+        type: EventType.ACTIVITY_SNAPSHOT,
+        messageId: randomUUID(),
+        activityType: 'a2ui-surface',
+        content: { operations },
+      }),
+    });
+  } catch (err) {
+    await sse.writeSSE({
+      data: JSON.stringify({
+        type: 'RUN_ERROR',
+        message: err instanceof Error ? err.message : String(err),
+        code: 'run_error',
+      }),
+    });
+    return;
+  }
+
+  await sse.writeSSE({
+    data: JSON.stringify({
+      type: EventType.RUN_FINISHED,
+      threadId: input.threadId,
+      runId: input.runId,
+    }),
   });
 }
 
-function isPreventCachingRequested(
-  input: Parameters<typeof streamAgentEvents>[2],
-): boolean {
+function readSurfaceIdFromOperations(
+  operations: readonly unknown[],
+): string | undefined {
+  for (const op of operations) {
+    if (!op || typeof op !== 'object') continue;
+    const candidate = op as {
+      createSurface?: { surfaceId?: unknown };
+      updateComponents?: { surfaceId?: unknown };
+      updateDataModel?: { surfaceId?: unknown };
+    };
+    const surfaceId =
+      candidate.createSurface?.surfaceId ??
+      candidate.updateComponents?.surfaceId ??
+      candidate.updateDataModel?.surfaceId;
+    if (typeof surfaceId === 'string') {
+      return surfaceId;
+    }
+  }
+  return undefined;
+}
+
+function isPreventCachingRequested(input: RunAgentInput): boolean {
   const props = input.forwardedProps;
   if (!props || typeof props !== 'object') {
     return false;
