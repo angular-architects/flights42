@@ -27,10 +27,23 @@ type Component = Record<string, unknown> & {
   component: string;
 };
 
+/**
+ * Record of a single data-fetch step the compiler ran while assembling
+ * the dashboard. The route surfaces these as synthetic AG-UI tool-call
+ * events so the user keeps the same "tool calls" visibility they had
+ * before the DSL refactor (where every call originated from the LLM).
+ */
+export interface DataStep {
+  name: string;
+  args: unknown;
+  result?: unknown;
+}
+
 export interface CompiledDashboard {
   surfaceId: string;
   structural: A2uiMessage[];
   dataModel: A2uiMessage[];
+  dataSteps: DataStep[];
 }
 
 interface DashboardData {
@@ -56,12 +69,14 @@ export async function compileDashboard(
   spec: DashboardSpec,
   options: { surfaceId?: string } = {},
 ): Promise<CompiledDashboard> {
-  const data = await fetchAllDashboardData(spec);
-  return assembleDashboard(spec, data, options.surfaceId);
+  const dataSteps: DataStep[] = [];
+  const data = await fetchAllDashboardData(spec, dataSteps);
+  return assembleDashboard(spec, data, options.surfaceId, dataSteps);
 }
 
 async function fetchAllDashboardData(
   spec: DashboardSpec,
+  dataSteps: DataStep[],
 ): Promise<DashboardData> {
   const routes = new Set<string>();
   let needsBookedFlights = false;
@@ -88,6 +103,19 @@ async function fetchAllDashboardData(
   }
 
   const routeList = [...routes];
+  const flightStepIndices: number[] = [];
+  for (const key of routeList) {
+    const [from, to] = key.split('|');
+    flightStepIndices.push(
+      dataSteps.push({ name: 'searchFlights', args: { from, to } }) - 1,
+    );
+  }
+  let findBookedStepIdx: number | null = null;
+  if (needsBookedFlights) {
+    findBookedStepIdx =
+      dataSteps.push({ name: 'findBookedFlights', args: {} }) - 1;
+  }
+
   const [bookedFlights, ...flightLists] = await Promise.all([
     needsBookedFlights ? getBookedFlights() : Promise.resolve([]),
     ...routeList.map((key) => {
@@ -95,6 +123,13 @@ async function fetchAllDashboardData(
       return fetchFlights(from, to);
     }),
   ]);
+
+  flightStepIndices.forEach((stepIdx, i) => {
+    dataSteps[stepIdx].result = { count: flightLists[i]?.length ?? 0 };
+  });
+  if (findBookedStepIdx !== null) {
+    dataSteps[findBookedStepIdx].result = { count: bookedFlights.length };
+  }
 
   const flightsByRoute = new Map<string, FlightRecord[]>();
   routeList.forEach((key, idx) => {
@@ -108,6 +143,7 @@ function assembleDashboard(
   spec: DashboardSpec,
   data: DashboardData,
   givenSurfaceId: string | undefined,
+  dataSteps: DataStep[],
 ): CompiledDashboard {
   const surfaceId = givenSurfaceId ?? `dash-${randomUUID()}`;
 
@@ -116,7 +152,7 @@ function assembleDashboard(
   const rootChildren: string[] = [];
 
   spec.tiles.forEach((tile, idx) => {
-    const result = buildTile(idx, tile, data, surfaceId);
+    const result = buildTile(idx, tile, data, surfaceId, dataSteps);
     rootChildren.push(...result.rootChildren);
     allComponents.push(...result.components);
     allDataOps.push(...result.dataOps);
@@ -140,7 +176,7 @@ function assembleDashboard(
     } as unknown as A2uiMessage,
   ];
 
-  return { surfaceId, structural, dataModel: allDataOps };
+  return { surfaceId, structural, dataModel: allDataOps, dataSteps };
 }
 
 function buildTile(
@@ -148,6 +184,7 @@ function buildTile(
   tile: DashboardTile,
   data: DashboardData,
   surfaceId: string,
+  dataSteps: DataStep[],
 ): TileBuildResult {
   switch (tile.type) {
     case 'flightsTable':
@@ -155,21 +192,21 @@ function buildTile(
     case 'delayedFlightsTable':
       return buildFlightsTable(idx, tile, data, surfaceId, true);
     case 'delayShareChart':
-      return buildDelayShareChart(idx, tile, data, surfaceId);
+      return buildDelayShareChart(idx, tile, data, surfaceId, dataSteps);
     case 'delaysPerDayChart':
-      return buildDelaysPerDayChart(idx, tile, data, surfaceId);
+      return buildDelaysPerDayChart(idx, tile, data, surfaceId, dataSteps);
     case 'boardingPasses':
       return buildBoardingPasses(idx, tile, data, surfaceId);
     case 'bookedFlightsList':
-      return buildBookedFlightsList(idx, data, surfaceId);
+      return buildBookedFlightsList(idx, data, surfaceId, dataSteps);
     case 'flightSearch':
       return buildFlightSearch(idx, tile, surfaceId);
     case 'rentalCars':
-      return buildRentalCars(idx, tile, data, surfaceId);
+      return buildRentalCars(idx, tile, data, surfaceId, dataSteps);
     case 'hotels':
-      return buildHotels(idx, tile, data, surfaceId);
+      return buildHotels(idx, tile, data, surfaceId, dataSteps);
     case 'weatherList':
-      return buildWeatherList(idx, data, surfaceId);
+      return buildWeatherList(idx, data, surfaceId, dataSteps);
   }
 }
 
@@ -294,6 +331,7 @@ function buildDelayShareChart(
   tile: Extract<DashboardTile, { type: 'delayShareChart' }>,
   data: DashboardData,
   surfaceId: string,
+  dataSteps: DataStep[],
 ): TileBuildResult {
   const flights = data.flightsByRoute.get(routeKey(tile.from, tile.to)) ?? [];
   let onTime = 0;
@@ -302,11 +340,22 @@ function buildDelayShareChart(
     if (f.delay > 0) delayed += 1;
     else onTime += 1;
   }
+  const chartType = tile.chartType ?? 'pie';
   const url = buildAndCacheChartUrl({
-    type: tile.chartType ?? 'pie',
+    type: chartType,
     title: `On-time vs. delayed (${tile.from} → ${tile.to})`,
     labels: ['On time', 'Delayed'],
     datasets: [{ label: 'Flights', data: [onTime, delayed] }],
+  });
+  dataSteps.push({
+    name: 'renderFlightChart',
+    args: {
+      from: tile.from,
+      to: tile.to,
+      type: 'delayShare',
+      chartType,
+    },
+    result: { onTime, delayed, total: onTime + delayed, url },
   });
   return chartTile(
     idx,
@@ -321,6 +370,7 @@ function buildDelaysPerDayChart(
   tile: Extract<DashboardTile, { type: 'delaysPerDayChart' }>,
   data: DashboardData,
   surfaceId: string,
+  dataSteps: DataStep[],
 ): TileBuildResult {
   const flights = data.flightsByRoute.get(routeKey(tile.from, tile.to)) ?? [];
   const buckets = new Map<string, { onTime: number; delayed: number }>();
@@ -342,6 +392,16 @@ function buildDelaysPerDayChart(
       { label: 'On time', data: sortedDays.map(([, v]) => v.onTime) },
       { label: 'Delayed', data: sortedDays.map(([, v]) => v.delayed) },
     ],
+  });
+  dataSteps.push({
+    name: 'renderFlightChart',
+    args: {
+      from: tile.from,
+      to: tile.to,
+      type: 'delaysPerDay',
+      chartType: 'bar',
+    },
+    result: { days: sortedDays.length, url },
   });
   return chartTile(
     idx,
@@ -426,6 +486,7 @@ function buildBookedFlightsList(
   idx: number,
   data: DashboardData,
   surfaceId: string,
+  dataSteps: DataStep[],
 ): TileBuildResult {
   const flights = data.bookedFlights;
   const cardId = tileId(idx, 'card');
@@ -511,6 +572,11 @@ function buildBookedFlightsList(
     );
 
     const w = weatherForecast(flight.to, flight.date);
+    dataSteps.push({
+      name: 'weatherForecast',
+      args: { city: flight.to, date: flight.date.slice(0, 10) },
+      result: { condition: w.condition, temperatureC: w.temperatureC },
+    });
     const meta = `${flight.date.slice(0, 10)} · ${weatherIconFor(w.condition)} ${w.condition} — ${w.temperatureC} °C · ${
       flight.delay > 0 ? `Delayed by ${flight.delay} min` : 'On time'
     }`;
@@ -610,9 +676,15 @@ function buildRentalCars(
   tile: Extract<DashboardTile, { type: 'rentalCars' }>,
   data: DashboardData,
   surfaceId: string,
+  dataSteps: DataStep[],
 ): TileBuildResult {
   const city = tile.city ?? data.bookedFlights[0]?.to ?? FALLBACK_CITY;
   const result = searchRentalCars(city);
+  dataSteps.push({
+    name: 'searchRentalCars',
+    args: { city },
+    result: { count: result.cars.length },
+  });
   return imageRowList({
     idx,
     surfaceId,
@@ -630,9 +702,15 @@ function buildHotels(
   tile: Extract<DashboardTile, { type: 'hotels' }>,
   data: DashboardData,
   surfaceId: string,
+  dataSteps: DataStep[],
 ): TileBuildResult {
   const city = tile.city ?? data.bookedFlights[0]?.to ?? FALLBACK_CITY;
   const result = searchHotels(city);
+  dataSteps.push({
+    name: 'searchHotels',
+    args: { city },
+    result: { count: result.hotels.length },
+  });
   return imageRowList({
     idx,
     surfaceId,
@@ -649,6 +727,7 @@ function buildWeatherList(
   idx: number,
   data: DashboardData,
   surfaceId: string,
+  dataSteps: DataStep[],
 ): TileBuildResult {
   const flights = data.bookedFlights;
   const cardId = tileId(idx, 'card');
@@ -694,6 +773,11 @@ function buildWeatherList(
       variant: 'body',
     });
     const w = weatherForecast(flight.to, flight.date);
+    dataSteps.push({
+      name: 'weatherForecast',
+      args: { city: flight.to, date: flight.date.slice(0, 10) },
+      result: { condition: w.condition, temperatureC: w.temperatureC },
+    });
     const line = `${flight.to} · ${flight.date.slice(0, 10)} · ${weatherIconFor(w.condition)} ${w.condition} — ${w.temperatureC} °C`;
     dataOps.push(dataOp(surfaceId, path, line));
   });

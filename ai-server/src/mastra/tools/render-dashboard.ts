@@ -5,7 +5,7 @@ import {
   type DashboardSpec,
   dashboardSpecSchema,
 } from '../dashboard-dsl/dashboard-spec.js';
-import { recordDashboardSpec } from '../dashboard-dsl/spec-channel.js';
+import { recordDashboardRun } from '../dashboard-dsl/spec-channel.js';
 
 export const RENDER_DASHBOARD_TOOL_NAME = 'renderDashboard';
 
@@ -24,7 +24,7 @@ export const renderDashboardTool = createTool({
   inputSchema: dashboardSpecSchema,
   execute: async (input: DashboardSpec) => {
     const compiled = await compileDashboard(input);
-    recordDashboardSpec(compiled.surfaceId, input);
+    recordDashboardRun(compiled.surfaceId, input, compiled.dataSteps);
     return {
       surfaceId: compiled.surfaceId,
       messages: [...compiled.structural, ...compiled.dataModel],
