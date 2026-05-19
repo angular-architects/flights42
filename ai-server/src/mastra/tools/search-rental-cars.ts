@@ -47,6 +47,37 @@ function hashString(value: string): number {
   return Math.abs(hash);
 }
 
+export interface RentalCar {
+  id: string;
+  category: string;
+  model: string;
+  pricePerDay: number;
+  currency: 'EUR';
+  imageUrl: string;
+}
+
+export interface RentalCarSearchResult {
+  city: string;
+  cars: RentalCar[];
+}
+
+/**
+ * Pure helper, shared with the dashboard DSL compiler so we don't have
+ * to invoke the tool through the LLM just to grab the same mocked list.
+ */
+export function searchRentalCars(city: string): RentalCarSearchResult {
+  const seed = hashString(city.toLowerCase());
+  const cars: RentalCar[] = CAR_TEMPLATES.map((template, index) => ({
+    id: `car-${index + 1}`,
+    category: template.category,
+    model: template.models[(seed + index) % template.models.length],
+    pricePerDay: template.basePrice + ((seed + index * 7) % 20),
+    currency: 'EUR' as const,
+    imageUrl: template.imageUrl,
+  }));
+  return { city, cars };
+}
+
 export const searchRentalCarsTool = createTool({
   id: 'searchRentalCars',
   description: [
@@ -71,16 +102,5 @@ export const searchRentalCarsTool = createTool({
       }),
     ),
   }),
-  execute: async ({ city }) => {
-    const seed = hashString(city.toLowerCase());
-    const cars = CAR_TEMPLATES.map((template, index) => ({
-      id: `car-${index + 1}`,
-      category: template.category,
-      model: template.models[(seed + index) % template.models.length],
-      pricePerDay: template.basePrice + ((seed + index * 7) % 20),
-      currency: 'EUR' as const,
-      imageUrl: template.imageUrl,
-    }));
-    return { city, cars };
-  },
+  execute: async ({ city }) => searchRentalCars(city),
 });

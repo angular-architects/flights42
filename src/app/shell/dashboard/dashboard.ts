@@ -77,6 +77,8 @@ export class Dashboard {
 
   protected readonly showToolDetails = signal(false);
 
+  private runStartTime: number | null = null;
+
   constructor() {
     registerHandlers({
       checkIn: (action) => checkInAction(action),
@@ -85,6 +87,18 @@ export class Dashboard {
 
     effect(() => {
       this.absorbA2uiTextFallback(this.chat.value());
+    });
+
+    effect(() => {
+      const isLoading = this.chat.isLoading();
+      if (!isLoading && this.runStartTime !== null) {
+        const durationMs = performance.now() - this.runStartTime;
+        const seconds = (durationMs / 1000).toFixed(2);
+        console.log(
+          `[dashboard] Agent run completed in ${seconds}s (${durationMs.toFixed(0)}ms)`,
+        );
+        this.runStartTime = null;
+      }
     });
 
     this.destroyRef.onDestroy(() => {
@@ -101,6 +115,7 @@ export class Dashboard {
     this.chat.reset();
     this.synthesizedWidgets.set({});
     this.showToolDetails.set(false);
+    this.runStartTime = performance.now();
     this.chat.sendMessage({ role: 'user', content });
   }
 
