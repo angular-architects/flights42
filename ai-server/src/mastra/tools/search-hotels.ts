@@ -121,6 +121,42 @@ function rotate<T>(items: readonly T[], offset: number): T[] {
   return [...items.slice(start), ...items.slice(0, start)];
 }
 
+export interface Hotel {
+  id: string;
+  name: string;
+  stars: number;
+  pricePerNight: number;
+  currency: 'EUR';
+  imageUrl: string;
+}
+
+export interface HotelSearchResult {
+  city: string;
+  hotels: Hotel[];
+}
+
+/**
+ * Pure helper, shared with the dashboard DSL compiler so we can render
+ * the hotels tile without going through the LLM.
+ */
+export function searchHotels(city: string): HotelSearchResult {
+  const key = city.toLowerCase().trim();
+  const seed = hashString(key);
+  const known = HOTELS_BY_CITY[key];
+  const list = known ?? rotate(FALLBACK_HOTELS, seed);
+
+  const hotels: Hotel[] = list.map((hotel, index) => ({
+    id: `hotel-${index + 1}`,
+    name: hotel.name,
+    stars: hotel.stars,
+    pricePerNight: hotel.basePrice + ((seed + index * 11) % 25),
+    currency: 'EUR' as const,
+    imageUrl: hotel.imageUrl,
+  }));
+
+  return { city, hotels };
+}
+
 export const searchHotelsTool = createTool({
   id: 'searchHotels',
   description: [
@@ -154,21 +190,5 @@ export const searchHotelsTool = createTool({
       }),
     ),
   }),
-  execute: async ({ city }) => {
-    const key = city.toLowerCase().trim();
-    const seed = hashString(key);
-    const known = HOTELS_BY_CITY[key];
-    const list = known ?? rotate(FALLBACK_HOTELS, seed);
-
-    const hotels = list.map((hotel, index) => ({
-      id: `hotel-${index + 1}`,
-      name: hotel.name,
-      stars: hotel.stars,
-      pricePerNight: hotel.basePrice + ((seed + index * 11) % 25),
-      currency: 'EUR' as const,
-      imageUrl: hotel.imageUrl,
-    }));
-
-    return { city, hotels };
-  },
+  execute: async ({ city }) => searchHotels(city),
 });
