@@ -1,9 +1,4 @@
-import {
-  EnvironmentInjector,
-  inject,
-  Injectable,
-  runInInjectionContext,
-} from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   type AgUiChatResourceRef,
   agUiResource,
@@ -25,31 +20,28 @@ import { flightWidget } from './widgets/flight-widget';
 export class TicketingChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
-  private readonly injector = inject(EnvironmentInjector);
 
   private chat: AgUiChatResourceRef | null = null;
 
   public init(): void {
     if (!this.chat) {
-      this.chat = runInInjectionContext(this.injector, () =>
-        agUiResource({
-          url: this.config.agUiUrl,
-          model: this.config.model,
-          useServerMemory: true,
-          tools: [
-            findFlightsTool,
-            getLoadedFlightsTool,
-            toggleFlightSelectionTool,
-            getCurrentBasketTool,
-            displayFlightDetailTool,
-            createShowComponentsTool([
-              messageWidget,
-              flightWidget,
-              mcpAppsWidgetComponent,
-            ]),
-          ],
-        }),
-      );
+      this.chat = agUiResource({
+        url: this.config.agUiUrl,
+        model: this.config.model,
+        useServerMemory: true,
+        tools: [
+          findFlightsTool,
+          getLoadedFlightsTool,
+          toggleFlightSelectionTool,
+          getCurrentBasketTool,
+          displayFlightDetailTool,
+          createShowComponentsTool([
+            messageWidget,
+            flightWidget,
+            mcpAppsWidgetComponent,
+          ]),
+        ],
+      });
     }
     this.chatStore.setChat(this.chat);
   }
