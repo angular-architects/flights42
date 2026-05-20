@@ -1,11 +1,9 @@
 import { A2uiRendererService } from '@a2ui/angular/v0_9';
-import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -24,11 +22,6 @@ import { registerHandlers } from '../../domains/ticketing/ai/register-handlers';
 import { dashboardFlightSearchAction } from './actions/dashboard-flight-search-action';
 import { examplePrompts } from './example-prompts';
 import { submitFlightSearchTool } from './tools/submit-flight-search.tool';
-
-interface ParsedA2uiSurface {
-  surfaceId: string;
-  messages: A2uiMessage[];
-}
 
 @Component({
   selector: 'app-dashboard',
@@ -53,10 +46,8 @@ export class Dashboard {
     forwardedProps: () => ({ preventCaching: this.preventCaching() }),
   });
 
-  private readonly synthesizedWidgets = signal<Record<string, AgUiWidget>>({});
-
   protected readonly widgets = computed<AgUiWidget[]>(() =>
-    collectWidgets(this.chat.value(), this.synthesizedWidgets()),
+    collectWidgets(this.chat.value()),
   );
 
   protected readonly hasOutput = computed(() =>
@@ -77,28 +68,10 @@ export class Dashboard {
 
   protected readonly showToolDetails = signal(false);
 
-  private runStartTime: number | null = null;
-
   constructor() {
     registerHandlers({
       checkIn: (action) => checkInAction(action),
       dashboardFlightSearch: (action) => dashboardFlightSearchAction(action),
-    });
-
-    effect(() => {
-      this.absorbA2uiTextFallback(this.chat.value());
-    });
-
-    effect(() => {
-      const isLoading = this.chat.isLoading();
-      if (!isLoading && this.runStartTime !== null) {
-        const durationMs = performance.now() - this.runStartTime;
-        const seconds = (durationMs / 1000).toFixed(2);
-        console.log(
-          `[dashboard] Agent run completed in ${seconds}s (${durationMs.toFixed(0)}ms)`,
-        );
-        this.runStartTime = null;
-      }
     });
 
     this.destroyRef.onDestroy(() => {
@@ -113,9 +86,7 @@ export class Dashboard {
     }
     this.clearRenderedSurfaces();
     this.chat.reset();
-    this.synthesizedWidgets.set({});
     this.showToolDetails.set(false);
-    this.runStartTime = performance.now();
     this.chat.sendMessage({ role: 'user', content });
   }
 
@@ -131,7 +102,6 @@ export class Dashboard {
   protected reset(): void {
     this.clearRenderedSurfaces();
     this.chat.reset();
-    this.synthesizedWidgets.set({});
     this.showToolDetails.set(false);
     this.message.set('');
   }
@@ -152,58 +122,12 @@ export class Dashboard {
       this.renderer.surfaceGroup.deleteSurface(id);
     }
   }
-
-  private absorbA2uiTextFallback(messages: AgUiChatMessage[]): void {
-    const current = this.synthesizedWidgets();
-    let next: Record<string, AgUiWidget> | null = null;
-
-    for (const message of messages) {
-      if (message.role !== 'assistant') {
-        continue;
-      }
-      if (message.widgets.length > 0) {
-        continue;
-      }
-      if (current[message.id]) {
-        continue;
-      }
-      const surface = tryParseA2uiSurface(message.content);
-      if (!surface) {
-        continue;
-      }
-
-      this.renderer.processMessages(surface.messages);
-      if (!this.renderer.surfaceGroup.getSurface(surface.surfaceId)) {
-        continue;
-      }
-
-      next ??= { ...current };
-      next[message.id] = {
-        name: `a2ui_${message.id}`,
-        a2uiSurfaceId: surface.surfaceId,
-      };
-    }
-
-    if (next) {
-      this.synthesizedWidgets.set(next);
-    }
-  }
 }
 
-function collectWidgets(
-  messages: AgUiChatMessage[],
-  synthesized: Record<string, AgUiWidget>,
-): AgUiWidget[] {
-  return messages.flatMap((message) => {
-    if (message.role !== 'assistant') {
-      return [];
-    }
-    if (message.widgets.length > 0) {
-      return message.widgets;
-    }
-    const fallback = synthesized[message.id];
-    return fallback ? [fallback] : [];
-  });
+function collectWidgets(messages: AgUiChatMessage[]): AgUiWidget[] {
+  return messages.flatMap((message) =>
+    message.role === 'assistant' ? message.widgets : [],
+  );
 }
 
 function hasOutput(
@@ -249,45 +173,4 @@ function formatToolArgs(args: unknown): string {
   } catch {
     return String(args);
   }
-}
-
-function tryParseA2uiSurface(content: string): ParsedA2uiSurface | null {
-  if (!content || !content.includes('"messages"')) {
-    return null;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return null;
-  }
-
-  if (
-    !parsed ||
-    typeof parsed !== 'object' ||
-    !('messages' in parsed) ||
-    !Array.isArray((parsed as { messages?: unknown }).messages)
-  ) {
-    return null;
-  }
-
-  const list = (parsed as { messages: A2uiMessage[] }).messages;
-  let surfaceId: string | null = null;
-  for (const op of list) {
-    if (op && typeof op === 'object' && 'createSurface' in op) {
-      const value = (op as { createSurface?: { surfaceId?: string } })
-        .createSurface;
-      if (value?.surfaceId) {
-        surfaceId = value.surfaceId;
-        break;
-      }
-    }
-  }
-
-  if (!surfaceId) {
-    return null;
-  }
-
-  return { surfaceId, messages: list };
 }
