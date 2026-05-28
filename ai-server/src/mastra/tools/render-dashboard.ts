@@ -1,14 +1,16 @@
 import { createTool } from '@mastra/core/tools';
 
-import { compileDashboard } from '../dashboard-dsl/compile-dashboard.js';
-import {
-  type DashboardSpec,
-  dashboardSpecSchema,
-} from '../dashboard-dsl/dashboard-spec.js';
-import { recordDashboardRun } from '../dashboard-dsl/spec-channel.js';
+import { dashboardSpecSchema } from '../dashboard-dsl/dashboard-spec.js';
 
 export const RENDER_DASHBOARD_TOOL_NAME = 'renderDashboard';
 
+// Pure schema-only tool. The LLM emits exactly one `renderDashboard`
+// call whose args are the dashboard DSL spec; the route handler
+// intercepts those args, deterministically compiles the spec, and
+// emits the resulting A2UI surface itself. The tool execute returns a
+// minimal acknowledgement so Mastra's auto-snapshot path
+// (`extractA2uiSurfacePayload`) does not produce an `a2ui-surface`
+// `ACTIVITY_SNAPSHOT` and the LLM's tool-result message stays small.
 export const renderDashboardTool = createTool({
   id: RENDER_DASHBOARD_TOOL_NAME,
   description: [
@@ -22,12 +24,5 @@ export const renderDashboardTool = createTool({
     '(e.g. "Graz", "Hamburg") — never airport codes.',
   ].join('\n'),
   inputSchema: dashboardSpecSchema,
-  execute: async (input: DashboardSpec) => {
-    const compiled = await compileDashboard(input);
-    recordDashboardRun(compiled.surfaceId, input, compiled.dataSteps);
-    return {
-      surfaceId: compiled.surfaceId,
-      messages: [...compiled.structural, ...compiled.dataModel],
-    };
-  },
+  execute: async () => ({ ok: true }),
 });

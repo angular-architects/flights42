@@ -16,10 +16,12 @@ import type { DashboardSpec, DashboardTile } from './dashboard-spec.js';
 const A2UI_VERSION = 'v0.9' as const;
 const BASIC_CATALOG_ID =
   'https://a2ui.org/specification/v0_9/basic_catalog.json';
-// Hard-cap on rows we render per table tile. The flight search returns
-// at most a few dozen entries for the demo routes; clamping protects us
-// from runaway DOM trees if the upstream data grows.
-const MAX_TABLE_ROWS = 30;
+// Default cap on rows we render per flight table tile when the spec
+// doesn't override it. Protects us from runaway DOM trees if the
+// upstream data grows. Tile types that previously had no cap stay
+// uncapped by default; the DSL exposes `maxRows`/`maxItems` for
+// per-tile overrides.
+const DEFAULT_FLIGHT_TABLE_MAX_ROWS = 30;
 const FALLBACK_CITY = 'Hamburg';
 
 type Component = Record<string, unknown> & {
@@ -198,7 +200,7 @@ function buildTile(
     case 'boardingPasses':
       return buildBoardingPasses(idx, tile, data, surfaceId);
     case 'bookedFlightsList':
-      return buildBookedFlightsList(idx, data, surfaceId, dataSteps);
+      return buildBookedFlightsList(idx, tile, data, surfaceId, dataSteps);
     case 'flightSearch':
       return buildFlightSearch(idx, tile, surfaceId);
     case 'rentalCars':
@@ -206,7 +208,7 @@ function buildTile(
     case 'hotels':
       return buildHotels(idx, tile, data, surfaceId, dataSteps);
     case 'weatherList':
-      return buildWeatherList(idx, data, surfaceId, dataSteps);
+      return buildWeatherList(idx, tile, data, surfaceId, dataSteps);
   }
 }
 
@@ -222,7 +224,8 @@ function buildFlightsTable(
 ): TileBuildResult {
   const all = data.flightsByRoute.get(routeKey(tile.from, tile.to)) ?? [];
   const filtered = onlyDelayed ? all.filter((f) => f.delay > 0) : all;
-  const flights = filtered.slice(0, MAX_TABLE_ROWS);
+  const limit = tile.maxRows ?? DEFAULT_FLIGHT_TABLE_MAX_ROWS;
+  const flights = filtered.slice(0, limit);
 
   const cardId = tileId(idx, 'card');
   const bodyId = tileId(idx, 'body');
@@ -484,11 +487,16 @@ function buildBoardingPasses(
 
 function buildBookedFlightsList(
   idx: number,
+  tile: Extract<DashboardTile, { type: 'bookedFlightsList' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],
 ): TileBuildResult {
-  const flights = data.bookedFlights;
+  const allBooked = sortBookedFlightsAscending(data.bookedFlights);
+  const flights = tile.maxRows ? allBooked.slice(0, tile.maxRows) : allBooked;
+  const showCheckIn = tile.showCheckInButton ?? true;
+  const showWeather = tile.showWeather ?? true;
+
   const cardId = tileId(idx, 'card');
   const bodyId = tileId(idx, 'body');
   const titleId = tileId(idx, 'title');
@@ -532,6 +540,10 @@ function buildBookedFlightsList(
 
     const path = (key: string) => pathFor(idx, `flights/${j}/${key}`);
 
+    const colChildren = showCheckIn
+      ? [titleNodeId, metaId, btnId]
+      : [titleNodeId, metaId];
+
     components.push(
       {
         id: rowId,
@@ -543,7 +555,7 @@ function buildBookedFlightsList(
         id: colId,
         component: 'Column',
         weight: 3,
-        children: [titleNodeId, metaId, btnId],
+        children: colChildren,
       },
       {
         id: titleNodeId,
@@ -557,29 +569,39 @@ function buildBookedFlightsList(
         text: { path: path('meta') },
         variant: 'body',
       },
-      {
-        id: btnId,
-        component: 'Button',
-        child: btnLabelId,
-        action: {
-          event: {
-            name: 'checkIn',
-            context: { flightId: { path: path('id') } },
-          },
-        },
-      },
-      { id: btnLabelId, component: 'Text', text: 'Check in' },
     );
 
-    const w = weatherForecast(flight.to, flight.date);
-    dataSteps.push({
-      name: 'weatherForecast',
-      args: { city: flight.to, date: flight.date.slice(0, 10) },
-      result: { condition: w.condition, temperatureC: w.temperatureC },
-    });
-    const meta = `${flight.date.slice(0, 10)} · ${weatherIconFor(w.condition)} ${w.condition} — ${w.temperatureC} °C · ${
-      flight.delay > 0 ? `Delayed by ${flight.delay} min` : 'On time'
-    }`;
+    if (showCheckIn) {
+      components.push(
+        {
+          id: btnId,
+          component: 'Button',
+          child: btnLabelId,
+          action: {
+            event: {
+              name: 'checkIn',
+              context: { flightId: { path: path('id') } },
+            },
+          },
+        },
+        { id: btnLabelId, component: 'Text', text: 'Check in' },
+      );
+    }
+
+    const statusText =
+      flight.delay > 0 ? `Delayed by ${flight.delay} min` : 'On time';
+    let meta: string;
+    if (showWeather) {
+      const w = weatherForecast(flight.to, flight.date);
+      dataSteps.push({
+        name: 'weatherForecast',
+        args: { city: flight.to, date: flight.date.slice(0, 10) },
+        result: { condition: w.condition, temperatureC: w.temperatureC },
+      });
+      meta = `${flight.date.slice(0, 10)} · ${weatherIconFor(w.condition)} ${w.condition} — ${w.temperatureC} °C · ${statusText}`;
+    } else {
+      meta = `${flight.date.slice(0, 10)} · ${statusText}`;
+    }
 
     dataOps.push(
       dataOp(surfaceId, path('id'), flight.id),
@@ -680,16 +702,19 @@ function buildRentalCars(
 ): TileBuildResult {
   const city = tile.city ?? data.bookedFlights[0]?.to ?? FALLBACK_CITY;
   const result = searchRentalCars(city);
+  const cars = tile.maxItems
+    ? result.cars.slice(0, tile.maxItems)
+    : result.cars;
   dataSteps.push({
     name: 'searchRentalCars',
     args: { city },
-    result: { count: result.cars.length },
+    result: { count: cars.length },
   });
   return imageRowList({
     idx,
     surfaceId,
     title: `Rent a car in ${result.city}`,
-    items: result.cars.map((car) => ({
+    items: cars.map((car) => ({
       imageUrl: car.imageUrl,
       title: `${car.category} — ${car.model}`,
       subtitle: `From ${car.pricePerDay} ${car.currency} / day`,
@@ -706,16 +731,19 @@ function buildHotels(
 ): TileBuildResult {
   const city = tile.city ?? data.bookedFlights[0]?.to ?? FALLBACK_CITY;
   const result = searchHotels(city);
+  const hotels = tile.maxItems
+    ? result.hotels.slice(0, tile.maxItems)
+    : result.hotels;
   dataSteps.push({
     name: 'searchHotels',
     args: { city },
-    result: { count: result.hotels.length },
+    result: { count: hotels.length },
   });
   return imageRowList({
     idx,
     surfaceId,
     title: `Hotels in ${result.city}`,
-    items: result.hotels.map((hotel) => ({
+    items: hotels.map((hotel) => ({
       imageUrl: hotel.imageUrl,
       title: hotel.name,
       subtitle: `${hotel.stars}★ — from ${hotel.pricePerNight} ${hotel.currency} / night`,
@@ -725,11 +753,13 @@ function buildHotels(
 
 function buildWeatherList(
   idx: number,
+  tile: Extract<DashboardTile, { type: 'weatherList' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],
 ): TileBuildResult {
-  const flights = data.bookedFlights;
+  const allBooked = data.bookedFlights;
+  const flights = tile.maxRows ? allBooked.slice(0, tile.maxRows) : allBooked;
   const cardId = tileId(idx, 'card');
   const bodyId = tileId(idx, 'body');
   const titleId = tileId(idx, 'title');
