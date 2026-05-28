@@ -8,13 +8,15 @@ import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
 import { getExtendedLocalAgent } from '../../../../libs/ag-ui-server/index.js';
-import { compileDashboard } from '../dashboard-dsl/compile-dashboard.js';
-import type { DataStep } from '../dashboard-dsl/compile-dashboard.js';
-import type { DashboardSpec } from '../dashboard-dsl/dashboard-spec.js';
 import {
-  consumeRecordedRun,
-  peekRecordedRun,
-} from '../dashboard-dsl/spec-channel.js';
+  type CompiledDashboard,
+  compileDashboard,
+  type DataStep,
+} from '../dashboard-dsl/compile-dashboard.js';
+import {
+  type DashboardSpec,
+  dashboardSpecSchema,
+} from '../dashboard-dsl/dashboard-spec.js';
 import {
   computeDashboardRequestHash,
   type DashboardCacheEntry,
@@ -54,11 +56,6 @@ export async function dashboardAgUiRouteHandler(
     }
   }
 
-  // `renderDashboard` stays out of the internal-tool list on purpose:
-  // showing the LLM's tool call (with the chosen DSL spec as args) is
-  // exactly the visibility we want in the dashboard's "tool calls"
-  // panel. The compiler's data fetches are surfaced separately via
-  // `injectBeforeA2uiSurface` below.
   const agent = getExtendedLocalAgent({
     mastra: mastraInstance,
     agentId: DASHBOARD_AGENT_ID,
@@ -67,36 +64,77 @@ export async function dashboardAgUiRouteHandler(
   });
 
   return streamSSE(c, async (sse) => {
-    let capturedSurfaceId: string | undefined;
+    let renderToolCallId: string | undefined;
+    let argsBuffer = '';
+    let capturedSpec: DashboardSpec | undefined;
 
     await streamAgentEvents(sse, agent, input, {
-      injectBeforeA2uiSurface: (operations) => {
-        const surfaceId = readSurfaceIdFromOperations(operations);
-        if (!surfaceId) {
-          return [];
+      onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
+        const e = event as BaseEvent & {
+          toolCallId?: string;
+          toolCallName?: string;
+          delta?: string;
+        };
+
+        if (
+          e.type === EventType.TOOL_CALL_START &&
+          e.toolCallName === RENDER_DASHBOARD_TOOL_NAME &&
+          typeof e.toolCallId === 'string'
+        ) {
+          renderToolCallId = e.toolCallId;
+          argsBuffer = '';
+          return;
         }
-        const recorded = peekRecordedRun(surfaceId);
-        if (!recorded) {
-          return [];
+
+        if (
+          e.type === EventType.TOOL_CALL_ARGS &&
+          e.toolCallId === renderToolCallId &&
+          typeof e.delta === 'string'
+        ) {
+          argsBuffer += e.delta;
+          return;
         }
-        return buildDataStepEvents(recorded.dataSteps);
-      },
-      onA2uiSurface: (operations) => {
-        capturedSurfaceId ??= readSurfaceIdFromOperations(operations);
+
+        if (
+          e.type === EventType.TOOL_CALL_END &&
+          e.toolCallId === renderToolCallId
+        ) {
+          const spec = parseAccumulatedSpec(argsBuffer);
+          if (!spec) {
+            return [
+              {
+                type: 'RUN_ERROR',
+                message: `renderDashboard received invalid spec: ${truncate(argsBuffer)}`,
+                code: 'invalid_dashboard_spec',
+              } as unknown as BaseEvent,
+            ];
+          }
+          capturedSpec = spec;
+          try {
+            const compiled = await compileDashboard(spec);
+            return emitCompiledDashboardEvents(compiled);
+          } catch (err) {
+            return [
+              {
+                type: 'RUN_ERROR',
+                message: err instanceof Error ? err.message : String(err),
+                code: 'run_error',
+              } as unknown as BaseEvent,
+            ];
+          }
+        }
       },
     });
 
-    if (!capturedSurfaceId) {
-      return;
-    }
-    const recordedRun = consumeRecordedRun(capturedSurfaceId);
-    if (!recordedRun) {
-      return;
-    }
-    try {
-      await writeDashboardCache(cacheKey, recordedRun.spec);
-    } catch (err) {
-      console.error(`Failed to write dashboard cache (hash=${cacheKey}):`, err);
+    if (capturedSpec && !preventCaching) {
+      try {
+        await writeDashboardCache(cacheKey, capturedSpec);
+      } catch (err) {
+        console.error(
+          `Failed to write dashboard cache (hash=${cacheKey}):`,
+          err,
+        );
+      }
     }
   });
 }
@@ -133,12 +171,9 @@ async function streamCachedDashboard(
     toolCallId: renderToolCallId,
   } as BaseEvent);
 
-  let operations: unknown[];
-  let dataSteps: readonly DataStep[];
+  let compiled: CompiledDashboard;
   try {
-    const compiled = await compileDashboard(spec);
-    operations = [...compiled.structural, ...compiled.dataModel];
-    dataSteps = compiled.dataSteps;
+    compiled = await compileDashboard(spec);
   } catch (err) {
     await emit(sse, {
       type: 'RUN_ERROR',
@@ -148,16 +183,9 @@ async function streamCachedDashboard(
     return;
   }
 
-  for (const event of buildDataStepEvents(dataSteps)) {
+  for (const event of emitCompiledDashboardEvents(compiled)) {
     await emit(sse, event);
   }
-
-  await emit(sse, {
-    type: EventType.ACTIVITY_SNAPSHOT,
-    messageId: renderToolCallId,
-    activityType: 'a2ui-surface',
-    content: { operations },
-  } as unknown as BaseEvent);
 
   await emit(sse, {
     type: EventType.TOOL_CALL_RESULT,
@@ -172,6 +200,27 @@ async function streamCachedDashboard(
     threadId: input.threadId,
     runId: input.runId,
   } as BaseEvent);
+}
+
+/**
+ * Build the synthetic event sequence for a freshly compiled dashboard:
+ * one `TOOL_CALL_*` group per compiler `DataStep` followed by the
+ * `a2ui-surface` `ACTIVITY_SNAPSHOT` carrying the full A2UI operation
+ * list. The caller is responsible for emitting any surrounding
+ * lifecycle events (`RUN_STARTED`, the `renderDashboard`
+ * `TOOL_CALL_*`, the matching `TOOL_CALL_RESULT`, `RUN_FINISHED`).
+ */
+function emitCompiledDashboardEvents(compiled: CompiledDashboard): BaseEvent[] {
+  const events = buildDataStepEvents(compiled.dataSteps);
+  events.push({
+    type: EventType.ACTIVITY_SNAPSHOT,
+    messageId: compiled.surfaceId,
+    activityType: 'a2ui-surface',
+    content: {
+      operations: [...compiled.structural, ...compiled.dataModel],
+    },
+  } as unknown as BaseEvent);
+  return events;
 }
 
 function buildDataStepEvents(steps: readonly DataStep[]): BaseEvent[] {
@@ -209,25 +258,18 @@ function emit(sse: SseWriter, event: BaseEvent): Promise<void> {
   return sse.writeSSE({ data: JSON.stringify(event) });
 }
 
-function readSurfaceIdFromOperations(
-  operations: readonly unknown[],
-): string | undefined {
-  for (const op of operations) {
-    if (!op || typeof op !== 'object') continue;
-    const candidate = op as {
-      createSurface?: { surfaceId?: unknown };
-      updateComponents?: { surfaceId?: unknown };
-      updateDataModel?: { surfaceId?: unknown };
-    };
-    const surfaceId =
-      candidate.createSurface?.surfaceId ??
-      candidate.updateComponents?.surfaceId ??
-      candidate.updateDataModel?.surfaceId;
-    if (typeof surfaceId === 'string') {
-      return surfaceId;
-    }
+function parseAccumulatedSpec(raw: string): DashboardSpec | null {
+  if (!raw) {
+    return null;
   }
-  return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const result = dashboardSpecSchema.safeParse(parsed);
+  return result.success ? result.data : null;
 }
 
 function isPreventCachingRequested(input: RunAgentInput): boolean {
@@ -255,4 +297,8 @@ async function tryReadDashboardCache(
     console.error(`Failed to read dashboard cache (hash=${hash}):`, err);
     return null;
   }
+}
+
+function truncate(text: string, max = 200): string {
+  return text.length > max ? `${text.slice(0, max)}…` : text;
 }
