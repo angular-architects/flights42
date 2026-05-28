@@ -61,6 +61,7 @@ module.exports = defineConfig([
   },
   {
     files: ['**/*.ts'],
+    ignores: ['ai-server/**/*.ts'],
     extends: [sheriff.configs.all],
   },
 ]);
