@@ -67,6 +67,7 @@
     "@mastra/loggers": "^1.0.4",
     "@mastra/mcp": "^1.4.1",
     "@mastra/memory": "^1.13.0",
+    "@mastra/observability": "1.8.0",
     "@modelcontextprotocol/ext-apps": "^1.5.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@ngrx/operators": "^21.0.1",

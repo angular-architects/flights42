@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -68,10 +69,21 @@ export class Dashboard {
 
   protected readonly showToolDetails = signal(false);
 
+  private generationStartTime: number | null = null;
+
   constructor() {
     registerHandlers({
       checkIn: (action) => checkInAction(action),
       dashboardFlightSearch: (action) => dashboardFlightSearchAction(action),
+    });
+
+    effect(() => {
+      const widgetCount = this.widgets().length;
+      if (widgetCount > 0 && this.generationStartTime !== null) {
+        const elapsedMs = performance.now() - this.generationStartTime;
+        console.log(`Dashboard angezeigt nach ${elapsedMs.toFixed(0)} ms`);
+        this.generationStartTime = null;
+      }
     });
 
     this.destroyRef.onDestroy(() => {
@@ -87,6 +99,7 @@ export class Dashboard {
     this.clearRenderedSurfaces();
     this.chat.reset();
     this.showToolDetails.set(false);
+    this.generationStartTime = performance.now();
     this.chat.sendMessage({ role: 'user', content });
   }
 
@@ -104,6 +117,7 @@ export class Dashboard {
     this.chat.reset();
     this.showToolDetails.set(false);
     this.message.set('');
+    this.generationStartTime = null;
   }
 
   protected toggleToolDetails(): void {
