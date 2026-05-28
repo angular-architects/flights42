@@ -9,6 +9,15 @@ import { streamSSE } from 'hono/streaming';
 
 import { getExtendedLocalAgent } from '../../../../libs/ag-ui-server/index.js';
 import {
+  type CompiledDashboard,
+  compileDashboard,
+  type DataStep,
+} from '../dashboard-dsl/compile-dashboard.js';
+import {
+  type DashboardSpec,
+  dashboardSpecSchema,
+} from '../dashboard-dsl/dashboard-spec.js';
+import {
   computeDashboardRequestHash,
   type DashboardCacheEntry,
   readDashboardCache,
@@ -102,13 +111,60 @@ export async function dashboardAgUiRouteHandler(
     let capturedSpec: DashboardSpec | undefined;
 
     await streamAgentEvents(sse, agent, input, {
-      onA2uiSurface: (operations) => {
-        void writeDashboardCache(cacheKey, operations).catch((err: unknown) => {
-          console.error(
-            `Failed to write dashboard cache (hash=${cacheKey}):`,
-            err,
-          );
-        });
+      onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
+        const e = event as BaseEvent & {
+          toolCallId?: string;
+          toolCallName?: string;
+          delta?: string;
+        };
+
+        if (
+          e.type === EventType.TOOL_CALL_START &&
+          e.toolCallName === RENDER_DASHBOARD_TOOL_NAME &&
+          typeof e.toolCallId === 'string'
+        ) {
+          renderToolCallId = e.toolCallId;
+          argsBuffer = '';
+          return;
+        }
+
+        if (
+          e.type === EventType.TOOL_CALL_ARGS &&
+          e.toolCallId === renderToolCallId &&
+          typeof e.delta === 'string'
+        ) {
+          argsBuffer += e.delta;
+          return;
+        }
+
+        if (
+          e.type === EventType.TOOL_CALL_END &&
+          e.toolCallId === renderToolCallId
+        ) {
+          const spec = parseAccumulatedSpec(argsBuffer);
+          if (!spec) {
+            return [
+              {
+                type: 'RUN_ERROR',
+                message: `renderDashboard received invalid spec: ${truncate(argsBuffer)}`,
+                code: 'invalid_dashboard_spec',
+              } as unknown as BaseEvent,
+            ];
+          }
+          capturedSpec = spec;
+          try {
+            const compiled = await compileDashboard(spec);
+            return emitCompiledDashboardEvents(compiled);
+          } catch (err) {
+            return [
+              {
+                type: 'RUN_ERROR',
+                message: err instanceof Error ? err.message : String(err),
+                code: 'run_error',
+              } as unknown as BaseEvent,
+            ];
+          }
+        }
       },
     });
 
@@ -172,10 +228,10 @@ async function streamCachedDashboard(
   }
 
   for (const event of emitCompiledDashboardEvents(compiled)) {
-    await emitFrame(sse, event);
+    await emit(sse, event);
   }
 
-  await emitFrame(sse, {
+  await emit(sse, {
     type: EventType.TOOL_CALL_RESULT,
     toolCallId: renderToolCallId,
     content: JSON.stringify({ ok: true, cached: true }),
@@ -246,19 +302,6 @@ function emit(sse: SseWriter, event: BaseEvent): Promise<void> {
   return sse.writeSSE({ data: JSON.stringify(event) });
 }
 
-// Like `emit`, but yields to the macrotask queue afterwards (dev only)
-// so each cached-replay frame is flushed as its own network chunk and
-// stays visible in the browser DevTools Network tab. See
-// `CACHED_FRAME_DELAY_MS` for why this is needed and how to disable it.
-async function emitFrame(sse: SseWriter, event: BaseEvent): Promise<void> {
-  await emit(sse, event);
-  if (CACHED_FRAME_DELAY_MS !== null) {
-    await new Promise<void>((resolve) =>
-      setTimeout(resolve, CACHED_FRAME_DELAY_MS),
-    );
-  }
-}
-
 function parseAccumulatedSpec(raw: string): DashboardSpec | null {
   if (!raw) {
     return null;
@@ -298,60 +341,6 @@ async function tryReadDashboardCache(
     console.error(`Failed to read dashboard cache (hash=${hash}):`, err);
     return null;
   }
-}
-
-async function tryServeFromCache(
-  c: ContextWithMastra,
-  cacheKey: string,
-  input: RunAgentInput,
-): Promise<Response | null> {
-  const entry = await tryReadDashboardCache(cacheKey);
-  if (!entry) {
-    return null;
-  }
-  return streamSSE(c, async (sse) => {
-    await streamCachedDashboard(sse, input, entry.spec);
-  });
-}
-
-interface RenderToolCallEndResult {
-  events: readonly BaseEvent[];
-  spec: DashboardSpec | null;
-}
-
-async function handleRenderToolCallEnd(
-  argsBuffer: string,
-): Promise<RenderToolCallEndResult> {
-  const spec = parseAccumulatedSpec(argsBuffer);
-  if (!spec) {
-    return {
-      events: [
-        makeRunError(
-          `renderDashboard received invalid spec: ${truncate(argsBuffer)}`,
-          'invalid_dashboard_spec',
-        ),
-      ],
-      spec: null,
-    };
-  }
-  try {
-    const compiled = await compileDashboard(spec);
-    return { events: emitCompiledDashboardEvents(compiled), spec };
-  } catch (err) {
-    return {
-      events: [
-        makeRunError(
-          err instanceof Error ? err.message : String(err),
-          'run_error',
-        ),
-      ],
-      spec: null,
-    };
-  }
-}
-
-function makeRunError(message: string, code: string): BaseEvent {
-  return { type: 'RUN_ERROR', message, code } as unknown as BaseEvent;
 }
 
 function truncate(text: string, max = 200): string {
