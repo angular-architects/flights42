@@ -2,51 +2,60 @@
 
 ## Goal
 
-This document describes the architecture rules for this repository.
-Agents and developers must follow these rules when changing application code.
+This document defines the architecture rules for this repository. Both agents and
+developers are required to adhere to these rules whenever they modify application code.
 
 ## Domain Boundaries
 
-- Respect existing domain boundaries defined by sheriff
-- Do not import implementation details from another feature's or domain's private parts
-- Cross-domain communication must happen through APIs configured by sheriff or by acessing parts of the shared area
+- Respect the existing domain boundaries enforced by Sheriff.
+- Never import implementation details from the private internals of another feature or domain.
+- Cross-domain communication must occur exclusively through the public APIs configured in
+  Sheriff or through dedicated parts of the shared area.
 
 ## Layering
 
-- Use relaxed layering
-- Only allow the following imports: feature --> ui --> data --> util
+- Apply _relaxed_ layering.
+- Permit only the following import direction: `feature → ui → data → util`.
 
-## Changing Sheriff Config
+## Changing the Sheriff Configuration
 
-- Change the Sheriff config only when you are explicitly asked for it
-- Do not change the Sheriff config just to relax boundaries
+- Modify the Sheriff configuration only when explicitly instructed to do so.
+- Never change the Sheriff configuration merely to relax existing boundaries.
 
 ## Locality
 
-- Code that is used and changed together should be closely located (e.g. in the same folder)
+- Keep code that is used and changed together in close proximity (e.g., within the same folder).
 
 ## Single Responsibility
 
-- Each file should have a single responsibility
-- Its fine to add additional helper constructs (functions, etc.) only used by the current file
+- Each file should have a single, well-defined responsibility.
+- Adding helper constructs (functions, etc.) that are used only within the current file is acceptable.
 
 ## Signals
 
-- Computed Signals with computations longer than a line should delegate to pure functions.
-  - If only needed once, put these functions at the end of the current file
+- Computed signals whose computation exceeds a single line should delegate to pure functions.
+  - If such a function is used only once, place it at the end of the current file.
 
 ## Feature Slicing
 
-- If code is only used by a feature, put it into the corresponding feature folder
-- If it's necessary to reuse code from a feature within another feature of the same domain, pull it into a lower layer
-- If it's necessary to reuse technical code from a feature within another feature of a differnt domain, pull it into a lower layer of the shared area
-  - In the case of domain-specific code, ask the user first
+- If code is used by a single feature only, place it in the corresponding feature folder.
+- If code from one feature must be reused by another feature within the same domain,
+  move it down to a lower layer.
+- If technical code from one feature must be reused by a feature in a different domain,
+  move it down to a lower layer of the shared area.
+  - For domain-specific code, consult the user first.
+
+## Data Access Services
+
+- Use the suffix `Client` (e.g., `FlightClient`).
+- Follow `FlightClient` as the reference implementation.
+- Data access services must be stateless.
 
 ## Shared Code
 
-- Put code into shared areas only if at least two independent features need it.
-- Do not create premature shared abstractions.
+- Promote code to a shared area only when at least two independent features require it.
+- Avoid premature shared abstractions.
 
 ## State Management
 
-- Follow `docs/signal-store.md` if present.
+- Follow `docs/signal-store.md` where applicable.
