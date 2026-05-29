@@ -238,7 +238,12 @@ function buildFlightsTable(
 
   const rowIds: string[] = [];
   const components: Component[] = [];
-  const dataOps: A2uiMessage[] = [];
+  const flightRows: {
+    number: string;
+    date: string;
+    time: string;
+    status: string;
+  }[] = [];
 
   if (flights.length === 0) {
     const emptyId = `${bodyId}-empty`;
@@ -264,7 +269,7 @@ function buildFlightsTable(
         variant: 'body',
       },
     );
-    return { rootChildren: [cardId], components, dataOps };
+    return { rootChildren: [cardId], components, dataOps: [] };
   }
 
   for (let j = 0; j < flights.length; j += 1) {
@@ -293,12 +298,12 @@ function buildFlightsTable(
       cellText(cellIds[3], pathFor(idx, `flights/${j}/status`)),
     );
 
-    dataOps.push(
-      dataOp(surfaceId, pathFor(idx, `flights/${j}/number`), String(f.id)),
-      dataOp(surfaceId, pathFor(idx, `flights/${j}/date`), datePart),
-      dataOp(surfaceId, pathFor(idx, `flights/${j}/time`), timePart),
-      dataOp(surfaceId, pathFor(idx, `flights/${j}/status`), status),
-    );
+    flightRows.push({
+      number: String(f.id),
+      date: datePart,
+      time: timePart,
+      status,
+    });
   }
 
   components.unshift(
@@ -325,6 +330,8 @@ function buildFlightsTable(
     headerText(headerCellIds[2], 'Time'),
     headerText(headerCellIds[3], lastColumnHeader),
   );
+
+  const dataOps = [dataOp(surfaceId, tilePath(idx), { flights: flightRows })];
 
   return { rootChildren: [cardId], components, dataOps };
 }
@@ -433,7 +440,7 @@ function chartTile(
       { id: titleId, component: 'Text', text: title, variant: 'h2' },
       { id: imgId, component: 'Image', url: { path } },
     ],
-    dataOps: [dataOp(surfaceId, path, chartUrl)],
+    dataOps: [dataOp(surfaceId, tilePath(idx), { chart: chartUrl })],
   };
 }
 
@@ -471,16 +478,15 @@ function buildBoardingPasses(
     }),
   ];
 
-  const dataOps: A2uiMessage[] = flights.flatMap((flight, j) => {
-    const path = (key: string) => pathFor(idx, `tickets/${j}/${key}`);
-    return [
-      dataOp(surfaceId, path('ticketId'), flight.id),
-      dataOp(surfaceId, path('from'), flight.from),
-      dataOp(surfaceId, path('to'), flight.to),
-      dataOp(surfaceId, path('date'), flight.date.slice(0, 10)),
-      dataOp(surfaceId, path('delay'), flight.delay),
-    ];
-  });
+  const tickets = flights.map((flight) => ({
+    ticketId: flight.id,
+    from: flight.from,
+    to: flight.to,
+    date: flight.date.slice(0, 10),
+    delay: flight.delay,
+  }));
+
+  const dataOps = [dataOp(surfaceId, tilePath(idx), { tickets })];
 
   return { rootChildren: [stackId], components, dataOps };
 }
@@ -526,7 +532,7 @@ function buildBookedFlightsList(
   }
 
   const components: Component[] = [];
-  const dataOps: A2uiMessage[] = [];
+  const flightRows: { id: number; route: string; meta: string }[] = [];
   const rowIds: string[] = [];
 
   flights.forEach((flight, j) => {
@@ -603,12 +609,14 @@ function buildBookedFlightsList(
       meta = `${flight.date.slice(0, 10)} · ${statusText}`;
     }
 
-    dataOps.push(
-      dataOp(surfaceId, path('id'), flight.id),
-      dataOp(surfaceId, path('route'), `${flight.from} → ${flight.to}`),
-      dataOp(surfaceId, path('meta'), meta),
-    );
+    flightRows.push({
+      id: flight.id,
+      route: `${flight.from} → ${flight.to}`,
+      meta,
+    });
   });
+
+  const dataOps = [dataOp(surfaceId, tilePath(idx), { flights: flightRows })];
 
   components.unshift(
     { id: cardId, component: 'Card', child: bodyId },
@@ -686,8 +694,12 @@ function buildFlightSearch(
   ];
 
   const dataOps = [
-    dataOp(surfaceId, fromPath, tile.defaultFrom ?? 'Graz'),
-    dataOp(surfaceId, toPath, tile.defaultTo ?? 'Hamburg'),
+    dataOp(surfaceId, tilePath(idx), {
+      search: {
+        from: tile.defaultFrom ?? 'Graz',
+        to: tile.defaultTo ?? 'Hamburg',
+      },
+    }),
   ];
 
   return { rootChildren: [cardId], components, dataOps };
@@ -789,7 +801,7 @@ function buildWeatherList(
   }
 
   const components: Component[] = [];
-  const dataOps: A2uiMessage[] = [];
+  const itemRows: { text: string }[] = [];
   const rowIds: string[] = [];
 
   flights.forEach((flight, j) => {
@@ -809,8 +821,10 @@ function buildWeatherList(
       result: { condition: w.condition, temperatureC: w.temperatureC },
     });
     const line = `${flight.to} · ${flight.date.slice(0, 10)} · ${weatherIconFor(w.condition)} ${w.condition} — ${w.temperatureC} °C`;
-    dataOps.push(dataOp(surfaceId, path, line));
+    itemRows.push({ text: line });
   });
+
+  const dataOps = [dataOp(surfaceId, tilePath(idx), { items: itemRows })];
 
   components.unshift(
     { id: cardId, component: 'Card', child: bodyId },
@@ -842,7 +856,7 @@ function imageRowList(args: {
   const titleId = tileId(idx, 'title');
 
   const components: Component[] = [];
-  const dataOps: A2uiMessage[] = [];
+  const itemRows: { image: string; title: string; subtitle: string }[] = [];
   const rowIds: string[] = [];
 
   items.forEach((item, j) => {
@@ -880,12 +894,14 @@ function imageRowList(args: {
       },
     );
 
-    dataOps.push(
-      dataOp(surfaceId, imgPath, item.imageUrl),
-      dataOp(surfaceId, titlePath, item.title),
-      dataOp(surfaceId, subPath, item.subtitle),
-    );
+    itemRows.push({
+      image: item.imageUrl,
+      title: item.title,
+      subtitle: item.subtitle,
+    });
   });
+
+  const dataOps = [dataOp(surfaceId, tilePath(idx), { items: itemRows })];
 
   components.unshift(
     { id: cardId, component: 'Card', child: bodyId },
@@ -913,6 +929,14 @@ function tileId(idx: number, suffix: string): string {
 
 function pathFor(idx: number, suffix: string): string {
   return `/t${idx}/${suffix}`;
+}
+
+// Root data-model path for a tile. Every tile now seeds its whole
+// subtree with a single `updateDataModel` op at this path instead of one
+// op per leaf value. A2UI's `DataModel.set` notifies descendant signals,
+// so component bindings like `/t3/flights/0/number` still resolve.
+function tilePath(idx: number): string {
+  return `/t${idx}`;
 }
 
 function routeKey(from: string, to: string): string {
