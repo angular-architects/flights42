@@ -32,6 +32,33 @@ import {
 
 const DASHBOARD_AGENT_ID = 'dashboardAgent';
 
+// Replaying a cached dashboard produces the whole SSE body in one tight
+// burst of microtask-spaced writes. Chrome DevTools then renders the
+// ag-ui stream as empty in the Network tab because it never observes the
+// frames arriving incrementally — even though the `HttpAgent` on the
+// client consumes the body correctly. Yielding to the macrotask queue
+// after each frame flushes it as its own network chunk so DevTools
+// recognises a live stream. This is purely a debugging aid: it is
+// disabled in production and the per-frame delay (ms) can be tuned via
+// `AG_UI_STREAM_FRAME_DELAY_MS` (a negative value disables it entirely;
+// the default of 0 still forces a macrotask boundary via setTimeout).
+const CACHED_FRAME_DELAY_MS = resolveCachedFrameDelayMs();
+
+function resolveCachedFrameDelayMs(): number | null {
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
+  const raw = process.env.AG_UI_STREAM_FRAME_DELAY_MS;
+  if (raw === undefined) {
+    return 0;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return parsed;
+}
+
 export async function dashboardAgUiRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
@@ -124,7 +151,7 @@ async function streamCachedDashboard(
   input: RunAgentInput,
   spec: DashboardSpec,
 ): Promise<void> {
-  await emit(sse, {
+  await emitFrame(sse, {
     type: EventType.RUN_STARTED,
     threadId: input.threadId,
     runId: input.runId,
@@ -135,18 +162,18 @@ async function streamCachedDashboard(
 
   // Mirror what the LLM would emit on a cache miss so the "tool calls"
   // panel still shows the dashboard spec the cache replayed.
-  await emit(sse, {
+  await emitFrame(sse, {
     type: EventType.TOOL_CALL_START,
     parentMessageId: renderParentMessageId,
     toolCallId: renderToolCallId,
     toolCallName: RENDER_DASHBOARD_TOOL_NAME,
   } as BaseEvent);
-  await emit(sse, {
+  await emitFrame(sse, {
     type: EventType.TOOL_CALL_ARGS,
     toolCallId: renderToolCallId,
     delta: JSON.stringify(spec),
   } as BaseEvent);
-  await emit(sse, {
+  await emitFrame(sse, {
     type: EventType.TOOL_CALL_END,
     toolCallId: renderToolCallId,
   } as BaseEvent);
@@ -155,7 +182,7 @@ async function streamCachedDashboard(
   try {
     compiled = await compileDashboard(spec);
   } catch (err) {
-    await emit(
+    await emitFrame(
       sse,
       makeRunError(
         err instanceof Error ? err.message : String(err),
@@ -166,10 +193,10 @@ async function streamCachedDashboard(
   }
 
   for (const event of emitCompiledDashboardEvents(compiled)) {
-    await emit(sse, event);
+    await emitFrame(sse, event);
   }
 
-  await emit(sse, {
+  await emitFrame(sse, {
     type: EventType.TOOL_CALL_RESULT,
     toolCallId: renderToolCallId,
     content: JSON.stringify({ ok: true, cached: true }),
@@ -177,7 +204,7 @@ async function streamCachedDashboard(
     role: 'tool',
   } as unknown as BaseEvent);
 
-  await emit(sse, {
+  await emitFrame(sse, {
     type: EventType.RUN_FINISHED,
     threadId: input.threadId,
     runId: input.runId,
@@ -238,6 +265,19 @@ function buildDataStepEvents(steps: readonly DataStep[]): BaseEvent[] {
 
 function emit(sse: SseWriter, event: BaseEvent): Promise<void> {
   return sse.writeSSE({ data: JSON.stringify(event) });
+}
+
+// Like `emit`, but yields to the macrotask queue afterwards (dev only)
+// so each cached-replay frame is flushed as its own network chunk and
+// stays visible in the browser DevTools Network tab. See
+// `CACHED_FRAME_DELAY_MS` for why this is needed and how to disable it.
+async function emitFrame(sse: SseWriter, event: BaseEvent): Promise<void> {
+  await emit(sse, event);
+  if (CACHED_FRAME_DELAY_MS !== null) {
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, CACHED_FRAME_DELAY_MS),
+    );
+  }
 }
 
 function parseAccumulatedSpec(raw: string): DashboardSpec | null {
