@@ -10,6 +10,8 @@ developers are required to adhere to these rules whenever they modify applicatio
 - Model new features after `FlightSearch` and `FlightEdit` in terms of structure and style.
 
 ## Domain Boundaries
+_(derived from [ADR-0001](adr/0001-use-sheriff-for-domain-boundaries.md))_
+
 
 - Add a new domain only when the user explicitly requests it. The agent may always propose a
   new domain, but such a proposal must be accepted by the user before it is created.
@@ -23,10 +25,14 @@ developers are required to adhere to these rules whenever they modify applicatio
 
 ## Layering
 
+_(derived from [ADR-0002](adr/0002-relaxed-layering.md))_
+
 - Apply _relaxed_ layering.
 - Permit only the following import direction: `feature → ui → data → util`.
 
 ## Changing the Sheriff Configuration
+
+_(derived from [ADR-0001](adr/0001-use-sheriff-for-domain-boundaries.md))_
 
 - Modify the Sheriff configuration only when explicitly instructed to do so.
 - Never change the Sheriff configuration merely to relax existing boundaries.
@@ -46,6 +52,8 @@ developers are required to adhere to these rules whenever they modify applicatio
   - If such a function is used only once, place it at the end of the current file.
 
 ## Feature Slicing
+
+_(derived from [ADR-0004](adr/0004-feature-slicing-and-shared-code.md))_
 
 - If code is used by a single feature only, place it in the corresponding feature folder.
 - If code from one feature must be reused by another feature within the same domain,
@@ -67,6 +75,8 @@ developers are required to adhere to these rules whenever they modify applicatio
 
 ## Shared Code
 
+_(derived from [ADR-0004](adr/0004-feature-slicing-and-shared-code.md))_
+
 - Promote code to a shared area only when at least two independent features require it.
 - Avoid premature shared abstractions.
 
@@ -78,5 +88,7 @@ developers are required to adhere to these rules whenever they modify applicatio
 - Record the chosen option and rationale in the response.
 
 ## State Management
+
+_(derived from [ADR-0003](adr/0003-ngrx-signal-store-for-state.md))_
 
 - Follow `docs/architecture-state-management.md` where applicable.

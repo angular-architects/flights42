@@ -1,5 +1,8 @@
 # Signal Store
 
+_(derived from [ADR-0003](adr/0003-ngrx-signal-store-for-state.md); the smart/dumb
+component split is a convention without its own ADR)_
+
 ## Location of Stores
 
 - Place new Signal Stores at the feature level whenever possible.
