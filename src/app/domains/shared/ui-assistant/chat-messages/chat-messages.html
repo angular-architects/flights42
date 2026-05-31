@@ -17,58 +17,21 @@
     <div class="avatar">{{ message.icon }}</div>
     <div>
       <div class="bubble">
-        @if (message.role === 'assistant') {
-          @if (message.contentString) {
-            <app-message [data]="message.contentString"></app-message>
-          }
-          @for (widget of message.widgets; track widget.id) {
-            <app-widget-container [widget]="widget" />
-          }
-        } @else if (message.role === 'error') {
+        @if (message.contentString) {
           <app-message [data]="message.contentString"></app-message>
-        } @else {
-          <app-message [data]="message.contentString"></app-message>
+        }
+        @for (widget of message.widgets; track widget.id) {
+          <app-widget-container [widget]="widget" />
         }
 
         @for (toolCall of message.toolCalls; track toolCall.id) {
           <div class="tool-call" [title]="toolCall.args | json">
-            <app-message [data]="'Tool Call: ' + toolCall.name"></app-message>
+            Tool Call: {{ toolCall.name }}
             <app-tool-status
               class="ml-5"
               [pending]="toolCall.status === 'pending'" />
           </div>
         }
-      </div>
-      <div class="meta"></div>
-    </div>
-  </article>
-}
-
-@let activeInterrupt = interruptModel();
-
-@if (activeInterrupt) {
-  <article class="msg assistant">
-    <div class="avatar">🤖</div>
-    <div>
-      <div class="bubble">
-        <strong>Approval needed</strong>
-        <div [title]="activeInterrupt.payload.args | json">
-          {{ activeInterrupt.message }}
-        </div>
-        <div class="approval-actions">
-          <button
-            class="btn btn-default"
-            type="button"
-            (click)="resumeInterrupt.emit(false)">
-            Reject
-          </button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            (click)="resumeInterrupt.emit(true)">
-            Approve
-          </button>
-        </div>
       </div>
       <div class="meta"></div>
     </div>
