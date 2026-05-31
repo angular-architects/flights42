@@ -1,4 +1,4 @@
-import { DatePipe, JsonPipe } from '@angular/common';
+import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,14 +10,13 @@ import {
 } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 
-import { CityPipe } from '../../../shared/ui-common/city.pipe';
 import { LanguageService } from '../../../shared/util-common/language';
-import { Flight } from '../../data/flight';
+import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormField, DatePipe, JsonPipe, CityPipe],
+  imports: [FormField, JsonPipe, FlightCard],
   templateUrl: './flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,7 +39,10 @@ export class FlightSearch {
   protected readonly error = this.flightStore.flightsError;
   protected readonly isLoading = this.flightStore.flightsIsLoading;
 
-  protected readonly selectedFlight = signal<Flight | null>(null);
+  protected readonly basket = signal<Record<number, boolean>>({
+    3: true,
+    5: true,
+  });
 
   constructor() {
     console.log('user language', this.languageService.getUserLang());
@@ -57,8 +59,11 @@ export class FlightSearch {
     this.flightStore.updateFilter(this.filter().from, this.filter().to);
   }
 
-  protected select(flight: Flight): void {
-    this.selectedFlight.set(flight);
+  protected updateBasket(flightId: number, selected: boolean): void {
+    this.basket.update((basket) => ({
+      ...basket,
+      [flightId]: selected,
+    }));
   }
 
   protected delay(): void {
