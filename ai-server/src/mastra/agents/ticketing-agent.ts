@@ -1,18 +1,11 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-// import { initMcpServer } from '../../../../libs/ag-ui-server/index.js';
 import { model } from '../config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
-// import { packageAgent } from './package-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
-
-// const hotelsMcpTools = await initMcpServer({
-//   serverId: 'hotels',
-//   url: new URL('http://127.0.0.1:3002/mcp'),
-// });
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
@@ -23,8 +16,6 @@ export const ticketingAgent = new Agent({
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
-    // ...hotelsMcpTools,
   },
-  // agents: { packageAgent },
   memory: new Memory(),
 });

@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { FlightInfo } from '../../data/flight-info';
 import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const flightSchema = z.object({
   id: z.number().describe('The flight id'),
   from: z.string().describe('Departure city'),
@@ -127,7 +128,8 @@ export const flightWidget = defineAgUiComponent({
   ].join('\n'),
   component: FlightWidget,
   schema: z.object({
-    flight: flightSchema,
-    status: z.enum(['booked', 'other']).describe('Status of the flight'),
+    // TODO: describe component inputs (flight and status)
+    // HINT: use the above declared flightSchema
+    //       and a zod-based enum with the possible values 'booked' and 'other'
   }),
 });

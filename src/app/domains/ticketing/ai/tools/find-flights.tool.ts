@@ -1,9 +1,5 @@
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
-
-import { FlightStore } from '../../feature-booking/flight-search/flight-store';
 
 export const findFlightsTool = defineAgUiTool({
   name: 'findFlights',
@@ -17,13 +13,13 @@ Remarks:
 - If needed, send at most one short text confirmation after the tool call has completed.
     `.trim(),
   schema: z.object({
-    from: z.string().describe('airport of departure'),
-    to: z.string().describe('airport of destination'),
+    // TODO: add schema for from and to including a description
   }),
   execute: async (args) => {
-    const store = inject(FlightStore);
-    const router = inject(Router);
-    store.updateFilter(args.from, args.to);
-    await router.navigate(['/ticketing/booking/flight-search']);
+    console.log('findFlights', args);
+
+    // TODO: Inject FlightStore and Router
+    // TODO: forward from and to from args store (updateFilter)
+    // TODO: route to /ticketing/booking/flight-search (router.navigate)
   },
 });
