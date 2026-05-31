@@ -5,11 +5,11 @@ import {
   computed,
   effect,
   inject,
-  linkedSignal,
   signal,
 } from '@angular/core';
 import { debounce, form, FormField } from '@angular/forms/signals';
 
+import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { LanguageService } from '../../../shared/util-common/language';
 import { Flight } from '../../data/flight';
 import { FlightStore } from './flight-store';
@@ -24,10 +24,13 @@ export class FlightSearch {
   private flightStore = inject(FlightStore);
   private languageService = inject(LanguageService);
 
-  protected readonly filter = linkedSignal(() => ({
-    from: this.flightStore.from(),
-    to: this.flightStore.to(),
-  }));
+  protected readonly filter = delegatedSignal(
+    () => ({
+      from: this.flightStore.from(),
+      to: this.flightStore.to(),
+    }),
+    (value) => this.flightStore.updateFilter(value.from, value.to),
+  );
   protected readonly filterForm = form(this.filter, (path) => {
     debounce(path, 300);
   });
@@ -55,7 +58,7 @@ export class FlightSearch {
   }
 
   protected search(): void {
-    this.flightStore.updateFilter(this.filter().from, this.filter().to);
+    this.flightStore.reload();
   }
 
   protected select(flight: Flight): void {
