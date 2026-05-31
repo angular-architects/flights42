@@ -1200,3 +1200,11 @@ td.error-col app-validation-errors-pane {
     transform: rotate(360deg);
   }
 }
+
+.selectable {
+  cursor: pointer;
+}
+
+tr.selected {
+  background-color: var(--color-primary-lightest, #eeedfe);
+}
