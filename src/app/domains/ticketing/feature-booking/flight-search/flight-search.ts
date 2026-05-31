@@ -10,13 +10,14 @@ import {
 } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 
+import { CityPipe } from '../../../shared/ui-common/city.pipe';
 import { LanguageService } from '../../../shared/util-common/language';
 import { Flight } from '../../data/flight';
 import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormField, DatePipe, JsonPipe],
+  imports: [FormField, DatePipe, JsonPipe, CityPipe],
   templateUrl: './flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
