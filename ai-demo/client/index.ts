@@ -6,7 +6,7 @@ import type { AGUIEvent, BaseEvent } from '@ag-ui/core';
 import { closeInput, readLine } from './input.js';
 import { detailFor } from './utils.js';
 
-const SHOW_DETAILS = process.argv.includes('--details');
+const SHOW_DETAILS = false;
 
 const baseUrl = process.env.AI_DEMO_URL ?? 'http://localhost:4555';
 
