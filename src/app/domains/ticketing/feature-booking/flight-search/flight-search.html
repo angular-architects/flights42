@@ -35,6 +35,7 @@
         [item]="flight"
         [selected]="basket()[flight.id]"
         (selectedChange)="updateBasket(flight.id, $event)" />
+      <a [routerLink]="['/booking/flight-edit', flight.id]">Edit</a>
     </div>
   }
 </div>
