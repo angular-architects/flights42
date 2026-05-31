@@ -28,32 +28,17 @@
   <div class="alert">Error loading flights!</div>
 }
 
-@if (flights().length > 0) {
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Id</th>
-        <th>From</th>
-        <th>To</th>
-        <th>Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (flight of flightsWithDelays(); track flight.id) {
-        <tr
-          [class.selected]="flight === selectedFlight()"
-          (click)="select(flight)"
-          class="selectable">
-          <td>{{ flight.id }}</td>
-          <td>{{ flight.from | appCity: 'short' }}</td>
-          <td>{{ flight.to | appCity: 'long' }}</td>
-          <td>{{ flight.date | date: 'dd.MM.yyyy' }}</td>
-        </tr>
-      }
-    </tbody>
-  </table>
-}
+<div class="row">
+  @for (flight of flightsWithDelays(); track flight.id) {
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <app-flight-card
+        [item]="flight"
+        [selected]="basket()[flight.id]"
+        (selectedChange)="updateBasket(flight.id, $event)" />
+    </div>
+  }
+</div>
 
-@if (selectedFlight()) {
-  <pre>{{ selectedFlight() | json }}</pre>
-}
+<p>&nbsp;</p>
+
+<pre>{{ basket() | json }}</pre>
