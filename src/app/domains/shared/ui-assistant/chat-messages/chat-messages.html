@@ -18,15 +18,16 @@
     <div>
       <div class="bubble">
         @if (message.contentString) {
-          <app-message [data]="message.contentString"></app-message>
+          <!-- TODO: display the contentString using the app-message component -->
         }
+
         @for (widget of message.widgets; track widget.id) {
-          <app-widget-container [widget]="widget" />
+          <!-- TODO: display the widget using the app-widget-container component -->
         }
 
         @for (toolCall of message.toolCalls; track toolCall.id) {
           <div class="tool-call" [title]="toolCall.args | json">
-            Tool Call: {{ toolCall.name }}
+            <!-- TODO: display the tool name -->
             <app-tool-status
               class="ml-5"
               [pending]="toolCall.status === 'pending'" />
