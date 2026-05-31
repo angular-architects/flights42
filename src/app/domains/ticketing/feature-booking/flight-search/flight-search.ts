@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { debounce, form, FormField } from '@angular/forms/signals';
 
+import { appSettings } from '../../../shared/util-common/app-settings';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { LanguageService } from '../../../shared/util-common/language';
 import { FlightCard } from '../../ui/flight-card/flight-card';
@@ -32,7 +33,7 @@ export class FlightSearch {
     (value) => this.flightStore.updateFilter(value.from, value.to),
   );
   protected readonly filterForm = form(this.filter, (path) => {
-    debounce(path, 300);
+    debounce(path, appSettings.debounceTimeMs);
   });
 
   protected readonly flightRoute = computed(
