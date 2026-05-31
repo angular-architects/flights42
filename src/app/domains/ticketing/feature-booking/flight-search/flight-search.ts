@@ -1,15 +1,18 @@
 import { DatePipe, JsonPipe } from '@angular/common';
-import { httpResource } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  inject,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 
+import { LanguageService } from '../../../shared/util-common/language';
 import { Flight } from '../../data/flight';
+import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
@@ -18,36 +21,29 @@ import { Flight } from '../../data/flight';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightSearch {
-  protected readonly filter = signal({ from: 'Graz', to: 'Hamburg' });
+  private flightStore = inject(FlightStore);
+  private languageService = inject(LanguageService);
+
+  protected readonly filter = linkedSignal(() => ({
+    from: this.flightStore.from(),
+    to: this.flightStore.to(),
+  }));
   protected readonly filterForm = form(this.filter);
 
   protected readonly flightRoute = computed(
     () => this.filter().from + ' to ' + this.filter().to,
   );
 
-  protected readonly flightsResource = httpResource<Flight[]>(
-    () => ({
-      url: 'https://demo.angulararchitects.io/api/flight',
-      params: {
-        from: this.filter().from,
-        to: this.filter().to,
-      },
-    }),
-    { defaultValue: [] },
-  );
-
-  protected readonly flights = this.flightsResource.value;
-  protected readonly error = this.flightsResource.error;
-  protected readonly isLoading = this.flightsResource.isLoading;
-
-  protected readonly delayInMin = signal(0);
-  protected readonly flightsWithDelays = computed(() =>
-    toFlightsWithDelays(this.flights(), this.delayInMin()),
-  );
+  protected readonly flights = this.flightStore.flights;
+  protected readonly flightsWithDelays = this.flightStore.flightsWithDelays;
+  protected readonly error = this.flightStore.flightsError;
+  protected readonly isLoading = this.flightStore.flightsIsLoading;
 
   protected readonly selectedFlight = signal<Flight | null>(null);
 
   constructor() {
+    console.log('user language', this.languageService.getUserLang());
+
     effect(() => {
       const error = this.error();
       if (error) {
@@ -57,7 +53,7 @@ export class FlightSearch {
   }
 
   protected search(): void {
-    this.flightsResource.reload();
+    this.flightStore.updateFilter(this.filter().from, this.filter().to);
   }
 
   protected select(flight: Flight): void {
@@ -65,20 +61,6 @@ export class FlightSearch {
   }
 
   protected delay(): void {
-    this.delayInMin.update((delayInMin) => delayInMin + 15);
+    this.flightStore.delay();
   }
-}
-
-function toFlightsWithDelays(flights: Flight[], delay: number): Flight[] {
-  if (flights.length === 0) {
-    return [];
-  }
-
-  const ONE_MINUTE = 1000 * 60;
-  const oldFlight = flights[0];
-  const oldDate = new Date(oldFlight.date);
-  const newDate = new Date(oldDate.getTime() + delay * ONE_MINUTE);
-  const newFlight = { ...oldFlight, date: newDate.toISOString() };
-
-  return [newFlight, ...flights.slice(1)];
 }
