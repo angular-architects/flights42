@@ -5,11 +5,12 @@ import {
   computed,
   effect,
   inject,
-  linkedSignal,
   signal,
 } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
+import { debounce, form, FormField } from '@angular/forms/signals';
 
+import { appSettings } from '../../../shared/util-common/app-settings';
+import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { LanguageService } from '../../../shared/util-common/language';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from './flight-store';
@@ -24,11 +25,16 @@ export class FlightSearch {
   private flightStore = inject(FlightStore);
   private languageService = inject(LanguageService);
 
-  protected readonly filter = linkedSignal(() => ({
-    from: this.flightStore.from(),
-    to: this.flightStore.to(),
-  }));
-  protected readonly filterForm = form(this.filter);
+  protected readonly filter = delegatedSignal(
+    () => ({
+      from: this.flightStore.from(),
+      to: this.flightStore.to(),
+    }),
+    (value) => this.flightStore.updateFilter(value.from, value.to),
+  );
+  protected readonly filterForm = form(this.filter, (path) => {
+    debounce(path, appSettings.debounceTimeMs);
+  });
 
   protected readonly flightRoute = computed(
     () => this.filter().from + ' to ' + this.filter().to,
@@ -56,7 +62,7 @@ export class FlightSearch {
   }
 
   protected search(): void {
-    this.flightStore.updateFilter(this.filter().from, this.filter().to);
+    this.flightStore.reload();
   }
 
   protected updateBasket(flightId: number, selected: boolean): void {
