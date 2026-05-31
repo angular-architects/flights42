@@ -1,8 +1,8 @@
 import { Mastra } from '@mastra/core/mastra';
 import { registerApiRoute } from '@mastra/core/server';
 
-import { weatherAgent } from './agent';
-import { chatRouteHandler } from './chat-route';
+import { weatherAgent } from './agent.js';
+import { chatRouteHandler } from './chat-route.js';
 
 const port = Number(process.env.AI_DEMO_PORT ?? 4555);
 

@@ -3,7 +3,7 @@ import { stdout } from 'node:process';
 import { closeInput, readLine } from './input.js';
 import { detailFor, extractText } from './utils.js';
 
-const SHOW_DETAILS = true;
+const SHOW_DETAILS = false;
 
 const url = process.env.AI_DEMO_URL ?? 'http://localhost:4555';
 
