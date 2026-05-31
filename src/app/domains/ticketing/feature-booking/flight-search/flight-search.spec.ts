@@ -5,9 +5,10 @@ import {
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { page } from 'vitest/browser';
 
-import { provideLanguageService } from '../../../shared/util-common/language';
 import { createTestFlight } from '../../../../testing/create-test-flight';
 import { provideTestConfig } from '../../../../testing/provide-test-config';
+import { appSettings } from '../../../shared/util-common/app-settings';
+import { provideLanguageService } from '../../../shared/util-common/language';
 import { FlightSearch } from './flight-search';
 import { FlightStore } from './flight-store';
 
@@ -26,6 +27,9 @@ describe('flight-search', () => {
       ],
     }).compileComponents();
 
+    // Turn off debouncing so the form propagates changes immediately
+    vi.spyOn(appSettings, 'debounceTimeMs', 'get').mockReturnValue(0);
+
     fixture = TestBed.createComponent(FlightSearch);
     component = fixture.componentInstance;
 
@@ -34,9 +38,11 @@ describe('flight-search', () => {
     // Await the initial data loading (from = Graz, to = Hamburg)
     const request = await vi.waitFor(
       () => ctrl.expectOne('/flight?from=Graz&to=Hamburg'),
-      { interval: 50, timeout: 1000 },
+      { interval: 0 },
     );
     request.flush([]);
+
+    await fixture.whenStable();
   });
 
   afterEach(() => {
@@ -55,26 +61,12 @@ describe('flight-search', () => {
     await expect.element(button).toBeDisabled();
   });
 
-  it('enables the search button when from and to are given', async () => {
-    await page.getByLabelText('From').fill('Paris');
+  it('loads flights when the search criteria change', async () => {
     await page.getByLabelText('To').fill('London');
 
-    const button = page.getByRole('button', { name: 'Search' });
-    await expect.element(button).toBeEnabled();
-  });
-
-  it('searches for flights when the search button is clicked', async () => {
-    const store = TestBed.inject(FlightStore);
-    vi.spyOn(store, 'updateFilter');
-
-    await page.getByLabelText('From').fill('Paris');
-    await page.getByLabelText('To').fill('London');
-
-    const button = page.getByRole('button', { name: 'Search' });
-    await button.click();
-
-    const request = await vi.waitFor(() =>
-      ctrl.expectOne('/flight?from=Paris&to=London'),
+    const request = await vi.waitFor(
+      () => ctrl.expectOne('/flight?from=Graz&to=London'),
+      { interval: 0 },
     );
 
     request.flush([
@@ -83,6 +75,23 @@ describe('flight-search', () => {
       createTestFlight(3),
     ]);
 
-    expect(store.updateFilter).toBeCalledWith('Paris', 'London');
+    await fixture.whenStable();
+  });
+
+  it('delegates the filter changes to the store', async () => {
+    const store = TestBed.inject(FlightStore);
+    vi.spyOn(store, 'updateFilter');
+
+    await page.getByLabelText('To').fill('London');
+
+    const request = await vi.waitFor(
+      () => ctrl.expectOne('/flight?from=Graz&to=London'),
+      { interval: 0 },
+    );
+    request.flush([]);
+
+    await fixture.whenStable();
+
+    expect(store.updateFilter).toBeCalledWith('Graz', 'London');
   });
 });
