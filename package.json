@@ -17,6 +17,8 @@
     "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
     "ag-ui-demo:server": "node --import tsx ag-ui-demo/server/index.ts",
     "ag-ui-demo:client": "node --import tsx ag-ui-demo/client/index.ts",
+    "ai-demo-server": "node --watch --import tsx ai-demo/server/index.ts",
+    "ai-demo-client": "node --watch --import tsx ai-demo/client/index.ts",
     "prepare": "husky"
   },
   "lint-staged": {
