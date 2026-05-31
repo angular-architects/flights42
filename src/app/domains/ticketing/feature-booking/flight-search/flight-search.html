@@ -1,0 +1,53 @@
+<h1>Flight Search</h1>
+
+<form>
+  <div class="form-group">
+    <label for="from">From:</label>
+    <input [formField]="filterForm.from" id="from" />
+  </div>
+  <div class="form-group">
+    <label for="to">To:</label>
+    <input [formField]="filterForm.to" id="to" />
+  </div>
+
+  <div class="form-group">Route: {{ flightRoute() }}</div>
+
+  <div class="form-group">
+    <button
+      type="button"
+      (click)="search()"
+      [disabled]="!filter().from || !filter().to">
+      Search
+    </button>
+  </div>
+</form>
+
+@if (flights().length > 0) {
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (flight of flights(); track flight.id) {
+        <tr
+          [class.selected]="flight === selectedFlight()"
+          (click)="select(flight)"
+          class="selectable">
+          <td>{{ flight.id }}</td>
+          <td>{{ flight.from }}</td>
+          <td>{{ flight.to }}</td>
+          <td>{{ flight.date | date: 'dd.MM.yyyy' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@if (selectedFlight()) {
+  <pre>{{ selectedFlight() | json }}</pre>
+}
