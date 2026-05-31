@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
+import { RouterLink } from '@angular/router';
 
 import { LanguageService } from '../../../shared/util-common/language';
 import { FlightCard } from '../../ui/flight-card/flight-card';
@@ -16,7 +17,7 @@ import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormField, JsonPipe, FlightCard],
+  imports: [FormField, JsonPipe, FlightCard, RouterLink],
   templateUrl: './flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
