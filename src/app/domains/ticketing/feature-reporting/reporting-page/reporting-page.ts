@@ -74,6 +74,16 @@ export class ReportingPage {
     this.input.set(this.message());
   }
 
+  protected demo(): void {
+    this.data.set([
+      { name: 'Vienna', value: 42 },
+      { name: 'London', value: 35 },
+      { name: 'Paris', value: 28 },
+      { name: 'New York', value: 19 },
+      { name: 'Tokyo', value: 12 },
+    ]);
+  }
+
   protected format(value: number) {
     return Number.isInteger(value) ? value.toString() : '';
   }

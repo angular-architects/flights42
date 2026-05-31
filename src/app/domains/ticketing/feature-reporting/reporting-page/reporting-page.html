@@ -11,6 +11,7 @@
     <button (click)="submit()">Generate</button>
     <button type="button" (click)="useExamplePrompt(0)">Example #1</button>
     <button type="button" (click)="useExamplePrompt(1)">Example #2</button>
+    <button type="button" (click)="demo()">Demo</button>
   </div>
 </form>
 
@@ -27,14 +28,17 @@
 }
 @if (generator.hasValue()) {
   <div class="mb-30">{{ generator.value()?.message }}</div>
-
+}
+@if (generator.hasValue() || data().length > 0) {
   <div class="chart-wrapper">
     <canvas #chart></canvas>
   </div>
 
-  <button (click)="regenerate()" class="btn btn-default mt-20">
-    Regenerate
-  </button>
+  @if (generator.hasValue()) {
+    <button (click)="regenerate()" class="btn btn-default mt-20">
+      Regenerate
+    </button>
+  }
 
   <button (click)="toggleDetails()" class="btn btn-default">Details</button>
 }
