@@ -19,8 +19,19 @@
       [disabled]="!filter().from || !filter().to">
       Search
     </button>
+    <button type="button" (click)="delay()" [disabled]="flights().length === 0">
+      Delay 1st
+    </button>
   </div>
 </form>
+
+@if (isLoading()) {
+  <div>Loading...</div>
+}
+
+@if (error()) {
+  <div class="alert">Error loading flights!</div>
+}
 
 @if (flights().length > 0) {
   <table class="table">
@@ -33,7 +44,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (flight of flights(); track flight.id) {
+      @for (flight of flightsWithDelays(); track flight.id) {
         <tr
           [class.selected]="flight === selectedFlight()"
           (click)="select(flight)"
