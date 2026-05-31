@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { debounce, form, FormField } from '@angular/forms/signals';
 
+import { CityPipe } from '../../../shared/ui-common/city.pipe';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { LanguageService } from '../../../shared/util-common/language';
 import { Flight } from '../../data/flight';
@@ -16,7 +17,7 @@ import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormField, DatePipe, JsonPipe],
+  imports: [FormField, DatePipe, JsonPipe, CityPipe],
   templateUrl: './flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

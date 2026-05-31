@@ -1,4 +1,5 @@
 {
   "baseUrl": "https://demo.angulararchitects.io/api",
+  "icao": false,
   "model": "gpt-5-chat-latest"
 }
