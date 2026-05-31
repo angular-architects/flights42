@@ -10,15 +10,15 @@ import {
   NavigationError,
   NavigationStart,
   Router,
+  RouterOutlet,
 } from '@angular/router';
 
-import { FlightSearch } from './domains/ticketing/feature-booking/flight-search/flight-search';
 import { Navbar } from './shell/navbar/navbar';
 import { Sidebar } from './shell/sidebar/sidebar';
 
 @Component({
   selector: 'app-root',
-  imports: [Sidebar, Navbar, FlightSearch],
+  imports: [Sidebar, Navbar, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

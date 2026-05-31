@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { debounce, form, FormField } from '@angular/forms/signals';
+import { RouterLink } from '@angular/router';
 
 import { appSettings } from '../../../shared/util-common/app-settings';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
@@ -16,7 +17,7 @@ import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
-  imports: [FormField, JsonPipe, FlightCard],
+  imports: [FormField, JsonPipe, FlightCard, RouterLink],
   templateUrl: './flight-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
