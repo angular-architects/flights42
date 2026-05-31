@@ -5,12 +5,12 @@ import {
   computed,
   effect,
   inject,
-  linkedSignal,
   signal,
 } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
+import { debounce, form, FormField } from '@angular/forms/signals';
 
 import { CityPipe } from '../../../shared/ui-common/city.pipe';
+import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { LanguageService } from '../../../shared/util-common/language';
 import { Flight } from '../../data/flight';
 import { FlightStore } from './flight-store';
@@ -25,11 +25,16 @@ export class FlightSearch {
   private flightStore = inject(FlightStore);
   private languageService = inject(LanguageService);
 
-  protected readonly filter = linkedSignal(() => ({
-    from: this.flightStore.from(),
-    to: this.flightStore.to(),
-  }));
-  protected readonly filterForm = form(this.filter);
+  protected readonly filter = delegatedSignal(
+    () => ({
+      from: this.flightStore.from(),
+      to: this.flightStore.to(),
+    }),
+    (value) => this.flightStore.updateFilter(value.from, value.to),
+  );
+  protected readonly filterForm = form(this.filter, (path) => {
+    debounce(path, 300);
+  });
 
   protected readonly flightRoute = computed(
     () => this.filter().from + ' to ' + this.filter().to,
@@ -54,7 +59,7 @@ export class FlightSearch {
   }
 
   protected search(): void {
-    this.flightStore.updateFilter(this.filter().from, this.filter().to);
+    this.flightStore.reload();
   }
 
   protected select(flight: Flight): void {
