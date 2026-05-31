@@ -7,7 +7,7 @@ import {
   effect,
   signal,
 } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
+import { debounce, form, FormField } from '@angular/forms/signals';
 
 import { Flight } from '../../data/flight';
 
@@ -19,7 +19,9 @@ import { Flight } from '../../data/flight';
 })
 export class FlightSearch {
   protected readonly filter = signal({ from: 'Graz', to: 'Hamburg' });
-  protected readonly filterForm = form(this.filter);
+  protected readonly filterForm = form(this.filter, (path) => {
+    debounce(path, 300);
+  });
 
   protected readonly flightRoute = computed(
     () => this.filter().from + ' to ' + this.filter().to,
