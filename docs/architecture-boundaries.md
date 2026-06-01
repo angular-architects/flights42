@@ -79,4 +79,4 @@ developers are required to adhere to these rules whenever they modify applicatio
 
 ## State Management
 
-- Follow `docs/signal-store.md` where applicable.
+- Follow `docs/architecture-state-management.md` where applicable.
