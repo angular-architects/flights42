@@ -6,12 +6,11 @@ import {
   output,
 } from '@angular/core';
 
-import { CityPipe } from '../../../shared/ui-common/city.pipe';
 import { Flight } from '../../data/flight';
 
 @Component({
   selector: 'app-flight-card',
-  imports: [DatePipe, CityPipe],
+  imports: [DatePipe],
   templateUrl: './flight-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Provider } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export interface Config {
@@ -27,4 +27,14 @@ export class ConfigService {
     this._baseUrl = config.baseUrl;
     this._icao = config.icao;
   }
+}
+
+export function provideTestConfig(): Provider {
+  return {
+    provide: ConfigService,
+    useValue: {
+      baseUrl: '',
+      icao: false,
+    },
+  };
 }
