@@ -81,7 +81,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "browsers": ["Chromium"]
+            "browsers": ["Chromium"],
+            "setupFiles": ["src/vitest-setup.ts"]
           },
           "configurations": {
             "ci": {
