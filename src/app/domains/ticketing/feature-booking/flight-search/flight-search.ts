@@ -11,7 +11,6 @@ import { debounce, form, FormField } from '@angular/forms/signals';
 
 import { appSettings } from '../../../shared/util-common/app-settings';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
-import { LanguageService } from '../../../shared/util-common/language';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from './flight-store';
 
@@ -23,7 +22,6 @@ import { FlightStore } from './flight-store';
 })
 export class FlightSearch {
   private flightStore = inject(FlightStore);
-  private languageService = inject(LanguageService);
 
   protected readonly filter = delegatedSignal(
     () => ({
@@ -51,8 +49,6 @@ export class FlightSearch {
   });
 
   constructor() {
-    console.log('user language', this.languageService.getUserLang());
-
     effect(() => {
       const error = this.error();
       if (error) {
