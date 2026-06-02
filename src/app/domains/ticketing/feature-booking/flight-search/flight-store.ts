@@ -16,7 +16,7 @@ export const FlightStore = signalStore(
 
   // TODO: Add withResource; get the resource from the FlightClient
 
-  // TODO: Add withComponent to compute flightsWithDelays
+  // TODO: Add withComputed to compute flightsWithDelays
 
   // TODO: Add withMethods: updateFilter, updateBasket, reload, delay
 
