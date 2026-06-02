@@ -4,7 +4,7 @@ import { streamAgUi, streamNative } from './stream.js';
 
 type Mode = 'native' | 'ag-ui';
 // Switch to 'ag-ui' to stream the AG-UI protocol instead of the native format.
-const mode = 'native' as Mode;
+const mode: Mode = 'native';
 
 const NDJSON_HEADERS = {
   'Content-Type': 'application/x-ndjson; charset=utf-8',
