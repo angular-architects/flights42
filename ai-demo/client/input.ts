@@ -1,7 +1,9 @@
 import { stdin, stdout } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
-const rl = createInterface({ input: stdin, output: stdout });
+// terminal: false disables readline's cursor management so streamed output
+// written directly to stdout is not cleared when the next prompt is drawn.
+const rl = createInterface({ input: stdin, output: stdout, terminal: false });
 
 /**
  * Reads a single trimmed line from the console. Returns undefined when the

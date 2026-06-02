@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="745" viewBox="0 0 1080 745" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+    <marker id="arrowDash" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b25400"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1080" height="745" fill="#ffffff"/>
+
+  <!-- ===================== EDGES (Agent -> File) ===================== -->
+  <!-- Claude Code (oben) -> Files -->
+  <line x1="420" y1="72" x2="212" y2="155" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="500" y1="72" x2="663" y2="155" stroke="#b25400" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#arrowDash)"/>
+  <line x1="200" y1="195" x2="200" y2="343" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="668" y1="195" x2="548" y2="343" stroke="#b25400" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#arrowDash)"/>
+  <line x1="722" y1="195" x2="838" y2="343" stroke="#b25400" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#arrowDash)"/>
+
+  <!-- Cursor AI (unten) -> Files -->
+  <line x1="420" y1="653" x2="214" y2="567" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="200" y1="525" x2="200" y2="382" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="500" y1="653" x2="663" y2="567" stroke="#b25400" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#arrowDash)"/>
+  <line x1="650" y1="525" x2="548" y2="382" stroke="#b25400" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#arrowDash)"/>
+  <line x1="730" y1="525" x2="838" y2="382" stroke="#b25400" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#arrowDash)"/>
+
+  <!-- ===================== NODES ===================== -->
+  <!-- Agents (abgerundet) -->
+  <g>
+    <rect x="385" y="18" width="150" height="54" rx="14" fill="#1565c0" stroke="#0d47a1" stroke-width="2"/>
+    <text x="460" y="50" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="bold">Claude Code</text>
+  </g>
+  <g>
+    <rect x="385" y="653" width="150" height="54" rx="14" fill="#1565c0" stroke="#0d47a1" stroke-width="2"/>
+    <text x="460" y="685" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="bold">Cursor AI</text>
+  </g>
+
+  <!-- Files (eckig) -->
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="140" y="155" width="120" height="40" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="200" y="180" text-anchor="middle" fill="#111">CLAUDE.md</text>
+
+    <rect x="615" y="155" width="150" height="40" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="690" y="180" text-anchor="middle" fill="#111">src/CLAUDE.md</text>
+
+    <rect x="140" y="340" width="120" height="40" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="200" y="365" text-anchor="middle" fill="#111">AGENTS.md</text>
+
+    <rect x="385" y="340" width="270" height="40" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="520" y="365" text-anchor="middle" fill="#111">docs/architecture-boundaries.md</text>
+
+    <rect x="720" y="340" width="300" height="40" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="870" y="365" text-anchor="middle" fill="#111">docs/architecture-state-management.md</text>
+
+    <rect x="95" y="525" width="210" height="40" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="200" y="550" text-anchor="middle" fill="#111">.cursor/rules/cursor.mdc</text>
+
+    <rect x="560" y="525" width="260" height="40" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="690" y="550" text-anchor="middle" fill="#111">.cursor/rules/architecture.mdc</text>
+  </g>
+
+  <!-- ===================== EDGE LABELS ===================== -->
+  <g font-size="11" font-style="italic" fill="#b25400" text-anchor="middle"
+     style="paint-order:stroke; stroke:#ffffff; stroke-width:3px; stroke-linejoin:round;">
+    <text x="585" y="110">&#171;on demand&#187;</text>
+    <text x="600" y="262">&#171;on demand&#187;</text>
+    <text x="788" y="262">&#171;on demand&#187;</text>
+    <text x="585" y="615">&#171;on demand&#187;</text>
+    <text x="592" y="460">&#171;on demand&#187;</text>
+    <text x="792" y="460">&#171;on demand&#187;</text>
+  </g>
+
+  <!-- ===================== LEGEND ===================== -->
+  <g>
+    <rect x="20" y="15" width="265" height="124" rx="6" fill="#fafafa" stroke="#cccccc"/>
+    <rect x="34" y="30" width="28" height="17" rx="8" fill="#1565c0" stroke="#0d47a1"/>
+    <text x="72" y="43" font-size="12" fill="#222">Agent (abgerundete Ecken)</text>
+    <rect x="34" y="58" width="28" height="17" rx="2" fill="#f5f5f5" stroke="#616161"/>
+    <text x="72" y="71" font-size="12" fill="#222">File (eckig)</text>
+    <line x1="34" y1="93" x2="62" y2="93" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <text x="72" y="97" font-size="12" fill="#222">immer geladen</text>
+    <line x1="34" y1="117" x2="62" y2="117" stroke="#b25400" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#arrowDash)"/>
+    <text x="72" y="121" font-size="12" fill="#222"><tspan font-style="italic" fill="#b25400">&#171;on demand&#187;</tspan> = nur bei Bedarf</text>
+  </g>
+</svg>

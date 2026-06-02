@@ -2,24 +2,33 @@ import { randomUUID } from 'node:crypto';
 
 import type { RunAgentInput } from '@ag-ui/core';
 import { MastraAgent } from '@ag-ui/mastra';
-import type { Response } from 'express';
+import type { Agent } from '@mastra/core/agent';
 
-import { weatherAgent } from './agent.js';
+const ENCODER = new TextEncoder();
 
-export async function streamNative(
+export function streamNative(
+  agent: Agent,
   prompt: string,
-  response: Response,
-): Promise<void> {
-  const stream = await weatherAgent.stream(prompt);
-  for await (const chunk of stream.fullStream) {
-    response.write(`${JSON.stringify(chunk)}\n`);
-  }
+): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        const stream = await agent.stream(prompt);
+        for await (const chunk of stream.fullStream) {
+          controller.enqueue(ENCODER.encode(`${JSON.stringify(chunk)}\n`));
+        }
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
 }
 
-export async function streamAgUi(
+export function streamAgUi(
+  agent: Agent,
   prompt: string,
-  response: Response,
-): Promise<void> {
+): ReadableStream<Uint8Array> {
   const threadId = randomUUID();
   const input: RunAgentInput = {
     threadId,
@@ -29,16 +38,21 @@ export async function streamAgUi(
     context: [],
   };
 
-  const aguiAgent = new MastraAgent({
-    agent: weatherAgent,
-    resourceId: threadId,
-  });
+  const aguiAgent = new MastraAgent({ agent, resourceId: threadId });
 
-  await new Promise<void>((resolve, reject) => {
-    aguiAgent.run(input).subscribe({
-      next: (event) => response.write(`${JSON.stringify(event)}\n`),
-      error: reject,
-      complete: resolve,
-    });
+  let subscription: { unsubscribe(): void } | undefined;
+
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      subscription = aguiAgent.run(input).subscribe({
+        next: (event) =>
+          controller.enqueue(ENCODER.encode(`${JSON.stringify(event)}\n`)),
+        error: (error) => controller.error(error),
+        complete: () => controller.close(),
+      });
+    },
+    cancel() {
+      subscription?.unsubscribe();
+    },
   });
 }
