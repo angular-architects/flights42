@@ -1,3 +1,18 @@
+"Manfred Steyer <manfred.steyer@gmx.net>,Sat Jun 6 22:48:48 2026 +0200	75eea0e24720eedb82726462566345b917e4345e,feat: add forensic review"
+94	0	.agents/skills/forensic-architecture-review/SKILL.md
+94	0	.claude/skills/forensic-architecture-review/SKILL.md
+
+"Manfred Steyer <manfred.steyer@gmx.net>,Sat Jun 6 22:45:09 2026 +0200	9db857a12768e93b3c7e16ba02e6ce4555a39024,feat: add detective mcp"
+124	0	.agents/skills/domain-boundaries-review/SKILL.md
+124	0	.claude/skills/domain-boundaries-review/SKILL.md
+3	0	.cursor/mcp.json
+1	1	.detective/hash
+24	0	.detective/log
+3480	0	.detective/trend-cache.json
+3	0	.mcp.json
+4	4	package-lock.json
+1	1	package.json
+
 "Manfred Steyer <manfred.steyer@gmx.net>,Sat Jun 6 22:07:48 2026 +0200	b2ef760a3061445b2d647f43d31d65ee8a1817de,feat: add verify-and-fix skill"
 34	0	.agents/skills/verify-and-fix/SKILL.md
 34	0	.claude/skills/verify-and-fix/SKILL.md
