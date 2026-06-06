@@ -8,6 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:arch": "vitest run --config vitest.arch.config.ts",
+    "verify": "node scripts/ci-checks.mjs --full",
     "lint": "ng lint",
     "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
     "sync:agent-config": "node scripts/sync-agent-config.mjs",
