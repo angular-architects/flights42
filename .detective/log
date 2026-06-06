@@ -1,3 +1,27 @@
+"Manfred Steyer <manfred.steyer@gmx.net>,Sat Jun 6 22:07:48 2026 +0200	b2ef760a3061445b2d647f43d31d65ee8a1817de,feat: add verify-and-fix skill"
+34	0	.agents/skills/verify-and-fix/SKILL.md
+34	0	.claude/skills/verify-and-fix/SKILL.md
+1	0	package.json
+15	3	scripts/ci-checks.mjs
+
+"Manfred Steyer <manfred.steyer@gmx.net>,Sat Jun 6 21:56:27 2026 +0200	4ebd5709486daea1cb3f48eb71dd3a93412eceb2,feat: call tsarch in ci-checks"
+1	0	scripts/ci-checks.mjs
+
+"Manfred Steyer <manfred.steyer@gmx.net>,Sat Jun 6 21:54:56 2026 +0200	c81491f05ad7bbfa7d43c8c06758227ddd572554,feat: add tsarch"
+19	0	.detective/config.json
+1	0	.detective/hash
+1744	0	.detective/log
+59	0	arch/access-rules.spec.ts
+44	0	arch/utils.ts
+4	1	docs/architecture-boundaries.md
+21	6	docs/architecture-state-management.md
+773	7	package-lock.json
+3	1	package.json
+1	1	src/app/domains/ticketing/feature-booking/summary-page/{summary-store.ts => summary-coordinator.ts}
+2	2	src/app/domains/ticketing/feature-booking/summary-page/summary-page.ts
+17	0	tsconfig.arch.json
+16	0	vitest.arch.config.ts
+
 "Manfred Steyer <manfred.steyer@gmx.net>,Mon Jun 1 18:21:46 2026 +0200	781b7b76f78f613cd5a99f90186ff0abfaca23b4,refactor: rename architecture docs"
 8	8	.agents/skills/architecture-review/SKILL.md
 8	8	.claude/skills/architecture-review/SKILL.md
