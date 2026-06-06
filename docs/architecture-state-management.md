@@ -42,8 +42,19 @@
 
 ## Store Dependencies
 
-- A store accesses another store only in exceptional cases. Ask the user before
-  introducing a store-to-store dependency.
+- A store MUST NOT depend on another store. Combining state from several stores is the
+  job of a coordinator, never of a store itself.
+
+## Coordinators
+
+- When a feature needs to read and combine state from several stores (and delegate writes
+  back to them), introduce a coordinator instead of letting a store depend on other stores.
+- A coordinator is a plain `@Injectable({ providedIn: 'root' })` service class — NOT a
+  Signal Store. Use the suffix `Coordinator` and the file suffix `-coordinator.ts`
+  (e.g., `SummaryCoordinator` in `summary-coordinator.ts`).
+- A coordinator MAY inject several stores; it typically exposes `computed` views derived
+  from them and forwards write actions to the underlying stores.
+- Follow `SummaryCoordinator` as the reference implementation.
 
 ## Structure of Stores
 
@@ -55,8 +66,12 @@
 
 ## Smart and Dumb Components and Stores
 
-- Only smart components are permitted to use stores.
-- Smart components use the following suffixes: `Page`, `Search`, `Detail`, `Edit`
-  (e.g., `FlightSearch`, `FlightEdit`).
-- Components obtain data only from a store or from a service that orchestrates several
+- Only smart components and coordinators are permitted to use stores.
+- Smart components use the following suffixes: `Page`, `Search`, `Detail`, `Edit`,
+  `Overview` (e.g., `FlightSearch`, `FlightEdit`).
+- Components obtain data only from a store or from a coordinator that combines several
   stores — never directly from a data access service.
+- Exception (locality): a dumb component MAY use a store that is co-located in the same
+  folder or in a child folder of it.
+- Exception (ai): files inside an `ai` layer (any `ai/` folder) are exempt from these
+  access restrictions and may access stores and data access services directly.

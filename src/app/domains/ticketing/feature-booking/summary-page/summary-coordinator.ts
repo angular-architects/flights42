@@ -4,7 +4,7 @@ import { FlightStore } from '../flight-search/flight-store';
 import { PassengerStore } from '../passenger-search/passenger-store';
 
 @Injectable({ providedIn: 'root' })
-export class SummaryStore {
+export class SummaryCoordinator {
   private flightStore = inject(FlightStore);
   private passengerStore = inject(PassengerStore);
 

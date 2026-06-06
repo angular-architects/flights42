@@ -1,0 +1,19 @@
+{
+  "scopes": [
+    "src/app/domains/checkin",
+    "src/app/domains/luggage",
+    "src/app/domains/shared",
+    "src/app/domains/ticketing"
+  ],
+  "groups": ["src/app/domains", "src/app", "src"],
+  "entries": [],
+  "filter": {
+    "files": [],
+    "logs": []
+  },
+  "aliases": {},
+  "teams": {
+    "example-team-a": ["John Doe", "Jane Doe"],
+    "example-team-b": ["Max Muster", "Susi Sorglos"]
+  }
+}

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { PassengerCard } from '../passenger-card/passenger-card';
-import { SummaryStore } from './summary-store';
+import { SummaryCoordinator } from './summary-coordinator';
 
 @Component({
   selector: 'app-summary-page',
@@ -11,7 +11,7 @@ import { SummaryStore } from './summary-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SummaryPage {
-  private readonly store = inject(SummaryStore);
+  private readonly store = inject(SummaryCoordinator);
 
   protected readonly selectedFlights = this.store.selectedFlights;
   protected readonly selectedPassengers = this.store.selectedPassengers;

@@ -63,7 +63,10 @@ developers are required to adhere to these rules whenever they modify applicatio
 - Follow `FlightClient` as the reference implementation.
 - Data access services must be stateless.
 - Components must never call a data access service directly. They obtain data through a
-  store or through a service that orchestrates several stores.
+  store or through a coordinator that combines several stores (see
+  `docs/architecture-state-management.md`).
+- Only stores may access a data access service directly. Exception: files inside an `ai`
+  layer (any `ai/` folder) may access data access services directly.
 
 ## Shared Code
 
