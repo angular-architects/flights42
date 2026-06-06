@@ -19,7 +19,6 @@ tools are unavailable, ask the user to start it.
 ## Workflow
 
 ```
-- [ ] Step 0: Ensure the Detective cache is fresh
 - [ ] Step 1: Determine the domain folders / scopes
 - [ ] Step 2: Semantic DDD review (ubiquitous language)
 - [ ] Step 3: Technical review (dependencies / coupling)
@@ -27,26 +26,14 @@ tools are unavailable, ask the user to start it.
 - [ ] Step 5: Synthesize feedback
 ```
 
-### Step 0: Ensure the cache is fresh (mandatory, do this first)
-
-Many Detective analyses read the Git history from a cache. Before using any
-Detective tool, make sure the cache is filled and not stale:
-
-1. Call `cache.status`.
-2. If it returns `isStale: true` (or you are unsure), call `cache.update`.
-
-Only proceed once the cache is fresh. This prevents stale results from the
-history-based tools (`changeCoupling.get`, `teamAlignment.get`, `hotspots.*`,
-`trendAnalysis.run`).
-
 ### Step 1: Determine the domain folders / scopes
 
 Use Detective to learn the actual structure instead of guessing:
 
-- `config.read` — the configured scopes (each scope is a folder prefix that
+- `config_read` — the configured scopes (each scope is a folder prefix that
   represents one domain/feature), groups, teams, aliases, filters.
-- `folders.get` — the folder hierarchy inferred from real code dependencies.
-- `modules.get` — file count per scope, to judge size and balance.
+- `folders_get` — the folder hierarchy inferred from real code dependencies.
+- `modules_get` — file count per scope, to judge size and balance.
 
 Note very large or very small scopes — both hint at a suboptimal cut.
 
@@ -72,7 +59,7 @@ comes from the code and the domain language.
 
 ### Step 3: Technical review — dependencies
 
-`coupling.get` is the primary tool here. It returns the structural coupling
+`coupling_get` is the primary tool here. It returns the structural coupling
 matrix (imports between scopes) and the cohesion per scope.
 
 - **High cohesion within** a scope + **low coupling between** scopes = good cut.
@@ -85,16 +72,16 @@ matrix (imports between scopes) and the cohesion per scope.
 
 Use the change history to validate the cut behaviorally:
 
-- `changeCoupling.get` — logical/temporal coupling: scopes frequently changed in
+- `changeCoupling_get` — logical/temporal coupling: scopes frequently changed in
   the same commit. Strong co-change between two scopes that are _not_
   structurally coupled suggests a hidden boundary problem (they belong together,
   or the cut forces shotgun edits).
-- `hotspots.find` / `hotspots.aggregate` — files/modules with high complexity
+- `hotspots_find` / `hotspots_aggregate` — files/modules with high complexity
   AND high change frequency (Tornhill hotspots). Hotspots clustered on a
   boundary often mean the boundary is wrong or overloaded.
-- `teamAlignment.get` — Conway's law: ideally one team works primarily within
+- `teamAlignment_get` — Conway's law: ideally one team works primarily within
   one scope. Many teams scattered across one scope hints at a misaligned cut.
-- Optionally `trendAnalysis.run` to see whether boundary-related complexity is
+- Optionally `trendAnalysis_run` to see whether boundary-related complexity is
   growing over time.
 
 Use `limitCommits` / `limitMonths` to restrict the history window when the repo
