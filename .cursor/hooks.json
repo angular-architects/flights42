@@ -3,7 +3,7 @@
   "hooks": {
     "stop": [
       {
-        "command": "node scripts/ci-checks.mjs",
+        "command": "node scripts/hooks/cursor-stop-hook.mjs",
         "timeout": 600,
         "loop_limit": 3
       }

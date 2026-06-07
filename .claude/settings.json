@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/ci-checks.mjs",
+            "command": "node scripts/hooks/claude-stop-hook.mjs",
             "timeout": 600
           }
         ]
