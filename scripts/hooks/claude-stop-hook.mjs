@@ -1,6 +1,12 @@
-import { runStopHook } from './run-stop-hook.mjs';
+import process from 'node:process';
 
-runStopHook({
-  success: () => ({ exitCode: 0 }),
-  fail: (_input, message) => ({ exitCode: 2, stderr: message }),
-});
+import { runChecks } from '../ci-checks.mjs';
+
+const result = runChecks({ capture: true });
+
+if (result.status === 'error') {
+  process.stderr.write(result.message);
+  process.exit(2);
+}
+
+process.exit(0);

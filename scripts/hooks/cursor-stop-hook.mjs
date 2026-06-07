@@ -1,10 +1,17 @@
-import { runStopHook } from './run-stop-hook.mjs';
+import process from 'node:process';
 
-runStopHook({
-  skip: (input) => input.status === 'aborted',
-  success: () => ({ exitCode: 0, stdout: '{}' }),
-  fail: (_input, message) => ({
-    exitCode: 0,
-    stdout: JSON.stringify({ followup_message: message }),
-  }),
-});
+import { runChecks } from '../ci-checks.mjs';
+import { readInput } from './read-input.mjs';
+
+const input = await readInput();
+
+if (input.status !== 'aborted') {
+  const result = runChecks({ capture: true });
+  if (result.status === 'error') {
+    process.stdout.write(JSON.stringify({ followup_message: result.message }));
+    process.exit(0);
+  }
+}
+
+process.stdout.write('{}');
+process.exit(0);

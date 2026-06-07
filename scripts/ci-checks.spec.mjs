@@ -4,7 +4,6 @@ vi.mock('node:child_process', () => ({ execSync: vi.fn() }));
 
 import { execSync } from 'node:child_process';
 
-import { CiCheckError } from './ci-check-error.mjs';
 import { runChecks } from './ci-checks.mjs';
 
 const execSyncMock = vi.mocked(execSync);
@@ -18,34 +17,30 @@ describe('runChecks', () => {
     execSyncMock.mockReset();
   });
 
-  it('runs the three fast steps and does not throw when all pass', () => {
+  it('runs the three fast steps and succeeds when all pass', () => {
     execSyncMock.mockReturnValue('ok');
 
-    expect(() => runChecks()).not.toThrow();
+    expect(runChecks()).toEqual({ status: 'success' });
     expect(execSyncMock).toHaveBeenCalledTimes(3);
   });
 
   it('runs the fast steps plus the full-only steps in full mode', () => {
     execSyncMock.mockReturnValue('ok');
 
-    runChecks({ full: true });
-
+    expect(runChecks({ full: true })).toEqual({ status: 'success' });
     expect(execSyncMock).toHaveBeenCalledTimes(5);
   });
 
-  it('throws a CiCheckError carrying the captured stdout in capture mode', () => {
+  it('returns an error result carrying the captured stdout in capture mode', () => {
     execSyncMock.mockImplementation(() => {
       throw execFailure({ stdout: 'error  Unexpected store dependency' });
     });
 
-    try {
-      runChecks({ capture: true });
-      expect.unreachable('runChecks should have thrown');
-    } catch (error) {
-      expect(error).toBeInstanceOf(CiCheckError);
-      expect(error.step).toBe('npx ng lint flights');
-      expect(error.output).toContain('Unexpected store dependency');
-    }
+    const result = runChecks({ capture: true });
+
+    expect(result.status).toBe('error');
+    expect(result.message).toContain('npx ng lint flights');
+    expect(result.message).toContain('Unexpected store dependency');
   });
 
   it('also captures stderr output', () => {
@@ -53,9 +48,10 @@ describe('runChecks', () => {
       throw execFailure({ stderr: 'FAIL arch/access-rules.spec.ts' });
     });
 
-    expect(() => runChecks({ capture: true })).toThrowError(
-      /FAIL arch\/access-rules/,
-    );
+    const result = runChecks({ capture: true });
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/FAIL arch\/access-rules/);
   });
 
   it('stops at the first failing step', () => {
@@ -63,7 +59,7 @@ describe('runChecks', () => {
       throw execFailure({ stdout: 'boom' });
     });
 
-    expect(() => runChecks({ capture: true })).toThrow();
+    expect(runChecks({ capture: true }).status).toBe('error');
     expect(execSyncMock).toHaveBeenCalledTimes(1);
   });
 });
