@@ -21,12 +21,17 @@ It stops at the first failing step.
 ## Fix loop
 
 1. Run `npm run verify`.
-2. On failure, fix the **root cause**, not the symptom. Never weaken lint,
+2. On failure, diagnose the **root cause**, not the symptom. Never weaken lint,
    Sheriff, or the architecture rules to make a check pass — fix the code
    instead. The rules live in `docs/architecture-boundaries.md` and
    `docs/architecture-state-management.md`.
-3. Re-run `npm run verify` and repeat until every step passes.
-4. Report success only once `npm run verify` is fully green.
+3. **Propose the fixes first.** Summarize each problem and the change you intend
+   to make, then wait for the user's confirmation. Do **not** edit any files
+   until the user approves.
+4. After the user confirms, apply the approved fixes.
+5. Re-run `npm run verify`. If new problems appear, go back to step 2 (propose,
+   confirm, then apply) and repeat until every step passes.
+6. Report success only once `npm run verify` is fully green.
 
 ## Notes
 
