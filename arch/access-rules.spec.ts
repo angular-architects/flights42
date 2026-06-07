@@ -13,8 +13,8 @@ const TS_CONFIG = 'tsconfig.arch.json';
 const STORE = String.raw`-store\.ts$`;
 const CLIENT = String.raw`-client\.ts$`;
 const SMART = String.raw`-(page|search|edit|detail|overview)\.ts$`;
+const DUMB = String.raw`(-(card|pane)\.ts$|/ui(-[^/]+)?/)`;
 const AI_LAYER = String.raw`/ai/`;
-// A coordinator is a plain service that may read and combine several stores.
 const COORDINATOR = String.raw`-coordinator\.ts$`;
 
 describe('architecture: suffix-based access rules', () => {
@@ -52,6 +52,17 @@ describe('architecture: suffix-based access rules', () => {
       .shouldNot()
       .dependOnFiles()
       .matchingPattern(STORE);
+
+    const violations = await rule.check();
+    expect(violations.map(toDependency).map(formatDependency)).toEqual([]);
+  });
+
+  it('dumb components must not access smart components', async () => {
+    const rule = filesOfProject(TS_CONFIG)
+      .matchingPattern(DUMB)
+      .shouldNot()
+      .dependOnFiles()
+      .matchingPattern(SMART);
 
     const violations = await rule.check();
     expect(violations.map(toDependency).map(formatDependency)).toEqual([]);
