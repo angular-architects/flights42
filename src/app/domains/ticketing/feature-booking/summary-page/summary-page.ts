@@ -11,19 +11,19 @@ import { SummaryCoordinator } from './summary-coordinator';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SummaryPage {
-  private readonly store = inject(SummaryCoordinator);
+  private readonly coordinator = inject(SummaryCoordinator);
 
-  protected readonly selectedFlights = this.store.selectedFlights;
-  protected readonly selectedPassengers = this.store.selectedPassengers;
+  protected readonly selectedFlights = this.coordinator.selectedFlights;
+  protected readonly selectedPassengers = this.coordinator.selectedPassengers;
 
   protected updateFlightSelection(flightId: number, selected: boolean): void {
-    this.store.updateFlightSelection(flightId, selected);
+    this.coordinator.updateFlightSelection(flightId, selected);
   }
 
   protected updatePassengerSelection(
     passengerId: number,
     selected: boolean,
   ): void {
-    this.store.updatePassengerSelection(passengerId, selected);
+    this.coordinator.updatePassengerSelection(passengerId, selected);
   }
 }
