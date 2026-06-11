@@ -30,10 +30,7 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import {
-  appendA2uiSurfaceFromActivitySnapshot,
-  appendA2uiSurfaceFromToolResult,
-} from './widgets';
+import { appendA2uiSurfaceFromActivitySnapshot } from './widgets';
 
 export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
 
@@ -219,18 +216,9 @@ export async function runAgent(
       followUpToolCallIds.push(event.toolCallId);
     },
     onToolCallResultEvent: ({ event }) => {
-      messageStream.update((item) => {
-        const messages = readMessages(item);
-        const withSurface = appendA2uiSurfaceFromToolResult(
-          messages,
-          event.toolCallId,
-          event.content,
-          renderer,
-        );
-        return {
-          value: completeToolCall(withSurface, event.toolCallId),
-        };
-      });
+      messageStream.update((item) => ({
+        value: completeToolCall(readMessages(item), event.toolCallId),
+      }));
     },
     onActivitySnapshotEvent: ({ event }) => {
       if (event.activityType !== 'a2ui-surface') {
@@ -378,7 +366,6 @@ export async function runUntilSettled(
     await executePendingTools({
       agent,
       toolMap,
-      renderer,
       environmentInjector,
       pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,
