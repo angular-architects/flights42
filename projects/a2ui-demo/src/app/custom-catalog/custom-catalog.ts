@@ -7,15 +7,18 @@ import { z } from 'zod/v3';
 
 import { formatIdImplementation } from './format-id';
 import { MilesProgress } from './miles-progress';
+import { binding } from './utils';
 
-const dynamicObjectSchema = z.union([
-  z.record(z.unknown()),
-  z.object({ path: z.string() }).strict(),
-]);
+const passengerSchema = z.object({
+  id: z.number(),
+  firstName: z.string(),
+  lastName: z.string(),
+  bonusMiles: z.number(),
+});
 
 const milesProgressSchema = z
   .object({
-    passenger: dynamicObjectSchema.optional(),
+    passenger: binding(passengerSchema).optional(),
     weight: z.number().optional(),
   })
   .strict();
