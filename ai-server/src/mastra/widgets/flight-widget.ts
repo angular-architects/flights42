@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+
 import { z } from 'zod';
 
 import {
@@ -42,7 +43,10 @@ export const flightWidget = defineServerWidget({
       .describe('Booking status of the flight.'),
   }),
   build: ({ flight, status }): BuiltComponent => {
-    const prefix = `flight-${flight.id}-${randomUUID().slice(0, 8)}`;
+    const instanceId = `${flight.id}-${randomUUID().slice(0, 8)}`;
+    const prefix = `flight-${instanceId}`;
+    const dataPath = `/flights/${instanceId}`;
+
     const cardId = `${prefix}-card`;
     const columnId = `${prefix}-column`;
     const titleId = `${prefix}-title`;

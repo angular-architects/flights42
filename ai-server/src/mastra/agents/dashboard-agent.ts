@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
+import { model } from '../config.js';
 import {
   RENDER_DASHBOARD_TOOL_NAME,
   renderDashboardTool,
@@ -10,11 +11,8 @@ import { dashboardAgentPrompt } from './dashboard-agent.prompt.js';
 export const dashboardAgent = new Agent({
   id: 'dashboardAgent',
   name: 'Flight42 Dashboard Composer',
-  instructions: addCustomCatalogInstructions({
-    systemInstructions: dashboardAgentPrompt,
-    log: false,
-  }),
-  model: 'openai/gpt-5.3-chat-latest',
+  instructions: dashboardAgentPrompt,
+  model,
   // The object key — not the tool's `id` — is what Mastra sends to the
   // LLM as the function name. Keeping them aligned with
   // `RENDER_DASHBOARD_TOOL_NAME` ensures the route handler's

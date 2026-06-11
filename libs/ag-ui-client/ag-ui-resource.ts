@@ -130,6 +130,8 @@ export function agUiResource(
   const renderer = inject(A2uiRendererService);
   const a2uiCatalog =
     inject(A2UI_CUSTOM_CATALOG, { optional: true }) ?? undefined;
+  const readForwardedProps = (): Record<string, unknown> =>
+    options.forwardedProps ? options.forwardedProps() : {};
   const createAgent = (): HttpAgent =>
     new HttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();

@@ -30,9 +30,23 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import { appendA2uiSurfaceFromToolResult } from './widgets';
+import {
+  appendA2uiSurfaceFromActivitySnapshot,
+  appendA2uiSurfaceFromToolResult,
+} from './widgets';
 
 export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
+
+function buildForwardedProps(
+  model: string | undefined,
+  extras: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  const merged: Record<string, unknown> = { ...(extras ?? {}) };
+  if (model) {
+    merged['modelHint'] = model;
+  }
+  return Object.keys(merged).length > 0 ? merged : undefined;
+}
 
 export interface RunAgentOptions {
   agent: HttpAgent;
@@ -100,54 +114,6 @@ function buildCatalogContext(
   ];
 }
 
-function buildCatalogContext(
-  catalog: A2uiCustomCatalog | undefined,
-): { description: string; value: string }[] | undefined {
-  if (!catalog) {
-    return undefined;
-  }
-
-  const components = catalog.components.reduce<
-    Record<string, { description: string; schema: unknown }>
-  >((acc, entry) => {
-    acc[entry.name] = {
-      description: entry.description,
-      schema: z.toJSONSchema(entry.schema),
-    };
-    return acc;
-  }, {});
-
-  const functions = (catalog.functions ?? []).reduce<
-    Record<string, { description: string; returnType: string; schema: unknown }>
-  >((acc, fn) => {
-    acc[fn.name] = {
-      description: fn.description,
-      returnType: fn.returnType,
-      schema: z.toJSONSchema(fn.schema),
-    };
-    return acc;
-  }, {});
-
-  const payload: {
-    catalogId: string;
-    components?: typeof components;
-    functions?: typeof functions;
-  } = { catalogId: catalog.id };
-  if (Object.keys(components).length > 0) {
-    payload.components = components;
-  }
-  if (Object.keys(functions).length > 0) {
-    payload.functions = functions;
-  }
-
-  return [
-    {
-      description: A2UI_CATALOG_CONTEXT_DESCRIPTION,
-      value: JSON.stringify(payload),
-    },
-  ];
-}
-
 interface RunAgentResult {
   pendingLocalCalls: PendingToolExecution[];
   followUpToolCallIds: string[];
@@ -165,6 +131,7 @@ export async function runAgent(
     useServerMemory,
     a2uiCatalog,
     messageStream,
+    extraForwardedProps,
   } = options;
   const { runId } = options;
 
@@ -320,7 +287,7 @@ export async function runAgent(
     {
       runId,
       tools: toolsToOffer,
-      forwardedProps: model ? { modelHint: model } : undefined,
+      forwardedProps,
       context: buildCatalogContext(a2uiCatalog),
     },
     subscriber,

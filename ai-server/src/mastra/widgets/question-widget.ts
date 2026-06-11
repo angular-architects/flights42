@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+
 import { z } from 'zod';
 
 import {
@@ -30,7 +31,8 @@ export const questionWidget = defineServerWidget({
       .describe('List of questions to ask the user.'),
   }),
   build: ({ questions }): BuiltComponent => {
-    const prefix = `question-${randomUUID().slice(0, 8)}`;
+    const instanceId = randomUUID().slice(0, 8);
+    const prefix = `question-${instanceId}`;
     const cardId = `${prefix}-card`;
     const columnId = `${prefix}-column`;
     const dataPath = `/forms/${instanceId}`;

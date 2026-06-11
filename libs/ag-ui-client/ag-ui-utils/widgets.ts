@@ -151,23 +151,20 @@ function widgetsContentEqual(a: AgUiWidget, b: AgUiWidget): boolean {
 
 function appendWidget(
   messages: AgUiChatMessage[],
-  toolCallId: string,
+  anchorId: string,
   widget: AgUiWidget,
 ): AgUiChatMessage[] {
-  const existingIndex = messages.findIndex(
-    (message) => message.id === messageId,
-  );
-
-  if (existingIndex !== -1) {
-    const existing = messages[existingIndex];
-    if (existing.role !== 'assistant') {
-      return messages;
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index];
+    if (message.role !== 'assistant') {
+      continue;
     }
 
     const matchesToolCall = message.toolCalls.some(
-      (toolCall: AgUiToolCall) => toolCall.id === toolCallId,
+      (toolCall: AgUiToolCall) => toolCall.id === anchorId,
     );
-    if (!matchesToolCall) {
+    const matchesMessage = message.id === anchorId;
+    if (!matchesToolCall && !matchesMessage) {
       continue;
     }
 
@@ -178,16 +175,32 @@ function appendWidget(
       return messages;
     }
 
-    return replaceMessage(messages, existingIndex, {
-      ...existing,
-      widgets: [...existing.widgets, widget],
+    return replaceMessage(messages, index, {
+      ...message,
+      widgets: [...message.widgets, widget],
+    });
+  }
+
+  const lastAssistantIndex = findLastAssistantMessageIndex(messages);
+  if (lastAssistantIndex !== -1) {
+    const lastAssistantMessage = messages[lastAssistantIndex];
+    const hasWidget = lastAssistantMessage.widgets.some((entry: AgUiWidget) =>
+      widgetsContentEqual(entry, widget),
+    );
+    if (hasWidget) {
+      return messages;
+    }
+
+    return replaceMessage(messages, lastAssistantIndex, {
+      ...lastAssistantMessage,
+      widgets: [...lastAssistantMessage.widgets, widget],
     });
   }
 
   return [
     ...messages,
     {
-      id: messageId,
+      id: anchorId,
       role: 'assistant',
       content: '',
       widgets: [widget],

@@ -609,11 +609,11 @@ function buildBookedFlightsList(
       meta = `${flight.date.slice(0, 10)} · ${statusText}`;
     }
 
-    dataOps.push(
-      dataOp(surfaceId, path('id'), flight.id),
-      dataOp(surfaceId, path('route'), `${flight.from} → ${flight.to}`),
-      dataOp(surfaceId, path('meta'), meta),
-    );
+    flightRows.push({
+      id: flight.id,
+      route: `${flight.from} → ${flight.to}`,
+      meta,
+    });
   });
 
   const dataOps = [dataOp(surfaceId, tilePath(idx), { flights: flightRows })];

@@ -27,14 +27,64 @@
     @if (hasOutput()) {
       <button type="button" (click)="reset()">Reset</button>
     }
+    <label class="prevent-caching">
+      <input
+        type="checkbox"
+        name="preventCaching"
+        [checked]="preventCaching()"
+        (change)="preventCaching.set($any($event.target).checked)" />
+      Prevent caching
+    </label>
   </div>
 </form>
 
-@if (chat.isLoading()) {
-  <div class="ai-wait-indicator">
-    <span></span>
-    <span></span>
-    <span></span>
+@if (chat.isLoading() || allToolCalls().length > 0) {
+  <div class="tool-status">
+    <span class="tool-status-text">{{ currentStatus() }}</span>
+    @if (chat.isLoading()) {
+      <div class="ai-wait-indicator tool-status-dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    }
+    @if (allToolCalls().length > 0) {
+      <button
+        type="button"
+        class="tool-status-toggle"
+        (click)="toggleToolDetails()">
+        {{ showToolDetails() ? 'Less' : 'More' }}
+      </button>
+    }
+  </div>
+}
+
+@if (showToolDetails() && allToolCalls().length > 0) {
+  <div class="tool-details-layer" role="dialog" aria-label="Tool call details">
+    <header class="tool-details-header">
+      <h2>Tool calls</h2>
+      <button
+        type="button"
+        class="tool-details-close"
+        (click)="toggleToolDetails()">
+        Less
+      </button>
+    </header>
+    <ol class="tool-details-list">
+      @for (toolCall of allToolCalls(); track toolCall.id) {
+        <li class="tool-details-item" [attr.data-status]="toolCall.status">
+          <div class="tool-details-item-head">
+            <span class="tool-details-name">{{ toolCall.name }}</span>
+            <span class="tool-details-status">{{ toolCall.status }}</span>
+          </div>
+          @if (formatToolArgs(toolCall.args); as argsText) {
+            @if (argsText.length > 0) {
+              <pre class="tool-details-args">{{ argsText }}</pre>
+            }
+          }
+        </li>
+      }
+    </ol>
   </div>
 }
 

@@ -3,16 +3,32 @@ import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  type DashboardSpec,
+  dashboardSpecSchema,
+} from '../dashboard-dsl/dashboard-spec.js';
+
 // File-system based cache for the dashboard agent. Resolves to
 // `<repo>/ai-server/cache/` relative to this source file so the location is
 // stable regardless of which directory `mastra dev` is launched from.
+//
+// Since the move to the dashboard DSL we cache only the parsed
+// `DashboardSpec`. A2UI structural ops are recompiled deterministically
+// from the spec by `compileDashboard` on every refresh, and the data
+// ops are reproduced fresh from the live data sources. The .json
+// extension is new on purpose so old `.a2ui.txt` files (which used a
+// different layout) no longer collide.
 const SOURCE_DIR = dirname(fileURLToPath(import.meta.url));
 const CACHE_DIR = resolve(SOURCE_DIR, '../../../cache');
-const FILE_SUFFIX = '.a2ui.txt';
+const FILE_SUFFIX = '.dashboard.json';
 
 interface RequestMessage {
   readonly role: string;
   readonly content?: unknown;
+}
+
+export interface DashboardCacheEntry {
+  spec: DashboardSpec;
 }
 
 export function computeDashboardRequestHash(
@@ -40,11 +56,11 @@ export async function dashboardCacheExists(hash: string): Promise<boolean> {
 
 export async function readDashboardCache(
   hash: string,
-): Promise<unknown[] | null> {
+): Promise<DashboardCacheEntry | null> {
   try {
     const raw = await readFile(getCacheFilePath(hash), 'utf-8');
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? parsed : null;
+    return toCacheEntry(parsed);
   } catch (err) {
     if (isNotFoundError(err)) {
       return null;
@@ -55,14 +71,31 @@ export async function readDashboardCache(
 
 export async function writeDashboardCache(
   hash: string,
-  operations: readonly unknown[],
-): Promise<void> {
+  spec: DashboardSpec,
+): Promise<DashboardCacheEntry> {
+  const entry: DashboardCacheEntry = { spec };
   await mkdir(CACHE_DIR, { recursive: true });
   await writeFile(
     getCacheFilePath(hash),
-    JSON.stringify(operations, null, 2),
+    JSON.stringify(entry, null, 2),
     'utf-8',
   );
+  return entry;
+}
+
+function toCacheEntry(value: unknown): DashboardCacheEntry | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const candidate = value as { spec?: unknown };
+  if (!candidate.spec) {
+    return null;
+  }
+  const result = dashboardSpecSchema.safeParse(candidate.spec);
+  if (!result.success) {
+    return null;
+  }
+  return { spec: result.data };
 }
 
 function getCacheFilePath(hash: string): string {

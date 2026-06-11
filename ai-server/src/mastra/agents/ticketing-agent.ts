@@ -5,14 +5,10 @@ import {
   addCustomCatalogInstructions,
   renderA2uiTool,
 } from '../../../../libs/ag-ui-server/index.js';
+import { modelAdvancedTasks } from '../config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
-import {
-  flightWidget,
-  messageWidget,
-  questionWidget,
-} from '../widgets/index.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
 export const ticketingAgent = new Agent({
@@ -22,12 +18,12 @@ export const ticketingAgent = new Agent({
     systemInstructions: ticketingAgentPrompt,
     log: false,
   }),
-  model: 'openai/gpt-5.3-chat-latest',
+  model: modelAdvancedTasks,
   tools: {
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
-    showComponents,
+    renderA2uiTool,
   },
   memory: new Memory(),
 });

@@ -1,6 +1,8 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { AI_SERVER_PUBLIC_URL } from './public-url.js';
+
 const PALETTE = [
   '#3b82f6',
   '#f97316',
@@ -40,13 +42,45 @@ function rememberChart(svg: string): string {
   return id;
 }
 
+export interface FlightChartDataset {
+  label?: string;
+  data: number[];
+  color?: string;
+}
+
+export interface BuildAndCacheChartArgs {
+  type: 'bar' | 'pie';
+  title?: string;
+  labels: string[];
+  datasets: FlightChartDataset[];
+}
+
+/**
+ * Renders a chart SVG with the same shapes the public `renderChartTool`
+ * produces, caches it, and returns the short HTTP URL the client can
+ * embed in an `Image` component. Shared with composite tools (e.g.
+ * `renderFlightChartTool`) to avoid an extra LLM round-trip per chart.
+ */
+export function buildAndCacheChartUrl(args: BuildAndCacheChartArgs): string {
+  const svg =
+    args.type === 'bar'
+      ? renderBarChart({
+          labels: args.labels,
+          datasets: args.datasets,
+          title: args.title,
+        })
+      : renderPieChart({
+          labels: args.labels,
+          datasets: args.datasets,
+          title: args.title,
+        });
+  const id = rememberChart(svg);
+  return `${AI_SERVER_PUBLIC_URL}/charts/${id}.svg`;
+}
+
 export function getCachedChartSvg(id: string): string | undefined {
   return chartCache.get(id);
 }
-
-const CHART_BASE_URL = (
-  process.env['AI_SERVER_PUBLIC_URL'] ?? 'http://localhost:3001'
-).replace(/\/+$/, '');
 
 const datasetSchema = z.object({
   label: z
@@ -95,7 +129,7 @@ export const renderChartTool = createTool({
         : renderPieChart({ labels, datasets, title });
     const id = rememberChart(svg);
     return {
-      url: `${CHART_BASE_URL}/charts/${id}.svg`,
+      url: `${AI_SERVER_PUBLIC_URL}/charts/${id}.svg`,
     };
   },
 });

@@ -301,6 +301,8 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
     return true;
   }
 
+  const serializedResult = JSON.stringify(result);
+
   addToolResultMessage(agent, pendingCall.toolCallId, result);
 
   messageStream.update((item) => ({

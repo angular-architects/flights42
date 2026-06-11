@@ -16,11 +16,11 @@ import {
 } from '@angular/core';
 import type { ZodTypeAny } from 'zod';
 
+import { type A2uiCustomCatalogFunction } from './a2ui-schema';
 import {
   type A2uiCustomCatalog,
   type A2uiCustomCatalogComponent,
 } from './ag-ui-types';
-import { type A2uiCustomCatalogFunction } from './a2ui-schema';
 
 /**
  * Holds the descriptor of the registered A2UI custom catalog so consumers
