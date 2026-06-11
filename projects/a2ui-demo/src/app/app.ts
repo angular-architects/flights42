@@ -40,7 +40,9 @@ export class App {
       lastName: 'Miller',
       bonusMiles: 1200,
     };
-    this.renderer.processMessages(this.createSurfaceMessages(passenger));
+
+    const a2uiMessages = createSurfaceMessages(this.surfaceId, passenger);
+    this.renderer.processMessages(a2uiMessages);
   }
 
   private registerHandler(): void {
@@ -48,17 +50,11 @@ export class App {
       (action: A2uiClientAction) => {
         console.log('[A2UI Event]', action);
 
-        if (action.name !== 'increaseMiles') {
-          return;
-        }
-
-        const passenger = action.context as unknown as Passenger;
-        this.renderer.processMessages([
-          this.toUpdateMessage({
-            ...passenger,
-            bonusMiles: passenger.bonusMiles + 300,
-          }),
-        ]);
+        // TODO: Add handler for increaseMiles action:
+        //       1. Get the passenger from the action context
+        //       2. Update its bonusMiles by 300 and write it back
+        // Hint: For writing back, use
+        //       renderer.processMessages and toUpdateMessage
       },
     );
 

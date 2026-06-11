@@ -1,6 +1,7 @@
+import { BasicCatalog } from '@a2ui/angular/v0_9';
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 
-import { customCatalog } from './custom-catalog/custom-catalog';
+const basicCatalogId = new BasicCatalog().id;
 
 export interface Passenger {
   id: number;
@@ -18,7 +19,7 @@ export function createSurfaceMessages(
       version: 'v0.9',
       createSurface: {
         surfaceId,
-        catalogId: customCatalog.id,
+        catalogId: basicCatalogId,
       },
     },
     {
@@ -82,27 +83,16 @@ export function createSurfaceMessages(
           {
             id: 'passenger-id-value',
             component: 'Text',
-            text: {
-              call: 'formatId',
-              args: {
-                value: { path: '/passenger/id' },
-              },
-              returnType: 'string',
-            },
+            text: { path: '/passenger/id' },
             variant: 'body',
           },
-          {
-            id: 'passenger-first-name-label',
-            component: 'Text',
-            text: 'First name: ',
-            variant: 'body',
-          },
-          {
-            id: 'passenger-first-name-value',
-            component: 'Text',
-            text: { path: '/passenger/firstName' },
-            variant: 'body',
-          },
+
+          // TODO: Add label for firstName
+          { id: 'passenger-first-name-label', component: 'Text' },
+
+          // TODO: Add value for firstName
+          { id: 'passenger-first-name-value', component: 'Text' },
+
           {
             id: 'passenger-last-name-label',
             component: 'Text',
@@ -124,43 +114,22 @@ export function createSurfaceMessages(
           {
             id: 'passenger-bonus-miles-value',
             component: 'Text',
-            text: {
-              call: 'formatNumber',
-              args: {
-                value: { path: '/passenger/bonusMiles' },
-                decimals: 0,
-              },
-              returnType: 'string',
-            },
+            // TODO: Format bonus miles using a comma as thousands separator
+            //       Example: 1,200 for 1200
+            text: { path: '/passenger/bonusMiles' },
             variant: 'body',
           },
-          {
-            id: 'miles-progress',
-            component: 'MilesProgress',
-            passenger: { path: '/passenger' },
-          },
-          {
-            id: 'increase-button',
-            component: 'Button',
-            child: 'increase-button-label',
-            action: {
-              event: {
-                name: 'increaseMiles',
-                context: {
-                  id: { path: '/passenger/id' },
-                  firstName: { path: '/passenger/firstName' },
-                  lastName: { path: '/passenger/lastName' },
-                  bonusMiles: { path: '/passenger/bonusMiles' },
-                },
-              },
-            },
-          },
-          {
-            id: 'increase-button-label',
-            component: 'Text',
-            text: 'Increase Miles',
-            variant: 'body',
-          },
+
+          // TODO: Add button with label "Increase Miles"
+          //       Replace the following text component by a button
+          //       Trigger an action increaseMiles providing a context with:
+          //       id, firstName, lastName, bonusMiles
+          { id: 'increase-button', component: 'Text' },
+
+          // TODO: Use Custom MilesProgress component
+          //       Replace the following Text component by a MilesProgress
+          // HINT: Switch to custom catalog in app.config.ts first
+          { id: 'miles-progress', component: 'Text' },
         ],
       },
     },
