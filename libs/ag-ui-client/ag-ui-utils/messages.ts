@@ -55,9 +55,8 @@ export function filterPublicMessages(
     const hasContent = message.content.trim().length > 0;
     const hasToolCalls = filteredToolCalls.length > 0;
     const hasWidgets = message.widgets.length > 0;
-    const hasWorkflowSteps = message.workflowSteps.length > 0;
 
-    if (!hasContent && !hasToolCalls && !hasWidgets && !hasWorkflowSteps) {
+    if (!hasContent && !hasToolCalls && !hasWidgets) {
       return [];
     }
 
@@ -87,7 +86,6 @@ export function upsertAssistantMessage(
         content,
         widgets: [],
         toolCalls: [],
-        workflowSteps: [],
       },
     ];
   }
@@ -135,7 +133,6 @@ export function appendErrorMessage(
       content: errorMessage,
       widgets: [],
       toolCalls: [],
-      workflowSteps: [],
     },
   ];
 }

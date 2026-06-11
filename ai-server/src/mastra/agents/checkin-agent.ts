@@ -14,6 +14,8 @@
 
 import { Agent } from '@mastra/core/agent';
 
+import { model } from '../config.js';
+
 const checkinAgentInstructions = `
 You are a check-in assistant for the Flights42 airline. The user uploads a
 ticket image (boarding pass, e-ticket, or printed itinerary) or an identity
@@ -66,6 +68,6 @@ export const checkinAgent = new Agent({
   // Vision-capable model. The user's ticket image arrives as an
   // AI-SDK `ImagePart` on a multipart user message (see fallback in
   // extended-mastra-agent.ts).
-  model: 'openai/gpt-5.3-chat-latest',
+  model,
   defaultOptions: { maxSteps: 3 },
 });
