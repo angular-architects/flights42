@@ -20,12 +20,5 @@ import { AgUiWidgetInstance } from '../ag-ui-types';
 export class WidgetContainerComponent {
   readonly widget = input.required<AgUiWidgetInstance>();
 
-  protected readonly widgetInputs = computed(() => {
-    const widget = this.widget();
-    return widget.kind === 'action'
-      ? {
-          actionData: widget.data,
-        }
-      : widget.props;
-  });
+  protected readonly widgetInputs = computed(() => this.widget().props);
 }

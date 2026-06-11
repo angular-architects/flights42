@@ -1,7 +1,5 @@
 import {
   type AgentSubscriber,
-  type BaseEvent,
-  EventType,
   type HttpAgent,
   randomUUID,
 } from '@ag-ui/client';
@@ -14,9 +12,7 @@ import {
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
-  type AgUiInterrupt,
   type AgUiRegisteredComponent,
-  type AgUiResumeRequest,
   type AgUiWorkflowStep,
 } from '../ag-ui-types';
 import {
@@ -33,49 +29,14 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import {
-  upsertActionWidgetForToolCall,
-  upsertWidgetFromActivitySnapshot,
-} from './widgets';
-
-interface RunAgentCompatParameters {
-  runId?: string;
-  tools?: RunAgentInputTool[];
-  context?: unknown;
-  forwardedProps?: Record<string, unknown>;
-  abortController?: AbortController;
-  resume?: AgUiResumeRequest;
-}
-
-interface RunAgentInputTool {
-  name: string;
-  description?: string;
-  parameters?: Record<string, unknown>;
-}
-
-interface InterruptAwareHttpAgent extends HttpAgent {
-  runAgentCompat(
-    parameters?: RunAgentCompatParameters,
-    subscriber?: AgentSubscriber,
-  ): Promise<{
-    result: unknown;
-    newMessages: unknown[];
-  }>;
-}
-
-interface InterruptAwareRunFinishedEvent extends BaseEvent {
-  type: EventType.RUN_FINISHED;
-  outcome?: 'success' | 'interrupt';
-  interrupt?: AgUiInterrupt;
-}
+import { upsertWidgetFromActivitySnapshot } from './widgets';
 
 export interface RunAgentOptions {
-  agent: InterruptAwareHttpAgent;
+  agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
-  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;
@@ -85,7 +46,6 @@ export interface RunAgentOptions {
 interface RunAgentResult {
   pendingLocalCalls: PendingToolExecution[];
   followUpToolCallIds: string[];
-  interrupt: AgUiInterrupt | null;
 }
 
 export async function runAgent(
@@ -105,7 +65,6 @@ export async function runAgent(
 
   const pendingLocalCalls: PendingToolExecution[] = [];
   const followUpToolCallIds: string[] = [];
-  let interrupt: AgUiInterrupt | null = null;
 
   // Workflow steps arrive as STEP_STARTED / STEP_FINISHED with only `stepName`.
   // Track them on a synthetic per-run "workflow" message so the UI can render
@@ -230,9 +189,8 @@ export async function runAgent(
       // through a typed shadow.
       const stepName = (event as { stepName?: unknown }).stepName;
 
-      messageStream.update((item) => {
-        const messages = readMessages(item);
-        const toolCall = {
+      messageStream.update((item) => ({
+        value: upsertToolCall(readMessages(item), {
           id: event.toolCallId,
           name: event.toolCallName,
           args: {},
@@ -240,65 +198,27 @@ export async function runAgent(
           ...(typeof stepName === 'string' && stepName.length > 0
             ? { stepName }
             : {}),
-        };
-
-        return {
-          value: upsertActionWidgetForToolCall(
-            upsertToolCall(messages, toolCall),
-            toolCall,
-            componentMap,
-          ),
-        };
-      });
+        }),
+      }));
     },
     onToolCallArgsEvent: ({ event, toolCallName, partialToolCallArgs }) => {
-      messageStream.update((item) => {
-        const nextMessages = updateToolCall(
-          readMessages(item),
-          event.toolCallId,
-          {
-            name: toolCallName,
-            args: partialToolCallArgs,
-          },
-        );
-        const toolCall = findToolCall(nextMessages, event.toolCallId);
-
-        return {
-          value: toolCall
-            ? upsertActionWidgetForToolCall(
-                nextMessages,
-                toolCall,
-                componentMap,
-              )
-            : nextMessages,
-        };
-      });
+      messageStream.update((item) => ({
+        value: updateToolCall(readMessages(item), event.toolCallId, {
+          name: toolCallName,
+          args: partialToolCallArgs,
+        }),
+      }));
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
-      messageStream.update((item) => {
-        const nextMessages = updateToolCall(
-          readMessages(item),
-          event.toolCallId,
-          {
-            name: toolCallName,
-            args: normalizedToolCallArgs,
-            status: 'pending',
-          },
-        );
-        const toolCall = findToolCall(nextMessages, event.toolCallId);
-
-        return {
-          value: toolCall
-            ? upsertActionWidgetForToolCall(
-                nextMessages,
-                toolCall,
-                componentMap,
-              )
-            : nextMessages,
-        };
-      });
+      messageStream.update((item) => ({
+        value: updateToolCall(readMessages(item), event.toolCallId, {
+          name: toolCallName,
+          args: normalizedToolCallArgs,
+          status: 'pending',
+        }),
+      }));
 
       const toolDefinition = toolMap.get(toolCallName);
       if (!toolDefinition) {
@@ -319,28 +239,13 @@ export async function runAgent(
       const result = safeParseJson(event.content);
       const error = readToolErrorMessage(result);
 
-      messageStream.update((item) => {
-        const nextMessages = updateToolCall(
-          readMessages(item),
-          event.toolCallId,
-          {
-            status: error ? 'error' : 'complete',
-            result,
-            error,
-          },
-        );
-        const toolCall = findToolCall(nextMessages, event.toolCallId);
-
-        return {
-          value: toolCall
-            ? upsertActionWidgetForToolCall(
-                nextMessages,
-                toolCall,
-                componentMap,
-              )
-            : nextMessages,
-        };
-      });
+      messageStream.update((item) => ({
+        value: updateToolCall(readMessages(item), event.toolCallId, {
+          status: error ? 'error' : 'complete',
+          result,
+          error,
+        }),
+      }));
     },
     onActivitySnapshotEvent: ({ event }) => {
       messageStream.update((item) => ({
@@ -361,7 +266,7 @@ export async function runAgent(
 
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item), componentMap),
+          markPendingToolCallsAsError(readMessages(item)),
           message,
         ),
       }));
@@ -369,42 +274,10 @@ export async function runAgent(
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item), componentMap),
+          markPendingToolCallsAsError(readMessages(item)),
           friendlyErrorMessage(error, 'Unknown AG-UI run failure'),
         ),
       }));
-    },
-    onRunFinishedEvent: ({ event }) => {
-      const interruptEvent = event as InterruptAwareRunFinishedEvent;
-      const activeInterrupt = interruptEvent.interrupt;
-      if (interruptEvent.outcome !== 'interrupt' || !activeInterrupt) {
-        return;
-      }
-
-      interrupt = activeInterrupt;
-      messageStream.update((item) => {
-        const nextMessages = updateToolCall(
-          readMessages(item),
-          activeInterrupt.payload.toolCallId,
-          {
-            status: 'interrupt',
-          },
-        );
-        const toolCall = findToolCall(
-          nextMessages,
-          activeInterrupt.payload.toolCallId,
-        );
-
-        return {
-          value: toolCall
-            ? upsertActionWidgetForToolCall(
-                nextMessages,
-                toolCall,
-                componentMap,
-              )
-            : nextMessages,
-        };
-      });
     },
   };
 
@@ -425,7 +298,7 @@ export async function runAgent(
     ...(forwardedProps?.() ?? {}),
   };
 
-  await agent.runAgentCompat(
+  await agent.runAgent(
     {
       runId,
       tools: toolsToOffer,
@@ -433,7 +306,6 @@ export async function runAgent(
         Object.keys(mergedForwardedProps).length > 0
           ? mergedForwardedProps
           : undefined,
-      resume: options.resume,
     },
     subscriber,
   );
@@ -441,13 +313,11 @@ export async function runAgent(
   return {
     pendingLocalCalls,
     followUpToolCallIds,
-    interrupt,
   };
 }
 
 function markPendingToolCallsAsError(
   messages: AgUiChatMessage[],
-  componentMap: Map<string, AgUiRegisteredComponent>,
 ): AgUiChatMessage[] {
   return messages.reduce<AgUiChatMessage[]>((currentMessages, message) => {
     if (message.role !== 'assistant') {
@@ -460,38 +330,14 @@ function markPendingToolCallsAsError(
           return nextMessages;
         }
 
-        const updatedMessages = updateToolCall(nextMessages, toolCall.id, {
+        return updateToolCall(nextMessages, toolCall.id, {
           status: 'error',
           error: 'Tool execution did not complete.',
         });
-        const updatedToolCall = findToolCall(updatedMessages, toolCall.id);
-
-        return updatedToolCall
-          ? upsertActionWidgetForToolCall(
-              updatedMessages,
-              updatedToolCall,
-              componentMap,
-            )
-          : updatedMessages;
       },
       currentMessages,
     );
   }, messages);
-}
-
-function findToolCall(messages: AgUiChatMessage[], toolCallId: string) {
-  for (const message of messages) {
-    if (message.role !== 'assistant') {
-      continue;
-    }
-
-    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
-    if (toolCall) {
-      return toolCall;
-    }
-  }
-
-  return undefined;
 }
 
 function readToolErrorMessage(content: unknown): string | undefined {
@@ -516,14 +362,12 @@ function safeParseJson(content: unknown): unknown {
 }
 
 export interface RunUntilSettledOptions {
-  agent: InterruptAwareHttpAgent;
+  agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   environmentInjector: EnvironmentInjector;
   runId: string;
-  interrupt: WritableSignal<AgUiInterrupt | null>;
-  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;
@@ -543,8 +387,6 @@ export async function runUntilSettled(
     componentMap,
     environmentInjector,
     runId,
-    interrupt,
-    resume,
     model,
     useServerMemory,
     forwardedProps,
@@ -575,17 +417,11 @@ export async function runUntilSettled(
       toolMap,
       componentMap,
       runId: currentRunId,
-      resume: turnCount === 1 ? resume : undefined,
       model,
       useServerMemory,
       forwardedProps,
       messageStream,
     });
-
-    if (runResult.interrupt) {
-      interrupt.set(runResult.interrupt);
-      break;
-    }
 
     if (useServerMemory) {
       agent.setMessages(
@@ -603,7 +439,7 @@ export async function runUntilSettled(
     });
 
     messageStream.update((item) => ({
-      value: markPendingToolCallsAsError(readMessages(item), componentMap),
+      value: markPendingToolCallsAsError(readMessages(item)),
     }));
 
     done = runResult.followUpToolCallIds.length === 0;

@@ -67,7 +67,7 @@ For every user request:
 5. Call \`renderChart\` with \`{ title, data }\` using the data the
    server returned.
 6. Reply with one short sentence confirming the chart is ready (e.g.
-   "Hier ist dein Diagramm.").
+   "Here is your chart").
 
 ## Sandbox rules — read carefully
 
@@ -111,7 +111,7 @@ Your tool calls:
      ]);
    \` })\`
 2. \`renderChart({ title: "Average delay: Graz → Hamburg vs Graz → Vienna", data: <data from step 1> })\`
-3. Reply: "Hier ist dein Diagramm."
+3. Reply: "Here is your chart"
 `.trim();
 
 export const reportingAgent = new Agent({

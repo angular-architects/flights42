@@ -1,9 +1,7 @@
 import { type InputContentPart, type UserMessage } from '@ag-ui/core';
 import {
-  type InputSignal,
   type InputSignalWithTransform,
   ResourceRef,
-  type Signal,
   Type,
 } from '@angular/core';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -42,33 +40,9 @@ export interface AgUiWidget {
   component: Type<unknown>;
 }
 
-export interface AgUiActionData<TInput = unknown, TResult = unknown> {
-  toolCallId: string;
-  toolName: string;
-  status: AgUiToolCallStatus;
-  input: TInput;
-  result?: TResult;
-  error?: string;
-}
-
-export interface AgUiResultWidget extends AgUiWidget {
-  kind?: 'result';
+export interface AgUiWidgetInstance extends AgUiWidget {
   props: Record<string, unknown>;
 }
-
-export interface AgUiActionWidget extends AgUiWidget {
-  kind: 'action';
-  toolCallId: string;
-  data: AgUiActionData;
-}
-
-export interface AgUiActionCard<
-  TActionData extends AgUiActionData = AgUiActionData,
-> {
-  actionData: InputSignal<TActionData>;
-}
-
-export type AgUiWidgetInstance = AgUiResultWidget | AgUiActionWidget;
 
 export interface AgUiMcpAppsSnapshotContent {
   serverId: string;
@@ -96,20 +70,6 @@ export type ComponentSignalInputs<TComponent> = NonNeverProperties<
   UnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
 >;
 
-type ActionDataInputForComponent<TComponent> =
-  ComponentSignalInputs<TComponent> extends {
-    actionData: infer TActionData;
-  }
-    ? TActionData
-    : never;
-
-type ActionCardComponentGuard<TComponent> =
-  ActionDataInputForComponent<TComponent> extends AgUiActionData
-    ? unknown
-    : {
-        __actionDataError: 'Action components must expose an actionData input typed as AgUiActionData.';
-      };
-
 type SchemaPropsForComponent<
   TComponent,
   TProps extends Record<string, unknown>,
@@ -121,37 +81,17 @@ type SchemaPropsForComponent<
     : never;
 };
 
-export interface AgUiResultRegisteredComponent<
+export interface AgUiRegisteredComponent<
   TComponent = unknown,
   TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
   TName extends string = string,
 > {
-  kind?: 'result';
   name: TName;
   description: string;
   component: Type<TComponent>;
   schema: z.ZodType<TProps>;
   clientOnly?: true;
 }
-
-export interface AgUiActionRegisteredComponent<
-  TComponent = unknown,
-  TToolName extends string = string,
-> {
-  kind: 'action';
-  name: TToolName;
-  component: Type<TComponent>;
-  toolName: TToolName;
-  clientOnly?: true;
-}
-
-export type AgUiRegisteredComponent<
-  TComponent = unknown,
-  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
-  TName extends string = string,
-> =
-  | AgUiResultRegisteredComponent<TComponent, TProps, TName>
-  | AgUiActionRegisteredComponent<TComponent, TName>;
 
 export function defineAgUiComponent<
   const TName extends string,
@@ -163,9 +103,8 @@ export function defineAgUiComponent<
   component: Type<TComponent>;
   schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
   clientOnly?: true;
-}): AgUiResultRegisteredComponent<TComponent, TProps, TName>;
+}): AgUiRegisteredComponent<TComponent, TProps, TName>;
 export function defineAgUiComponent(component: {
-  kind?: 'result';
   name: string;
   description: string;
   component: Type<unknown>;
@@ -175,21 +114,7 @@ export function defineAgUiComponent(component: {
   return component as AgUiRegisteredComponent;
 }
 
-export function defineActionCard<const TToolName extends string, TComponent>(
-  component: {
-    toolName: TToolName;
-    component: Type<TComponent>;
-    clientOnly?: true;
-  } & ActionCardComponentGuard<TComponent>,
-): AgUiActionRegisteredComponent<TComponent, TToolName> {
-  return {
-    kind: 'action',
-    name: component.toolName,
-    ...component,
-  } as AgUiActionRegisteredComponent<TComponent, TToolName>;
-}
-
-export type AgUiToolCallStatus = 'pending' | 'interrupt' | 'complete' | 'error';
+export type AgUiToolCallStatus = 'pending' | 'complete' | 'error';
 
 export interface AgUiToolCall {
   id: string;
@@ -221,26 +146,6 @@ export interface AgUiChatMessage {
   toolCalls: AgUiToolCall[];
   workflowSteps: AgUiWorkflowStep[];
   attachments?: AgUiChatMessageAttachment[];
-}
-
-export interface AgUiInterruptPayload {
-  kind: 'approval' | 'suspend';
-  toolCallId: string;
-  toolName: string;
-  args: unknown;
-  resumeSchema?: unknown;
-  suspendPayload?: unknown;
-}
-
-export interface AgUiInterrupt {
-  id: string;
-  reason: string;
-  payload: AgUiInterruptPayload;
-}
-
-export interface AgUiResumeRequest {
-  interruptId?: string;
-  payload?: unknown;
 }
 
 type ToolExecuteFn<TArgs> = {
@@ -316,8 +221,6 @@ export interface AgUiResourceOptions {
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
   sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
-  interrupt: Signal<AgUiInterrupt | null>;
-  resumeInterrupt: (approved: boolean) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;
