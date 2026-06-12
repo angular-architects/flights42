@@ -19,8 +19,8 @@ import {
   type AgUiMcpAppsSnapshotContent,
   defineAgUiComponent,
 } from '../ag-ui-types';
-import { McpAppsClientService } from './mcp-apps-client';
 import { MCP_APPS_CONFIG } from './mcp-apps.provider';
+import { McpAppsClientService } from './mcp-apps-client';
 
 @Component({
   selector: 'app-mcp-apps-widget',
