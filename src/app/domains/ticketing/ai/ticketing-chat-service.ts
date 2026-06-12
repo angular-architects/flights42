@@ -4,7 +4,6 @@ import {
   Injectable,
   runInInjectionContext,
 } from '@angular/core';
-import { USE_ACTION_CARDS } from '@flights42/feature-flags';
 import {
   type AgUiChatResourceRef,
   agUiResource,
@@ -26,9 +25,7 @@ import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { flightWidget } from './widgets/flight-widget';
 import { planWidget } from './widgets/plan-widget';
 
-const ACTION_CARDS = USE_ACTION_CARDS
-  ? [bookFlightActionCard, cancelFlightActionCard]
-  : [];
+const ACTION_CARDS = [bookFlightActionCard, cancelFlightActionCard];
 
 @Injectable({ providedIn: 'root' })
 export class TicketingChatService {
