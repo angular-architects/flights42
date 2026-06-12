@@ -164,21 +164,16 @@ async function start(): Promise<void> {
     }
   });
 
-  app.get('/mcp', async (req: SessionRequest, res: Response) => {
-    const sessionId = req.headers['mcp-session-id'];
-
-    if (typeof sessionId !== 'string') {
-      res.status(400).send('Missing session ID.');
-      return;
-    }
-
-    const transport = transports.get(sessionId);
-    if (!transport) {
-      res.status(404).send('Session not found.');
-      return;
-    }
-
-    await transport.handleRequest(req, res);
+  // We never push server-initiated messages (the hotel widget is pure
+  // request/response), so we don't offer the optional standalone SSE stream.
+  // Replying 405 tells the MCP client to skip opening that GET stream, which
+  // avoids one idle connection per client and keeps us within the browser's
+  // ~6-connections-per-host limit.
+  app.get('/mcp', (_req: SessionRequest, res: Response) => {
+    res.setHeader('Allow', 'POST, DELETE');
+    res
+      .status(405)
+      .send('Method Not Allowed: this server does not offer a GET SSE stream.');
   });
 
   app.delete('/mcp', async (req: SessionRequest, res: Response) => {
