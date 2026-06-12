@@ -274,11 +274,20 @@ export function agUiResource(
     defaultValue: [],
     stream,
   });
-  const publicValue = linkedSignal(() => filterPublicMessages(chat.value()));
+
+  // Derive the exposed value from `messageStream` instead of `chat.value()`:
+  // every `sendMessage` changes the resource params, which resets the resource
+  // value to its default (`[]`) until the new stream emits. That transient
+  // empty list would tear down and recreate every rendered message — including
+  // widget components with expensive state such as MCP-Apps iframes.
+  const liveValue = linkedSignal(() => readMessages(messageStream()));
+  const publicValue = linkedSignal(() =>
+    filterPublicMessages(readMessages(messageStream())),
+  );
 
   return {
     ...chat,
-    value: hideInternal ? publicValue : chat.value,
+    value: hideInternal ? publicValue : liveValue,
     isLoading,
     sendMessage,
     resendMessages,

@@ -13,15 +13,14 @@ import {
   AppBridge,
   PostMessageTransport,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
 
 import {
   type AgUiMcpAppsSnapshotContent,
   defineAgUiComponent,
 } from '../ag-ui-types';
-import { MCP_APPS_CONFIG, MCP_APPS_SERVER_URL } from './mcp-apps.provider';
+import { McpAppsClientService } from './mcp-apps-client';
+import { MCP_APPS_CONFIG } from './mcp-apps.provider';
 
 @Component({
   selector: 'app-mcp-apps-widget',
@@ -52,7 +51,7 @@ import { MCP_APPS_CONFIG, MCP_APPS_SERVER_URL } from './mcp-apps.provider';
 export class McpAppsWidgetComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mcpAppsConfig = inject(MCP_APPS_CONFIG);
-  private readonly mcpAppsServerUrl = inject(MCP_APPS_SERVER_URL);
+  private readonly clientService = inject(McpAppsClientService);
 
   readonly data = input.required<AgUiMcpAppsSnapshotContent>();
 
@@ -60,7 +59,6 @@ export class McpAppsWidgetComponent {
     viewChild.required<ElementRef<HTMLIFrameElement>>('appFrame');
 
   private bridge: AppBridge | null = null;
-  private client: Client | null = null;
   protected readonly error = signal('');
 
   constructor() {
@@ -82,7 +80,9 @@ export class McpAppsWidgetComponent {
     this.error.set('');
 
     try {
-      const client = await this.getClient();
+      // All widgets share one MCP client; per-widget clients would exhaust
+      // the browser's connection pool (~6 per host) via their SSE streams.
+      const client = await this.clientService.getClient();
       const resource = await client.readResource({ uri: data.resourceUri });
       const content = resource.contents[0] as { text: string };
       const html = content.text;
@@ -122,14 +122,13 @@ export class McpAppsWidgetComponent {
       await bridge.connect(
         new PostMessageTransport(frame.contentWindow!, frame.contentWindow!),
       );
+      this.bridge = bridge;
 
       await whenInitialized(bridge);
 
       const toolInput = { arguments: data.toolInput };
       bridge.sendToolInput(toolInput);
       bridge.sendToolResult(data.result);
-
-      this.bridge = bridge;
     } catch (error) {
       this.error.set(
         error instanceof Error ? error.message : 'Unable to render MCP App.',
@@ -139,48 +138,30 @@ export class McpAppsWidgetComponent {
   }
 
   private async disposeBridge(): Promise<void> {
-    if (this.bridge) {
-      await this.bridge.teardownResource({}).catch(() => undefined);
-      await this.bridge.close().catch(() => undefined);
-      this.bridge = null;
+    const bridge = this.bridge;
+    if (!bridge) {
+      return;
     }
-  }
+    this.bridge = null;
 
-  private async getClient(): Promise<Client> {
-    if (!this.client) {
-      this.client = await this.createClient();
-    }
-
-    return this.client;
-  }
-
-  private async createClient(): Promise<Client> {
-    const client = new Client({
-      name: 'MCP Host',
-      version: '1.0.0',
-    });
-    const transport = new StreamableHTTPClientTransport(
-      new URL(this.mcpAppsServerUrl),
-    );
-
-    await client.connect(transport);
-    return client;
-  }
-
-  private async disposeClient(): Promise<void> {
-    const client = this.client;
-
-    this.client = null;
-
-    if (client) {
-      await client.close().catch(() => undefined);
-    }
+    // Graceful shutdown
+    await Promise.race([
+      bridge.teardownResource({}).catch(() => undefined),
+      delay(250),
+    ]);
+    await bridge.close().catch(() => undefined);
   }
 
   private async dispose(): Promise<void> {
+    // The shared MCP client stays open; only the per-widget bridge goes away.
     await this.disposeBridge();
-    await this.disposeClient();
   }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function whenInitialized(bridge: AppBridge): Promise<void> {

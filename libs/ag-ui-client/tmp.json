@@ -1,0 +1,41 @@
+{
+  "type": "ACTIVITY_SNAPSHOT",
+  "messageId": "42466238-05d4-456f-bd56-2a665fefd47a",
+  "activityType": "mcp-apps",
+  "content": {
+    "serverId": "hotels",
+    "resourceUri": "ui://hotels/results.html",
+    "toolInput": { "city": "hamburg" },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"city\":\"hamburg\",\"hotels\":[{\"id\":\"biz-hotel\",\"name\":\"Biz Hotel hamburg\",\"sterne\":3,\"imageUrl\":\"http://127.0.0.1:3002/assets/hotels/biz-hotel.svg\"},{\"id\":\"grand-palace\",\"name\":\"Grand Palace hamburg\",\"sterne\":5,\"imageUrl\":\"http://127.0.0.1:3002/assets/hotels/grand-palace.svg\"},{\"id\":\"skyline-suites\",\"name\":\"Skyline Suites hamburg\",\"sterne\":4,\"imageUrl\":\"http://127.0.0.1:3002/assets/hotels/skyline-suites.svg\"}]}"
+        }
+      ],
+      "structuredContent": {
+        "city": "hamburg",
+        "hotels": [
+          {
+            "id": "biz-hotel",
+            "name": "Biz Hotel hamburg",
+            "sterne": 3,
+            "imageUrl": "http://127.0.0.1:3002/assets/hotels/biz-hotel.svg"
+          },
+          {
+            "id": "grand-palace",
+            "name": "Grand Palace hamburg",
+            "sterne": 5,
+            "imageUrl": "http://127.0.0.1:3002/assets/hotels/grand-palace.svg"
+          },
+          {
+            "id": "skyline-suites",
+            "name": "Skyline Suites hamburg",
+            "sterne": 4,
+            "imageUrl": "http://127.0.0.1:3002/assets/hotels/skyline-suites.svg"
+          }
+        ]
+      }
+    }
+  }
+}
