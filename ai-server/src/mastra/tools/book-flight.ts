@@ -1,31 +1,12 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../feature-flags.js';
 import {
   addBooking,
   fetchFlight,
   isBooked,
 } from '../data/booked-flights-store.js';
 import { formatFlightDate } from '../utils/format-date.js';
-
-function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException('Aborted', 'AbortError'));
-      return;
-    }
-    const timeout = setTimeout(() => {
-      signal?.removeEventListener('abort', onAbort);
-      resolve();
-    }, ms);
-    const onAbort = (): void => {
-      clearTimeout(timeout);
-      reject(new DOMException('Aborted', 'AbortError'));
-    };
-    signal?.addEventListener('abort', onAbort, { once: true });
-  });
-}
 
 const flightSchema = z.object({
   id: z.number(),
@@ -98,7 +79,7 @@ export const bookFlightTool = createTool({
       };
     }
 
-    if (USE_APPROVAL && resumeData?.approved !== true) {
+    if (resumeData?.approved !== true) {
       await suspend?.({
         action: 'book',
         flightId,
@@ -122,3 +103,22 @@ export const bookFlightTool = createTool({
     };
   },
 });
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(timeout);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}

@@ -17,9 +17,5 @@
       "@internal/ag-ui-server/*": ["../libs/ag-ui-server/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "../libs/ag-ui-server/**/*.ts",
-    "../feature-flags.ts"
-  ]
+  "include": ["src/**/*.ts", "../libs/ag-ui-server/**/*.ts"]
 }
