@@ -6,6 +6,8 @@ import {
   type AgUiActionWidget,
   AgUiChatMessage,
   AgUiInterrupt,
+  type AgUiInterruptOption,
+  type AgUiResumePayload,
   WidgetContainerComponent,
 } from '@internal/ag-ui-client';
 
@@ -29,11 +31,14 @@ export class ChatMessages {
   readonly messages = input.required<AgUiChatMessage[]>();
   readonly interrupt = input<AgUiInterrupt | null>(null);
   readonly pending = input<boolean>(false);
-  readonly resumeInterrupt = output<boolean>();
+  readonly resumeInterrupt = output<AgUiResumePayload>();
   protected readonly showIndicator = computed(() => this.pending());
   protected readonly interruptModel = computed(() =>
     toInterruptModel(this.interrupt()),
   );
+
+  protected readonly approvePayload: AgUiResumePayload = { approved: true };
+  protected readonly rejectPayload: AgUiResumePayload = { approved: false };
 
   protected readonly icons = {
     user: '💬',
@@ -78,7 +83,8 @@ export class ChatMessages {
 }
 
 interface InterruptPayload {
-  message?: string | undefined;
+  message?: string;
+  options?: AgUiInterruptOption[];
 }
 
 interface InterruptModel {
@@ -86,6 +92,7 @@ interface InterruptModel {
   reason: AgUiInterrupt['reason'];
   payload: AgUiInterrupt['payload'];
   message: string;
+  options: AgUiInterruptOption[];
 }
 
 function toInterruptModel(
@@ -105,6 +112,9 @@ function toInterruptModel(
       typeof suspendPayload?.message === 'string'
         ? suspendPayload.message
         : `Tool Call: ${interrupt.payload.toolName}`,
+    options: Array.isArray(suspendPayload?.options)
+      ? suspendPayload.options
+      : [],
   };
 }
 

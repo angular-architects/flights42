@@ -18,6 +18,7 @@ import {
   type AgUiInterrupt,
   type AgUiRegisteredComponent,
   type AgUiResourceOptions,
+  type AgUiResumePayload,
   type AgUiResumeRequest,
   type UserMessageContent,
   type UserMessageContentPart,
@@ -295,7 +296,7 @@ export function agUiResource(
     pendingRun.set({ id: randomUUID() });
   };
 
-  const resumeInterrupt = (approved: boolean): void => {
+  const resumeInterrupt = (payload: AgUiResumePayload): void => {
     const activeInterrupt = interrupt();
     if (!activeInterrupt) {
       return;
@@ -306,7 +307,7 @@ export function agUiResource(
       id: randomUUID(),
       resume: {
         interruptId: activeInterrupt.id,
-        payload: { approved },
+        payload,
       },
     });
   };
