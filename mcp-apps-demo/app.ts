@@ -1,5 +1,13 @@
 import { App } from '@modelcontextprotocol/ext-apps';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
+import { type AppViewModel, renderApp } from './app-rendering';
+
+const viewModel: AppViewModel = {
+  hostContext: undefined,
+  toolInput: undefined,
+  toolResult: undefined,
+  detailsVisible: false,
+};
 
 const appRoot = document.getElementById('app');
 
@@ -15,16 +23,18 @@ const app = new App({
 });
 
 app.ontoolresult = (result) => {
-  render(result);
+  viewModel.toolResult = result;
+  renderApp(root, viewModel);
+};
+
+app.ontoolinput = (input) => {
+  viewModel.toolInput = input;
+  renderApp(root, viewModel);
+};
+
+app.onhostcontextchanged = (context) => {
+  viewModel.hostContext = context;
+  renderApp(root, viewModel);
 };
 
 await app.connect();
-
-function render(result: CallToolResult): void {
-  root.innerHTML = '<pre></pre>';
-  const pre = root.querySelector('pre');
-
-  if (pre instanceof HTMLPreElement) {
-    pre.textContent = JSON.stringify(result, null, 2);
-  }
-}
