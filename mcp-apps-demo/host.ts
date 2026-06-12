@@ -32,6 +32,18 @@ await bridge.connect(
 
 await waitForInitialization(bridge);
 
+bridge.sendHostContextChange({
+  availableDisplayModes: ['fullscreen'],
+  displayMode: 'fullscreen',
+  theme: 'light',
+});
+
+bridge.sendToolInput({
+  arguments: {
+    city: 'Graz',
+  },
+});
+
 bridge.sendToolResult({
   content: [
     {
