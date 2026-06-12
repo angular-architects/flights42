@@ -6,7 +6,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AgUiChatResourceRef } from '@internal/ag-ui-client';
+import {
+  AgUiChatResourceRef,
+  type AgUiResumePayload,
+} from '@internal/ag-ui-client';
 
 import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
 import { ChatMessages } from '../chat-messages/chat-messages';
@@ -76,7 +79,7 @@ export class AssistantChat {
     this.chat?.stop();
   }
 
-  protected resumeInterrupt(approved: boolean): void {
-    this.chat?.resumeInterrupt(approved);
+  protected resumeInterrupt(payload: AgUiResumePayload): void {
+    this.chat?.resumeInterrupt(payload);
   }
 }

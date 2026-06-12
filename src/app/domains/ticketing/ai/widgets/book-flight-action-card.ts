@@ -16,6 +16,7 @@ import {
   BookingClient,
   type FlightMutationFlight,
   type FlightMutationResult,
+  type FlightPaymentMethod,
 } from '../../data/flight-mutation-client';
 import {
   getActionStatusLabel,
@@ -24,6 +25,11 @@ import {
   toFlightMutationResult,
   toLoadFailedResult,
 } from './card-utils';
+
+const PAYMENT_METHOD_LABELS: Record<FlightPaymentMethod, string> = {
+  creditCard: 'Credit card',
+  miles: 'Bonus miles',
+};
 
 interface BookFlightInput {
   flightId: number;
@@ -47,6 +53,10 @@ type BookFlightActionData = AgUiActionData<
         }
 
         <p class="status-line">Status: {{ statusLabel() }}</p>
+
+        @if (paymentMethodLabel(); as paymentLabel) {
+          <p class="payment-line">Payment: {{ paymentLabel }}</p>
+        }
 
         @if (showUndo()) {
           <p>
@@ -80,6 +90,10 @@ type BookFlightActionData = AgUiActionData<
     }
 
     .action-context {
+      color: #4e5b78;
+    }
+
+    .payment-line {
       color: #4e5b78;
     }
 
@@ -138,6 +152,19 @@ export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData
       this.result(),
     ),
   );
+
+  protected readonly paymentMethodLabel = computed(() => {
+    if (this.undoResult()) {
+      return null;
+    }
+
+    const result = this.result();
+    if (!result?.ok || !result.paymentMethod) {
+      return null;
+    }
+
+    return PAYMENT_METHOD_LABELS[result.paymentMethod];
+  });
 
   protected async undo(): Promise<void> {
     this.undoPending.set(true);

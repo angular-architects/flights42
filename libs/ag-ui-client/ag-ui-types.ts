@@ -189,11 +189,7 @@ export function defineActionCard<const TToolName extends string, TComponent>(
   } as AgUiActionRegisteredComponent<TComponent, TToolName>;
 }
 
-export type AgUiToolCallStatus =
-  | 'pending'
-  | 'interrupt'
-  | 'complete'
-  | 'error';
+export type AgUiToolCallStatus = 'pending' | 'interrupt' | 'complete' | 'error';
 
 export interface AgUiToolCall {
   id: string;
@@ -240,6 +236,24 @@ export interface AgUiInterrupt {
   id: string;
   reason: string;
   payload: AgUiInterruptPayload;
+}
+
+/**
+ * Payload sent back to the agent when resuming an interrupt. For built-in
+ * approvals this is `{ approved: boolean }`; for suspended tools it must
+ * match the tool's `resumeSchema` (e.g. `{ selection: 'creditCard' }`).
+ */
+export type AgUiResumePayload = Record<string, unknown>;
+
+/**
+ * Choice button offered by a suspended tool via the `options` array in its
+ * suspend payload. `payload` is forwarded verbatim as the resume payload.
+ */
+export interface AgUiInterruptOption {
+  id: string;
+  label: string;
+  payload: AgUiResumePayload;
+  variant?: 'primary' | 'default' | 'danger';
 }
 
 export interface AgUiResumeRequest {
@@ -321,7 +335,7 @@ export interface AgUiResourceOptions {
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
   sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
   interrupt: Signal<AgUiInterrupt | null>;
-  resumeInterrupt: (approved: boolean) => void;
+  resumeInterrupt: (payload: AgUiResumePayload) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;
