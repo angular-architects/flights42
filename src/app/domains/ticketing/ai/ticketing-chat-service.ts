@@ -1,4 +1,9 @@
-import { inject, Injectable } from '@angular/core';
+import {
+  EnvironmentInjector,
+  inject,
+  Injectable,
+  runInInjectionContext,
+} from '@angular/core';
 import { USE_ACTION_CARDS } from '@flights42/feature-flags';
 import {
   type AgUiChatResourceRef,
@@ -9,6 +14,7 @@ import {
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
+import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
@@ -18,6 +24,7 @@ import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool'
 import { bookFlightActionCard } from './widgets/book-flight-action-card';
 import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { flightWidget } from './widgets/flight-widget';
+import { planWidget } from './widgets/plan-widget';
 
 const ACTION_CARDS = USE_ACTION_CARDS
   ? [bookFlightActionCard, cancelFlightActionCard]
@@ -27,6 +34,8 @@ const ACTION_CARDS = USE_ACTION_CARDS
 export class TicketingChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
+  private readonly injector = inject(EnvironmentInjector);
+  private readonly agentMode = inject(AgentModeService);
 
   private chat: AgUiChatResourceRef | null = null;
 
@@ -35,23 +44,27 @@ export class TicketingChatService {
       const components = [
         messageWidget,
         flightWidget,
+        planWidget,
         mcpAppsWidgetComponent,
         ...ACTION_CARDS,
       ];
 
-      this.chat = agUiResource({
-        url: this.config.agUiUrl,
-        model: this.config.model,
-        useServerMemory: true,
-        tools: [
-          findFlightsTool,
-          getLoadedFlightsTool,
-          toggleFlightSelectionTool,
-          getCurrentBasketTool,
-          displayFlightDetailTool,
-          createShowComponentsTool(components),
-        ],
-      });
+      this.chat = runInInjectionContext(this.injector, () =>
+        agUiResource({
+          url: this.config.agUiUrl,
+          model: this.config.model,
+          useServerMemory: true,
+          forwardedProps: () => ({ agentMode: this.agentMode.mode() }),
+          tools: [
+            findFlightsTool,
+            getLoadedFlightsTool,
+            toggleFlightSelectionTool,
+            getCurrentBasketTool,
+            displayFlightDetailTool,
+            createShowComponentsTool(components),
+          ],
+        }),
+      );
     }
     this.chatStore.setChat(this.chat);
   }
