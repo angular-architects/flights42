@@ -1,7 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../feature-flags.js';
 import {
   fetchFlight,
   isBooked,
@@ -35,31 +34,15 @@ const resultSchema = z.union([
 export const cancelFlightTool = createTool({
   id: 'cancelFlight',
   description:
-    'Cancels a previously booked flight for the current passenger. Requires explicit user approval once pre-checks pass. Fails if the flight is not booked.',
+    'Cancels a previously booked flight for the current passenger. Fails if the flight is not booked.',
   inputSchema: z.object({
     flightId: z.number().describe('The id of the flight to cancel.'),
   }),
   outputSchema: resultSchema,
-  suspendSchema: z.object({
-    action: z.literal('cancel'),
-    flightId: z.number(),
-    flight: flightSchema.nullable(),
-    message: z.string(),
-  }),
-  resumeSchema: z.object({
-    approved: z.boolean(),
-  }),
-  execute: async ({ flightId }, context) => {
-    const resumeData = context?.agent?.resumeData;
-    const suspend = context?.agent?.suspend;
-
-    if (resumeData?.approved === false) {
-      return {
-        ok: false as const,
-        result: `Cancellation of flight ${flightId} was cancelled by the user.`,
-        code: 'USER_CANCELLED',
-      };
-    }
+  // TODO: Add suspendSchema and resumeSchema for the approval flow
+  execute: async ({ flightId }) => {
+    // TODO: Read resumeData/suspend from the context and
+    //       return early with code 'USER_CANCELLED' if the user declined
 
     if (!isBooked(flightId)) {
       return {
@@ -71,23 +54,8 @@ export const cancelFlightTool = createTool({
 
     const flight = await fetchFlight(flightId).catch(() => null);
 
-    if (USE_APPROVAL && resumeData?.approved !== true) {
-      const flightContext = flight
-        ? ` from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}`
-        : '';
-
-      await suspend?.({
-        action: 'cancel',
-        flightId,
-        flight,
-        message: `Please confirm cancellation of flight ${flightId}${flightContext}.`,
-      });
-      return {
-        ok: false as const,
-        result: 'Awaiting user approval.',
-        code: 'AWAITING_APPROVAL',
-      };
-    }
+    // TODO: If the user has not approved yet, suspend the tool
+    //       and return with code 'AWAITING_APPROVAL'
 
     removeBooking(flightId);
 

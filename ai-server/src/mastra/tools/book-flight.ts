@@ -1,7 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../feature-flags.js';
 import {
   addBooking,
   fetchFlight,
@@ -54,32 +53,15 @@ const resultSchema = z.union([
 export const bookFlightTool = createTool({
   id: 'bookFlight',
   description:
-    'Books a flight for the current passenger. Requires explicit user approval once pre-checks pass. Fails if the flight does not exist or is already booked.',
+    'Books a flight for the current passenger. Fails if the flight does not exist or is already booked.',
   inputSchema: z.object({
     flightId: z.number().describe('The id of the flight to book.'),
   }),
   outputSchema: resultSchema,
-  suspendSchema: z.object({
-    action: z.literal('book'),
-    flightId: z.number(),
-    flight: flightSchema,
-    message: z.string(),
-  }),
-  resumeSchema: z.object({
-    approved: z.boolean(),
-  }),
-  execute: async ({ flightId }, context) => {
-    const resumeData = context?.agent?.resumeData;
-    const suspend = context?.agent?.suspend;
-    // const abortSignal = context?.abortSignal;
-
-    if (resumeData?.approved === false) {
-      return {
-        ok: false as const,
-        result: `Booking of flight ${flightId} was cancelled by the user.`,
-        code: 'USER_CANCELLED',
-      };
-    }
+  // TODO: Add suspendSchema and resumeSchema for the approval flow
+  execute: async ({ flightId }) => {
+    // TODO: Read resumeData/suspend from the context and
+    //       return early with code 'USER_CANCELLED' if the user declined
 
     if (isBooked(flightId)) {
       return {
@@ -98,19 +80,8 @@ export const bookFlightTool = createTool({
       };
     }
 
-    if (USE_APPROVAL && resumeData?.approved !== true) {
-      await suspend?.({
-        action: 'book',
-        flightId,
-        flight,
-        message: `Please confirm booking of flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}.`,
-      });
-      return {
-        ok: false as const,
-        result: 'Awaiting user approval.',
-        code: 'AWAITING_APPROVAL',
-      };
-    }
+    // TODO: If the user has not approved yet, suspend the tool
+    //       and return with code 'AWAITING_APPROVAL'
 
     // await abortableDelay(6000, abortSignal);
 
