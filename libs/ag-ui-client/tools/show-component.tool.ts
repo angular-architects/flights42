@@ -143,12 +143,8 @@ function createExampleFromSchema(schema: JsonSchema): unknown {
 }
 
 function createComponentSchema(
-  registeredComponents: readonly AnyRegisteredComponent[],
+  publicComponents: readonly AnyRegisteredComponent[],
 ): z.ZodTypeAny {
-  const publicComponents = registeredComponents.filter(
-    (entry) => entry.clientOnly !== true,
-  );
-
   if (publicComponents.length === 0) {
     throw new Error('createShowComponentsTool requires at least one component');
   }
@@ -179,8 +175,15 @@ function createComponentSchema(
 export function createShowComponentsTool<
   const TComponents extends readonly AnyRegisteredComponent[],
 >(registeredComponents: TComponents) {
-  const componentSchema = createComponentSchema(registeredComponents);
-  const description = createToolDescription(registeredComponents);
+  // Client-only components (e.g. mcpAppsWidget) are rendered by the client
+  // itself and must stay invisible to the model: advertising them in the
+  // description while excluding them from the schema makes the model call
+  // showComponents with payloads that validation then rejects.
+  const publicComponents = registeredComponents.filter(
+    (entry) => entry.clientOnly !== true,
+  );
+  const componentSchema = createComponentSchema(publicComponents);
+  const description = createToolDescription(publicComponents);
 
   return defineAgUiTool({
     name: 'showComponents',
