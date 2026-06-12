@@ -1,7 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../feature-flags.js';
+import { USE_APPROVAL } from '../feature-flags.js';
 import {
   fetchFlight,
   isBooked,

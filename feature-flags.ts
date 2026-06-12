@@ -1,2 +1,1 @@
-export const USE_ACTION_CARDS = true;
-export const USE_APPROVAL = true;
+export * from './ai-server/src/mastra/feature-flags';

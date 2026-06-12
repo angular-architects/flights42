@@ -12,9 +12,5 @@
     "skipLibCheck": true,
     "isolatedModules": true
   },
-  "include": [
-    "src/**/*.ts",
-    "../libs/ag-ui-server/**/*.ts",
-    "../feature-flags.ts"
-  ]
+  "include": ["src/**/*.ts", "../libs/ag-ui-server/**/*.ts"]
 }
