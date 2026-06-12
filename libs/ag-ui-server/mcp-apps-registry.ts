@@ -44,17 +44,22 @@ export async function initMcpAppsRegistry(
         continue;
       }
 
-      mcpAppsRegistry.set(entry[0], entry[1]);
+      mcpAppsRegistry.set(entry.toolName, entry.metadata);
     }
   } finally {
     await client.close();
   }
 }
 
+interface McpAppToolRegistration {
+  toolName: string;
+  metadata: McpAppToolMetadata;
+}
+
 function toMcpAppToolMetadata(
   serverId: string,
   tool: McpTool,
-): [string, McpAppToolMetadata] | null {
+): McpAppToolRegistration | null {
   const meta = tool._meta as McpToolMeta | undefined;
   const resourceUri =
     typeof meta?.ui?.resourceUri === 'string'
@@ -67,11 +72,11 @@ function toMcpAppToolMetadata(
     return null;
   }
 
-  return [
-    `${serverId}_${tool.name}`,
-    {
+  return {
+    toolName: `${serverId}_${tool.name}`,
+    metadata: {
       serverId,
       resourceUri,
     },
-  ];
+  };
 }
