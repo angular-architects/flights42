@@ -1,4 +1,3 @@
-import type { AgentSubscriber, RunAgentInput } from '@ag-ui/client';
 import { HttpAgent, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -18,7 +17,6 @@ import {
   type AgUiInterrupt,
   type AgUiRegisteredComponent,
   type AgUiResourceOptions,
-  type AgUiResumeRequest,
   type UserMessageContent,
   type UserMessageContentPart,
 } from './ag-ui-types';
@@ -35,36 +33,6 @@ import { readRegisteredComponents } from './ag-ui-utils/widgets';
 interface StreamOptions {
   params: PendingRun | undefined;
   abortSignal: AbortSignal;
-}
-
-interface RunAgentCompatParameters extends Partial<
-  Pick<RunAgentInput, 'runId' | 'tools' | 'context' | 'forwardedProps'>
-> {
-  abortController?: AbortController;
-  resume?: AgUiResumeRequest;
-}
-
-class InterruptAwareHttpAgent extends HttpAgent {
-  runAgentCompat(
-    parameters?: RunAgentCompatParameters,
-    subscriber?: AgentSubscriber,
-  ) {
-    return super.runAgent(parameters, subscriber);
-  }
-
-  protected override prepareRunAgentInput(
-    parameters?: RunAgentCompatParameters,
-  ): RunAgentInput {
-    const input = super.prepareRunAgentInput(parameters);
-    if (!parameters?.resume) {
-      return input;
-    }
-
-    return {
-      ...input,
-      resume: parameters.resume,
-    } as RunAgentInput;
-  }
 }
 
 interface SendMessageOptions {
@@ -161,8 +129,8 @@ export function agUiResource(
   const useServerMemory = options.useServerMemory ?? false;
   const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
-  const createAgent = (): InterruptAwareHttpAgent =>
-    new InterruptAwareHttpAgent({ url: options.url, threadId: randomUUID() });
+  const createAgent = (): HttpAgent =>
+    new HttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();
   const tools = options.tools;
   const toolMap = new Map<string, AgUiClientToolDefinition<never>>(
@@ -304,10 +272,13 @@ export function agUiResource(
     interrupt.set(null);
     pendingRun.set({
       id: randomUUID(),
-      resume: {
-        interruptId: activeInterrupt.id,
-        payload: { approved },
-      },
+      resume: [
+        {
+          interruptId: activeInterrupt.id,
+          status: approved ? 'resolved' : 'cancelled',
+          payload: { approved },
+        },
+      ],
     });
   };
 
