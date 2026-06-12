@@ -6,7 +6,6 @@ import {
   fetchFlight,
   isBooked,
 } from '../data/booked-flights-store.js';
-import { USE_APPROVAL } from '../feature-flags.js';
 import { formatFlightDate } from '../utils/format-date.js';
 
 const flightSchema = z.object({
@@ -98,7 +97,7 @@ export const bookFlightTool = createTool({
     const hasPaymentSelection =
       selection === 'creditCard' || selection === 'miles';
 
-    if (USE_APPROVAL && !hasPaymentSelection) {
+    if (!hasPaymentSelection) {
       await suspend?.({
         action: 'book',
         flightId,

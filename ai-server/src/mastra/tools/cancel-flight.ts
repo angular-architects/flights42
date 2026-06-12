@@ -1,7 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../feature-flags.js';
 import {
   fetchFlight,
   isBooked,
@@ -71,7 +70,7 @@ export const cancelFlightTool = createTool({
 
     const flight = await fetchFlight(flightId).catch(() => null);
 
-    if (USE_APPROVAL && resumeData?.approved !== true) {
+    if (resumeData?.approved !== true) {
       const flightContext = flight
         ? ` from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}`
         : '';
