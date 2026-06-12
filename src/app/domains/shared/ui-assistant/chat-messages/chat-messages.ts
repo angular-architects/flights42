@@ -77,15 +77,11 @@ export class ChatMessages {
   );
 }
 
-interface InterruptPayload {
-  message?: string | undefined;
-}
-
 interface InterruptModel {
   id: AgUiInterrupt['id'];
   reason: AgUiInterrupt['reason'];
-  payload: AgUiInterrupt['payload'];
   message: string;
+  args: unknown;
 }
 
 function toInterruptModel(
@@ -95,16 +91,17 @@ function toInterruptModel(
     return null;
   }
 
-  const suspendPayload = interrupt.payload.suspendPayload as
-    | InterruptPayload
-    | undefined;
+  // `metadata` carries the Mastra bridge extras (kind, toolName, args,
+  // suspendPayload); `message` is first-class on the AG-UI `Interrupt`.
+  const metadata = interrupt.metadata ?? {};
+  const toolName =
+    typeof metadata['toolName'] === 'string' ? metadata['toolName'] : 'tool';
 
   return {
-    ...interrupt,
-    message:
-      typeof suspendPayload?.message === 'string'
-        ? suspendPayload.message
-        : `Tool Call: ${interrupt.payload.toolName}`,
+    id: interrupt.id,
+    reason: interrupt.reason,
+    message: interrupt.message ?? `Tool Call: ${toolName}`,
+    args: metadata['args'],
   };
 }
 

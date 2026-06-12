@@ -11,7 +11,7 @@ import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
   type AgUiRegisteredComponent,
-  type AgUiResumeRequest,
+  type AgUiResumeEntry,
   type AgUiToolCall,
 } from '../ag-ui-types';
 import { readMessages, replaceMessage } from './messages';
@@ -26,7 +26,7 @@ type AssistantToolCall = NonNullable<AssistantMessage['toolCalls']>[number];
 
 export interface PendingRun {
   id: string;
-  resume?: AgUiResumeRequest;
+  resume?: AgUiResumeEntry[];
 }
 
 export interface PendingToolExecution {

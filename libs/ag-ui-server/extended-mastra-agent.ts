@@ -1,6 +1,11 @@
 import { BaseEvent, RunAgentInput } from '@ag-ui/client';
 import { AbstractAgent, EventType, randomUUID } from '@ag-ui/client';
-import type { Message } from '@ag-ui/core';
+import type {
+  Interrupt,
+  Message,
+  ResumeEntry,
+  RunFinishedEvent,
+} from '@ag-ui/core';
 import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
 import { Agent } from '@mastra/core/agent';
 import { CoreMessage } from '@mastra/core/llm';
@@ -32,15 +37,6 @@ interface ClientToolDefinition {
   id: string;
   description?: string;
   inputSchema?: Record<string, unknown>;
-}
-
-interface InterruptResumeInput {
-  interruptId?: string;
-  payload?: unknown;
-}
-
-interface InterruptAwareRunAgentInput extends RunAgentInput {
-  resume?: InterruptResumeInput;
 }
 
 type InterruptKind = 'approval' | 'suspend';
@@ -562,10 +558,28 @@ function parseInterruptId(
   };
 }
 
-function readApproved(value: unknown): boolean | undefined {
-  const record = asRecord(value);
-  const approved = record?.['approved'];
-  return typeof approved === 'boolean' ? approved : undefined;
+function toInterrupt(interrupt: PendingInterrupt): Interrupt {
+  const suspendPayload = asRecord(interrupt.suspendPayload);
+  const message = getNestedString(suspendPayload, 'message');
+  const responseSchema = interrupt.resumeSchema
+    ? asRecord(safeParseJson(interrupt.resumeSchema))
+    : undefined;
+
+  return {
+    id: createInterruptId(interrupt),
+    reason: interrupt.kind === 'approval' ? 'human_approval' : 'tool_suspended',
+    ...(message ? { message } : {}),
+    toolCallId: interrupt.toolCallId,
+    ...(responseSchema ? { responseSchema } : {}),
+    metadata: {
+      kind: interrupt.kind,
+      toolName: interrupt.toolName,
+      args: interrupt.args,
+      ...(interrupt.suspendPayload !== undefined
+        ? { suspendPayload: interrupt.suspendPayload }
+        : {}),
+    },
+  };
 }
 
 function safeParseJson(value: string): unknown {
@@ -695,8 +709,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
       };
       attachBridge(this.requestContext, bridge);
 
-      const interruptAwareInput = input as InterruptAwareRunAgentInput;
-
       const startedEvent: BaseEvent = {
         type: EventType.RUN_STARTED,
         threadId: input.threadId,
@@ -704,7 +716,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       };
       observer.next(startedEvent);
 
-      void this.streamMastraAgent(interruptAwareInput, initialMessageId, {
+      void this.streamMastraAgent(input, initialMessageId, {
         onTextPart: (delta, messageId) => {
           const textEvent: BaseEvent = {
             type: EventType.TEXT_MESSAGE_CHUNK,
@@ -759,35 +771,24 @@ export class ExtendedMastraAgent extends AbstractAgent {
           observer.next(activityEvent);
         },
         onRunInterrupted: (interrupt) => {
-          observer.next({
+          const interruptedEvent: RunFinishedEvent = {
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
-            outcome: 'interrupt',
-            interrupt: {
-              id: createInterruptId(interrupt),
-              reason:
-                interrupt.kind === 'approval'
-                  ? 'human_approval'
-                  : 'tool_suspended',
-              payload: {
-                kind: interrupt.kind,
-                toolCallId: interrupt.toolCallId,
-                toolName: interrupt.toolName,
-                args: interrupt.args,
-                resumeSchema: safeParseJson(interrupt.resumeSchema ?? ''),
-                suspendPayload: interrupt.suspendPayload,
-              },
+            outcome: {
+              type: 'interrupt',
+              interrupts: [toInterrupt(interrupt)],
             },
-          } as BaseEvent);
+          };
+          observer.next(interruptedEvent);
           observer.complete();
         },
         onRunFinished: () => {
-          const finishedEvent: BaseEvent = {
+          const finishedEvent: RunFinishedEvent = {
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
-            outcome: 'success',
+            outcome: { type: 'success' },
           };
           observer.next(finishedEvent);
           observer.complete();
@@ -800,7 +801,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
   }
 
   private async streamMastraAgent(
-    input: InterruptAwareRunAgentInput,
+    input: RunAgentInput,
     assistantMessageId: string,
     handlers: {
       onTextPart: (delta: string, messageId: string) => void;
@@ -1032,21 +1033,20 @@ export class ExtendedMastraAgent extends AbstractAgent {
   }
 
   private async createMastraStream(
-    input: InterruptAwareRunAgentInput,
+    input: RunAgentInput,
     messages: CoreMessage[],
     clientTools: Record<string, ClientToolDefinition>,
   ) {
-    const interrupt = parseInterruptId(input.resume?.interruptId);
+    // The interrupt-aware lifecycle allows multiple parallel interrupts, but
+    // Mastra suspends a single tool call at a time, so we only ever emit (and
+    // therefore only ever receive back) one entry.
+    const resumeEntry: ResumeEntry | undefined = input.resume?.[0];
+    const interrupt = parseInterruptId(resumeEntry?.interruptId);
 
-    if (interrupt) {
+    if (interrupt && resumeEntry) {
+      const approved = resumeEntry.status === 'resolved';
+
       if (interrupt.kind === 'approval') {
-        const approved = readApproved(input.resume?.payload);
-        if (approved === undefined) {
-          throw new Error(
-            'Approval resume payload must include an approved boolean.',
-          );
-        }
-
         if (approved) {
           return this.agent.approveToolCall({
             runId: interrupt.runId,
@@ -1068,7 +1068,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
         });
       }
 
-      return this.agent.resumeStream(input.resume?.payload, {
+      return this.agent.resumeStream(resumeEntry.payload ?? { approved }, {
         runId: interrupt.runId,
         toolCallId: interrupt.toolCallId,
         memory: { thread: input.threadId, resource: this.resourceId },

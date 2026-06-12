@@ -1,7 +1,6 @@
 import {
   type AgentSubscriber,
-  type BaseEvent,
-  EventType,
+  getRunOutcome,
   type HttpAgent,
   randomUUID,
 } from '@ag-ui/client';
@@ -15,8 +14,8 @@ import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
   type AgUiInterrupt,
-  type AgUiResumeRequest,
   type AgUiRegisteredComponent,
+  type AgUiResumeEntry,
   type AgUiWorkflowStep,
 } from '../ag-ui-types';
 import {
@@ -38,44 +37,13 @@ import {
   upsertWidgetFromActivitySnapshot,
 } from './widgets';
 
-interface RunAgentCompatParameters {
-  runId?: string;
-  tools?: RunAgentInputTool[];
-  context?: unknown;
-  forwardedProps?: Record<string, unknown>;
-  abortController?: AbortController;
-  resume?: AgUiResumeRequest;
-}
-
-interface RunAgentInputTool {
-  name: string;
-  description?: string;
-  parameters?: Record<string, unknown>;
-}
-
-interface InterruptAwareHttpAgent extends HttpAgent {
-  runAgentCompat(
-    parameters?: RunAgentCompatParameters,
-    subscriber?: AgentSubscriber,
-  ): Promise<{
-    result: unknown;
-    newMessages: unknown[];
-  }>;
-}
-
-interface InterruptAwareRunFinishedEvent extends BaseEvent {
-  type: EventType.RUN_FINISHED;
-  outcome?: 'success' | 'interrupt';
-  interrupt?: AgUiInterrupt;
-}
-
 export interface RunAgentOptions {
-  agent: InterruptAwareHttpAgent;
+  agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   runId: string;
-  resume?: AgUiResumeRequest;
+  resume?: AgUiResumeEntry[];
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;
@@ -375,25 +343,26 @@ export async function runAgent(
       }));
     },
     onRunFinishedEvent: ({ event }) => {
-      const interruptEvent = event as InterruptAwareRunFinishedEvent;
-      const activeInterrupt = interruptEvent.interrupt;
-      if (interruptEvent.outcome !== 'interrupt' || !activeInterrupt) {
+      const outcome = getRunOutcome(event);
+      if (outcome?.type !== 'interrupt' || outcome.interrupts.length === 0) {
         return;
       }
 
+      // The server emits exactly one interrupt per run (Mastra suspends a
+      // single tool call at a time).
+      const activeInterrupt = outcome.interrupts[0];
       interrupt = activeInterrupt;
+
+      const toolCallId = activeInterrupt.toolCallId;
+      if (!toolCallId) {
+        return;
+      }
+
       messageStream.update((item) => {
-        const nextMessages = updateToolCall(
-          readMessages(item),
-          activeInterrupt.payload.toolCallId,
-          {
-            status: 'interrupt',
-          },
-        );
-        const toolCall = findToolCall(
-          nextMessages,
-          activeInterrupt.payload.toolCallId,
-        );
+        const nextMessages = updateToolCall(readMessages(item), toolCallId, {
+          status: 'interrupt',
+        });
+        const toolCall = findToolCall(nextMessages, toolCallId);
 
         return {
           value: toolCall
@@ -425,7 +394,7 @@ export async function runAgent(
     ...(forwardedProps?.() ?? {}),
   };
 
-  await agent.runAgentCompat(
+  await agent.runAgent(
     {
       runId,
       tools: toolsToOffer,
@@ -516,14 +485,14 @@ function safeParseJson(content: unknown): unknown {
 }
 
 export interface RunUntilSettledOptions {
-  agent: InterruptAwareHttpAgent;
+  agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
   environmentInjector: EnvironmentInjector;
   runId: string;
   interrupt: WritableSignal<AgUiInterrupt | null>;
-  resume?: AgUiResumeRequest;
+  resume?: AgUiResumeEntry[];
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;

@@ -1,4 +1,9 @@
-import { type InputContentPart, type UserMessage } from '@ag-ui/core';
+import {
+  type InputContentPart,
+  type Interrupt,
+  type ResumeEntry,
+  type UserMessage,
+} from '@ag-ui/core';
 import {
   type InputSignal,
   type InputSignalWithTransform,
@@ -189,11 +194,7 @@ export function defineActionCard<const TToolName extends string, TComponent>(
   } as AgUiActionRegisteredComponent<TComponent, TToolName>;
 }
 
-export type AgUiToolCallStatus =
-  | 'pending'
-  | 'interrupt'
-  | 'complete'
-  | 'error';
+export type AgUiToolCallStatus = 'pending' | 'interrupt' | 'complete' | 'error';
 
 export interface AgUiToolCall {
   id: string;
@@ -227,25 +228,16 @@ export interface AgUiChatMessage {
   attachments?: AgUiChatMessageAttachment[];
 }
 
-export interface AgUiInterruptPayload {
-  kind: 'approval' | 'suspend';
-  toolCallId: string;
-  toolName: string;
-  args: unknown;
-  resumeSchema?: unknown;
-  suspendPayload?: unknown;
-}
+/**
+ * Re-exports of the AG-UI core interrupt-aware run lifecycle types.
+ * `Interrupt` carries `id`, `reason`, optional `message`, `toolCallId`,
+ * `responseSchema`, `expiresAt` and free-form `metadata` (we put `kind`,
+ * `toolName`, `args` and the Mastra suspend payload there).
+ */
+export type AgUiInterrupt = Interrupt;
 
-export interface AgUiInterrupt {
-  id: string;
-  reason: string;
-  payload: AgUiInterruptPayload;
-}
-
-export interface AgUiResumeRequest {
-  interruptId?: string;
-  payload?: unknown;
-}
+/** One response per open interrupt, sent via `RunAgentInput.resume`. */
+export type AgUiResumeEntry = ResumeEntry;
 
 type ToolExecuteFn<TArgs> = {
   bivarianceHack: (args: TArgs) => Promise<unknown> | unknown;
@@ -320,7 +312,7 @@ export interface AgUiResourceOptions {
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
   sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
-  interrupt: Signal<AgUiInterrupt | null>;
+  interrupt: Signal<Interrupt | null>;
   resumeInterrupt: (approved: boolean) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
