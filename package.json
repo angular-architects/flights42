@@ -48,8 +48,8 @@
   "dependencies": {
     "@a2ui/angular": "^0.9.1",
     "@a2ui/web_core": "^0.9.2",
-    "@ag-ui/client": "^0.0.52",
-    "@ag-ui/core": "^0.0.52",
+    "@ag-ui/client": "^0.0.57",
+    "@ag-ui/core": "^0.0.57",
     "@ag-ui/mastra": "1.0.0",
     "@ag-ui/mcp-apps-middleware": "^0.0.3",
     "@ai-sdk/openai": "^3.0.49",
