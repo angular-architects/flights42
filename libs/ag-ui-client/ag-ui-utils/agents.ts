@@ -353,17 +353,6 @@ export async function runAgent(
         ),
       }));
     },
-    onActivitySnapshotEvent: ({ event }) => {
-      messageStream.update((item) => ({
-        value: upsertWidgetFromActivitySnapshot(
-          readMessages(item),
-          event.messageId,
-          event.activityType,
-          event.content,
-          componentMap,
-        ),
-      }));
-    },
     onRunErrorEvent: ({ event }) => {
       const message =
         event.code === 'abort'
