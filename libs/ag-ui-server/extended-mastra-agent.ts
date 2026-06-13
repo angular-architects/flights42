@@ -26,6 +26,12 @@ interface ExtendedLocalAgentOptions {
   resourceId: string;
   requestContext?: RequestContext;
   store?: Store;
+  /**
+   * Message shown to the user when a guardrail (input/output processor)
+   * aborts the run via tripwire. Either a fixed string or a formatter that
+   * receives the technical reason. Defaults to surfacing the raw reason.
+   */
+  tripwireMessage?: string | ((reason: string) => string);
 }
 
 interface ClientToolDefinition {
@@ -582,6 +588,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly resourceId: string;
   readonly requestContext: RequestContext;
   readonly store: Store;
+  readonly tripwireMessage?: string | ((reason: string) => string);
 
   private abortSignal?: AbortSignal;
 
@@ -592,6 +599,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.resourceId = options.resourceId;
     this.requestContext = options.requestContext ?? new RequestContext();
     this.store = options.store ?? defaultStore;
+    this.tripwireMessage = options.tripwireMessage;
   }
 
   setAbortSignal(signal: AbortSignal | undefined): void {
@@ -602,6 +610,13 @@ export class ExtendedMastraAgent extends AbstractAgent {
     return this.abortSignal;
   }
 
+  private resolveTripwireMessage(reason: string): string {
+    if (typeof this.tripwireMessage === 'function') {
+      return this.tripwireMessage(reason);
+    }
+    return this.tripwireMessage ?? reason;
+  }
+
   override clone(): ExtendedMastraAgent {
     return new ExtendedMastraAgent({
       agentId: this.agentId,
@@ -609,6 +624,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       resourceId: this.resourceId,
       requestContext: this.requestContext,
       store: this.store,
+      tripwireMessage: this.tripwireMessage,
     });
   }
 
@@ -977,6 +993,24 @@ export class ExtendedMastraAgent extends AbstractAgent {
             }
             break;
           }
+          case 'tripwire': {
+            // A guardrail (input/output processor) aborted the run. Mastra
+            // emits a `tripwire` chunk and then closes the stream, so unless we
+            // surface it the UI just sees an empty "success". We log the
+            // technical reason and show a configurable, user-facing message.
+            const payload = chunk as {
+              payload?: { reason?: string };
+            };
+            const blockReason =
+              payload.payload?.reason ??
+              'The request was blocked by a guardrail.';
+            handlers.onTextPart(
+              this.resolveTripwireMessage(blockReason),
+              assistantMessageId,
+            );
+            handlers.onRunFinished();
+            return;
+          }
           case 'error': {
             const payload = chunk as { payload: { error: string } };
             if (activeToolCallId) {
@@ -1103,6 +1137,7 @@ export function getExtendedLocalAgent(options: {
   resourceId: string;
   requestContext?: RequestContext;
   store?: Store;
+  tripwireMessage?: string | ((reason: string) => string);
 }): ExtendedMastraAgent {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
@@ -1115,5 +1150,6 @@ export function getExtendedLocalAgent(options: {
     resourceId: options.resourceId,
     requestContext: options.requestContext,
     store: options.store,
+    tripwireMessage: options.tripwireMessage,
   });
 }
