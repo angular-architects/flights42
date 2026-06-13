@@ -10,8 +10,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
-    "isolatedModules": true,
-    "outDir": "./out-tsc/ai-server"
+    "isolatedModules": true
   },
   "include": [
     "src/**/*.ts",
