@@ -1,9 +1,4 @@
-import {
-  EnvironmentInjector,
-  inject,
-  Injectable,
-  runInInjectionContext,
-} from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   type AgUiChatResourceRef,
   agUiResource,
@@ -31,7 +26,6 @@ const ACTION_CARDS = [bookFlightActionCard, cancelFlightActionCard];
 export class TicketingChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
-  private readonly injector = inject(EnvironmentInjector);
   private readonly agentMode = inject(AgentModeService);
 
   private chat: AgUiChatResourceRef | null = null;
@@ -46,22 +40,20 @@ export class TicketingChatService {
         ...ACTION_CARDS,
       ];
 
-      this.chat = runInInjectionContext(this.injector, () =>
-        agUiResource({
-          url: this.config.agUiUrl,
-          model: this.config.model,
-          useServerMemory: true,
-          forwardedProps: () => ({ agentMode: this.agentMode.mode() }),
-          tools: [
-            findFlightsTool,
-            getLoadedFlightsTool,
-            toggleFlightSelectionTool,
-            getCurrentBasketTool,
-            displayFlightDetailTool,
-            createShowComponentsTool(components),
-          ],
-        }),
-      );
+      this.chat = agUiResource({
+        url: this.config.agUiUrl,
+        model: this.config.model,
+        useServerMemory: true,
+        forwardedProps: () => ({ agentMode: this.agentMode.mode() }),
+        tools: [
+          findFlightsTool,
+          getLoadedFlightsTool,
+          toggleFlightSelectionTool,
+          getCurrentBasketTool,
+          displayFlightDetailTool,
+          createShowComponentsTool(components),
+        ],
+      });
     }
     this.chatStore.setChat(this.chat);
   }
