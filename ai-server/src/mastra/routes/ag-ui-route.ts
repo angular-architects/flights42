@@ -40,6 +40,7 @@ export async function agUiRouteHandler(
     agentId: agentId ?? '',
     resourceId: input.threadId,
     requestContext,
+    tripwireMessage: 'Sorry, I cannot help with this topic.',
   });
 
   agent.setAbortSignal(c.req.raw.signal);
