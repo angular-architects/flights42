@@ -33,15 +33,15 @@ const legSchema = z.object({
   candidates: z.array(flightSchema),
 });
 
-const loadedDataSchema = z.object({
-  legs: z.array(legSchema),
-  destinations: z.array(
-    z.object({
-      city: z.string(),
-      hotels: z.array(hotelSchema),
-    }),
-  ),
-});
+const destinationsSchema = z.array(
+  z.object({
+    city: z.string(),
+    hotels: z.array(hotelSchema),
+  }),
+);
+
+const flightsResultSchema = z.object({ legs: z.array(legSchema) });
+const hotelsResultSchema = z.object({ destinations: destinationsSchema });
 
 const finalPlanSchema = z.object({
   summary: z.string().describe("Short summary in the user's language."),
@@ -96,7 +96,7 @@ const findFlightsStep = createStep({
   description:
     'Loads flight candidates for every leg of the rough plan, restricted to the planned day.',
   inputSchema: roughPlanSchema,
-  outputSchema: z.object({ legs: z.array(legSchema) }),
+  outputSchema: flightsResultSchema,
   execute: async ({ inputData, writer, requestContext }) => {
     const ctx: StepProgressContext = {
       writer,
@@ -128,9 +128,9 @@ const findHotelsStep = createStep({
   id: 'findHotels',
   description:
     'Loads hotel options for every city of the rough plan (deterministic, no agent).',
-  inputSchema: z.object({ legs: z.array(legSchema) }),
-  outputSchema: loadedDataSchema,
-  execute: async ({ inputData, getInitData, writer, requestContext }) => {
+  inputSchema: roughPlanSchema,
+  outputSchema: hotelsResultSchema,
+  execute: async ({ inputData, writer, requestContext }) => {
     const ctx: StepProgressContext = {
       writer,
       requestContext,
@@ -138,10 +138,8 @@ const findHotelsStep = createStep({
     };
     await emitStepStatus(ctx, 'findHotels', 'started');
 
-    const init = getInitData<z.infer<typeof roughPlanSchema>>();
-
     const destinations = await Promise.all(
-      init.hotels.map(({ city }) =>
+      inputData.hotels.map(({ city }) =>
         withToolCall(ctx, 'findHotels', { city }, async () => ({
           city,
           hotels: findHotelsForCity(city),
@@ -152,7 +150,7 @@ const findHotelsStep = createStep({
     await emitStepStatus(ctx, 'findHotels', 'finished', {
       cityCount: destinations.length,
     });
-    return { legs: inputData.legs, destinations };
+    return { destinations };
   },
 });
 
@@ -160,13 +158,18 @@ const finalizeStep = createStep({
   id: 'finalize',
   description:
     'Lets an agent pick the concrete flights and hotels and build the final plan.',
-  inputSchema: loadedDataSchema,
+  inputSchema: z.object({
+    findFlights: flightsResultSchema,
+    findHotels: hotelsResultSchema,
+  }),
   outputSchema: finalPlanSchema,
   execute: async ({ inputData, getInitData, writer, requestContext }) => {
     const ctx: StepProgressContext = { writer, requestContext };
     await emitStepStatus(ctx, 'finalize', 'started');
 
     const init = getInitData<z.infer<typeof roughPlanSchema>>();
+    const { legs } = inputData.findFlights;
+    const { destinations } = inputData.findHotels;
 
     const result = await planFinalizerAgent.generate(
       [
@@ -176,10 +179,10 @@ const finalizeStep = createStep({
             Original user request: ${init.userPrompt}
 
             Available flights per leg (in travel order):
-            ${JSON.stringify(inputData.legs, null, 2)}
+            ${JSON.stringify(legs, null, 2)}
 
             Available hotels per city:
-            ${JSON.stringify(inputData.destinations, null, 2)}`,
+            ${JSON.stringify(destinations, null, 2)}`,
         },
       ],
       { structuredOutput: { schema: finalPlanSchema } },
@@ -199,7 +202,6 @@ export const packageTourWorkflow = createWorkflow({
   inputSchema: roughPlanSchema,
   outputSchema: finalPlanSchema,
 })
-  .then(findFlightsStep)
-  .then(findHotelsStep)
+  .parallel([findFlightsStep, findHotelsStep])
   .then(finalizeStep)
   .commit();
