@@ -4,6 +4,8 @@ import { BehaviorSubject, Subject } from 'rxjs';
 
 export interface ChatInfo {
   chat: AgUiChatResourceRef | null;
+  /** Greeting shown as the first assistant message. Undefined = component default. */
+  greeting?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,10 +21,10 @@ export class ChatRegistry {
     return this._chat;
   }
 
-  public setChat(chat: AgUiChatResourceRef) {
+  public setChat(chat: AgUiChatResourceRef, greeting?: string) {
     if (chat !== this._chat) {
       this._chat = chat;
-      this._chatInfo.next({ chat });
+      this._chatInfo.next({ chat, greeting });
     }
   }
 

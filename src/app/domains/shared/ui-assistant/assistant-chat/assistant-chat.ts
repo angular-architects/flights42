@@ -12,6 +12,8 @@ import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
 
+const DEFAULT_GREETING = 'Hi! How can I help you?';
+
 @Component({
   selector: 'app-assistant-chat',
   imports: [FormsModule, ChatMessages],
@@ -33,12 +35,14 @@ export class AssistantChat {
 
   protected readonly panelVisible = signal(false);
   protected readonly message = signal('');
+  protected readonly greeting = signal<string>(DEFAULT_GREETING);
 
   protected chat: AgUiChatResourceRef | null = null;
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
       this.chat = chatInfo.chat;
+      this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
     });
 
     this.chatRegistry.openRequested.subscribe(() => {

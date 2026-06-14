@@ -65,7 +65,8 @@
       #messagesContainer>
       <app-chat-messages
         [messages]="chat.value()"
-        [pending]="chat.isLoading()" />
+        [pending]="chat.isLoading()"
+        [greeting]="greeting()" />
     </section>
 
     <form

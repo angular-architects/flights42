@@ -26,6 +26,7 @@ import { ToolStatusComponent } from '../tool-status';
 export class ChatMessages {
   readonly messages = input.required<AgUiChatMessage[]>();
   readonly pending = input<boolean>(false);
+  readonly greeting = input<string>('Hi! How can I help you?');
   protected readonly showIndicator = computed(() => this.pending());
 
   protected readonly icons = {

@@ -43,6 +43,9 @@ export class TravelRefinementChatService {
         ],
       });
     }
-    this.chatStore.setChat(this.chat);
+    this.chatStore.setChat(
+      this.chat,
+      'Do you want to refine your travel plan?',
+    );
   }
 }

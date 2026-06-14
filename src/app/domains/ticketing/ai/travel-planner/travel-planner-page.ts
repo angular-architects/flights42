@@ -29,8 +29,6 @@ const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },
   { value: 2, label: '2 days' },
   { value: 3, label: '3 days' },
-  { value: 4, label: '4 days' },
-  { value: 5, label: '5 days' },
 ] as const;
 
 const WORKFLOW_STEP_LABELS: Record<string, string> = {
@@ -206,15 +204,23 @@ export class TravelPlannerPage {
       ? ` Traveler preferences: ${trimmedPreferences}.`
       : '';
 
-    // Always request a travel start of today + 10 days (ISO date without time).
+    // Travel starts today + 10 days. We compute the concrete outbound and return
+    // dates here (deterministically) and pass both into the prompt, so the agent
+    // does not have to derive the schedule from the duration.
     const startDate = new Date();
     startDate.setDate(startDate.getDate() + 10);
     const startDateIso = startDate.toISOString().slice(0, 10);
 
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + (duration - 1));
+    const endDateIso = endDate.toISOString().slice(0, 10);
+
+    const nights = duration - 1;
     const content =
-      `Please plan a package tour from ${from} to ${to} ` +
-      `for ${duration} ${duration === 1 ? 'day' : 'days'} ` +
-      `starting on ${startDateIso}.` +
+      `Please plan a package tour from ${from} to ${to}. ` +
+      `The outbound flight is on ${startDateIso} and the final return flight is on ` +
+      `${endDateIso} (${duration} ${duration === 1 ? 'day' : 'days'}, ` +
+      `${nights} ${nights === 1 ? 'night' : 'nights'}).` +
       preferenceText;
 
     this.chat.sendMessage({ role: 'user', content });

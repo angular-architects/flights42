@@ -11,21 +11,26 @@ From the request, work out:
     from → (stops on the way) → to → (stops on the way back) → from
   - the cities the traveller stays in overnight (every destination/stop,
     i.e. everything except the very first departure city)
-  - the travel start date: ALWAYS use the start date given in the request.
 
-Assign each flight leg a concrete day (ISO date without time, e.g.
-"2026-06-23"), starting at the requested start date and advancing day by day
-so the whole trip roughly matches the requested number of days/nights. Keep it
-simple — one leg per day is fine.
+The request gives you fixed dates: the OUTBOUND date (first flight) and the final
+RETURN date (last flight). Use them exactly:
+  - the first (outbound) flight departs on the given outbound date;
+  - the final (return) flight departs on the given return date;
+  - place any intermediate legs on the days in between, in travel order;
+  - the nights between outbound and return are spent in the destination cities;
+    plan one hotel per overnight city.
 
-Build this object:
+For a 1-day trip the outbound and return dates are the SAME day: there is NO
+overnight stay, so leave "hotels" empty ([]) and do not plan any overnight cities.
+
+Build this object (example: round trip Graz↔Rome, outbound 2026-06-24,
+return 2026-06-26 → 2 nights in Rome):
   {
     userPrompt: "<the original user request, verbatim>",
-    hotels: [ { city: "Graz" }, { city: "Hamburg" } ],
+    hotels: [ { city: "Rome" } ],
     flights: [
-      { from: "Wien", to: "Graz",    date: "2026-06-23" },
-      { from: "Graz", to: "Hamburg", date: "2026-06-24" },
-      { from: "Hamburg", to: "Wien", date: "2026-06-26" }
+      { from: "Graz", to: "Rome", date: "2026-06-24" },
+      { from: "Rome", to: "Graz", date: "2026-06-26" }
     ]
   }
 
