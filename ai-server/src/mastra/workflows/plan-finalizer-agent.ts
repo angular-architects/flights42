@@ -1,6 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 
-import { model } from '../config.js';
+import { model, modelAdvancedTasks } from '../config.js';
 
 const planFinalizerAgentPrompt = `
 You are the Plan Finalizer. You run as the last step of the packageTourWorkflow.
@@ -32,5 +32,5 @@ export const planFinalizerAgent = new Agent({
   id: 'planFinalizerAgent',
   name: 'Flight42 Plan Finalizer',
   instructions: planFinalizerAgentPrompt,
-  model,
+  model: modelAdvancedTasks,
 });
