@@ -1,6 +1,8 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { canonicalCity } from './city-aliases.js';
+
 const HOTEL_ASSET_BASE_URL = '/assets/hotels';
 
 export const hotelSchema = z.object({
@@ -35,10 +37,14 @@ const baseHotels = [
 ] as const;
 
 export function findHotelsForCity(city: string): Hotel[] {
+  // Normalize to the canonical spelling so the hotel's city matches the flight
+  // data (e.g. "Vienna" → "Wien"). This keeps the plan consistent and makes a
+  // duplicate lookup with a different spelling idempotent. See city-aliases.ts.
+  const canonical = canonicalCity(city);
   return baseHotels.map((hotel) => ({
     ...hotel,
-    name: `${hotel.name} ${city}`,
-    city,
+    name: `${hotel.name} ${canonical}`,
+    city: canonical,
   }));
 }
 

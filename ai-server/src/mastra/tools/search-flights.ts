@@ -1,6 +1,8 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { canonicalCity, cityCandidates } from './city-aliases.js';
+
 const FLIGHT_API_BASE = 'https://demo.angulararchitects.io/api/flight';
 
 export const flightSchema = z.object({
@@ -25,56 +27,14 @@ interface RawFlight {
 function normalize(raw: RawFlight): Flight {
   return {
     id: raw.id,
-    from: raw.from,
-    to: raw.to,
+    // Normalize to the canonical city spelling so flights and hotels for the
+    // same city always use an identical name (the plan ties them together by
+    // name). See city-aliases.ts.
+    from: canonicalCity(raw.from),
+    to: canonicalCity(raw.to),
     date: raw.date,
     delay: raw.delayed ? (raw.delay ?? 0) : 0,
   };
-}
-
-// The demo flight API stores city names inconsistently (some English, some
-// German — e.g. "Rome" but "Wien") and is name-sensitive, so a lookup for a
-// translated spelling like "Vienna" returns nothing. Agents are told not to
-// translate, but that is not reliable, so we treat these exonyms as equivalent
-// and retry with the alternative spellings whenever a direct lookup is empty.
-//
-// Convention: list the ENGLISH exonym first in each group. Combined with
-// `cityCandidates` (caller's spelling first), the lookup order becomes
-// caller's spelling → English → remaining variants — and English is the best
-// next guess because the API's data is mostly English.
-const CITY_ALIASES: readonly (readonly string[])[] = [
-  ['Vienna', 'Wien'],
-  ['Rome', 'Rom'],
-  ['Munich', 'München', 'Muenchen'],
-  ['Prague', 'Prag'],
-  ['Cologne', 'Köln', 'Koeln'],
-  ['Florence', 'Florenz'],
-  ['Venice', 'Venedig'],
-  ['Milan', 'Mailand'],
-  ['Naples', 'Neapel'],
-  ['Geneva', 'Genf'],
-  ['Lisbon', 'Lissabon'],
-  ['Warsaw', 'Warschau'],
-  ['Copenhagen', 'Kopenhagen'],
-  ['Athens', 'Athen'],
-  ['Brussels', 'Brüssel', 'Bruessel'],
-];
-
-/**
- * Returns the spellings to try for a city: the caller's spelling first (exact
- * match wins), then the English exonym, then any remaining variants — see the
- * "Convention" note on CITY_ALIASES.
- */
-function cityCandidates(city: string): string[] {
-  const trimmed = city.trim();
-  const lower = trimmed.toLowerCase();
-  const group = CITY_ALIASES.find((names) =>
-    names.some((name) => name.toLowerCase() === lower),
-  );
-  if (!group) {
-    return [trimmed];
-  }
-  return [trimmed, ...group.filter((name) => name.toLowerCase() !== lower)];
 }
 
 async function fetchFlights(from: string, to: string): Promise<Flight[]> {
