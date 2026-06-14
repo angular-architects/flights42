@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import {
   type AgUiChatResourceRef,
   agUiResource,
@@ -25,12 +25,16 @@ export class TravelRefinementChatService {
 
   private chat: AgUiChatResourceRef | null = null;
 
+  /** The traveler's original preferences, seeded into the first refinement turn. */
+  private readonly preferences = signal('');
+
   public init(): void {
     if (!this.chat) {
       this.chat = agUiResource({
         url: `${this.config.aiServerUrl}/ag-ui/travelRefinementAgent`,
         model: this.config.model,
         useServerMemory: true,
+        firstMessagePreamble: () => buildPreferencePreamble(this.preferences()),
         tools: [
           getTravelPlanTool,
           setTravelPlanTool,
@@ -48,4 +52,26 @@ export class TravelRefinementChatService {
       'Do you want to refine your travel plan?',
     );
   }
+
+  /**
+   * Starts a fresh refinement session for a newly created plan and seeds it
+   * with the traveler's preferences, so they are carried into the first turn
+   * and not lost during refinement.
+   */
+  public startSession(preferences: string): void {
+    this.preferences.set(preferences.trim());
+    this.chat?.reset();
+  }
+}
+
+function buildPreferencePreamble(preferences: string): string | undefined {
+  const trimmed = preferences.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  return (
+    `For context, the traveler's original preferences for this trip are: ` +
+    `"${trimmed}". Keep honoring them while refining the plan unless I ` +
+    `explicitly ask to change them.`
+  );
 }

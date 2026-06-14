@@ -217,6 +217,14 @@ export interface AgUiResourceOptions {
   maxLocalTurns?: number;
   model?: string;
   forwardedProps?: () => Record<string, unknown>;
+  /**
+   * Optional text prepended to the content sent to the agent for the FIRST
+   * user message of a session (re-armed by `reset()`). It only travels to the
+   * agent — it is not shown in the local chat bubble. Use it to seed context
+   * (e.g. the user's preferences) that would otherwise be lost. Return
+   * `undefined` / empty to add nothing.
+   */
+  firstMessagePreamble?: () => string | undefined;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {

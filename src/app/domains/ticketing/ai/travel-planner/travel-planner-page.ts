@@ -204,6 +204,10 @@ export class TravelPlannerPage {
       ? ` Traveler preferences: ${trimmedPreferences}.`
       : '';
 
+    // Start a fresh refinement session seeded with these preferences, so the
+    // refinement agent keeps honoring them once the user starts refining.
+    this.refinementChat.startSession(trimmedPreferences);
+
     // Travel starts today + 10 days. We compute the concrete outbound and return
     // dates here (deterministically) and pass both into the prompt, so the agent
     // does not have to derive the schedule from the duration.
