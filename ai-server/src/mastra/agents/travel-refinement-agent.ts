@@ -1,9 +1,9 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { model, modelAdvancedTasks } from '../config.js';
-import { hotelAgent } from './hotel-agent.js';
-import { ticketingAgent } from './ticketing-agent.js';
+import { modelAdvancedTasks } from '../config.js';
+import { findHotelsTool } from '../tools/find-hotels.js';
+import { searchFlightsTool } from '../tools/search-flights.js';
 import { travelRefinementAgentPrompt } from './travel-refinement-agent.prompt.js';
 
 export const travelRefinementAgent = new Agent({
@@ -11,7 +11,7 @@ export const travelRefinementAgent = new Agent({
   name: 'Flight42 Travel Refinement',
   instructions: travelRefinementAgentPrompt,
   model: modelAdvancedTasks,
-  agents: { ticketingAgent, hotelAgent },
+  tools: { searchFlightsTool, findHotelsTool },
   memory: new Memory(),
   defaultOptions: {
     providerOptions: {

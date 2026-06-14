@@ -281,7 +281,6 @@
   margin: 0;
   padding: 0.4rem 1.1rem 0.8rem;
   overflow-y: auto;
-  counter-reset: tool-step;
 }
 
 .tool-details-list:last-of-type {
@@ -316,14 +315,6 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 0.5rem;
-}
-
-.tool-details-item-head::before {
-  counter-increment: tool-step;
-  content: counter(tool-step) '.';
-  color: rgba(15, 23, 42, 0.5);
-  font-variant-numeric: tabular-nums;
-  margin-right: 0.4rem;
 }
 
 .tool-details-name {
@@ -382,11 +373,6 @@
   padding: 0.45rem 0.6rem;
   background: rgba(15, 23, 42, 0.02);
   font-size: 0.85rem;
-}
-
-.tool-details-subitem .tool-details-item-head::before {
-  content: '';
-  margin-right: 0;
 }
 
 .tool-details-subitem[data-status='pending'] {
