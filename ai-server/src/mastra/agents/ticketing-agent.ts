@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -6,13 +7,10 @@ import { model } from '../config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
+import { hotelAgent } from './hotel-agent.js';
 // import { packageAgent } from './package-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
-
-// const hotelsMcpTools = await initMcpServer({
-//   serverId: 'hotels',
-//   url: new URL('http://127.0.0.1:3002/mcp'),
-// });
+import { travelPlannerAgent } from './travel-planner-agent.js';
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
@@ -23,8 +21,7 @@ export const ticketingAgent = new Agent({
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
-    // ...hotelsMcpTools,
   },
-  // agents: { packageAgent },
+  // agents: { travelPlannerAgent, hotelAgent },
   memory: new Memory(),
 });
