@@ -67,6 +67,21 @@ const ATTACHMENT_LABELS: Record<
   binary: '[Datei hochgeladen]',
 };
 
+/**
+ * Prepends `text` to a user message's agent-facing content. Keeps the
+ * structured form intact: a string stays a string, an array of content parts
+ * gets a leading text part.
+ */
+function prependTextToContent(
+  content: UserMessageContent,
+  text: string,
+): UserMessageContent {
+  if (typeof content === 'string') {
+    return `${text}\n\n${content}`;
+  }
+  return [{ type: 'text', text }, ...content];
+}
+
 function normalizeUserMessageContent(
   content: UserMessageContent,
 ): NormalizedUserMessageContent | null {
@@ -150,6 +165,11 @@ export function agUiResource(
 
   const isLoading = signal<boolean>(false);
 
+  const firstMessagePreamble = options.firstMessagePreamble;
+  // Re-armed by `reset()`: the preamble is added only to the first user
+  // message of each session, then this flips to false.
+  let firstMessagePending = true;
+
   let activeRunRequestId = '';
 
   const stream = async (streamOptions: StreamOptions) => {
@@ -221,13 +241,26 @@ export function agUiResource(
       agent.messages = [];
     }
 
+    // For the first message of a session, prepend the optional preamble to the
+    // content sent to the agent (not to the displayed bubble), so seeded
+    // context like the user's preferences reaches the agent without cluttering
+    // the chat.
+    let agentContent = normalized.agentContent;
+    if (firstMessagePending) {
+      const preamble = firstMessagePreamble?.()?.trim();
+      if (preamble) {
+        agentContent = prependTextToContent(agentContent, preamble);
+      }
+    }
+    firstMessagePending = false;
+
     // The structured `agentContent` (string | UserMessageContentPart[])
     // travels to the agent untouched; only the local chat bubble uses
     // the textual placeholder.
     agent.addMessage({
       id,
       role: 'user' as const,
-      content: normalized.agentContent,
+      content: agentContent,
     });
 
     messageStream.update((item) => ({
@@ -260,6 +293,7 @@ export function agUiResource(
     agent.abortRun();
     agent = createAgent();
     isLoading.set(false);
+    firstMessagePending = true;
     pendingRun.set(undefined);
     messageStream.set({ value: [] });
   };
