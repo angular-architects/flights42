@@ -6,6 +6,7 @@ import { PinoLogger } from '@mastra/loggers';
 import { checkinAgent } from './agents/checkin-agent.js';
 import { hotelAgent } from './agents/hotel-agent.js';
 import { packageAgent } from './agents/package-agent.js';
+import { planFinalizerAgent } from './agents/plan-finalizer-agent.js';
 import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
 import { travelPlannerAgent } from './agents/travel-planner-agent.js';
@@ -23,6 +24,7 @@ export const mastra = new Mastra({
     packageAgent,
     hotelAgent,
     travelPlannerAgent,
+    planFinalizerAgent,
     reportingAgent,
     checkinAgent,
   },

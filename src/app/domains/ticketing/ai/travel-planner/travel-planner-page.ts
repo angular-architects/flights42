@@ -160,9 +160,15 @@ export class TravelPlannerPage {
       ? ` Traveler preferences: ${trimmedPreferences}.`
       : '';
 
+    // Always request a travel start of today + 10 days (ISO date without time).
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + 10);
+    const startDateIso = startDate.toISOString().slice(0, 10);
+
     const content =
       `Please plan a package tour from ${from} to ${to} ` +
-      `for ${duration} ${duration === 1 ? 'day' : 'days'} starting next week.` +
+      `for ${duration} ${duration === 1 ? 'day' : 'days'} ` +
+      `starting on ${startDateIso}.` +
       preferenceText;
 
     this.chat.sendMessage({ role: 'user', content });

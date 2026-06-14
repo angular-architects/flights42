@@ -2,35 +2,39 @@ import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 
 import { readBridge } from '../../../../libs/ag-ui-server/step-bridge.js';
-import { hotelSchema } from '../tools/find-hotels.js';
+import { findHotelsForCity, hotelSchema } from '../tools/find-hotels.js';
 import { flightSchema, searchFlights } from '../tools/search-flights.js';
 
-const packageInputSchema = z.object({
-  from: z.string().describe('Departure city (name, not IATA code).'),
-  to: z.string().describe('Destination city (name, not IATA code).'),
-  stops: z
-    .array(z.string())
-    .default([])
-    .describe(
-      'Intermediate stop cities on the OUTBOUND journey, in travel order between from and to.',
-    ),
-  returnStops: z
-    .array(z.string())
-    .default([])
-    .describe(
-      'Intermediate stop cities on the RETURN journey, in travel order between to and from.',
-    ),
-  departDate: z
-    .string()
-    .describe('Planned outbound departure date (ISO 8601, e.g. 2026-05-15).'),
-  returnDate: z
-    .string()
-    .describe('Planned return flight date (ISO 8601, e.g. 2026-05-22).'),
+/**
+ * Input of the workflow: the "rough plan" the travel planner agent derives
+ * from the user's free-text request (which cities to stay in and which flight
+ * legs to take, each on a concrete day). The original user prompt is passed
+ * along so the finalize agent (step 3) can honour preferences from it.
+ */
+const roughPlanSchema = z.object({
+  userPrompt: z.string().describe('The original user request, verbatim.'),
+  hotels: z
+    .array(z.object({ city: z.string() }))
+    .describe('Cities the traveller wants to stay in.'),
+  flights: z
+    .array(
+      z.object({
+        from: z.string().describe('Departure city (name, not IATA code).'),
+        to: z.string().describe('Destination city (name, not IATA code).'),
+        date: z
+          .string()
+          .describe(
+            'Departure day as ISO date without time, e.g. "2026-06-23".',
+          ),
+      }),
+    )
+    .describe('Flight legs in travel order.'),
 });
 
 const legSchema = z.object({
   from: z.string(),
   to: z.string(),
+  date: z.string(),
   candidates: z.array(flightSchema),
 });
 
@@ -39,9 +43,18 @@ const destinationSchema = z.object({
   hotels: z.array(hotelSchema),
 });
 
-const packageOutputSchema = z.object({
+const loadedDataSchema = z.object({
   legs: z.array(legSchema),
   destinations: z.array(destinationSchema),
+});
+
+/** Final, ready-to-render plan produced by the step-3 agent. */
+const finalPlanSchema = z.object({
+  summary: z.string().describe("Short summary in the user's language."),
+  flights: z.array(flightSchema).describe('Chosen flights, in travel order.'),
+  hotels: z
+    .array(hotelSchema)
+    .describe('Chosen hotels, one per overnight city.'),
 });
 
 interface StepProgressContext {
@@ -100,11 +113,13 @@ async function withToolCall<T>(
   return result;
 }
 
+// Step 1 — deterministically load flight candidates for every leg of the
+// rough plan (no agent involved). Each leg is restricted to its planned day.
 const findFlightsStep = createStep({
   id: 'findFlights',
   description:
-    'Searches for flights for all legs of the trip (outbound and return, including stops) using parallel requests.',
-  inputSchema: packageInputSchema,
+    'Loads flight candidates for every leg of the rough plan, restricted to the planned day.',
+  inputSchema: roughPlanSchema,
   outputSchema: z.object({ legs: z.array(legSchema) }),
   execute: async ({ inputData, writer, requestContext }) => {
     const ctx: StepProgressContext = {
@@ -114,21 +129,15 @@ const findFlightsStep = createStep({
     };
     await emitStepStatus(ctx, 'findFlights', 'started');
 
-    const { from, to, stops, returnStops } = inputData;
-    const citySequence = [from, ...stops, to, ...returnStops, from];
-    const legPairs = citySequence
-      .slice(0, -1)
-      .map((city, i) => ({ from: city, to: citySequence[i + 1] }));
-
     const legs = await Promise.all(
-      legPairs.map(async (pair) => {
+      inputData.flights.map(async (leg) => {
         const candidates = await withToolCall(
           ctx,
           'searchFlights',
-          { from: pair.from, to: pair.to },
-          () => searchFlights(pair.from, pair.to),
+          { from: leg.from, to: leg.to, date: leg.date },
+          () => searchFlights(leg.from, leg.to, leg.date),
         );
-        return { from: pair.from, to: pair.to, candidates };
+        return { from: leg.from, to: leg.to, date: leg.date, candidates };
       }),
     );
 
@@ -139,22 +148,15 @@ const findFlightsStep = createStep({
   },
 });
 
+// Step 2 — deterministically load hotel options for every city of the rough
+// plan (no agent involved).
 const findHotelsStep = createStep({
   id: 'findHotels',
   description:
-    'Asks the hotel agent for hotel options in all destination cities (stops + final destination) using parallel requests.',
+    'Loads hotel options for every city of the rough plan (deterministic, no agent).',
   inputSchema: z.object({ legs: z.array(legSchema) }),
-  outputSchema: z.object({
-    legs: z.array(legSchema),
-    destinations: z.array(destinationSchema),
-  }),
-  execute: async ({
-    inputData,
-    getInitData,
-    mastra,
-    writer,
-    requestContext,
-  }) => {
+  outputSchema: loadedDataSchema,
+  execute: async ({ inputData, getInitData, writer, requestContext }) => {
     const ctx: StepProgressContext = {
       writer,
       requestContext,
@@ -162,34 +164,15 @@ const findHotelsStep = createStep({
     };
     await emitStepStatus(ctx, 'findHotels', 'started');
 
-    const init = getInitData<z.infer<typeof packageInputSchema>>();
-    const cities = [...init.stops, init.to, ...init.returnStops];
-    const bridge = readBridge(requestContext);
-    const agent = mastra.getAgent('hotelAgent');
-
-    const agentOutputSchema = z.object({
-      city: z.string(),
-      hotels: z.array(hotelSchema),
-    });
+    const init = getInitData<z.infer<typeof roughPlanSchema>>();
 
     const destinations = await Promise.all(
-      cities.map(async (city) => {
-        const result = await agent.generate(
-          [{ role: 'user', content: `Find hotels in ${city}.` }],
-          { structuredOutput: { schema: agentOutputSchema } },
-        );
-
-        const hotelData = result.object ?? { city, hotels: [] };
-
-        bridge?.emitToolCall({
-          toolName: 'agent-hotelAgent',
-          args: { city },
-          result: hotelData,
-          stepName: ctx.stepName,
-        });
-
-        return { city, hotels: hotelData.hotels };
-      }),
+      init.hotels.map(({ city }) =>
+        withToolCall(ctx, 'findHotels', { city }, async () => ({
+          city,
+          hotels: findHotelsForCity(city),
+        })),
+      ),
     );
 
     await emitStepStatus(ctx, 'findHotels', 'finished', {
@@ -199,26 +182,58 @@ const findHotelsStep = createStep({
   },
 });
 
+// Step 3 — an agent turns the loaded data + the original user prompt into the
+// final, ready-to-render plan (picks one flight per leg and one hotel per city).
 const finalizeStep = createStep({
   id: 'finalize',
   description:
-    'Passes the combined legs and destinations through as the final workflow output.',
-  inputSchema: packageOutputSchema,
-  outputSchema: packageOutputSchema,
-  execute: async ({ inputData, writer, requestContext }) => {
+    'Lets an agent pick the concrete flights and hotels and build the final plan.',
+  inputSchema: loadedDataSchema,
+  outputSchema: finalPlanSchema,
+  execute: async ({
+    inputData,
+    getInitData,
+    mastra,
+    writer,
+    requestContext,
+  }) => {
     const ctx: StepProgressContext = { writer, requestContext };
     await emitStepStatus(ctx, 'finalize', 'started');
+
+    const init = getInitData<z.infer<typeof roughPlanSchema>>();
+    const agent = mastra.getAgent('planFinalizerAgent');
+
+    const result = await agent.generate(
+      [
+        {
+          role: 'user',
+          content: [
+            `Original user request: ${init.userPrompt}`,
+            '',
+            'Available flights per leg (in travel order):',
+            JSON.stringify(inputData.legs, null, 2),
+            '',
+            'Available hotels per city:',
+            JSON.stringify(inputData.destinations, null, 2),
+          ].join('\n'),
+        },
+      ],
+      { structuredOutput: { schema: finalPlanSchema } },
+    );
+
+    const plan = result.object ?? { summary: '', flights: [], hotels: [] };
+
     await emitStepStatus(ctx, 'finalize', 'finished');
-    return inputData;
+    return plan;
   },
 });
 
 export const packageTourWorkflow = createWorkflow({
   id: 'packageTourWorkflow',
   description:
-    'Proposes a multi-stop package tour: searches flights for all legs, then finds hotels for all destination cities, then finalizes the result.',
-  inputSchema: packageInputSchema,
-  outputSchema: packageOutputSchema,
+    'Takes a rough plan, loads flights and hotels for it deterministically, then lets an agent build the final travel plan.',
+  inputSchema: roughPlanSchema,
+  outputSchema: finalPlanSchema,
 })
   .then(findFlightsStep)
   .then(findHotelsStep)

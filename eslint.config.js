@@ -8,6 +8,11 @@ const sheriff = require('@softarc/eslint-plugin-sheriff');
 
 module.exports = defineConfig([
   {
+    // ai-server is a standalone Mastra/Node project with its own tsconfig and
+    // module boundaries; the root Angular/Sheriff rules don't apply to it.
+    ignores: ['ai-server/**'],
+  },
+  {
     files: ['**/*.ts'],
     extends: [
       eslint.configs.recommended,
