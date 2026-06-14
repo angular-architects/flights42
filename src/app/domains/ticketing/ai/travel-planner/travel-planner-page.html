@@ -48,7 +48,11 @@
     @if (chat.isLoading()) {
       <button type="button" (click)="stop()">Stop</button>
     }
-    @if (widgets().length > 0 || toolCalls().length > 0) {
+    @if (
+      planStore.flights().length > 0 ||
+      planStore.hotels().length > 0 ||
+      toolCalls().length > 0
+    ) {
       <button type="button" (click)="reset()">Reset</button>
     }
   </div>
@@ -170,39 +174,33 @@
 }
 
 <section class="planner-output">
-  @for (widget of messageWidgets(); track widget.id) {
+  @if (planStore.summary(); as summary) {
     <div class="planner-tile" data-widget="messageWidget">
-      <app-widget-container [widget]="widget" />
+      <p>{{ summary }}</p>
     </div>
   }
 
-  @if (flightWidgets().length > 0 || hotelWidgets().length > 0) {
-    <div class="trip-grid" [class.has-hotel]="hotelWidgets().length > 0">
-      @if (flightWidgets().length > 0) {
+  @if (planStore.flights().length > 0 || planStore.hotels().length > 0) {
+    <div class="trip-grid" [class.has-hotel]="planStore.hotels().length > 0">
+      @if (planStore.flights().length > 0) {
         <div class="flights-stack">
-          @for (widget of flightWidgets(); track widget.id) {
+          @for (flight of planStore.flights(); track flight.id) {
             <div class="flight-cell" data-widget="flightWidget">
-              <app-widget-container [widget]="widget" />
+              <app-flight-widget [flight]="flight" status="other" />
             </div>
           }
         </div>
       }
 
-      @if (hotelWidgets().length > 0) {
+      @if (planStore.hotels().length > 0) {
         <div class="hotel-stack">
-          @for (widget of hotelWidgets(); track widget.id) {
+          @for (hotel of planStore.hotels(); track hotel.id) {
             <div class="planner-tile" data-widget="hotelWidget">
-              <app-widget-container [widget]="widget" />
+              <app-hotel-widget [hotel]="hotel" />
             </div>
           }
         </div>
       }
-    </div>
-  }
-
-  @for (widget of otherWidgets(); track widget.id) {
-    <div class="planner-tile" [attr.data-widget]="widget.name">
-      <app-widget-container [widget]="widget" />
     </div>
   }
 </section>

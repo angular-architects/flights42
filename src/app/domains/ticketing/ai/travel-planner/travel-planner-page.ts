@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -13,13 +14,16 @@ import {
   type AgUiWidgetInstance,
   type AgUiWorkflowStep,
   createShowComponentsTool,
-  WidgetContainerComponent,
 } from '@internal/ag-ui-client';
 
+import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../../shared/util-common/config-service';
-import { flightWidget } from '../widgets/flight-widget';
-import { hotelWidget } from '../widgets/hotel-widget';
+import { FlightInfo } from '../../data/flight-info';
+import { FlightWidget, flightWidget } from '../widgets/flight-widget';
+import { HotelWidget, hotelWidget } from '../widgets/hotel-widget';
+import { type PlanHotel, TravelPlanStore } from './travel-plan-store';
+import { TravelRefinementChatService } from './travel-refinement-chat-service';
 
 const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },
@@ -52,7 +56,7 @@ interface PipelineStep {
 @Component({
   selector: 'app-travel-planner-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, WidgetContainerComponent],
+  imports: [ReactiveFormsModule, FlightWidget, HotelWidget],
   templateUrl: './travel-planner-page.html',
   styleUrl: './travel-planner-page.css',
 })
@@ -60,6 +64,12 @@ export class TravelPlannerPage {
   private readonly config = inject(ConfigService);
 
   private readonly fb = inject(FormBuilder);
+
+  private readonly refinementChat = inject(TravelRefinementChatService);
+
+  private readonly chatRegistry = inject(ChatRegistry);
+
+  protected readonly planStore = inject(TravelPlanStore);
 
   protected readonly durations = DURATION_OPTIONS;
 
@@ -93,10 +103,6 @@ export class TravelPlannerPage {
 
   protected readonly hotelWidgets = computed(() =>
     selectWidgetsByName(this.widgets(), 'hotelWidget'),
-  );
-
-  protected readonly otherWidgets = computed(() =>
-    selectOtherWidgets(this.widgets()),
   );
 
   protected readonly errorMessage = computed<string | null>(() =>
@@ -146,12 +152,52 @@ export class TravelPlannerPage {
 
   protected readonly showToolDetails = signal(false);
 
+  /** True between starting a generation and syncing its result into the store. */
+  private readonly awaitingPlan = signal(false);
+
+  constructor() {
+    // Register the refinement chat so the global assistant panel talks to the
+    // travelRefinementAgent while this page is active.
+    this.refinementChat.init();
+
+    // When a generation finishes, copy the produced flights/hotels into the
+    // plan store (single source of truth) and open the refinement chat.
+    effect(() => {
+      const loading = this.chat.isLoading();
+      if (loading || !this.awaitingPlan()) {
+        return;
+      }
+
+      const flights = this.flightWidgets()
+        .map((widget) => widget.props['flight'] as FlightInfo | undefined)
+        .filter((flight): flight is FlightInfo => !!flight);
+      const hotels = this.hotelWidgets()
+        .map((widget) => widget.props['hotel'] as PlanHotel | undefined)
+        .filter((hotel): hotel is PlanHotel => !!hotel);
+
+      if (flights.length === 0 && hotels.length === 0) {
+        // Nothing was generated (e.g. an error) — stay ready for a retry.
+        this.awaitingPlan.set(false);
+        return;
+      }
+
+      const summary =
+        (this.messageWidgets()[0]?.props['text'] as string | undefined) ?? '';
+
+      this.planStore.setPlan({ summary, flights, hotels });
+      this.awaitingPlan.set(false);
+      this.chatRegistry.requestOpen();
+    });
+  }
+
   protected submit(): void {
     if (this.form.invalid || this.chat.isLoading()) {
       return;
     }
 
     this.chat.reset();
+    this.planStore.clear();
+    this.awaitingPlan.set(true);
     this.showToolDetails.set(false);
 
     const { from, to, duration, preferences } = this.form.getRawValue();
@@ -176,6 +222,8 @@ export class TravelPlannerPage {
 
   protected reset(): void {
     this.chat.reset();
+    this.planStore.clear();
+    this.awaitingPlan.set(false);
     this.showToolDetails.set(false);
   }
 
@@ -217,13 +265,6 @@ function selectWidgetsByName(
   name: string,
 ): AgUiWidgetInstance[] {
   return widgets.filter((widget) => widget.name === name);
-}
-
-function selectOtherWidgets(
-  widgets: AgUiWidgetInstance[],
-): AgUiWidgetInstance[] {
-  const known = new Set(['messageWidget', 'flightWidget', 'hotelWidget']);
-  return widgets.filter((widget) => !known.has(widget.name));
 }
 
 function readErrorMessage(messages: AgUiChatMessage[]): string | null {

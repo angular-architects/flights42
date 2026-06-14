@@ -6,6 +6,7 @@ import { model } from '../config';
 import { bookFlightTool } from '../tools/book-flight';
 import { cancelFlightTool } from '../tools/cancel-flight';
 import { findBookedFlightsTool } from '../tools/find-booked-flights';
+import { searchFlightsTool } from '../tools/search-flights';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt';
 
 export const ticketingAgent = new Agent({
@@ -17,6 +18,7 @@ export const ticketingAgent = new Agent({
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
+    searchFlightsTool,
   },
   // agents: { travelPlannerAgent, hotelAgent },
   memory: new Memory(),
