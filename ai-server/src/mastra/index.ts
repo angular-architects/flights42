@@ -8,6 +8,7 @@ import { hotelAgent } from './agents/hotel-agent.js';
 import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
 import { travelPlannerAgent } from './agents/travel-planner-agent.js';
+import { travelRefinementAgent } from './agents/travel-refinement-agent.js';
 import { agUiRouteHandler } from './routes/ag-ui-route.js';
 import {
   bookFlightHandler,
@@ -21,6 +22,7 @@ export const mastra = new Mastra({
     ticketingAgent,
     hotelAgent,
     travelPlannerAgent,
+    travelRefinementAgent,
     reportingAgent,
     checkinAgent,
   },

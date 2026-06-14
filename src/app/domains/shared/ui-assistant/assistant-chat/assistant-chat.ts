@@ -40,6 +40,13 @@ export class AssistantChat {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
       this.chat = chatInfo.chat;
     });
+
+    this.chatRegistry.openRequested.subscribe(() => {
+      if (!this.panelVisible()) {
+        this.panelVisible.set(true);
+        this.handlePanelOpened();
+      }
+    });
   }
 
   private handlePanelOpened(): void {
