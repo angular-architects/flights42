@@ -13,14 +13,9 @@ export const travelRefinementAgent = new Agent({
   model: modelAdvancedTasks,
   agents: { ticketingAgent, hotelAgent },
   memory: new Memory(),
-  providerOptions: {
-    openai: {
-      reasoning: {
-        effort: 'low',
-      },
-      text: {
-        verbosity: 'low',
-      },
+  defaultOptions: {
+    providerOptions: {
+      openai: { reasoningEffort: 'low', textVerbosity: 'low' },
     },
   },
 });
