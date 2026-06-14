@@ -48,9 +48,6 @@ export async function searchFlights(
   const flights = raw.map(normalize);
 
   if (!date) {
-    console.log(
-      `searchFlights ${from} -> ${to}: ${flights.length} flights (no date filter)`,
-    );
     return flights;
   }
 
@@ -58,11 +55,7 @@ export async function searchFlights(
   // the requested day here in the tool. We only compare the date part and
   // ignore the time component (simplification for this workshop demo).
   const day = date.slice(0, 10);
-  const filtered = flights.filter((flight) => flight.date.slice(0, 10) === day);
-  console.log(
-    `searchFlights ${from} -> ${to} on ${day}: ${flights.length} before filter, ${filtered.length} after`,
-  );
-  return filtered;
+  return flights.filter((flight) => flight.date.slice(0, 10) === day);
 }
 
 export const searchFlightsTool = createTool({

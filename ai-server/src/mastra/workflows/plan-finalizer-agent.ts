@@ -1,4 +1,8 @@
-export const planFinalizerAgentPrompt = `
+import { Agent } from '@mastra/core/agent';
+
+import { model } from '../config.js';
+
+const planFinalizerAgentPrompt = `
 You are the Plan Finalizer. You run as the last step of the packageTourWorkflow.
 
 You receive:
@@ -23,3 +27,10 @@ Rules:
 - "summary" is ONE short sentence in the user's language summarizing the trip
   (e.g. dates and destinations). Do not list flight numbers or stars.
 `.trim();
+
+export const planFinalizerAgent = new Agent({
+  id: 'planFinalizerAgent',
+  name: 'Flight42 Plan Finalizer',
+  instructions: planFinalizerAgentPrompt,
+  model,
+});

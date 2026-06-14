@@ -4,13 +4,8 @@ import { z } from 'zod';
 
 import { findHotelsForCity, hotelSchema } from '../tools/find-hotels.js';
 import { flightSchema, searchFlights } from '../tools/search-flights.js';
+import { planFinalizerAgent } from './plan-finalizer-agent.js';
 
-/**
- * Input of the workflow: the "rough plan" the travel planner agent derives
- * from the user's free-text request (which cities to stay in and which flight
- * legs to take, each on a concrete day). The original user prompt is passed
- * along so the finalize agent (step 3) can honour preferences from it.
- */
 const roughPlanSchema = z.object({
   userPrompt: z.string().describe('The original user request, verbatim.'),
   hotels: z
@@ -38,17 +33,16 @@ const legSchema = z.object({
   candidates: z.array(flightSchema),
 });
 
-const destinationSchema = z.object({
-  city: z.string(),
-  hotels: z.array(hotelSchema),
-});
-
 const loadedDataSchema = z.object({
   legs: z.array(legSchema),
-  destinations: z.array(destinationSchema),
+  destinations: z.array(
+    z.object({
+      city: z.string(),
+      hotels: z.array(hotelSchema),
+    }),
+  ),
 });
 
-/** Final, ready-to-render plan produced by the step-3 agent. */
 const finalPlanSchema = z.object({
   summary: z.string().describe("Short summary in the user's language."),
   flights: z.array(flightSchema).describe('Chosen flights, in travel order.'),
@@ -60,10 +54,6 @@ const finalPlanSchema = z.object({
 interface StepProgressContext {
   writer?: { write: (chunk: unknown) => Promise<void> };
   requestContext?: Parameters<typeof readBridge>[0];
-  /**
-   * Name of the surrounding workflow step. Forwarded onto every bridge tool
-   * call so the client can group calls under their parent step.
-   */
   stepName?: string;
 }
 
@@ -73,15 +63,9 @@ async function emitStepStatus(
   status: 'started' | 'finished',
   extras?: Record<string, unknown>,
 ): Promise<void> {
-  // Primary path: per-request bridge stored on RequestContext by the AG-UI
-  // adapter. This bypasses Mastra's tool-stream pipe entirely and is reliably
-  // delivered even when the workflow is invoked as a sub-tool of an agent.
   const bridge = readBridge(ctx.requestContext);
   bridge?.emit({ stepName, kind: status, details: extras });
 
-  // Secondary path: also push a custom chunk into the workflow's stream so
-  // any consumer that DOES receive the piped output sees the progress too.
-  // The `data-` prefix is Mastra's reserved namespace for custom chunks.
   await ctx.writer?.write({
     type: 'data-step-status',
     stepName,
@@ -90,12 +74,6 @@ async function emitStepStatus(
   });
 }
 
-/**
- * Surface a synchronous "I just called X with these args, here's the result"
- * event to the AG-UI client as a regular tool call. Useful for exposing work
- * that happens inside a workflow step (direct service calls, sub-agent
- * invocations) so the UI's Tool-Calls list reflects the full picture.
- */
 async function withToolCall<T>(
   ctx: StepProgressContext,
   toolName: string,
@@ -113,8 +91,6 @@ async function withToolCall<T>(
   return result;
 }
 
-// Step 1 — deterministically load flight candidates for every leg of the
-// rough plan (no agent involved). Each leg is restricted to its planned day.
 const findFlightsStep = createStep({
   id: 'findFlights',
   description:
@@ -148,8 +124,6 @@ const findFlightsStep = createStep({
   },
 });
 
-// Step 2 — deterministically load hotel options for every city of the rough
-// plan (no agent involved).
 const findHotelsStep = createStep({
   id: 'findHotels',
   description:
@@ -182,40 +156,30 @@ const findHotelsStep = createStep({
   },
 });
 
-// Step 3 — an agent turns the loaded data + the original user prompt into the
-// final, ready-to-render plan (picks one flight per leg and one hotel per city).
 const finalizeStep = createStep({
   id: 'finalize',
   description:
     'Lets an agent pick the concrete flights and hotels and build the final plan.',
   inputSchema: loadedDataSchema,
   outputSchema: finalPlanSchema,
-  execute: async ({
-    inputData,
-    getInitData,
-    mastra,
-    writer,
-    requestContext,
-  }) => {
+  execute: async ({ inputData, getInitData, writer, requestContext }) => {
     const ctx: StepProgressContext = { writer, requestContext };
     await emitStepStatus(ctx, 'finalize', 'started');
 
     const init = getInitData<z.infer<typeof roughPlanSchema>>();
-    const agent = mastra.getAgent('planFinalizerAgent');
 
-    const result = await agent.generate(
+    const result = await planFinalizerAgent.generate(
       [
         {
           role: 'user',
-          content: [
-            `Original user request: ${init.userPrompt}`,
-            '',
-            'Available flights per leg (in travel order):',
-            JSON.stringify(inputData.legs, null, 2),
-            '',
-            'Available hotels per city:',
-            JSON.stringify(inputData.destinations, null, 2),
-          ].join('\n'),
+          content: `
+            Original user request: ${init.userPrompt}
+
+            Available flights per leg (in travel order):
+            ${JSON.stringify(inputData.legs, null, 2)}
+
+            Available hotels per city:
+            ${JSON.stringify(inputData.destinations, null, 2)}`,
         },
       ],
       { structuredOutput: { schema: finalPlanSchema } },
