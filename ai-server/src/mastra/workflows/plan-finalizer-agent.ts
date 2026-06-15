@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 
 import { model, modelAdvancedTasks } from '../config.js';
+import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 
 const planFinalizerAgentPrompt = `
 You are the Plan Finalizer. You run as the last step of the packageTourWorkflow.
@@ -35,7 +36,10 @@ export const planFinalizerAgent = new Agent({
   model: modelAdvancedTasks,
   defaultOptions: {
     providerOptions: {
-      openai: { reasoningEffort: 'low', textVerbosity: 'low' },
+      openai: {
+        reasoningEffort: 'low',
+        textVerbosity: 'low',
+      } as OpenAILanguageModelResponsesOptions,
     },
   },
 });
