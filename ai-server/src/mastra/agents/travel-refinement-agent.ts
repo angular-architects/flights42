@@ -5,6 +5,7 @@ import { modelAdvancedTasks } from '../config.js';
 import { findHotelsTool } from '../tools/find-hotels.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { travelRefinementAgentPrompt } from './travel-refinement-agent.prompt.js';
+import { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 
 export const travelRefinementAgent = new Agent({
   id: 'travelRefinementAgent',
@@ -15,7 +16,10 @@ export const travelRefinementAgent = new Agent({
   memory: new Memory(),
   defaultOptions: {
     providerOptions: {
-      openai: { reasoningEffort: 'low', textVerbosity: 'low' },
+      openai: {
+        reasoningEffort: 'low',
+        textVerbosity: 'low',
+      } as OpenAILanguageModelResponsesOptions,
     },
   },
 });
