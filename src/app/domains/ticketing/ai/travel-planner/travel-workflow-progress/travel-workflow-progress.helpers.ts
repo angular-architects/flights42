@@ -2,18 +2,13 @@ import type {
   AgUiChatMessage,
   AgUiToolCall,
   AgUiWorkflowStep,
+  AgUiWorkflowStepStatus,
 } from '@internal/ag-ui-client';
-
-export const WORKFLOW_STEP_LABELS: Record<string, string> = {
-  findFlights: 'Flights',
-  findHotels: 'Hotels',
-  finalize: 'Travel Plan',
-};
 
 export const PIPELINE_STEPS = [
   { id: 'findFlights', label: 'Flights' },
   { id: 'findHotels', label: 'Hotels' },
-  { id: '_plan', label: 'Travel Plan' },
+  { id: 'finalize', label: 'Travel Plan' },
 ] as const;
 
 export type PipelineStepState = 'upcoming' | 'active' | 'done';
@@ -33,14 +28,6 @@ export function selectVisibleToolCalls(
     .filter((toolCall) => toolCall.name !== 'showComponents');
 }
 
-export function selectTopLevelToolCalls(
-  toolCalls: AgUiToolCall[],
-): AgUiToolCall[] {
-  return toolCalls.filter(
-    (toolCall) => !toolCall.stepName && !toolCall.name.startsWith('workflow-'),
-  );
-}
-
 export function selectWorkflowSteps(
   messages: AgUiChatMessage[],
 ): AgUiWorkflowStep[] {
@@ -49,32 +36,15 @@ export function selectWorkflowSteps(
     .flatMap((message) => message.workflowSteps);
 }
 
-export function groupToolCallsByStep(
-  toolCalls: AgUiToolCall[],
-): Map<string, AgUiToolCall[]> {
-  const map = new Map<string, AgUiToolCall[]>();
-  for (const toolCall of toolCalls) {
-    const key = toolCall.stepName;
-    if (!key) {
-      continue;
-    }
-    const list = map.get(key);
-    if (list) {
-      list.push(toolCall);
-    } else {
-      map.set(key, [toolCall]);
-    }
+export function formatToolArgsValue(args: unknown): string | null {
+  if (args === undefined || args === null) {
+    return null;
   }
-  return map;
+  const text = typeof args === 'string' ? args : safeStringify(args);
+  return text.length > 0 ? text : null;
 }
 
-export function formatToolArgsValue(args: unknown): string {
-  if (args === undefined || args === null) {
-    return '';
-  }
-  if (typeof args === 'string') {
-    return args;
-  }
+function safeStringify(args: unknown): string {
   try {
     return JSON.stringify(args, null, 2);
   } catch {
@@ -82,44 +52,61 @@ export function formatToolArgsValue(args: unknown): string {
   }
 }
 
-export function readStepLabel(
-  name: string,
-  labels: Record<string, string>,
-): string {
-  return labels[name] ?? name;
-}
-
 export function buildPipeline(
   steps: AgUiWorkflowStep[],
   isLoading: boolean,
   hasWidgets: boolean,
 ): PipelineStep[] {
-  const statusMap = new Map<string, string>();
-  for (const step of steps) {
-    statusMap.set(step.name, step.status);
-  }
+  const status = new Map(steps.map((step) => [step.name, step.status]));
 
-  const sequentialIds = ['findFlights', 'findHotels'];
-  const allSequentialDone = sequentialIds.every(
-    (id) => statusMap.get(id) === 'complete',
-  );
-  const firstIncomplete = sequentialIds.find(
-    (id) => statusMap.get(id) !== 'complete',
-  );
-  const finalizeStarted =
-    statusMap.has('finalize') || (allSequentialDone && isLoading);
+  const activeDataStep = isLoading
+    ? ['findFlights', 'findHotels'].find((id) => status.get(id) !== 'complete')
+    : undefined;
 
-  return PIPELINE_STEPS.map(({ id, label }) => {
-    if (id === '_plan') {
-      if (!isLoading && hasWidgets) return { id, label, state: 'done' };
-      if (finalizeStarted) return { id, label, state: 'active' };
-      return { id, label, state: 'upcoming' };
+  const finalizeActive =
+    status.has('finalize') || (isLoading && !activeDataStep);
+
+  const context: PipelineStateContext = {
+    status,
+    isLoading,
+    hasWidgets,
+    activeDataStep,
+    finalizeActive,
+  };
+
+  return PIPELINE_STEPS.map(({ id, label }) => ({
+    id,
+    label,
+    state: resolvePipelineStepState(id, context),
+  }));
+}
+
+interface PipelineStateContext {
+  status: Map<string, AgUiWorkflowStepStatus>;
+  isLoading: boolean;
+  hasWidgets: boolean;
+  activeDataStep: string | undefined;
+  finalizeActive: boolean;
+}
+
+function resolvePipelineStepState(
+  id: string,
+  context: PipelineStateContext,
+): PipelineStepState {
+  const { status, isLoading, hasWidgets, activeDataStep, finalizeActive } =
+    context;
+
+  if (id === 'finalize') {
+    if (!isLoading && hasWidgets) {
+      return 'done';
     }
-    const status = statusMap.get(id);
-    if (status === 'complete') return { id, label, state: 'done' };
-    if (status === 'pending') return { id, label, state: 'active' };
-    if (isLoading && id === firstIncomplete)
-      return { id, label, state: 'active' };
-    return { id, label, state: 'upcoming' };
-  });
+    return finalizeActive ? 'active' : 'upcoming';
+  }
+  if (status.get(id) === 'complete') {
+    return 'done';
+  }
+  if (status.get(id) === 'pending' || id === activeDataStep) {
+    return 'active';
+  }
+  return 'upcoming';
 }
