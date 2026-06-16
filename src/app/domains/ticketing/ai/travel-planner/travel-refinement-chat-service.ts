@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   type AgUiChatResourceRef,
   agUiResource,
@@ -17,16 +17,15 @@ import { removeFlightFromPlanTool } from './tools/remove-flight-from-plan.tool';
 import { removeHotelFromPlanTool } from './tools/remove-hotel-from-plan.tool';
 import { replaceFlightInPlanTool } from './tools/replace-flight-in-plan.tool';
 import { setTravelPlanTool } from './tools/set-travel-plan.tool';
+import { TravelPlannerRequestStore } from './travel-planner-request-store';
 
 @Injectable({ providedIn: 'root' })
 export class TravelRefinementChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
+  private readonly requestStore = inject(TravelPlannerRequestStore);
 
   private chat: AgUiChatResourceRef | null = null;
-
-  /** The traveler's original preferences, seeded into the first refinement turn. */
-  private readonly preferences = signal('');
 
   public init(): void {
     if (!this.chat) {
@@ -34,7 +33,8 @@ export class TravelRefinementChatService {
         url: `${this.config.aiServerUrl}/ag-ui/travelRefinementAgent`,
         model: this.config.model,
         useServerMemory: true,
-        firstMessagePreamble: () => buildPreferencePreamble(this.preferences()),
+        firstMessagePreamble: () =>
+          buildPreferencePreamble(this.requestStore.preferences()),
         tools: [
           getTravelPlanTool,
           setTravelPlanTool,
@@ -54,12 +54,10 @@ export class TravelRefinementChatService {
   }
 
   /**
-   * Starts a fresh refinement session for a newly created plan and seeds it
-   * with the traveler's preferences, so they are carried into the first turn
-   * and not lost during refinement.
+   * Clears the current refinement conversation so a newly created plan starts
+   * from a fresh session. Preferences are read live from the input store.
    */
-  public startSession(preferences: string): void {
-    this.preferences.set(preferences.trim());
+  public reset(): void {
     this.chat?.reset();
   }
 }

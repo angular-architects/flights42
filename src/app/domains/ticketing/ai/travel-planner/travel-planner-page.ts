@@ -10,11 +10,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   type AgUiChatMessage,
   agUiResource,
-  type AgUiToolCall,
   type AgUiWidgetInstance,
-  type AgUiWorkflowStep,
   createShowComponentsTool,
 } from '@internal/ag-ui-client';
+import { addDays, format } from 'date-fns';
 
 import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../../shared/ui-assistant/widgets/message-widget';
@@ -24,7 +23,9 @@ import { FlightInfo } from '../../data/flight-info';
 import { FlightWidget, flightWidget } from '../widgets/flight-widget';
 import { HotelWidget, hotelWidget } from '../widgets/hotel-widget';
 import { type PlanHotel, TravelPlanStore } from './travel-plan-store';
+import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { TravelRefinementChatService } from './travel-refinement-chat-service';
+import { TravelWorkflowProgress } from './travel-workflow-progress/travel-workflow-progress';
 
 const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },
@@ -32,30 +33,15 @@ const DURATION_OPTIONS = [
   { value: 3, label: '3 days' },
 ] as const;
 
-const WORKFLOW_STEP_LABELS: Record<string, string> = {
-  findFlights: 'Flights',
-  findHotels: 'Hotels',
-  finalize: 'Travel Plan',
-};
-
-const PIPELINE_STEPS = [
-  { id: 'findFlights', label: 'Flights' },
-  { id: 'findHotels', label: 'Hotels' },
-  { id: '_plan', label: 'Travel Plan' },
-] as const;
-
-type PipelineStepState = 'upcoming' | 'active' | 'done';
-
-interface PipelineStep {
-  id: string;
-  label: string;
-  state: PipelineStepState;
-}
-
 @Component({
   selector: 'app-travel-planner-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, FlightWidget, HotelWidget],
+  imports: [
+    ReactiveFormsModule,
+    FlightWidget,
+    HotelWidget,
+    TravelWorkflowProgress,
+  ],
   templateUrl: './travel-planner-page.html',
   styleUrl: './travel-planner-page.css',
 })
@@ -70,13 +56,15 @@ export class TravelPlannerPage {
 
   protected readonly planStore = inject(TravelPlanStore);
 
+  private readonly requestStore = inject(TravelPlannerRequestStore);
+
   protected readonly durations = DURATION_OPTIONS;
 
   protected readonly form = this.fb.nonNullable.group({
-    from: ['Graz', Validators.required],
-    to: ['Rome', Validators.required],
-    duration: [3, Validators.required],
-    preferences: [''],
+    from: [this.requestStore.from(), Validators.required],
+    to: [this.requestStore.to(), Validators.required],
+    duration: [this.requestStore.duration(), Validators.required],
+    preferences: [this.requestStore.preferences()],
   });
 
   protected readonly chat = agUiResource({
@@ -108,49 +96,6 @@ export class TravelPlannerPage {
     readErrorMessage(this.chat.value()),
   );
 
-  protected readonly toolCalls = computed<AgUiToolCall[]>(() =>
-    selectVisibleToolCalls(this.chat.value()),
-  );
-
-  /**
-   * Tool calls that don't belong to any workflow step (top-level agent calls
-   * like the `workflow-*` wrapper around the workflow itself). Surfaced as a
-   * small extra section below the step timeline so they aren't lost.
-   */
-  protected readonly topLevelToolCalls = computed<AgUiToolCall[]>(() =>
-    selectTopLevelToolCalls(this.toolCalls()),
-  );
-
-  protected readonly workflowSteps = computed<AgUiWorkflowStep[]>(() =>
-    selectWorkflowSteps(this.chat.value()),
-  );
-
-  protected readonly toolCallsByStep = computed<Map<string, AgUiToolCall[]>>(
-    () => groupToolCallsByStep(this.toolCalls()),
-  );
-
-  protected readonly currentWorkflowStep = computed<string | null>(() => {
-    return readCurrentWorkflowStep(this.workflowSteps(), WORKFLOW_STEP_LABELS);
-  });
-
-  protected readonly currentStatus = computed<string>(() => {
-    return readCurrentStatus(
-      this.currentWorkflowStep(),
-      this.chat.isLoading(),
-      this.widgets().length,
-    );
-  });
-
-  protected readonly stepPipeline = computed<PipelineStep[]>(() =>
-    buildPipeline(
-      this.workflowSteps(),
-      this.chat.isLoading(),
-      this.widgets().length > 0,
-    ),
-  );
-
-  protected readonly showToolDetails = signal(false);
-
   /** True between starting a generation and syncing its result into the store. */
   private readonly awaitingPlan = signal(false);
 
@@ -161,34 +106,40 @@ export class TravelPlannerPage {
 
     // When a generation finishes, copy the produced flights/hotels into the
     // plan store (single source of truth) and open the refinement chat.
-    effect(() => {
-      const loading = this.chat.isLoading();
-      if (loading || !this.awaitingPlan()) {
-        return;
-      }
+    effect(() => this.syncGeneratedPlan());
+  }
 
-      const flights = this.flightWidgets()
-        .map((widget) => widget.props['flight'] as FlightInfo | undefined)
-        .filter((flight): flight is FlightInfo => !!flight);
-      const hotels = this.hotelWidgets()
-        .map((widget) => widget.props['hotel'] as PlanHotel | undefined)
-        .filter((hotel): hotel is PlanHotel => !!hotel);
+  /**
+   * Once a generation finishes, copies the produced flights/hotels into the
+   * plan store (single source of truth) and opens the refinement chat.
+   */
+  private syncGeneratedPlan(): void {
+    const loading = this.chat.isLoading();
+    if (loading || !this.awaitingPlan()) {
+      return;
+    }
 
-      if (flights.length === 0 && hotels.length === 0) {
-        // Nothing was generated (e.g. an error) — stay ready for a retry.
-        this.awaitingPlan.set(false);
-        return;
-      }
+    const flights = this.flightWidgets()
+      .map((widget) => widget.props['flight'] as FlightInfo | undefined)
+      .filter((flight): flight is FlightInfo => !!flight);
+    const hotels = this.hotelWidgets()
+      .map((widget) => widget.props['hotel'] as PlanHotel | undefined)
+      .filter((hotel): hotel is PlanHotel => !!hotel);
 
-      const summary =
-        (this.messageWidgets()[0]?.props['text'] as string | undefined) ?? '';
-
-      this.planStore.setPlan({ summary, flights, hotels });
+    if (flights.length === 0 && hotels.length === 0) {
+      // Nothing was generated (e.g. an error) — stay ready for a retry.
       this.awaitingPlan.set(false);
-      if (featureFlags.autoOpenRefinementChat) {
-        this.chatRegistry.requestOpen();
-      }
-    });
+      return;
+    }
+
+    const summary =
+      (this.messageWidgets()[0]?.props['text'] as string | undefined) ?? '';
+
+    this.planStore.setPlan({ summary, flights, hotels });
+    this.awaitingPlan.set(false);
+    if (featureFlags.autoOpenRefinementChat) {
+      this.chatRegistry.requestOpen();
+    }
   }
 
   protected submit(): void {
@@ -199,28 +150,31 @@ export class TravelPlannerPage {
     this.chat.reset();
     this.planStore.clear();
     this.awaitingPlan.set(true);
-    this.showToolDetails.set(false);
 
-    const { from, to, duration, preferences } = this.form.getRawValue();
-    const trimmedPreferences = preferences.trim();
+    // Persist the request as the single source of truth; the refinement chat
+    // reads the preferences from there.
+    this.requestStore.setRequest(this.form.getRawValue());
+    const from = this.requestStore.from();
+    const to = this.requestStore.to();
+    const duration = this.requestStore.duration();
+    const trimmedPreferences = this.requestStore.preferences();
+
     const preferenceText = trimmedPreferences
       ? ` Traveler preferences: ${trimmedPreferences}.`
       : '';
 
-    // Start a fresh refinement session seeded with these preferences, so the
-    // refinement agent keeps honoring them once the user starts refining.
-    this.refinementChat.startSession(trimmedPreferences);
+    // Start a fresh refinement session, so it picks up the new plan and
+    // preferences once the user starts refining.
+    this.refinementChat.reset();
 
     // Travel starts today + 10 days. We compute the concrete outbound and return
     // dates here (deterministically) and pass both into the prompt, so the agent
     // does not have to derive the schedule from the duration.
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() + 10);
-    const startDateIso = startDate.toISOString().slice(0, 10);
+    const startDate = addDays(new Date(), 10);
+    const startDateIso = trimTime(startDate);
 
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + (duration - 1));
-    const endDateIso = endDate.toISOString().slice(0, 10);
+    const endDate = addDays(startDate, duration - 1);
+    const endDateIso = trimTime(endDate);
 
     const nights = duration - 1;
     const content =
@@ -237,32 +191,16 @@ export class TravelPlannerPage {
     this.chat.reset();
     this.planStore.clear();
     this.awaitingPlan.set(false);
-    this.showToolDetails.set(false);
   }
 
   protected stop(): void {
     this.chat.stop();
   }
+}
 
-  protected toggleToolDetails(): void {
-    this.showToolDetails.update((value) => !value);
-  }
-
-  protected formatToolArgs(args: unknown): string {
-    return formatToolArgsValue(args);
-  }
-
-  protected stepLabel(name: string): string {
-    return readStepLabel(name, WORKFLOW_STEP_LABELS);
-  }
-
-  protected hasWorkflowSteps(): boolean {
-    return this.workflowSteps().length > 0;
-  }
-
-  protected toolCallsFor(stepName: string): AgUiToolCall[] {
-    return this.toolCallsByStep().get(stepName) ?? [];
-  }
+/** Drops the time component and returns the calendar date as `yyyy-MM-dd`. */
+function trimTime(date: Date): string {
+  return format(date, 'yyyy-MM-dd');
 }
 
 function selectAssistantWidgets(
@@ -283,125 +221,4 @@ function selectWidgetsByName(
 function readErrorMessage(messages: AgUiChatMessage[]): string | null {
   const error = messages.find((message) => message.role === 'error');
   return error?.content ?? null;
-}
-
-function selectVisibleToolCalls(messages: AgUiChatMessage[]): AgUiToolCall[] {
-  return messages
-    .filter((message) => message.role === 'assistant')
-    .flatMap((message) => message.toolCalls)
-    .filter((toolCall) => toolCall.name !== 'showComponents');
-}
-
-function selectTopLevelToolCalls(toolCalls: AgUiToolCall[]): AgUiToolCall[] {
-  return toolCalls.filter(
-    (toolCall) => !toolCall.stepName && !toolCall.name.startsWith('workflow-'),
-  );
-}
-
-function selectWorkflowSteps(messages: AgUiChatMessage[]): AgUiWorkflowStep[] {
-  return messages
-    .filter((message) => message.role === 'assistant')
-    .flatMap((message) => message.workflowSteps);
-}
-
-function groupToolCallsByStep(
-  toolCalls: AgUiToolCall[],
-): Map<string, AgUiToolCall[]> {
-  const map = new Map<string, AgUiToolCall[]>();
-  for (const toolCall of toolCalls) {
-    const key = toolCall.stepName;
-    if (!key) {
-      continue;
-    }
-    const list = map.get(key);
-    if (list) {
-      list.push(toolCall);
-    } else {
-      map.set(key, [toolCall]);
-    }
-  }
-  return map;
-}
-
-function readCurrentWorkflowStep(
-  steps: AgUiWorkflowStep[],
-  labels: Record<string, string>,
-): string | null {
-  for (let i = steps.length - 1; i >= 0; i -= 1) {
-    const step = steps[i];
-    if (step.status === 'pending') {
-      return labels[step.name] ?? step.name;
-    }
-  }
-  return null;
-}
-
-function readCurrentStatus(
-  currentWorkflowStep: string | null,
-  isLoading: boolean,
-  widgetCount: number,
-): string {
-  if (currentWorkflowStep) {
-    return currentWorkflowStep;
-  }
-  if (isLoading) {
-    return 'Building travel plan';
-  }
-  if (widgetCount > 0) {
-    return 'Done';
-  }
-  return 'Ready';
-}
-
-function formatToolArgsValue(args: unknown): string {
-  if (args === undefined || args === null) {
-    return '';
-  }
-  if (typeof args === 'string') {
-    return args;
-  }
-  try {
-    return JSON.stringify(args, null, 2);
-  } catch {
-    return String(args);
-  }
-}
-
-function readStepLabel(name: string, labels: Record<string, string>): string {
-  return labels[name] ?? name;
-}
-
-function buildPipeline(
-  steps: AgUiWorkflowStep[],
-  isLoading: boolean,
-  hasWidgets: boolean,
-): PipelineStep[] {
-  const statusMap = new Map<string, string>();
-  for (const step of steps) {
-    statusMap.set(step.name, step.status);
-  }
-
-  const sequentialIds = ['findFlights', 'findHotels'];
-  const allSequentialDone = sequentialIds.every(
-    (id) => statusMap.get(id) === 'complete',
-  );
-  const firstIncomplete = sequentialIds.find(
-    (id) => statusMap.get(id) !== 'complete',
-  );
-  const finalizeStarted =
-    statusMap.has('finalize') || (allSequentialDone && isLoading);
-
-  return PIPELINE_STEPS.map(({ id, label }) => {
-    if (id === '_plan') {
-      if (!isLoading && hasWidgets) return { id, label, state: 'done' };
-      if (finalizeStarted) return { id, label, state: 'active' };
-      return { id, label, state: 'upcoming' };
-    }
-    const status = statusMap.get(id);
-    if (status === 'complete') return { id, label, state: 'done' };
-    if (status === 'pending') return { id, label, state: 'active' };
-    if (isLoading && id === firstIncomplete)
-      return { id, label, state: 'active' };
-    return { id, label, state: 'upcoming' };
-  });
 }
