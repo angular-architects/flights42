@@ -57,13 +57,25 @@ export class ChatMessages {
     return true;
   }
 
+  private isEmptyModel(model: {
+    contentString: string;
+    widgets?: unknown[];
+    toolCalls?: unknown[];
+  }): boolean {
+    return (
+      !model.contentString && !model.widgets?.length && !model.toolCalls?.length
+    );
+  }
+
   protected readonly messageModels = computed(() =>
-    this.messages().map((message) => ({
-      ...message,
-      contentString:
-        typeof message.content === 'string' ? message.content : String(''),
-      hasContent: this.hasContent(message),
-      icon: this.icons[message.role] || '❓',
-    })),
+    this.messages()
+      .map((message) => ({
+        ...message,
+        contentString:
+          typeof message.content === 'string' ? message.content : String(''),
+        hasContent: this.hasContent(message),
+        icon: this.icons[message.role] || '❓',
+      }))
+      .filter((model) => !this.isEmptyModel(model)),
   );
 }
