@@ -187,12 +187,6 @@ export class TravelPlannerPage {
     this.chat.sendMessage({ role: 'user', content });
   }
 
-  protected reset(): void {
-    this.chat.reset();
-    this.planStore.clear();
-    this.awaitingPlan.set(false);
-  }
-
   protected stop(): void {
     this.chat.stop();
   }

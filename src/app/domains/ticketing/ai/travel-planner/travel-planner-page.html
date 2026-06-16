@@ -48,13 +48,6 @@
     @if (chat.isLoading()) {
       <button type="button" (click)="stop()">Stop</button>
     }
-    @if (
-      planStore.flights().length > 0 ||
-      planStore.hotels().length > 0 ||
-      chat.value().length > 0
-    ) {
-      <button type="button" (click)="reset()">Reset</button>
-    }
   </div>
 </form>
 
