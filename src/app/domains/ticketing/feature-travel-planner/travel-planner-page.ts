@@ -15,17 +15,17 @@ import {
 } from '@internal/ag-ui-client';
 import { addDays, format } from 'date-fns';
 
-import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
-import { messageWidget } from '../../../shared/ui-assistant/widgets/message-widget';
-import { ConfigService } from '../../../shared/util-common/config-service';
-import { featureFlags } from '../../../shared/util-common/feature-flags';
-import { FlightInfo } from '../../data/flight-info';
-import { FlightWidget, flightWidget } from '../widgets/flight-widget';
-import { HotelWidget, hotelWidget } from '../widgets/hotel-widget';
+import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
+import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
+import { ConfigService } from '../../shared/util-common/config-service';
+import { featureFlags } from '../../shared/util-common/feature-flags';
+import { FlightInfo } from '../data/flight-info';
 import { type PlanHotel, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { TravelRefinementChatService } from './travel-refinement-chat-service';
 import { TravelWorkflowProgress } from './travel-workflow-progress/travel-workflow-progress';
+import { FlightWidget, flightWidget } from './ui/flight-widget';
+import { HotelWidget, hotelWidget } from './ui/hotel-widget';
 
 const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },

@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
-import { FlightStore } from '../../feature-booking/flight-search/flight-store';
+import { FlightStore } from '../../data/flight-store';
 
 export const toggleFlightSelectionTool = defineAgUiTool({
   name: 'toggleFlightSelection',

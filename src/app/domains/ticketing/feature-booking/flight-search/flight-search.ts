@@ -11,9 +11,9 @@ import { form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
+import { FlightStore } from '../../data/flight-store';
 // import { LuggageClient } from '../../../luggage/data/luggage-client';
 import { FlightCard } from '../../ui/flight-card/flight-card';
-import { FlightStore } from './flight-store';
 
 @Component({
   selector: 'app-flight-search',
