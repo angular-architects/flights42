@@ -51,123 +51,17 @@
     @if (
       planStore.flights().length > 0 ||
       planStore.hotels().length > 0 ||
-      toolCalls().length > 0
+      chat.value().length > 0
     ) {
       <button type="button" (click)="reset()">Reset</button>
     }
   </div>
 </form>
 
-@if (chat.isLoading() || workflowSteps().length > 0) {
-  <div class="step-tracker-row">
-    <div class="step-tracker">
-      @for (
-        step of stepPipeline();
-        track step.id;
-        let i = $index;
-        let last = $last
-      ) {
-        <div class="step-node" [attr.data-state]="step.state">
-          <div class="step-icon">
-            @if (step.state === 'done') {
-              ✓
-            } @else if (step.state === 'active') {
-              <span class="step-spinner"></span>
-            } @else {
-              {{ i + 1 }}
-            }
-          </div>
-          <span class="step-label">{{ step.label }}</span>
-        </div>
-        @if (!last) {
-          <div
-            class="step-connector"
-            [class.done]="step.state === 'done'"></div>
-        }
-      }
-    </div>
-    <button
-      type="button"
-      class="step-more-btn"
-      [disabled]="workflowSteps().length === 0 && toolCalls().length === 0"
-      (click)="toggleToolDetails()">
-      {{ showToolDetails() ? 'Less' : 'More' }}
-    </button>
-  </div>
-}
-
-@if (
-  showToolDetails() && (workflowSteps().length > 0 || toolCalls().length > 0)
-) {
-  <div class="tool-details-layer" role="dialog" aria-label="Workflow details">
-    <header class="tool-details-header">
-      <h2>Workflow progress</h2>
-      <button
-        type="button"
-        class="tool-details-close"
-        (click)="toggleToolDetails()">
-        Close
-      </button>
-    </header>
-
-    @if (workflowSteps().length > 0) {
-      <ol class="tool-details-list">
-        @for (step of workflowSteps(); track step.name) {
-          <li class="tool-details-item" [attr.data-status]="step.status">
-            <div class="tool-details-item-head">
-              <span class="tool-details-name">{{ stepLabel(step.name) }}</span>
-              <span class="tool-details-status">{{ step.status }}</span>
-            </div>
-            @if (toolCallsFor(step.name); as stepCalls) {
-              @if (stepCalls.length > 0) {
-                <ul class="tool-details-sublist">
-                  @for (toolCall of stepCalls; track toolCall.id) {
-                    <li
-                      class="tool-details-subitem"
-                      [attr.data-status]="toolCall.status">
-                      <div class="tool-details-item-head">
-                        <span class="tool-details-name">{{
-                          toolCall.name
-                        }}</span>
-                        <span class="tool-details-status">{{
-                          toolCall.status
-                        }}</span>
-                      </div>
-                      @if (formatToolArgs(toolCall.args); as argsText) {
-                        @if (argsText.length > 0) {
-                          <pre class="tool-details-args">{{ argsText }}</pre>
-                        }
-                      }
-                    </li>
-                  }
-                </ul>
-              }
-            }
-          </li>
-        }
-      </ol>
-    }
-
-    @if (topLevelToolCalls().length > 0) {
-      <h3 class="tool-details-subheading">Other tool calls</h3>
-      <ol class="tool-details-list">
-        @for (toolCall of topLevelToolCalls(); track toolCall.id) {
-          <li class="tool-details-item" [attr.data-status]="toolCall.status">
-            <div class="tool-details-item-head">
-              <span class="tool-details-name">{{ toolCall.name }}</span>
-              <span class="tool-details-status">{{ toolCall.status }}</span>
-            </div>
-            @if (formatToolArgs(toolCall.args); as argsText) {
-              @if (argsText.length > 0) {
-                <pre class="tool-details-args">{{ argsText }}</pre>
-              }
-            }
-          </li>
-        }
-      </ol>
-    }
-  </div>
-}
+<app-travel-workflow-progress
+  [messages]="chat.value()"
+  [loading]="chat.isLoading()"
+  [widgetCount]="widgets().length" />
 
 @if (errorMessage(); as error) {
   <p class="planner-error">{{ error }}</p>
