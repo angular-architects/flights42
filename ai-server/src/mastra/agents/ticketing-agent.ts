@@ -8,6 +8,7 @@ import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
+import { hotelAgent } from './hotel-agent.js';
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
@@ -20,6 +21,6 @@ export const ticketingAgent = new Agent({
     cancelFlightTool,
     searchFlightsTool,
   },
-  // agents: { travelPlannerAgent, hotelAgent },
+  // agents: { hotelAgent },
   memory: new Memory(),
 });
