@@ -19,6 +19,7 @@ import {
 import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../../shared/util-common/config-service';
+import { featureFlags } from '../../../shared/util-common/feature-flags';
 import { FlightInfo } from '../../data/flight-info';
 import { FlightWidget, flightWidget } from '../widgets/flight-widget';
 import { HotelWidget, hotelWidget } from '../widgets/hotel-widget';
@@ -184,7 +185,9 @@ export class TravelPlannerPage {
 
       this.planStore.setPlan({ summary, flights, hotels });
       this.awaitingPlan.set(false);
-      this.chatRegistry.requestOpen();
+      if (featureFlags.autoOpenRefinementChat) {
+        this.chatRegistry.requestOpen();
+      }
     });
   }
 
