@@ -1,7 +1,7 @@
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 
-import { FlightInfo } from '../../data/flight-info';
+import { FlightInfo } from '../data/flight-info';
 
 export interface PlanHotel {
   id: string;

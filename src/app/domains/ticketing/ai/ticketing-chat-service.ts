@@ -8,13 +8,13 @@ import {
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
-import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
-import { findFlightsTool } from './tools/find-flights.tool';
-import { getCurrentBasketTool } from './tools/get-current-basket.tool';
-import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
-import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
-import { flightWidget } from './widgets/flight-widget';
-import { hotelWidget } from './widgets/hotel-widget';
+import { flightWidget } from '../feature-travel-planner/ui/flight-widget';
+import { hotelWidget } from '../feature-travel-planner/ui/hotel-widget';
+import { displayFlightDetailTool } from './ticketing-tools/display-flight-detail.tool';
+import { findFlightsTool } from './ticketing-tools/find-flights.tool';
+import { getCurrentBasketTool } from './ticketing-tools/get-current-basket.tool';
+import { getLoadedFlightsTool } from './ticketing-tools/get-loaded-flights.tool';
+import { toggleFlightSelectionTool } from './ticketing-tools/toggle-flight-selection.tool';
 
 @Injectable({ providedIn: 'root' })
 export class TicketingChatService {

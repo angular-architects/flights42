@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
-import { FlightStore } from '../../feature-booking/flight-search/flight-store';
+import { FlightStore } from '../../data/flight-store';
 
 export const findFlightsTool = defineAgUiTool({
   name: 'findFlights',
