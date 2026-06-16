@@ -182,19 +182,6 @@
   padding: 0.25rem 0.6rem;
 }
 
-.tool-details-subheading {
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(15, 23, 42, 0.55);
-  margin: 0.9rem 1.1rem 0.2rem;
-}
-
-.tool-details-subheading:first-of-type {
-  margin-top: 0.6rem;
-}
-
 .tool-details-list {
   list-style: none;
   margin: 0;
@@ -273,44 +260,6 @@
   word-break: break-word;
   max-height: 14rem;
   overflow: auto;
-}
-
-.tool-details-sublist {
-  list-style: none;
-  margin: 0.5rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  border-left: 2px solid rgba(15, 23, 42, 0.08);
-  padding-left: 0.7rem;
-}
-
-.tool-details-subitem {
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  border-radius: 6px;
-  padding: 0.45rem 0.6rem;
-  background: rgba(15, 23, 42, 0.02);
-  font-size: 0.85rem;
-}
-
-.tool-details-subitem[data-status='pending'] {
-  border-color: rgba(59, 130, 246, 0.35);
-  background: rgba(59, 130, 246, 0.04);
-}
-
-.tool-details-subitem[data-status='error'] {
-  border-color: rgba(220, 38, 38, 0.35);
-  background: rgba(220, 38, 38, 0.04);
-}
-
-.tool-details-subitem .tool-details-name {
-  font-size: 0.82rem;
-}
-
-.tool-details-subitem .tool-details-args {
-  font-size: 0.74rem;
-  max-height: 10rem;
 }
 
 @media (min-width: 1200px) {

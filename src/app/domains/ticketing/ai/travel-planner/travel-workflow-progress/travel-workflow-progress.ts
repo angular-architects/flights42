@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   input,
   signal,
 } from '@angular/core';
@@ -15,13 +14,9 @@ import type {
 import {
   buildPipeline,
   formatToolArgsValue,
-  groupToolCallsByStep,
   type PipelineStep,
-  readStepLabel,
-  selectTopLevelToolCalls,
   selectVisibleToolCalls,
   selectWorkflowSteps,
-  WORKFLOW_STEP_LABELS,
 } from './travel-workflow-progress.helpers';
 
 /**
@@ -44,48 +39,25 @@ export class TravelWorkflowProgress {
     selectVisibleToolCalls(this.messages()),
   );
 
-  protected readonly topLevelToolCalls = computed<AgUiToolCall[]>(() =>
-    selectTopLevelToolCalls(this.toolCalls()),
-  );
-
   protected readonly workflowSteps = computed<AgUiWorkflowStep[]>(() =>
     selectWorkflowSteps(this.messages()),
-  );
-
-  protected readonly toolCallsByStep = computed<Map<string, AgUiToolCall[]>>(
-    () => groupToolCallsByStep(this.toolCalls()),
   );
 
   protected readonly stepPipeline = computed<PipelineStep[]>(() =>
     buildPipeline(this.workflowSteps(), this.loading(), this.widgetCount() > 0),
   );
 
-  protected readonly showToolDetails = signal(false);
+  protected readonly canToggleDetails = computed(
+    () => this.toolCalls().length > 0,
+  );
 
-  constructor() {
-    // Collapse the details panel whenever there is nothing to show (e.g. after
-    // a reset or once a new generation clears the previous run), so it does not
-    // pop back open by itself when the next run produces data.
-    effect(() => {
-      if (this.workflowSteps().length === 0 && this.toolCalls().length === 0) {
-        this.showToolDetails.set(false);
-      }
-    });
-  }
+  protected readonly showToolDetails = signal(false);
 
   protected toggleToolDetails(): void {
     this.showToolDetails.update((value) => !value);
   }
 
-  protected formatToolArgs(args: unknown): string {
+  protected formatToolArgs(args: unknown): string | null {
     return formatToolArgsValue(args);
-  }
-
-  protected stepLabel(name: string): string {
-    return readStepLabel(name, WORKFLOW_STEP_LABELS);
-  }
-
-  protected toolCallsFor(stepName: string): AgUiToolCall[] {
-    return this.toolCallsByStep().get(stepName) ?? [];
   }
 }
