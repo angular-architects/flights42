@@ -4,8 +4,8 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { createTestFlight } from '../../../../testing/create-test-flight';
-import { provideTestConfig } from '../../../../testing/provide-test-config';
+import { createTestFlight } from '../../../testing/create-test-flight';
+import { provideTestConfig } from '../../../testing/provide-test-config';
 import { FlightStore } from './flight-store';
 
 describe('flight-store', () => {

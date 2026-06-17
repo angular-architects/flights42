@@ -3,7 +3,7 @@ import { defineAgUiTool } from '@internal/ag-ui-client';
 
 import { Flight } from '../../data/flight';
 import { FlightInfo } from '../../data/flight-info';
-import { FlightStore } from '../../feature-booking/flight-search/flight-store';
+import { FlightStore } from '../../data/flight-store';
 
 export const getLoadedFlightsTool = defineAgUiTool({
   name: 'getLoadedFlights',

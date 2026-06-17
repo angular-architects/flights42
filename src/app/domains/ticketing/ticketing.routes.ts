@@ -4,12 +4,11 @@ import { Routes } from '@angular/router';
 import { authGuard } from '../shared/util-auth/auth.guard';
 import { exitGuard } from '../shared/util-common/exit.guard';
 import { TicketingChatService } from './ai/ticketing-chat-service';
-import { TravelPlannerPage } from './ai/travel-planner/travel-planner-page';
 import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advanced-flight-edit';
 import { BookingNavigation } from './feature-booking/booking-navigation';
 import { FlightEdit } from './feature-booking/flight-edit/flight-edit';
 import { FlightSearch } from './feature-booking/flight-search/flight-search';
-// import { FlightStore } from './feature-booking/flight-search/flight-store';
+// import { FlightStore } from './data/flight-store';
 import { PassengerEdit } from './feature-booking/passenger-edit/passenger-edit';
 import { passengerResolver } from './feature-booking/passenger-edit/passenger-resolver';
 import { PassengerSearch } from './feature-booking/passenger-search/passenger-search';
@@ -17,6 +16,7 @@ import { ProtoFlightEdit } from './feature-booking/proto-flight-edit/proto-fligh
 import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/reactive-flight-search';
 import { SummaryPage } from './feature-booking/summary-page/summary-page';
 import { ReportingPage } from './feature-reporting/reporting-page/reporting-page';
+import { TravelPlannerPage } from './feature-travel-planner/travel-planner-page';
 
 export const bookingRoutes: Routes = [
   {

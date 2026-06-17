@@ -9,8 +9,8 @@ import {
   withState,
 } from '@ngrx/signals';
 
-import { Flight } from '../../data/flight';
-import { FlightClient } from '../../data/flight-client';
+import { Flight } from './flight';
+import { FlightClient } from './flight-client';
 
 export interface FlightFilter {
   from: string;

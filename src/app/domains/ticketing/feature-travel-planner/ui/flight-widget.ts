@@ -11,7 +11,7 @@ import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { FlightInfo } from '../../data/flight-info';
-import { FlightStore } from '../../feature-booking/flight-search/flight-store';
+import { FlightStore } from '../../data/flight-store';
 
 const flightSchema = z.object({
   id: z.number().describe('The flight id'),
