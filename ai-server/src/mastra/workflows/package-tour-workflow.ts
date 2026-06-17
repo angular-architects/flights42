@@ -1,96 +1,21 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 
-import { readBridge } from '../../../../libs/ag-ui-server/step-bridge.js';
-import { findHotelsForCity, hotelSchema } from '../tools/find-hotels.js';
-import { flightSchema, searchFlights } from '../tools/search-flights.js';
+import { findHotelsForCity } from '../tools/find-hotels.js';
+import { searchFlights } from '../tools/search-flights.js';
+import {
+  reportStepStatus,
+  reportToolCall,
+  type StepProgressContext,
+} from './bridge.js';
 import { planFinalizerAgent } from './plan-finalizer-agent.js';
+import {
+  finalPlanSchema,
+  legSchema,
+  loadedDataSchema,
+  roughPlanSchema,
+} from './schemas.js';
 import { createPlan, overnightCitiesFromLegs } from './utils.js';
-
-const roughPlanSchema = z.object({
-  userPrompt: z.string().describe('The original user request, verbatim.'),
-  hotels: z
-    .array(z.object({ city: z.string() }))
-    .describe('Cities the traveller wants to stay in.'),
-  flights: z
-    .array(
-      z.object({
-        from: z.string().describe('Departure city (name, not IATA code).'),
-        to: z.string().describe('Destination city (name, not IATA code).'),
-        date: z
-          .string()
-          .describe(
-            'Departure day as ISO date without time, e.g. "2026-06-23".',
-          ),
-      }),
-    )
-    .describe('Flight legs in travel order.'),
-});
-
-const legSchema = z.object({
-  from: z.string(),
-  to: z.string(),
-  date: z.string(),
-  candidates: z.array(flightSchema),
-});
-
-const loadedDataSchema = z.object({
-  legs: z.array(legSchema),
-  destinations: z.array(
-    z.object({
-      city: z.string(),
-      hotels: z.array(hotelSchema),
-    }),
-  ),
-});
-
-const finalPlanSchema = z.object({
-  summary: z.string().describe("Short summary in the user's language."),
-  flights: z.array(flightSchema).describe('Chosen flights, in travel order.'),
-  hotels: z
-    .array(hotelSchema)
-    .describe('Chosen hotels, one per overnight city.'),
-});
-
-interface StepProgressContext {
-  writer?: { write: (chunk: unknown) => Promise<void> };
-  requestContext?: Parameters<typeof readBridge>[0];
-  stepName?: string;
-}
-
-async function emitStepStatus(
-  ctx: StepProgressContext,
-  stepName: string,
-  status: 'started' | 'finished',
-  extras?: Record<string, unknown>,
-): Promise<void> {
-  const bridge = readBridge(ctx.requestContext);
-  bridge?.emit({ stepName, kind: status, details: extras });
-
-  await ctx.writer?.write({
-    type: 'data-step-status',
-    stepName,
-    status,
-    ...(extras ?? {}),
-  });
-}
-
-async function withToolCall<T>(
-  ctx: StepProgressContext,
-  toolName: string,
-  args: unknown,
-  run: () => Promise<T>,
-): Promise<T> {
-  const bridge = readBridge(ctx.requestContext);
-  const result = await run();
-  bridge?.emitToolCall({
-    toolName,
-    args,
-    result,
-    stepName: ctx.stepName,
-  });
-  return result;
-}
 
 const findFlightsStep = createStep({
   id: 'findFlights',
@@ -104,21 +29,22 @@ const findFlightsStep = createStep({
       requestContext,
       stepName: 'findFlights',
     };
-    await emitStepStatus(ctx, 'findFlights', 'started');
+    await reportStepStatus(ctx, 'findFlights', 'started');
 
     const legs = await Promise.all(
       inputData.flights.map(async (leg) => {
-        const candidates = await withToolCall(
+        const candidates = await searchFlights(leg.from, leg.to, leg.date);
+        reportToolCall(
           ctx,
           'searchFlights',
           { from: leg.from, to: leg.to, date: leg.date },
-          () => searchFlights(leg.from, leg.to, leg.date),
+          candidates,
         );
         return { from: leg.from, to: leg.to, date: leg.date, candidates };
       }),
     );
 
-    await emitStepStatus(ctx, 'findFlights', 'finished', {
+    await reportStepStatus(ctx, 'findFlights', 'finished', {
       legCount: legs.length,
     });
     return { legs };
@@ -137,20 +63,17 @@ const findHotelsStep = createStep({
       requestContext,
       stepName: 'findHotels',
     };
-    await emitStepStatus(ctx, 'findHotels', 'started');
+    await reportStepStatus(ctx, 'findHotels', 'started');
 
     const overnightCities = overnightCitiesFromLegs(inputData.legs);
 
-    const destinations = await Promise.all(
-      overnightCities.map((city) =>
-        withToolCall(ctx, 'findHotels', { city }, async () => ({
-          city,
-          hotels: findHotelsForCity(city),
-        })),
-      ),
-    );
+    const destinations = overnightCities.map((city) => {
+      const hotels = findHotelsForCity(city);
+      reportToolCall(ctx, 'findHotels', { city }, { city, hotels });
+      return { city, hotels };
+    });
 
-    await emitStepStatus(ctx, 'findHotels', 'finished', {
+    await reportStepStatus(ctx, 'findHotels', 'finished', {
       cityCount: destinations.length,
     });
     return { legs: inputData.legs, destinations };
@@ -165,7 +88,7 @@ const finalizeStep = createStep({
   outputSchema: finalPlanSchema,
   execute: async ({ inputData, getInitData, writer, requestContext }) => {
     const ctx: StepProgressContext = { writer, requestContext };
-    await emitStepStatus(ctx, 'finalize', 'started');
+    await reportStepStatus(ctx, 'finalize', 'started');
 
     const init = getInitData<z.infer<typeof roughPlanSchema>>();
 
@@ -189,7 +112,7 @@ const finalizeStep = createStep({
     const raw = result.object ?? { summary: '', flights: [], hotels: [] };
     const plan = createPlan(raw, inputData.legs, inputData.destinations);
 
-    await emitStepStatus(ctx, 'finalize', 'finished');
+    await reportStepStatus(ctx, 'finalize', 'finished');
     return plan;
   },
 });
