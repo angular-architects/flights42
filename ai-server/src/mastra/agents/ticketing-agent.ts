@@ -19,7 +19,6 @@ export const ticketingAgent = new Agent({
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
-    searchFlightsTool,
   },
   // agents: { hotelAgent },
   memory: new Memory(),

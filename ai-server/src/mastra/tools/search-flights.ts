@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { toDateOnly } from '../utils/format-date.js';
 import { canonicalCity, cityCandidates } from './city-aliases.js';
 
 const FLIGHT_API_BASE = 'https://demo.angulararchitects.io/api/flight';
@@ -77,8 +78,8 @@ export async function searchFlights(
   // The demo flight API cannot filter by date, so we restrict the results to
   // the requested day here in the tool. We only compare the date part and
   // ignore the time component (simplification for this workshop demo).
-  const day = date.slice(0, 10);
-  return flights.filter((flight) => flight.date.slice(0, 10) === day);
+  const day = toDateOnly(date);
+  return flights.filter((flight) => toDateOnly(flight.date) === day);
 }
 
 export const searchFlightsTool = createTool({

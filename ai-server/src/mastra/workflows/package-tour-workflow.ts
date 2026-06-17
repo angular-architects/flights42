@@ -5,6 +5,7 @@ import { readBridge } from '../../../../libs/ag-ui-server/step-bridge.js';
 import { findHotelsForCity, hotelSchema } from '../tools/find-hotels.js';
 import { flightSchema, searchFlights } from '../tools/search-flights.js';
 import { planFinalizerAgent } from './plan-finalizer-agent.js';
+import { createPlan, overnightCitiesFromLegs } from './utils.js';
 
 const roughPlanSchema = z.object({
   userPrompt: z.string().describe('The original user request, verbatim.'),
@@ -130,7 +131,7 @@ const findHotelsStep = createStep({
     'Loads hotel options for every city of the rough plan (deterministic, no agent).',
   inputSchema: z.object({ legs: z.array(legSchema) }),
   outputSchema: loadedDataSchema,
-  execute: async ({ inputData, getInitData, writer, requestContext }) => {
+  execute: async ({ inputData, writer, requestContext }) => {
     const ctx: StepProgressContext = {
       writer,
       requestContext,
@@ -138,10 +139,10 @@ const findHotelsStep = createStep({
     };
     await emitStepStatus(ctx, 'findHotels', 'started');
 
-    const init = getInitData<z.infer<typeof roughPlanSchema>>();
+    const overnightCities = overnightCitiesFromLegs(inputData.legs);
 
     const destinations = await Promise.all(
-      init.hotels.map(({ city }) =>
+      overnightCities.map((city) =>
         withToolCall(ctx, 'findHotels', { city }, async () => ({
           city,
           hotels: findHotelsForCity(city),
@@ -185,7 +186,8 @@ const finalizeStep = createStep({
       { structuredOutput: { schema: finalPlanSchema } },
     );
 
-    const plan = result.object ?? { summary: '', flights: [], hotels: [] };
+    const raw = result.object ?? { summary: '', flights: [], hotels: [] };
+    const plan = createPlan(raw, inputData.legs, inputData.destinations);
 
     await emitStepStatus(ctx, 'finalize', 'finished');
     return plan;
