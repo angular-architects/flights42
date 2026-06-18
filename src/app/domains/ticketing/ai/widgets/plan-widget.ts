@@ -55,11 +55,6 @@ export class PlanWidget {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
 
-  // Snapshot the plan at the moment this card is created. The store keeps
-  // changing as the user co-plans, but a card already shown in the chat history
-  // must keep displaying the plan as it was back then -- so we copy the steps
-  // here instead of reading the live signals. Every plan change makes the agent
-  // render a NEW planWidget, each frozen to its own snapshot.
   protected readonly title = this.store.title();
   protected readonly steps: PlanStep[] = this.store
     .steps()
@@ -67,13 +62,19 @@ export class PlanWidget {
   protected readonly isEmpty = this.steps.length === 0;
 
   protected labelForAction(action: PlanStep['action']): string {
-    if (action === 'book') return 'Book';
-    if (action === 'cancel') return 'Cancel';
+    if (action === 'book') {
+      return 'Book';
+    }
+    if (action === 'cancel') {
+      return 'Cancel';
+    }
     return 'Step';
   }
 
   protected execute(): void {
-    if (this.isEmpty) return;
+    if (this.isEmpty) {
+      return;
+    }
     this.agentMode.mode.set('execution');
     this.chatRegistry.chat?.sendMessage({
       role: 'user',
@@ -82,14 +83,19 @@ export class PlanWidget {
     });
   }
 
+  private verbForAction(action: PlanStep['action']): string {
+    if (action === 'book') {
+      return 'Book';
+    }
+    if (action === 'cancel') {
+      return 'Cancel';
+    }
+    return 'Do';
+  }
+
   private buildExecutionMessage(): string {
     const lines = this.steps.map((step, index) => {
-      const verb =
-        step.action === 'book'
-          ? 'Book'
-          : step.action === 'cancel'
-            ? 'Cancel'
-            : 'Do';
+      const verb = this.verbForAction(step.action);
       const flight = step.flightId != null ? ` flight ${step.flightId}` : '';
       return `${index + 1}. ${verb}${flight} — ${step.description}`;
     });
