@@ -14,6 +14,11 @@ manually, so the user will confirm the values before submitting.
   schema: TicketInfoSchema,
   execute: (args) => {
     const store = inject(CheckinTicketStore);
+    // The model sometimes emits the literal string "unknown" for the email
+    // address instead of omitting it. Treat that as "no value".
+    if (args.passenger?.email === 'unknown') {
+      args.passenger.email = '';
+    }
     store.setExtractedTicket(args);
     return { ok: true };
   },

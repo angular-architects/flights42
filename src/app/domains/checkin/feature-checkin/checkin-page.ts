@@ -12,7 +12,7 @@ import {
   signal,
   viewChildren,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FormField, required } from '@angular/forms/signals';
 import { SignalFormControl } from '@angular/forms/signals/compat';
 import { compatForm } from '@angular/forms/signals/compat';
@@ -140,7 +140,6 @@ export class CheckinPage {
   });
 
   constructor() {
-    this.initValidators();
     this.connectRouterParams();
     this.initForm();
     this.bindExtractedTicketToForm();
@@ -311,14 +310,6 @@ export class CheckinPage {
     this.activatedRoute.fragment.subscribe((fragment) => {
       console.log('fragment', fragment);
     });
-  }
-
-  private initValidators() {
-    this.passengerGroup.controls.email.addValidators([
-      Validators.required,
-      Validators.minLength(3),
-      Validators.email,
-    ]);
   }
 
   private focusFirstEmptyElement() {

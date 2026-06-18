@@ -1,17 +1,3 @@
-// Multimodal AG-UI agent (Part 2 / checkin):
-//
-// The agent receives a flight ticket image as an AG-UI `image` content
-// part on the user message and is expected to call the **client tool**
-// `fillCheckinForm` with the extracted fields. It owns no server-side
-// tools and intentionally has **no memory** — every upload is a
-// stateless one-shot extraction.
-//
-// Image transport relies on the multimodal fallback in
-// `libs/ag-ui-server/extended-mastra-agent.ts`
-// (`injectMultimodalUserParts`) because `@ag-ui/mastra@1.0.0`'s
-// `convertAGUIMessagesToMastra` strips non-text content parts. See the
-// header comment in that file for the verification.
-
 import { Agent } from '@mastra/core/agent';
 
 import { model } from '../config.js';
@@ -44,6 +30,7 @@ Field hints:
   the ticket (often a 6-letter code or a long numeric string).
 - \`passenger.firstName\` / \`passenger.lastName\`: passenger name as
   printed; split by the first space if a single line is given.
+- \`passenger.email\`: omit this field when no email address is found.
 - \`passenger.passport.passportNumber\`: passport/document number if visible.
 - \`passenger.passport.issuedOn\`: issue date as \`YYYY-MM-DD\` if readable.
 - \`passenger.passport.validUntil\`: expiry date as \`YYYY-MM-DD\` if readable.
@@ -68,9 +55,5 @@ export const checkinAgent = new Agent({
   id: 'checkinAgent',
   name: 'Flights42 Check-in Assistant',
   instructions: checkinAgentInstructions,
-  // Vision-capable model. The user's ticket image arrives as an
-  // AI-SDK `ImagePart` on a multipart user message (see fallback in
-  // extended-mastra-agent.ts).
   model,
-  defaultOptions: { maxSteps: 3 },
 });

@@ -40,7 +40,14 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "overrides": {
-    "rxjs": "$rxjs"
+    "rxjs": "$rxjs",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@softarc/detective": {
+      "express": "^4.21.2",
+      "path-to-regexp": "^0.1.12",
+      "cookie": "^0.7.2",
+      "qs": "^6.15.2"
+    }
   },
   "dependencies": {
     "@a2ui/angular": "^0.9.1",
