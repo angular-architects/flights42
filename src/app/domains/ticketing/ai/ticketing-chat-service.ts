@@ -19,6 +19,7 @@ import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { getPlanTool } from './tools/get-plan.tool';
 import { movePlanStepTool } from './tools/move-plan-step.tool';
 import { removePlanStepTool } from './tools/remove-plan-step.tool';
+import { reversePlanTool } from './tools/reverse-plan.tool';
 import { setPlanTool } from './tools/set-plan.tool';
 import { swapPlanStepsTool } from './tools/swap-plan-steps.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
@@ -59,9 +60,7 @@ export class TicketingChatService {
           toggleFlightSelectionTool,
           getCurrentBasketTool,
           displayFlightDetailTool,
-          // Tool-based co-planning: the planning agent edits the canonical plan
-          // in the PlanStore through these atomic operations instead of
-          // re-emitting the whole plan as text every turn.
+          // Tool-based co-planning:
           getPlanTool,
           setPlanTool,
           addPlanStepTool,
@@ -69,6 +68,7 @@ export class TicketingChatService {
           updatePlanStepTool,
           movePlanStepTool,
           swapPlanStepsTool,
+          reversePlanTool,
           clearPlanTool,
           createShowComponentsTool(components),
         ],

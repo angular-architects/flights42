@@ -99,6 +99,11 @@ export const PlanStore = signalStore(
       });
     },
 
+    /** Reverses the order of all steps (first becomes last). */
+    reverse(): void {
+      patchState(store, (state) => ({ steps: [...state.steps].reverse() }));
+    },
+
     clear(): void {
       patchState(store, { title: '', steps: [] });
     },
