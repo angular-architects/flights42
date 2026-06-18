@@ -1,7 +1,7 @@
+import { readBridge } from '@internal/ag-ui-server';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 
-import { readBridge } from '../../../../libs/ag-ui-server/step-bridge.js';
 import { hotelSchema } from '../tools/find-hotels.js';
 import { flightSchema, searchFlights } from '../tools/search-flights.js';
 

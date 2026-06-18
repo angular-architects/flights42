@@ -1,4 +1,5 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -11,7 +12,11 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "outDir": "./out-tsc/ai-server"
+    "outDir": "./out-tsc/ai-server",
+    "paths": {
+      "@internal/ag-ui-server": ["../libs/ag-ui-server/index.ts"],
+      "@internal/ag-ui-server/*": ["../libs/ag-ui-server/*"]
+    }
   },
   "include": ["src/**/*.ts", "../libs/ag-ui-server/**/*.ts"]
 }

@@ -1,12 +1,11 @@
 import type { RunAgentInput } from '@ag-ui/client';
 import { transformChunks } from '@ag-ui/client';
-import type { ContextWithMastra } from '@mastra/core/server';
-
 import {
   getExtendedLocalAgent,
   observableToSseStream,
   SSE_HEADERS,
-} from '../../../../libs/ag-ui-server/index.js';
+} from '@internal/ag-ui-server';
+import type { ContextWithMastra } from '@mastra/core/server';
 
 export async function agUiRouteHandler(
   c: ContextWithMastra,
