@@ -102,26 +102,25 @@ export class PlanWidget {
       })
       .join('\n');
 
-    return `
-Execute the following plan now. Perform EVERY step, in EXACTLY this order, one at a time — do not reorder, skip, merge, or add steps:
+    return `Execute the following plan now. Perform EVERY step, in EXACTLY this order, 
+            one at a time — do not reorder, skip, merge, or add steps:
 
-${lines}
-`.trim();
+              ${lines}`;
   }
 }
 
 export const planWidget = defineAgUiComponent({
   name: 'planWidget',
   description: `
-Renders the current co-plan. The plan itself is held in the client-side
-PlanStore and edited through the plan tools (setPlan, addPlanStep,
-removePlanStep, updatePlanStep, movePlanStep, swapPlanSteps, clearPlan).
-This widget takes NO arguments — it snapshots the plan from that store at
-render time. Append it after the messageWidget whenever the plan changes
-(the initial draft and after every edit) so the user sees the updated
-plan; each card freezes the plan as it was at that moment. The widget
-renders an "Execute" button.
-`.trim(),
+    Renders the current co-plan. The plan itself is held in the client-side
+    PlanStore and edited through the plan tools (setPlan, addPlanStep,
+    removePlanStep, updatePlanStep, movePlanStep, swapPlanSteps, reversePlan,
+    clearPlan).
+    This widget takes NO arguments — it snapshots the plan from that store at
+    render time. Append it after the messageWidget whenever the plan changes
+    (the initial draft and after every edit) so the user sees the updated
+    plan; each card freezes the plan as it was at that moment. The widget
+    renders an "Execute" button.`,
   component: PlanWidget,
   schema: z.object({}),
 });

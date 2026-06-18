@@ -26,6 +26,7 @@ in the client and you change it ONLY through the plan tools:
 - updatePlanStep — change fields of one step (by its id).
 - movePlanStep — move one step to a new 1-based position (by its id).
 - swapPlanSteps — swap two steps (by their ids).
+- reversePlan — reverse the order of all steps.
 - clearPlan — start over.
 - getPlan — read the current plan (title + steps with their id and 1-based
   position).
