@@ -14,16 +14,16 @@ import { PlanStore } from '../plan/plan-store';
     <div class="plan-card">
       <div class="plan-header">
         <span class="plan-badge">Plan</span>
-        @if (store.title()) {
-          <h3 class="plan-title">{{ store.title() }}</h3>
+        @if (title) {
+          <h3 class="plan-title">{{ title }}</h3>
         }
       </div>
 
-      @if (store.isEmpty()) {
+      @if (isEmpty) {
         <p class="plan-empty">No steps yet.</p>
       } @else {
         <ol class="plan-steps">
-          @for (step of store.steps(); track step.id) {
+          @for (step of steps; track step.id) {
             <li class="plan-step">
               <span class="step-kind" [attr.data-kind]="step.action">
                 {{ labelForAction(step.action) }}
@@ -41,7 +41,7 @@ import { PlanStore } from '../plan/plan-store';
         <button
           type="button"
           class="execute-btn"
-          [disabled]="store.isEmpty()"
+          [disabled]="isEmpty"
           (click)="execute()">
           Execute
         </button>
@@ -51,9 +51,20 @@ import { PlanStore } from '../plan/plan-store';
   styleUrls: ['./plan-widget.css'],
 })
 export class PlanWidget {
-  protected readonly store = inject(PlanStore);
+  private readonly store = inject(PlanStore);
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
+
+  // Snapshot the plan at the moment this card is created. The store keeps
+  // changing as the user co-plans, but a card already shown in the chat history
+  // must keep displaying the plan as it was back then -- so we copy the steps
+  // here instead of reading the live signals. Every plan change makes the agent
+  // render a NEW planWidget, each frozen to its own snapshot.
+  protected readonly title = this.store.title();
+  protected readonly steps: PlanStep[] = this.store
+    .steps()
+    .map((step) => ({ ...step }));
+  protected readonly isEmpty = this.steps.length === 0;
 
   protected labelForAction(action: PlanStep['action']): string {
     if (action === 'book') return 'Book';
@@ -62,7 +73,7 @@ export class PlanWidget {
   }
 
   protected execute(): void {
-    if (this.store.isEmpty()) return;
+    if (this.isEmpty) return;
     this.agentMode.mode.set('execution');
     this.chatRegistry.chat?.sendMessage({
       role: 'user',
@@ -72,7 +83,7 @@ export class PlanWidget {
   }
 
   private buildExecutionMessage(): string {
-    const lines = this.store.steps().map((step, index) => {
+    const lines = this.steps.map((step, index) => {
       const verb =
         step.action === 'book'
           ? 'Book'
@@ -98,10 +109,11 @@ export const planWidget = defineAgUiComponent({
     'Renders the current co-plan. The plan itself is held in the client-side',
     'PlanStore and edited through the plan tools (setPlan, addPlanStep,',
     'removePlanStep, updatePlanStep, movePlanStep, swapPlanSteps, clearPlan).',
-    'This widget always shows the live plan from that store, so you do NOT pass',
-    'the steps here. Append this widget once to anchor the plan in the chat;',
-    'after that, edits update the rendered card automatically — do not show it',
-    'again on every change. The widget renders an "Execute" button.',
+    'This widget takes NO arguments — it snapshots the plan from that store at',
+    'render time. Append it after the messageWidget whenever the plan changes',
+    '(the initial draft and after every edit) so the user sees the updated',
+    'plan; each card freezes the plan as it was at that moment. The widget',
+    'renders an "Execute" button.',
   ].join('\n'),
   component: PlanWidget,
   schema: z.object({}),
