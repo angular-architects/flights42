@@ -10,6 +10,10 @@ export const swapPlanStepsTool = defineAgUiTool({
 Swaps the positions of two steps. Address both steps by their stable "id" (look
 them up via getPlan). Use this for "swap steps 3 and 5", "do the cancel before
 the booking", etc.
+
+Example — user: "Swap steps 1 and 2."
+  (getPlan shows step 1 has id "s-7f3a" and step 2 has id "s-1c08")
+  swapPlanSteps({ "idA": "s-7f3a", "idB": "s-1c08" })
   `.trim(),
   schema: z.object({
     idA: z.string().describe('Stable id of the first step.'),
