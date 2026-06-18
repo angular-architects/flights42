@@ -75,8 +75,29 @@ export class PlanWidget {
     this.agentMode.mode.set('execution');
     this.chatRegistry.chat?.sendMessage({
       role: 'user',
-      content: 'Please execute the plan we just agreed on, in the order shown.',
+      content: this.buildExecutionMessage(),
+      hidden: true,
     });
+  }
+
+  private buildExecutionMessage(): string {
+    const lines = this.steps().map((step, index) => {
+      const verb =
+        step.action === 'book'
+          ? 'Book'
+          : step.action === 'cancel'
+            ? 'Cancel'
+            : 'Do';
+      const flight = step.flightId != null ? ` flight ${step.flightId}` : '';
+      return `${index + 1}. ${verb}${flight} — ${step.description}`;
+    });
+
+    return [
+      'Execute the following plan now. Perform EVERY step, in EXACTLY this',
+      'order, one at a time — do not reorder, skip, merge, or add steps:',
+      '',
+      ...lines,
+    ].join('\n');
   }
 }
 
