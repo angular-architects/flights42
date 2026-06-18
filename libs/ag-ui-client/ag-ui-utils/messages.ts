@@ -9,6 +9,19 @@ export function readMessages(
   return 'value' in item ? item.value : [];
 }
 
+/**
+ * Scopes a client-side render identity (message id / widget id) to the current
+ * run. Tool-call ids are only guaranteed unique *within* a single run — some
+ * providers reset them per response — so using them raw as Angular @for track
+ * keys lets a later run's card collide with an earlier one and clobber it.
+ * Prefixing with the run id keeps the protocol-level toolCallId intact while
+ * making the rendered identities globally unique. The runId is constant for the
+ * lifetime of a tool call, so the id stays stable across streaming rebuilds.
+ */
+export function scopeRenderId(runId: string, id: string): string {
+  return `${runId}:${id}`;
+}
+
 export function replaceMessage(
   messages: AgUiChatMessage[],
   index: number,

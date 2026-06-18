@@ -244,9 +244,10 @@ export async function runAgent(
 
         return {
           value: upsertActionWidgetForToolCall(
-            upsertToolCall(messages, toolCall),
+            upsertToolCall(messages, toolCall, runId),
             toolCall,
             componentMap,
+            runId,
           ),
         };
       });
@@ -269,6 +270,7 @@ export async function runAgent(
                 nextMessages,
                 toolCall,
                 componentMap,
+                runId,
               )
             : nextMessages,
         };
@@ -295,6 +297,7 @@ export async function runAgent(
                 nextMessages,
                 toolCall,
                 componentMap,
+                runId,
               )
             : nextMessages,
         };
@@ -337,6 +340,7 @@ export async function runAgent(
                 nextMessages,
                 toolCall,
                 componentMap,
+                runId,
               )
             : nextMessages,
         };
@@ -361,7 +365,7 @@ export async function runAgent(
 
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item), componentMap),
+          markPendingToolCallsAsError(readMessages(item), componentMap, runId),
           message,
         ),
       }));
@@ -369,7 +373,7 @@ export async function runAgent(
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          markPendingToolCallsAsError(readMessages(item), componentMap),
+          markPendingToolCallsAsError(readMessages(item), componentMap, runId),
           friendlyErrorMessage(error, 'Unknown AG-UI run failure'),
         ),
       }));
@@ -401,6 +405,7 @@ export async function runAgent(
                 nextMessages,
                 toolCall,
                 componentMap,
+                runId,
               )
             : nextMessages,
         };
@@ -448,6 +453,7 @@ export async function runAgent(
 function markPendingToolCallsAsError(
   messages: AgUiChatMessage[],
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
 ): AgUiChatMessage[] {
   return messages.reduce<AgUiChatMessage[]>((currentMessages, message) => {
     if (message.role !== 'assistant') {
@@ -471,6 +477,7 @@ function markPendingToolCallsAsError(
               updatedMessages,
               updatedToolCall,
               componentMap,
+              runId,
             )
           : updatedMessages;
       },
@@ -600,10 +607,15 @@ export async function runUntilSettled(
       environmentInjector,
       pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,
+      runId: currentRunId,
     });
 
     messageStream.update((item) => ({
-      value: markPendingToolCallsAsError(readMessages(item), componentMap),
+      value: markPendingToolCallsAsError(
+        readMessages(item),
+        componentMap,
+        currentRunId,
+      ),
     }));
 
     done = runResult.followUpToolCallIds.length === 0;

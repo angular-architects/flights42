@@ -1,3 +1,5 @@
+import { type Injector, runInInjectionContext } from '@angular/core';
+
 import {
   type AgUiActionRegisteredComponent,
   type AgUiActionWidget,
@@ -5,10 +7,11 @@ import {
   type AgUiClientToolDefinition,
   type AgUiMcpAppsSnapshotContent,
   type AgUiRegisteredComponent,
+  type AgUiResultRegisteredComponent,
   type AgUiToolCall,
   type AgUiWidgetInstance,
 } from '../ag-ui-types';
-import { replaceMessage } from './messages';
+import { replaceMessage, scopeRenderId } from './messages';
 
 export function readRegisteredComponents(
   tools: AgUiClientToolDefinition<never>[],
@@ -20,8 +23,9 @@ export function upsertActionWidgetForToolCall(
   messages: AgUiChatMessage[],
   toolCall: AgUiToolCall,
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
 ): AgUiChatMessage[] {
-  const widget = toActionWidget(toolCall, componentMap);
+  const widget = toActionWidget(toolCall, componentMap, runId);
   if (!widget) {
     return removeActionWidget(messages, toolCall.id);
   }
@@ -34,12 +38,16 @@ export function appendWidgetsFromToolResult(
   toolCallId: string,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
+  injector: Injector,
 ): AgUiChatMessage[] {
   const widgets = toWidgets(
     toolNameFor(messages, toolCallId),
     toolCallId,
     content,
     componentMap,
+    runId,
+    injector,
   );
 
   if (widgets.length === 0) {
@@ -54,12 +62,16 @@ export function appendWidgetsFromPendingToolResult(
   pendingCall: { toolCallId: string; toolCallName: string },
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
+  injector: Injector,
 ): AgUiChatMessage[] {
   const widgets = toWidgets(
     pendingCall.toolCallName,
     pendingCall.toolCallId,
     content,
     componentMap,
+    runId,
+    injector,
   );
 
   if (widgets.length === 0) {
@@ -223,11 +235,19 @@ function toWidgets(
   toolCallId: string,
   content: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
+  injector: Injector,
 ): AgUiWidgetInstance[] {
   const parsed = safeParseJson(content);
 
   if (name === 'showComponents') {
-    return toRegisteredWidgets(parsed, toolCallId, componentMap);
+    return toRegisteredWidgets(
+      parsed,
+      toolCallId,
+      componentMap,
+      runId,
+      injector,
+    );
   }
 
   if (!name) {
@@ -243,10 +263,14 @@ function toWidgets(
   return parsed && typeof parsed === 'object' && component
     ? [
         {
-          id: `${toolCallId}-0`,
+          id: scopeRenderId(runId, `${toolCallId}-0`),
           name,
           component,
-          props: parsed as Record<string, unknown>,
+          props: captureWidgetProps(
+            registeredComponent,
+            parsed as Record<string, unknown>,
+            injector,
+          ),
         },
       ]
     : [];
@@ -256,6 +280,8 @@ function toRegisteredWidgets(
   value: unknown,
   toolCallId: string,
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
+  injector: Injector,
 ): AgUiWidgetInstance[] {
   if (
     !value ||
@@ -269,9 +295,36 @@ function toRegisteredWidgets(
   const components = (value as { components: unknown[] }).components;
   return components
     .map((item, index) =>
-      toRegisteredWidget(item, toolCallId, index, componentMap),
+      toRegisteredWidget(
+        item,
+        toolCallId,
+        index,
+        componentMap,
+        runId,
+        injector,
+      ),
     )
     .filter((widget): widget is AgUiWidgetInstance => widget !== null);
+}
+
+/**
+ * Lets a registered component freeze live client state into its props at the
+ * moment the widget instance is created (see `captureProps`). Runs inside the
+ * provided injection context so the hook can `inject(...)`. Falls back to the
+ * model-supplied props when no hook is registered.
+ */
+function captureWidgetProps(
+  registeredComponent: AgUiResultRegisteredComponent,
+  props: Record<string, unknown>,
+  injector: Injector,
+): Record<string, unknown> {
+  if (!registeredComponent.captureProps) {
+    return props;
+  }
+
+  return runInInjectionContext(injector, () =>
+    registeredComponent.captureProps!(props),
+  );
 }
 
 function toRegisteredWidget(
@@ -279,6 +332,8 @@ function toRegisteredWidget(
   toolCallId: string,
   index: number,
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
+  injector: Injector,
 ): AgUiWidgetInstance | null {
   if (!value || typeof value !== 'object') {
     return null;
@@ -293,25 +348,29 @@ function toRegisteredWidget(
   const registeredComponent = componentName
     ? componentMap.get(componentName)
     : undefined;
-  const component =
+  const resultComponent =
     registeredComponent && registeredComponent.kind !== 'action'
-      ? registeredComponent.component
+      ? registeredComponent
       : undefined;
 
   if (
     !componentName ||
     !widget.props ||
     typeof widget.props !== 'object' ||
-    !component
+    !resultComponent
   ) {
     return null;
   }
 
   return {
-    id: `${toolCallId}-${index}`,
+    id: scopeRenderId(runId, `${toolCallId}-${index}`),
     name: componentName,
-    component,
-    props: widget.props as Record<string, unknown>,
+    component: resultComponent.component,
+    props: captureWidgetProps(
+      resultComponent,
+      widget.props as Record<string, unknown>,
+      injector,
+    ),
   };
 }
 
@@ -345,6 +404,7 @@ function toMcpAppsWidget(
 function toActionWidget(
   toolCall: AgUiToolCall,
   componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
 ): AgUiActionWidget | null {
   const registeredComponent = findActionComponent(componentMap, toolCall.name);
   if (!registeredComponent) {
@@ -353,7 +413,7 @@ function toActionWidget(
 
   return {
     kind: 'action',
-    id: `${toolCall.id}-action`,
+    id: scopeRenderId(runId, `${toolCall.id}-action`),
     name: registeredComponent.name,
     component: registeredComponent.component,
     toolCallId: toolCall.id,
