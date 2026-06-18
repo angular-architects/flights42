@@ -3,5 +3,5 @@ export interface FeatureFlags {
 }
 
 export const featureFlags: FeatureFlags = {
-  autoOpenRefinementChat: false,
+  autoOpenRefinementChat: true,
 };
