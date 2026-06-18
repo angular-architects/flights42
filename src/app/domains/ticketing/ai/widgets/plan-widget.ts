@@ -94,33 +94,34 @@ export class PlanWidget {
   }
 
   private buildExecutionMessage(): string {
-    const lines = this.steps.map((step, index) => {
-      const verb = this.verbForAction(step.action);
-      const flight = step.flightId != null ? ` flight ${step.flightId}` : '';
-      return `${index + 1}. ${verb}${flight} — ${step.description}`;
-    });
+    const lines = this.steps
+      .map((step, index) => {
+        const verb = this.verbForAction(step.action);
+        const flight = step.flightId != null ? ` flight ${step.flightId}` : '';
+        return `${index + 1}. ${verb}${flight} — ${step.description}`;
+      })
+      .join('\n');
 
-    return [
-      'Execute the following plan now. Perform EVERY step, in EXACTLY this',
-      'order, one at a time — do not reorder, skip, merge, or add steps:',
-      '',
-      ...lines,
-    ].join('\n');
+    return `
+Execute the following plan now. Perform EVERY step, in EXACTLY this order, one at a time — do not reorder, skip, merge, or add steps:
+
+${lines}
+`.trim();
   }
 }
 
 export const planWidget = defineAgUiComponent({
   name: 'planWidget',
-  description: [
-    'Renders the current co-plan. The plan itself is held in the client-side',
-    'PlanStore and edited through the plan tools (setPlan, addPlanStep,',
-    'removePlanStep, updatePlanStep, movePlanStep, swapPlanSteps, clearPlan).',
-    'This widget takes NO arguments — it snapshots the plan from that store at',
-    'render time. Append it after the messageWidget whenever the plan changes',
-    '(the initial draft and after every edit) so the user sees the updated',
-    'plan; each card freezes the plan as it was at that moment. The widget',
-    'renders an "Execute" button.',
-  ].join('\n'),
+  description: `
+Renders the current co-plan. The plan itself is held in the client-side
+PlanStore and edited through the plan tools (setPlan, addPlanStep,
+removePlanStep, updatePlanStep, movePlanStep, swapPlanSteps, clearPlan).
+This widget takes NO arguments — it snapshots the plan from that store at
+render time. Append it after the messageWidget whenever the plan changes
+(the initial draft and after every edit) so the user sees the updated
+plan; each card freezes the plan as it was at that moment. The widget
+renders an "Execute" button.
+`.trim(),
   component: PlanWidget,
   schema: z.object({}),
 });
