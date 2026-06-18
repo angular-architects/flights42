@@ -70,6 +70,7 @@ class InterruptAwareHttpAgent extends HttpAgent {
 interface SendMessageOptions {
   role: 'user';
   content: UserMessageContent;
+  hidden?: boolean;
 }
 
 interface NormalizedUserMessageContent {
@@ -268,20 +269,22 @@ export function agUiResource(
       content: normalized.agentContent,
     });
 
-    messageStream.update((item) => ({
-      value: [
-        ...readMessages(item),
-        {
-          id,
-          role: 'user' as const,
-          content: normalized.displayContent,
-          widgets: [],
-          toolCalls: [],
-          workflowSteps: [],
-          attachments: normalized.attachments,
-        },
-      ],
-    }));
+    if (!message.hidden) {
+      messageStream.update((item) => ({
+        value: [
+          ...readMessages(item),
+          {
+            id,
+            role: 'user' as const,
+            content: normalized.displayContent,
+            widgets: [],
+            toolCalls: [],
+            workflowSteps: [],
+            attachments: normalized.attachments,
+          },
+        ],
+      }));
+    }
 
     pendingRun.set({ id: randomUUID() });
   };

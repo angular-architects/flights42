@@ -4,5 +4,5 @@ export type AgentMode = 'plan' | 'execution';
 
 @Injectable({ providedIn: 'root' })
 export class AgentModeService {
-  readonly mode = signal<AgentMode>('execution');
+  readonly mode = signal<AgentMode>('plan');
 }

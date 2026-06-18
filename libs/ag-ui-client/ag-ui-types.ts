@@ -189,11 +189,7 @@ export function defineActionCard<const TToolName extends string, TComponent>(
   } as AgUiActionRegisteredComponent<TComponent, TToolName>;
 }
 
-export type AgUiToolCallStatus =
-  | 'pending'
-  | 'interrupt'
-  | 'complete'
-  | 'error';
+export type AgUiToolCallStatus = 'pending' | 'interrupt' | 'complete' | 'error';
 
 export interface AgUiToolCall {
   id: string;
@@ -319,7 +315,11 @@ export interface AgUiResourceOptions {
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
-  sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
+  sendMessage: (message: {
+    role: 'user';
+    content: UserMessageContent;
+    hidden?: boolean;
+  }) => void;
   interrupt: Signal<AgUiInterrupt | null>;
   resumeInterrupt: (approved: boolean) => void;
   resendMessages: () => void;
