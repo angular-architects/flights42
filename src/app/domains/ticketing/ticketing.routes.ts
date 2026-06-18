@@ -80,6 +80,10 @@ export const bookingRoutes: Routes = [
     path: 'reporting',
     component: ReportingPage,
   },
+  {
+    path: 'travel-planner',
+    component: TravelPlannerPage,
+  },
 ];
 
 export default bookingRoutes;
