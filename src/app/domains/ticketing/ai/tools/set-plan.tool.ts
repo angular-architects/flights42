@@ -12,6 +12,15 @@ Creates or replaces the WHOLE co-plan at once. Use this only to draft the
 initial plan, or when the user asks for a fundamentally different plan. For
 incremental changes (add/remove/reorder/swap a single step) use the dedicated
 step tools instead of rewriting everything.
+
+Example — user: "Rebook flight 390 for 391."
+  setPlan({
+    "title": "Rebook Paris trip",
+    "steps": [
+      { "action": "book",   "flightId": 391, "description": "Book replacement flight 391" },
+      { "action": "cancel", "flightId": 390, "description": "Cancel existing flight 390" }
+    ]
+  })
   `.trim(),
   schema: z.object({
     title: z

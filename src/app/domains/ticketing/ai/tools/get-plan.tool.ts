@@ -15,6 +15,16 @@ Call this BEFORE changing an existing plan instead of relying on memory. When
 the user refers to a step by position ("step 3", "the last one", "der zweite
 Schritt"), resolve that position to the step's "id" from this result and pass
 that id to the editing tools.
+
+Example — read the plan before editing it:
+  getPlan()
+  → {
+      "title": "Rebook Paris trip",
+      "steps": [
+        { "position": 1, "id": "s-7f3a", "action": "book",   "flightId": 391, "description": "Book flight 391" },
+        { "position": 2, "id": "s-1c08", "action": "cancel", "flightId": 390, "description": "Cancel flight 390" }
+      ]
+    }
   `.trim(),
   execute: () => {
     const store = inject(PlanStore);
