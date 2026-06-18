@@ -10,11 +10,19 @@ import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
+import { addPlanStepTool } from './tools/add-plan-step.tool';
+import { clearPlanTool } from './tools/clear-plan.tool';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
 import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
+import { getPlanTool } from './tools/get-plan.tool';
+import { movePlanStepTool } from './tools/move-plan-step.tool';
+import { removePlanStepTool } from './tools/remove-plan-step.tool';
+import { setPlanTool } from './tools/set-plan.tool';
+import { swapPlanStepsTool } from './tools/swap-plan-steps.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
+import { updatePlanStepTool } from './tools/update-plan-step.tool';
 import { bookFlightActionCard } from './widgets/book-flight-action-card';
 import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { flightWidget } from './widgets/flight-widget';
@@ -51,6 +59,17 @@ export class TicketingChatService {
           toggleFlightSelectionTool,
           getCurrentBasketTool,
           displayFlightDetailTool,
+          // Tool-based co-planning: the planning agent edits the canonical plan
+          // in the PlanStore through these atomic operations instead of
+          // re-emitting the whole plan as text every turn.
+          getPlanTool,
+          setPlanTool,
+          addPlanStepTool,
+          removePlanStepTool,
+          updatePlanStepTool,
+          movePlanStepTool,
+          swapPlanStepsTool,
+          clearPlanTool,
           createShowComponentsTool(components),
         ],
       });

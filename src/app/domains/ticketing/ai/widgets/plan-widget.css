@@ -50,6 +50,18 @@
   color: #2f3d5a;
 }
 
+.plan-empty {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: #6b7794;
+}
+
+.execute-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .step-kind {
   display: inline-block;
   padding: 1px 6px;
