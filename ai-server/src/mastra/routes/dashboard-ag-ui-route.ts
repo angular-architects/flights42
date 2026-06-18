@@ -32,16 +32,6 @@ import {
 
 const DASHBOARD_AGENT_ID = 'dashboardAgent';
 
-// Replaying a cached dashboard produces the whole SSE body in one tight
-// burst of microtask-spaced writes. Chrome DevTools then renders the
-// ag-ui stream as empty in the Network tab because it never observes the
-// frames arriving incrementally — even though the `HttpAgent` on the
-// client consumes the body correctly. Yielding to the macrotask queue
-// after each frame flushes it as its own network chunk so DevTools
-// recognises a live stream. This is purely a debugging aid: it is
-// disabled in production and the per-frame delay (ms) can be tuned via
-// `AG_UI_STREAM_FRAME_DELAY_MS` (a negative value disables it entirely;
-// the default of 0 still forces a macrotask boundary via setTimeout).
 const CACHED_FRAME_DELAY_MS = resolveCachedFrameDelayMs();
 
 function resolveCachedFrameDelayMs(): number | null {
@@ -291,7 +281,11 @@ function parseAccumulatedSpec(raw: string): DashboardSpec | null {
     return null;
   }
   const result = dashboardSpecSchema.safeParse(parsed);
-  return result.success ? result.data : null;
+  if (!result.success) {
+    console.error('Invalid dashboard spec:', result.error.issues);
+    return null;
+  }
+  return result.data;
 }
 
 function isPreventCachingRequested(input: RunAgentInput): boolean {

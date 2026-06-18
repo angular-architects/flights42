@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const FLIGHT_API_BASE = 'https://demo.angulararchitects.io/api/flight';
 
-const flightSchema = z.object({
+export const flightSchema = z.object({
   id: z.number(),
   from: z.string(),
   to: z.string(),
