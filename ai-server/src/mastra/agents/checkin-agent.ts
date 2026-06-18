@@ -29,6 +29,9 @@ When you receive a ticket or identity document image:
 1. Carefully extract the listed fields from the image. If a field is
    missing, illegible, or you are not confident, **omit it** — do not
    hallucinate. Empty strings are not allowed; just leave the field out.
+   When a value cannot be found (e.g. the email address), drop the whole
+   entry (its key **and** value) entirely — never emit the key with an
+   empty, null, or placeholder value.
 2. Call the client tool \`fillCheckinForm\` with the structured data
    that matches its schema.
 3. After the tool call, briefly confirm to the user (in their language,
