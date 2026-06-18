@@ -14,7 +14,7 @@ import {
   type AgUiResumeRequest,
   type AgUiToolCall,
 } from '../ag-ui-types';
-import { readMessages, replaceMessage } from './messages';
+import { readMessages, replaceMessage, scopeRenderId } from './messages';
 import {
   appendWidgetsFromPendingToolResult,
   upsertActionWidgetForToolCall,
@@ -42,6 +42,7 @@ interface ExecutePendingToolsOptions {
   environmentInjector: EnvironmentInjector;
   pendingLocalCalls: PendingToolExecution[];
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+  runId: string;
 }
 
 interface ExecuteToolOptions {
@@ -51,6 +52,7 @@ interface ExecuteToolOptions {
   environmentInjector: EnvironmentInjector;
   pendingCall: PendingToolExecution;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+  runId: string;
 }
 
 interface RecordToolErrorOptions {
@@ -59,21 +61,24 @@ interface RecordToolErrorOptions {
   pendingCall: PendingToolExecution;
   error: unknown;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+  runId: string;
 }
 
 export function upsertToolCall(
   messages: AgUiChatMessage[],
   toolCall: AgUiToolCall,
+  runId: string,
 ): AgUiChatMessage[] {
+  const messageId = scopeRenderId(runId, toolCall.id);
   const toolCallMessageIndex = messages.findIndex(
-    (message) => message.id === toolCall.id,
+    (message) => message.id === messageId,
   );
 
   if (toolCallMessageIndex === -1) {
     return [
       ...messages,
       {
-        id: toolCall.id,
+        id: messageId,
         role: 'assistant',
         content: '',
         widgets: [],
@@ -251,6 +256,7 @@ export async function executePendingTools(
     environmentInjector,
     pendingLocalCalls,
     messageStream,
+    runId,
   } = options;
 
   let sentAnyToolResult = false;
@@ -269,6 +275,7 @@ export async function executePendingTools(
         environmentInjector,
         pendingCall,
         messageStream,
+        runId,
       });
       sentAnyToolResult ||= sentToolResult;
     } catch (error) {
@@ -278,6 +285,7 @@ export async function executePendingTools(
         pendingCall,
         error,
         messageStream,
+        runId,
       });
     }
   }
@@ -293,6 +301,7 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
     environmentInjector,
     pendingCall,
     messageStream,
+    runId,
   } = options;
 
   const result = await runInInjectionContext(environmentInjector, () =>
@@ -316,7 +325,12 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
 
       return {
         value: toolCall
-          ? upsertActionWidgetForToolCall(nextMessages, toolCall, componentMap)
+          ? upsertActionWidgetForToolCall(
+              nextMessages,
+              toolCall,
+              componentMap,
+              runId,
+            )
           : nextMessages,
       };
     });
@@ -340,7 +354,12 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
     );
     const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
     const messagesWithActionWidget = toolCall
-      ? upsertActionWidgetForToolCall(nextMessages, toolCall, componentMap)
+      ? upsertActionWidgetForToolCall(
+          nextMessages,
+          toolCall,
+          componentMap,
+          runId,
+        )
       : nextMessages;
 
     return {
@@ -349,6 +368,8 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
         pendingCall,
         serializedResult,
         componentMap,
+        runId,
+        environmentInjector,
       ),
     };
   });
@@ -357,7 +378,8 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
 }
 
 function recordToolError(options: RecordToolErrorOptions): void {
-  const { agent, pendingCall, error, messageStream, componentMap } = options;
+  const { agent, pendingCall, error, messageStream, componentMap, runId } =
+    options;
   const message = formatToolErrorMessage(pendingCall.toolCallName, error);
 
   if (pendingCall.toolCallName === 'showComponents') {
@@ -390,7 +412,12 @@ function recordToolError(options: RecordToolErrorOptions): void {
       const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
 
       return toolCall
-        ? upsertActionWidgetForToolCall(nextMessages, toolCall, componentMap)
+        ? upsertActionWidgetForToolCall(
+            nextMessages,
+            toolCall,
+            componentMap,
+            runId,
+          )
         : nextMessages;
     })(),
   }));

@@ -132,6 +132,17 @@ export interface AgUiResultRegisteredComponent<
   component: Type<TComponent>;
   schema: z.ZodType<TProps>;
   clientOnly?: true;
+  /**
+   * Optional client-side hook to freeze live client state into the widget's
+   * props at the moment the widget instance is created. It receives the props
+   * the model supplied (matching `schema`) and returns the props the component
+   * actually renders. Invoked inside an Angular injection context, so it may
+   * call `inject(...)`. Use this for components whose data lives in a mutable
+   * client store: capturing it here makes the rendered card immutable, so the
+   * card keeps showing the state as it was even if Angular re-creates the
+   * component (e.g. on @for re-keying) instead of reading the now-current store.
+   */
+  captureProps?: (props: Record<string, unknown>) => Record<string, unknown>;
 }
 
 export interface AgUiActionRegisteredComponent<
@@ -163,6 +174,7 @@ export function defineAgUiComponent<
   component: Type<TComponent>;
   schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
   clientOnly?: true;
+  captureProps?: (props: Record<string, unknown>) => Record<string, unknown>;
 }): AgUiResultRegisteredComponent<TComponent, TProps, TName>;
 export function defineAgUiComponent(component: {
   kind?: 'result';
@@ -171,6 +183,7 @@ export function defineAgUiComponent(component: {
   component: Type<unknown>;
   schema: z.ZodType<Record<string, unknown>>;
   clientOnly?: true;
+  captureProps?: (props: Record<string, unknown>) => Record<string, unknown>;
 }): AgUiRegisteredComponent {
   return component as AgUiRegisteredComponent;
 }
