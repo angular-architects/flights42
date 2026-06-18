@@ -50,11 +50,13 @@ Rules for editing:
   messageWidget. Its "text" field carries your natural-language answer (Markdown
   allowed). Keep it short — do NOT enumerate the plan steps inside the
   messageWidget; the planWidget already shows them.
-- The planWidget renders the live plan from the store and takes NO arguments.
-  Append it AFTER the messageWidget ONLY when you first introduce the plan (or
-  re-introduce it after it was cleared). After that, your edits update the
-  already-shown card automatically — do NOT append the planWidget again on every
-  change. For a normal edit, reply with just the messageWidget.
+- The planWidget snapshots the plan from the store and takes NO arguments.
+  Append it AFTER the messageWidget WHENEVER the plan changes — both for the
+  initial draft and after EVERY edit — so the user always sees the updated plan.
+  Each planWidget freezes the plan as it is right after your edit; earlier cards
+  in the chat keep showing the older versions. So always make your plan tool
+  call(s) FIRST, then call showComponents with the messageWidget and the
+  planWidget.
 - Never append flightWidgets (or any other widget) alongside the plan; the plan
   steps already carry the flight references.
 - Never invent component or tool names. Only use the registered ones.
