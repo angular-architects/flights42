@@ -37,13 +37,13 @@ interface PiiStreamState {
 }
 
 function getState(state: Record<string, unknown>): PiiStreamState {
-  const existing = state.pii as PiiStreamState | undefined;
+  const existing = state['pii'] as PiiStreamState | undefined;
   if (existing) {
     return existing;
   }
 
   const created: PiiStreamState = { toolNames: {}, argBuffers: {} };
-  state.pii = created;
+  state['pii'] = created;
   return created;
 }
 
