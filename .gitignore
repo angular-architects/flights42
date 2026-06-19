@@ -4,7 +4,12 @@
 /dist
 /tmp
 /out-tsc
+/ai-server/out-tsc
 /bazel-out
+*.tsbuildinfo
+# Stray TypeScript build output next to sources (src is .ts)
+/mcp-server/src/*.js
+/mcp-server/vite.config.js
 
 # Node
 /node_modules
