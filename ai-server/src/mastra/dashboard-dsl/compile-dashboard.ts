@@ -7,9 +7,9 @@ import {
   getBookedFlights,
 } from '../data/booked-flights-store.js';
 import { buildAndCacheChartUrl } from '../tools/render-chart.js';
+import { fetchFlights, type FlightRecord } from '../tools/search-flights.js';
 import { searchHotels } from '../tools/search-hotels.js';
 import { searchRentalCars } from '../tools/search-rental-cars.js';
-import { fetchFlights, type FlightRecord } from '../tools/search-flights.js';
 import { weatherForecast, weatherIconFor } from '../tools/weather-forecast.js';
 import type { DashboardSpec, DashboardTile } from './dashboard-spec.js';
 

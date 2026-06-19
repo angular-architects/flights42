@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import { z } from 'zod';
-
 import {
   type BuiltComponent,
   defineServerWidget,
-} from '../../../../libs/ag-ui-server/index.js';
+} from '@internal/ag-ui-server';
+import { z } from 'zod';
 
 const questionSchema = z.object({
   id: z

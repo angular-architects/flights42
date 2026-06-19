@@ -4,10 +4,10 @@ import {
   randomUUID,
   type RunAgentInput,
 } from '@ag-ui/client';
+import { getExtendedLocalAgent } from '@internal/ag-ui-server';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
-import { getExtendedLocalAgent } from '../../../../libs/ag-ui-server/index.js';
 import {
   computeDashboardRequestHash,
   type DashboardCacheEntry,
@@ -35,10 +35,10 @@ const DASHBOARD_AGENT_ID = 'dashboardAgent';
 const CACHED_FRAME_DELAY_MS = resolveCachedFrameDelayMs();
 
 function resolveCachedFrameDelayMs(): number | null {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env['NODE_ENV'] === 'production') {
     return null;
   }
-  const raw = process.env.AG_UI_STREAM_FRAME_DELAY_MS;
+  const raw = process.env['AG_UI_STREAM_FRAME_DELAY_MS'];
   if (raw === undefined) {
     return 0;
   }
@@ -78,62 +78,67 @@ export async function dashboardAgUiRouteHandler(
     requestContext,
   });
 
-  return streamSSE(c, async (sse) => {
-    let renderToolCallId: string | undefined;
-    let argsBuffer = '';
-    let capturedSpec: DashboardSpec | undefined;
+  // `c` is typed against @mastra/core's bundled hono, which is structurally
+  // incompatible with the project's hono `Context` that `streamSSE` expects.
+  return streamSSE(
+    c as unknown as Parameters<typeof streamSSE>[0],
+    async (sse) => {
+      let renderToolCallId: string | undefined;
+      let argsBuffer = '';
+      let capturedSpec: DashboardSpec | undefined;
 
-    await streamAgentEvents(sse, agent, input, {
-      onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
-        const e = event as BaseEvent & {
-          toolCallId?: string;
-          toolCallName?: string;
-          delta?: string;
-        };
+      await streamAgentEvents(sse, agent, input, {
+        onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
+          const e = event as BaseEvent & {
+            toolCallId?: string;
+            toolCallName?: string;
+            delta?: string;
+          };
 
-        if (
-          e.type === EventType.TOOL_CALL_START &&
-          e.toolCallName === RENDER_DASHBOARD_TOOL_NAME &&
-          typeof e.toolCallId === 'string'
-        ) {
-          renderToolCallId = e.toolCallId;
-          argsBuffer = '';
-          return;
-        }
-
-        if (
-          e.type === EventType.TOOL_CALL_ARGS &&
-          e.toolCallId === renderToolCallId &&
-          typeof e.delta === 'string'
-        ) {
-          argsBuffer += e.delta;
-          return;
-        }
-
-        if (
-          e.type === EventType.TOOL_CALL_END &&
-          e.toolCallId === renderToolCallId
-        ) {
-          const { events, spec } = await handleRenderToolCallEnd(argsBuffer);
-          if (spec) {
-            capturedSpec = spec;
+          if (
+            e.type === EventType.TOOL_CALL_START &&
+            e.toolCallName === RENDER_DASHBOARD_TOOL_NAME &&
+            typeof e.toolCallId === 'string'
+          ) {
+            renderToolCallId = e.toolCallId;
+            argsBuffer = '';
+            return;
           }
-          return events;
-        }
-      },
-    });
 
-    if (capturedSpec && !preventCaching) {
-      try {
-        await writeDashboardCache(cacheKey, capturedSpec);
-      } catch (err) {
-        console.error(
-          `Failed to write dashboard cache (hash=${cacheKey}):`,
-          err,
-        );
+          if (
+            e.type === EventType.TOOL_CALL_ARGS &&
+            e.toolCallId === renderToolCallId &&
+            typeof e.delta === 'string'
+          ) {
+            argsBuffer += e.delta;
+            return;
+          }
+
+          if (
+            e.type === EventType.TOOL_CALL_END &&
+            e.toolCallId === renderToolCallId
+          ) {
+            const { events, spec } = await handleRenderToolCallEnd(argsBuffer);
+            if (spec) {
+              capturedSpec = spec;
+            }
+            return events;
+          }
+        },
+      });
+
+      if (capturedSpec && !preventCaching) {
+        try {
+          await writeDashboardCache(cacheKey, capturedSpec);
+        } catch (err) {
+          console.error(
+            `Failed to write dashboard cache (hash=${cacheKey}):`,
+            err,
+          );
+        }
       }
-    }
-  });
+    },
+  );
 }
 
 async function streamCachedDashboard(
@@ -324,9 +329,14 @@ async function tryServeFromCache(
   if (!entry) {
     return null;
   }
-  return streamSSE(c, async (sse) => {
-    await streamCachedDashboard(sse, input, entry.spec);
-  });
+  // `c` is typed against @mastra/core's bundled hono, which is structurally
+  // incompatible with the project's hono `Context` that `streamSSE` expects.
+  return streamSSE(
+    c as unknown as Parameters<typeof streamSSE>[0],
+    async (sse) => {
+      await streamCachedDashboard(sse, input, entry.spec);
+    },
+  );
 }
 
 interface RenderToolCallEndResult {
