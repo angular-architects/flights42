@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import {
   type AgUiChatResourceRef,
   agUiResource,
@@ -8,7 +8,7 @@ import {
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
-import { type TravelPlan, TravelPlanStore } from './travel-plan-store';
+import { TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { flightWidget } from './ui/flight-widget';
 import { hotelWidget } from './ui/hotel-widget';
@@ -20,6 +20,10 @@ export class TravelRefinementChatService {
   private readonly requestStore = inject(TravelPlannerRequestStore);
   private readonly planStore = inject(TravelPlanStore);
 
+  private readonly preferencePreamble = computed(() =>
+    buildPreferencePreamble(this.requestStore.preferences()),
+  );
+
   private chat: AgUiChatResourceRef | null = null;
 
   public init(): void {
@@ -28,15 +32,10 @@ export class TravelRefinementChatService {
         url: `${this.config.aiServerUrl}/ag-ui/travelRefinementAgent`,
         model: this.config.model,
         useServerMemory: true,
-        firstMessagePreamble: () =>
-          buildPreferencePreamble(this.requestStore.preferences()),
-        state: (): TravelPlan => ({
-          summary: this.planStore.summary(),
-          flights: this.planStore.flights(),
-          hotels: this.planStore.hotels(),
-        }),
+        firstMessagePreamble: () => this.preferencePreamble(),
+        state: () => this.planStore.plan(),
         onStateSnapshot: (state) => {
-          this.planStore.setPlan(state as TravelPlan);
+          this.planStore.setPlan(state);
         },
         tools: [
           createShowComponentsTool([messageWidget, flightWidget, hotelWidget]),
@@ -49,10 +48,6 @@ export class TravelRefinementChatService {
     );
   }
 
-  /**
-   * Clears the current refinement conversation so a newly created plan starts
-   * from a fresh session. Preferences are read live from the input store.
-   */
   public reset(): void {
     this.chat?.reset();
   }

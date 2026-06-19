@@ -209,7 +209,7 @@ export function defineAgUiTool(
   };
 }
 
-export interface AgUiResourceOptions {
+export interface AgUiResourceOptions<TState = unknown> {
   url: string;
   tools: AgUiClientToolDefinition<never>[];
   hideInternal?: boolean;
@@ -230,12 +230,12 @@ export interface AgUiResourceOptions {
    * The agent owns no copy: the client is the source of truth and ships the
    * state on each run.
    */
-  state?: () => unknown;
+  state?: () => TState;
   /**
    * Called whenever the agent emits a STATE_SNAPSHOT, with the new full state.
    * Use it to mirror the agent's state back into your local store.
    */
-  onStateSnapshot?: (state: unknown) => void;
+  onStateSnapshot?: (state: TState) => void;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {

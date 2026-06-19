@@ -1,5 +1,12 @@
+import { computed } from '@angular/core';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 
 import { FlightInfo } from '../data/flight-info';
 
@@ -25,6 +32,14 @@ export const TravelPlanStore = signalStore(
     flights: [],
     hotels: [],
   }),
+
+  withComputed((store) => ({
+    plan: computed<TravelPlan>(() => ({
+      summary: store.summary(),
+      flights: store.flights(),
+      hotels: store.hotels(),
+    })),
+  })),
 
   withMethods((store) => ({
     setPlan(plan: TravelPlan): void {

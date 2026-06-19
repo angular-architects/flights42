@@ -136,8 +136,8 @@ function normalizeUserMessageContent(
   };
 }
 
-export function agUiResource(
-  options: AgUiResourceOptions,
+export function agUiResource<TState = unknown>(
+  options: AgUiResourceOptions<TState>,
 ): AgUiChatResourceRef {
   const hideInternal = options.hideInternal ?? true;
   const useServerMemory = options.useServerMemory ?? false;
@@ -198,7 +198,9 @@ export function agUiResource(
       useServerMemory,
       forwardedProps: options.forwardedProps,
       state: options.state,
-      onStateSnapshot: options.onStateSnapshot,
+      onStateSnapshot: options.onStateSnapshot as
+        | ((state: unknown) => void)
+        | undefined,
       abortSignal,
       messageStream,
       isLoading,
