@@ -5,7 +5,7 @@
  * no AG-UI bridge / writer is attached (e.g. a direct test run), the reports are
  * silently skipped. See libs/ag-ui-server/step-bridge.ts for the why.
  */
-import { readBridge } from '../../../../libs/ag-ui-server/step-bridge.js';
+import { readBridge } from '@internal/ag-ui-server';
 
 export interface StepProgressContext {
   writer?: { write: (chunk: unknown) => Promise<void> };
