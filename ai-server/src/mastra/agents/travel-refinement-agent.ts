@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { model, modelAdvancedTasks } from '../config.js';
+import { model } from '../config.js';
 import { findHotelsTool } from '../tools/find-hotels.js';
 import {
   addFlightToPlanTool,
@@ -11,6 +11,7 @@ import {
   removeHotelFromPlanTool,
   replaceFlightInPlanTool,
   setTravelPlanTool,
+  validatePlanTool,
 } from '../tools/plan/index.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { travelRefinementAgentPrompt } from './travel-refinement-agent.prompt.js';
@@ -20,7 +21,7 @@ export const travelRefinementAgent = new Agent({
   id: 'travelRefinementAgent',
   name: 'Flight42 Travel Refinement',
   instructions: travelRefinementAgentPrompt,
-  model: modelAdvancedTasks,
+  model: model,
   tools: {
     searchFlightsTool,
     findHotelsTool,
@@ -31,12 +32,15 @@ export const travelRefinementAgent = new Agent({
     replaceFlightInPlanTool,
     addHotelToPlanTool,
     removeHotelFromPlanTool,
+    validatePlanTool,
   },
   memory: new Memory(),
   defaultOptions: {
+    maxSteps: 12,
     providerOptions: {
       openai: {
         parallelToolCalls: false,
+        reasoningEffort: 'medium',
       } as OpenAILanguageModelResponsesOptions,
     },
   },

@@ -7,3 +7,4 @@ export * from './remove-hotel-from-plan.tool.js';
 export * from './replace-flight-in-plan.tool.js';
 export * from './set-travel-plan.tool.js';
 export * from './state-preamble.js';
+export * from './validate-plan.tool.js';
