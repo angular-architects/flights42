@@ -31,7 +31,7 @@ import {
 } from './tools';
 import { upsertWidgetFromActivitySnapshot } from './widgets';
 
-export interface RunAgentOptions {
+export interface RunAgentOptions<TState = unknown> {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
@@ -40,8 +40,8 @@ export interface RunAgentOptions {
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;
-  state?: () => unknown;
-  onStateSnapshot?: (state: unknown) => void;
+  state?: () => TState;
+  onStateSnapshot?: (state: TState) => void;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
 }
 
@@ -50,8 +50,8 @@ interface RunAgentResult {
   followUpToolCallIds: string[];
 }
 
-export async function runAgent(
-  options: RunAgentOptions,
+export async function runAgent<TState = unknown>(
+  options: RunAgentOptions<TState>,
 ): Promise<RunAgentResult> {
   const {
     agent,
@@ -372,7 +372,7 @@ function safeParseJson(content: unknown): unknown {
   }
 }
 
-export interface RunUntilSettledOptions {
+export interface RunUntilSettledOptions<TState = unknown> {
   agent: HttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
@@ -382,16 +382,16 @@ export interface RunUntilSettledOptions {
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;
-  state?: () => unknown;
-  onStateSnapshot?: (state: unknown) => void;
+  state?: () => TState;
+  onStateSnapshot?: (state: TState) => void;
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
   maxLocalTurns: number;
 }
 
-export async function runUntilSettled(
-  options: RunUntilSettledOptions,
+export async function runUntilSettled<TState = unknown>(
+  options: RunUntilSettledOptions<TState>,
 ): Promise<void> {
   const {
     agent,

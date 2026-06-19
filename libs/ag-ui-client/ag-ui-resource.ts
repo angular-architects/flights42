@@ -198,9 +198,7 @@ export function agUiResource<TState = unknown>(
       useServerMemory,
       forwardedProps: options.forwardedProps,
       state: options.state,
-      onStateSnapshot: options.onStateSnapshot as
-        | ((state: unknown) => void)
-        | undefined,
+      onStateSnapshot: options.onStateSnapshot,
       abortSignal,
       messageStream,
       isLoading,
