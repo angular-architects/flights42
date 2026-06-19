@@ -1,4 +1,4 @@
-import { readBridge } from '@internal/ag-ui-server';
+import { readBridge } from '@internal/ag-ui-server/step-bridge.js';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 
