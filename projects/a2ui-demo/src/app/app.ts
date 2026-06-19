@@ -7,7 +7,11 @@ import {
   inject,
 } from '@angular/core';
 
-import { createSurfaceMessages, type Passenger } from './passenger-card';
+import {
+  createSurfaceMessages,
+  type Passenger,
+  toUpdateMessage,
+} from './passenger-card';
 
 @Component({
   selector: 'app-root',
@@ -44,24 +48,11 @@ export class App {
       (action: A2uiClientAction) => {
         console.log('[A2UI Event]', action);
 
-        if (action.name !== 'increaseMiles') {
-          return;
-        }
-
-        const passenger = action.context as Passenger;
-        this.renderer.processMessages([
-          {
-            version: 'v0.9',
-            updateDataModel: {
-              surfaceId: this.surfaceId,
-              path: '/passenger',
-              value: {
-                ...passenger,
-                bonusMiles: passenger.bonusMiles + 300,
-              },
-            },
-          },
-        ]);
+        // TODO: Add handler for increaseMiles action:
+        //       1. Get the passenger from the action context
+        //       2. Update its bonusMiles by 300 and write it back
+        // Hint: For writing back, use
+        //       renderer.processMessages and toUpdateMessage
       },
     );
 

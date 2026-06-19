@@ -1,6 +1,7 @@
 import {
   A2UI_RENDERER_CONFIG,
   A2uiRendererService,
+  BasicCatalog,
   provideMarkdownRenderer,
 } from '@a2ui/angular/v0_9';
 import {
@@ -9,15 +10,13 @@ import {
 } from '@angular/core';
 import { marked } from 'marked';
 
-import { customCatalog } from './custom-catalog/custom-catalog';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     {
       provide: A2UI_RENDERER_CONFIG,
       useValue: {
-        catalogs: [customCatalog],
+        catalogs: [new BasicCatalog()],
       },
     },
     provideMarkdownRenderer(async (markdown) =>
