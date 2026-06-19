@@ -8,13 +8,7 @@ import {
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
-import { addFlightToPlanTool } from './ai-tools/add-flight-to-plan.tool';
-import { addHotelToPlanTool } from './ai-tools/add-hotel-to-plan.tool';
-import { getTravelPlanTool } from './ai-tools/get-travel-plan.tool';
-import { removeFlightFromPlanTool } from './ai-tools/remove-flight-from-plan.tool';
-import { removeHotelFromPlanTool } from './ai-tools/remove-hotel-from-plan.tool';
-import { replaceFlightInPlanTool } from './ai-tools/replace-flight-in-plan.tool';
-import { setTravelPlanTool } from './ai-tools/set-travel-plan.tool';
+import { type TravelPlan, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { flightWidget } from './ui/flight-widget';
 import { hotelWidget } from './ui/hotel-widget';
@@ -24,6 +18,7 @@ export class TravelRefinementChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
   private readonly requestStore = inject(TravelPlannerRequestStore);
+  private readonly planStore = inject(TravelPlanStore);
 
   private chat: AgUiChatResourceRef | null = null;
 
@@ -35,14 +30,15 @@ export class TravelRefinementChatService {
         useServerMemory: true,
         firstMessagePreamble: () =>
           buildPreferencePreamble(this.requestStore.preferences()),
+        state: (): TravelPlan => ({
+          summary: this.planStore.summary(),
+          flights: this.planStore.flights(),
+          hotels: this.planStore.hotels(),
+        }),
+        onStateSnapshot: (state) => {
+          this.planStore.setPlan(state as TravelPlan);
+        },
         tools: [
-          getTravelPlanTool,
-          setTravelPlanTool,
-          addFlightToPlanTool,
-          removeFlightFromPlanTool,
-          replaceFlightInPlanTool,
-          addHotelToPlanTool,
-          removeHotelFromPlanTool,
           createShowComponentsTool([messageWidget, flightWidget, hotelWidget]),
         ],
       });

@@ -26,6 +26,7 @@ interface ExtendedLocalAgentOptions {
   resourceId: string;
   requestContext?: RequestContext;
   store?: Store;
+  statePreamble?: (state: unknown) => string | undefined;
 }
 
 interface ClientToolDefinition {
@@ -508,12 +509,34 @@ function parseWorkflowStepChunk(chunk: unknown): ParsedStepEvent | null {
   return null;
 }
 
+function prependTextToLastUserMessage(
+  messages: CoreMessage[],
+  text: string,
+): CoreMessage[] {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const target = messages[index];
+    if (target.role !== 'user') {
+      continue;
+    }
+    const content = target.content;
+    const nextContent =
+      typeof content === 'string'
+        ? `${text}\n\n${content}`
+        : [{ type: 'text', text }, ...(content as unknown[])];
+    const next = [...messages];
+    next[index] = { ...target, content: nextContent } as CoreMessage;
+    return next;
+  }
+  return messages;
+}
+
 export class ExtendedMastraAgent extends AbstractAgent {
   override readonly agentId: string;
   readonly agent: Agent;
   readonly resourceId: string;
   readonly requestContext: RequestContext;
   readonly store: Store;
+  private readonly statePreamble?: (state: unknown) => string | undefined;
 
   private abortSignal?: AbortSignal;
 
@@ -524,6 +547,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.resourceId = options.resourceId;
     this.requestContext = options.requestContext ?? new RequestContext();
     this.store = options.store ?? defaultStore;
+    this.statePreamble = options.statePreamble;
   }
 
   setAbortSignal(signal: AbortSignal | undefined): void {
@@ -541,6 +565,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       resourceId: this.resourceId,
       requestContext: this.requestContext,
       store: this.store,
+      statePreamble: this.statePreamble,
     });
   }
 
@@ -618,12 +643,24 @@ export class ExtendedMastraAgent extends AbstractAgent {
         }
       };
 
+      let runState: unknown = input.state;
+
       // Per-request bridge: workflow steps push progress AND tool calls
       // here; this bypasses Mastra's tool-stream pipe entirely and is
       // isolated per RequestContext.
       const bridge: AgUiBridge = {
         emit: emitStep,
         emitToolCall: emitBridgeToolCall,
+        emitStateSnapshot: (state) => {
+          observer.next({
+            type: EventType.STATE_SNAPSHOT,
+            snapshot: state,
+          } as BaseEvent);
+        },
+        getState: () => runState,
+        setState: (state) => {
+          runState = state;
+        },
       };
       attachBridge(this.requestContext, bridge);
 
@@ -705,6 +742,20 @@ export class ExtendedMastraAgent extends AbstractAgent {
     }) as unknown as ReturnType<AbstractAgent['run']>;
   }
 
+  private withStatePreamble(
+    messages: CoreMessage[],
+    state: unknown,
+  ): CoreMessage[] {
+    if (state === undefined || state === null || !this.statePreamble) {
+      return messages;
+    }
+    const preamble = this.statePreamble(state)?.trim();
+    if (!preamble) {
+      return messages;
+    }
+    return prependTextToLastUserMessage(messages, preamble);
+  }
+
   private async streamMastraAgent(
     input: RunAgentInput,
     assistantMessageId: string,
@@ -755,13 +806,18 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
     this.requestContext.set('ag-ui', { context: input.context });
 
+    const messagesForRun = this.withStatePreamble(
+      rehydratedMastraMessages,
+      input.state,
+    );
+
     let activeToolCallId: string | undefined;
     let activeToolName: string | undefined;
 
     try {
       const stream = await this.createMastraStream(
         input,
-        rehydratedMastraMessages,
+        messagesForRun,
         clientTools,
       );
 
@@ -922,6 +978,7 @@ export function getExtendedLocalAgent(options: {
   resourceId: string;
   requestContext?: RequestContext;
   store?: Store;
+  statePreamble?: (state: unknown) => string | undefined;
 }): ExtendedMastraAgent {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
@@ -934,5 +991,6 @@ export function getExtendedLocalAgent(options: {
     resourceId: options.resourceId,
     requestContext: options.requestContext,
     store: options.store,
+    statePreamble: options.statePreamble,
   });
 }

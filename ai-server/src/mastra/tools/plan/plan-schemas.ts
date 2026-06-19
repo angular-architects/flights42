@@ -17,3 +17,12 @@ export const planHotelSchema = z.object({
     .describe('Absolute or app-relative URL to a hotel image'),
   city: z.string().describe('City the hotel is located in'),
 });
+
+export type PlanFlight = z.infer<typeof planFlightSchema>;
+export type PlanHotel = z.infer<typeof planHotelSchema>;
+
+export interface TravelPlan {
+  summary: string;
+  flights: PlanFlight[];
+  hotels: PlanHotel[];
+}

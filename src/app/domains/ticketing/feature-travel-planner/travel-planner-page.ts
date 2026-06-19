@@ -99,14 +99,26 @@ export class TravelPlannerPage {
   /** True between starting a generation and syncing its result into the store. */
   private readonly awaitingPlan = signal(false);
 
+  // Plain field (not a signal) so the sync effect only tracks isLoading().
+  private previousLoading = false;
+
   constructor() {
     // Register the refinement chat so the global assistant panel talks to the
     // travelRefinementAgent while this page is active.
     this.refinementChat.init();
 
-    // When a generation finishes, copy the produced flights/hotels into the
-    // plan store (single source of truth) and open the refinement chat.
-    effect(() => this.syncGeneratedPlan());
+    // Sync only on the loading true→false edge of an actual generation. Reacting
+    // to every signal change would also fire in the transient window right after
+    // reset() — where chat.value() still holds the PREVIOUS generation's widgets —
+    // and copy a stale plan while consuming awaitingPlan too early.
+    effect(() => {
+      const loading = this.chat.isLoading();
+      const justFinished = this.previousLoading && !loading;
+      this.previousLoading = loading;
+      if (justFinished) {
+        this.syncGeneratedPlan();
+      }
+    });
   }
 
   /**

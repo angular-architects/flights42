@@ -1,0 +1,45 @@
+{
+  "type": "STATE_SNAPSHOT",
+  "snapshot": {
+    "summary": "Package tour from Graz to Rome with a dinner stopover in Paris from 2026-06-29 to 2026-07-01.",
+    "flights": [
+      {
+        "id": 390,
+        "from": "Graz",
+        "to": "Paris",
+        "date": "2026-06-29T15:40:00.000Z",
+        "delay": 10
+      },
+      {
+        "id": 6313,
+        "from": "Paris",
+        "to": "Rome",
+        "date": "2026-06-30T08:20:00.000Z",
+        "delay": 23
+      },
+      {
+        "id": 6346,
+        "from": "Rome",
+        "to": "Graz",
+        "date": "2026-07-01T15:40:00.000Z",
+        "delay": 0
+      }
+    ],
+    "hotels": [
+      {
+        "id": "biz-hotel",
+        "name": "Biz Hotel Paris",
+        "sterne": 4,
+        "imageUrl": "/assets/hotels/skyline-suites.svg",
+        "city": "Paris"
+      },
+      {
+        "id": "biz-hotel",
+        "name": "Biz Hotel Rome",
+        "sterne": 4,
+        "imageUrl": "/assets/hotels/skyline-suites.svg",
+        "city": "Rome"
+      }
+    ]
+  }
+}

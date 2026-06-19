@@ -197,6 +197,8 @@ export function agUiResource(
       model: options.model,
       useServerMemory,
       forwardedProps: options.forwardedProps,
+      state: options.state,
+      onStateSnapshot: options.onStateSnapshot,
       abortSignal,
       messageStream,
       isLoading,

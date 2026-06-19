@@ -40,6 +40,8 @@ export interface RunAgentOptions {
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;
+  state?: () => unknown;
+  onStateSnapshot?: (state: unknown) => void;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
 }
 
@@ -59,6 +61,8 @@ export async function runAgent(
     model,
     useServerMemory,
     forwardedProps,
+    state,
+    onStateSnapshot,
     messageStream,
   } = options;
   const { runId } = options;
@@ -115,6 +119,9 @@ export async function runAgent(
   };
 
   const subscriber: AgentSubscriber = {
+    onStateSnapshotEvent: ({ event }) => {
+      onStateSnapshot?.(event.snapshot);
+    },
     onTextMessageStartEvent: ({ event }) => {
       if (event.role !== 'assistant') {
         return;
@@ -298,6 +305,10 @@ export async function runAgent(
     ...(forwardedProps?.() ?? {}),
   };
 
+  if (state) {
+    agent.setState(state());
+  }
+
   await agent.runAgent(
     {
       runId,
@@ -371,6 +382,8 @@ export interface RunUntilSettledOptions {
   model?: string;
   useServerMemory?: boolean;
   forwardedProps?: () => Record<string, unknown>;
+  state?: () => unknown;
+  onStateSnapshot?: (state: unknown) => void;
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
@@ -390,6 +403,8 @@ export async function runUntilSettled(
     model,
     useServerMemory,
     forwardedProps,
+    state,
+    onStateSnapshot,
     abortSignal,
     messageStream,
     maxLocalTurns,
@@ -420,6 +435,8 @@ export async function runUntilSettled(
       model,
       useServerMemory,
       forwardedProps,
+      state,
+      onStateSnapshot,
       messageStream,
     });
 

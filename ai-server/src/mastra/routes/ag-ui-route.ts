@@ -7,6 +7,13 @@ import {
 } from '@internal/ag-ui-server';
 import type { ContextWithMastra } from '@mastra/core/server';
 
+import { travelPlanStatePreamble } from '../tools/plan/index.js';
+
+const STATE_PREAMBLES: Record<string, (state: unknown) => string | undefined> =
+  {
+    travelRefinementAgent: travelPlanStatePreamble,
+  };
+
 export async function agUiRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
@@ -39,6 +46,7 @@ export async function agUiRouteHandler(
     agentId: agentId ?? '',
     resourceId: input.threadId,
     requestContext,
+    statePreamble: STATE_PREAMBLES[agentId ?? ''],
   });
 
   agent.setAbortSignal(c.req.raw.signal);
