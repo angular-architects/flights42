@@ -25,4 +25,9 @@ export interface TravelPlan {
   summary: string;
   flights: PlanFlight[];
   hotels: PlanHotel[];
+  // City the trip must return to. Set once from the user's intent.
+  //   string    → return there is enforced (normal case: the start city)
+  //   null      → user explicitly wants a one-way / open-jaw trip → no closure
+  //   undefined → legacy/default: treat as round trip (return to flights[0].from)
+  homeCity?: string | null;
 }

@@ -27,6 +27,15 @@ export const setTravelPlanTool = createTool({
     hotels: z
       .array(planHotelSchema)
       .describe('The complete list of hotels, one per overnight city.'),
+    homeCity: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        'City the trip must return to (normally the start city). Set to null ' +
+          'only when the user explicitly wants a one-way / open-jaw trip. Omit ' +
+          'to keep the current value.',
+      ),
   }),
   execute: async (args, { requestContext }) => {
     const current = readPlan(requestContext);
@@ -34,6 +43,7 @@ export const setTravelPlanTool = createTool({
       summary: args.summary ?? current.summary,
       flights: args.flights,
       hotels: args.hotels,
+      homeCity: args.homeCity === undefined ? current.homeCity : args.homeCity,
     });
     return { flights: args.flights.length, hotels: args.hotels.length };
   },

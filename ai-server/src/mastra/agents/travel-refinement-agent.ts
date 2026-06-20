@@ -11,8 +11,8 @@ import {
   removeHotelFromPlanTool,
   replaceFlightInPlanTool,
   setTravelPlanTool,
-  validatePlanTool,
 } from '../tools/plan/index.js';
+import { planValidationGuardrail } from '../processors/plan-validation-guardrail.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { travelRefinementAgentPrompt } from './travel-refinement-agent.prompt.js';
 import { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
@@ -32,8 +32,8 @@ export const travelRefinementAgent = new Agent({
     replaceFlightInPlanTool,
     addHotelToPlanTool,
     removeHotelFromPlanTool,
-    validatePlanTool,
   },
+  outputProcessors: [planValidationGuardrail],
   memory: new Memory(),
   defaultOptions: {
     maxSteps: 12,
