@@ -5,15 +5,13 @@ import { z } from 'zod';
 import { TravelPlanStore } from '../travel-plan-store';
 import { planFlightSchema, planHotelSchema } from './plan-schemas';
 
-export const setTravelPlanTool = defineAgUiTool({
-  name: 'setTravelPlan',
+export const setPlanTool = defineAgUiTool({
+  name: 'setPlan',
   description: `
-Replaces the ENTIRE travel plan with a new, fully consistent one (flights in
-travel order + one hotel per overnight city). Use this whenever a change affects
-more than one item or the city sequence — e.g. changing a flight leg that also
-changes the destination city (a hotel must be swapped) or the connecting/return
-flight. Build the complete new plan first (search any new flights/hotels via the
-sub-agents), then commit it here in one go. Only call on explicit user request.
+Replaces the entire travel plan with the one you pass in. It is stored 1:1, so
+include everything you want to keep. List flights in travel order and each hotel
+right after the flight that arrives in its city. Only call on an explicit user
+request.
   `.trim(),
   schema: z.object({
     summary: z
@@ -24,10 +22,10 @@ sub-agents), then commit it here in one go. Only call on explicit user request.
       ),
     flights: z
       .array(planFlightSchema)
-      .describe('The complete list of flights, in travel order.'),
+      .describe('All flights, in travel order.'),
     hotels: z
       .array(planHotelSchema)
-      .describe('The complete list of hotels, one per overnight city.'),
+      .describe('All hotels, each after the flight arriving in its city.'),
   }),
   execute: (args) => {
     const store = inject(TravelPlanStore);

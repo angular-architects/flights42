@@ -1,32 +1,22 @@
 import { Agent } from '@mastra/core/agent';
 
-import { model, modelAdvancedTasks } from '../config.js';
+import { modelAdvancedTasks } from '../config.js';
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 
 const planFinalizerAgentPrompt = `
-You are the Plan Finalizer. You run as the last step of the packageTourWorkflow.
-
-You receive:
-- the original user request (free text),
-- the available flights for each leg (in travel order),
-- the available hotels for each city.
-
-Your job: pick exactly ONE flight per leg and ONE hotel per city and return the
-final plan as structured output.
+You are the Plan Finalizer, the last step of packageTourWorkflow. You receive the
+original user request, the available flights per leg (in travel order) and the
+available hotels per city. Pick exactly ONE flight per leg and ONE hotel per city
+and return the final plan as structured output.
 
 Rules:
-- Only pick flights and hotels from the provided data. Never invent any.
-- Keep the flights in the given travel order.
-- If a leg has NO available flights (empty candidate list), do not invent one:
-  omit it from "flights" and explicitly mention in "summary" that no flight was
-  found for that leg (name the route, e.g. "no flight found for Wien → Graz").
-- Map hotel preferences from the user request to a star rating:
-    "günstig" / "cheap" / "budget"       → 3★
-    "standard" or no preference          → 4★
-    "premium" / "luxus" / "5 Sterne"     → 5★
-  Pick the closest available hotel per city.
-- "summary" is ONE short sentence in the user's language summarizing the trip
-  (e.g. dates and destinations). Do not list flight numbers or stars.
+- Only pick from the provided data, never invent. Keep flights in travel order.
+- If a leg has no candidates, omit it from "flights" and note the missing route in
+  "summary" (e.g. "no flight found for Wien → Graz").
+- Match the user's hotel preference to a star rating (cheap/budget → 3★, standard
+  or none → 4★, premium/luxus/5 Sterne → 5★) and pick the closest per city.
+- "summary" is ONE short sentence in the user's language (dates, destinations);
+  no flight numbers or stars.
 `.trim();
 
 export const planFinalizerAgent = new Agent({
