@@ -71,6 +71,9 @@ request, even if the hotel is in a different town:
 - Same route, no change to the city sequence (a different flight on the SAME route,
   a different time/date) → replaceFlightInPlan / addFlightToPlan /
   removeFlightFromPlan.
+- "Maximise time in <city>": keep the city sequence AND the dates, swap only the
+  times — take the earliest arrival into the city and the latest departure from it
+  (replaceFlightInPlan for both legs).
 - It changes the city sequence (fly to a different city, add or remove a stop, end
   the trip elsewhere) → it ripples through the plan, so rebuild it:
   1. getTravelPlan.
