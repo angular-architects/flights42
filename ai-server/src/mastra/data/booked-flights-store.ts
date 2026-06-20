@@ -17,7 +17,7 @@ interface RawFlight {
   delay?: number;
 }
 
-const bookedFlightIds = new Set<number>([1, 2, 50, 390]);
+const bookedFlightIds = new Set<number>([1, 2, 50, 516]);
 
 const flightCache = new Map<number, BookedFlight>();
 
