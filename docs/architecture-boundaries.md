@@ -26,6 +26,13 @@ developers are required to adhere to these rules whenever they modify applicatio
 - Apply _relaxed_ layering.
 - Permit only the following import direction: `feature → ui → data → util`.
 
+### Layer Responsibilities
+
+- **`feature`**: Smart (container) components that orchestrate user flows; route components; coordinators that combine stores; local state specific to one use case.
+- **`ui`**: Presentational (dumb) components, directives, and pipes; no business logic or server communication.
+- **`data`**: Stores (signal-based state), data access services (`*Client`), domain models (interfaces/types), and mapping logic tightly coupled to the remote API shape.
+- **`util`**: General-purpose helpers, constants, and technical utilities with NO domain-specific knowledge. Can be stateful but also stateless.
+
 ## Changing the Sheriff Configuration
 
 - Modify the Sheriff configuration only when explicitly instructed to do so.
