@@ -1,5 +1,5 @@
-DO NOT EDIT THIS DIRECTORY.
+DO NOT EDIT this directory.
 
-These files are a generated copy produced by `npm run sync:agent-config`
+This is a generated copy produced by `npm run sync:agent-config`
 from `.agents/skills/`. Any change here is overwritten on the next sync.
-Edit the source under `.agents/skills/` instead.
+Edit `.agents/skills/` instead.

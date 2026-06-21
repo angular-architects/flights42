@@ -1,5 +1,15 @@
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
+## Architecture
+
+Before changing application or library code, read `docs/architecture-boundaries.md` and apply the architecture rules.
+
+If the change touches state management, also read `docs/architecture-state-management.md` when it exists.
+
+File-name suffixes carry architectural meaning (see `docs/architecture-state-management.md`). Renaming or moving a file across suffixes is a re-classification, not a cosmetic change — verify it against those rules first.
+
+Do not bypass documented domain boundaries. Prefer small, focused changes.
+
 ## Comments
 
 - Write all code comments and inline documentation in English, regardless of the conversation language
