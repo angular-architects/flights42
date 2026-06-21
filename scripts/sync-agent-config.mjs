@@ -1,6 +1,12 @@
 import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
-import { doNotEditWarning, toCursorHooks } from './utils.mjs';
+import { doNotEditWarning } from './utils.mjs';
+
+// Hooks are NOT synced: every coding agent has its own entry point (config
+// location, schema and hook I/O protocol). They are hand-maintained per
+// platform in `.claude/settings.json` and `.cursor/hooks.json`. The only thing
+// shared is the logic itself (`scripts/run-checks.mjs`), which each platform's
+// hook script calls.
 
 // Skills: .agents/skills -> .claude/skills
 rmSync('.claude/skills', { recursive: true, force: true });
@@ -23,23 +29,6 @@ writeFileSync(
   doNotEditWarning('`.cursor/mcp.json`', '`.agents/mcp.json`'),
 );
 
-// Hooks: .agents/hooks.json -> .claude/settings.json (Claude) and .cursor/hooks.json (Cursor)
-const hooks = JSON.parse(readFileSync('.agents/hooks.json', 'utf8'));
-writeFileSync('.claude/settings.json', `${JSON.stringify(hooks, null, 2)}\n`);
-writeFileSync(
-  '.claude/settings.DO_NOT_EDIT.txt',
-  doNotEditWarning('`.claude/settings.json`', '`.agents/hooks.json`'),
-);
-const cursorHooks = { version: 1, hooks: toCursorHooks(hooks.hooks) };
-writeFileSync(
-  '.cursor/hooks.json',
-  `${JSON.stringify(cursorHooks, null, 2)}\n`,
-);
-writeFileSync(
-  '.cursor/hooks.DO_NOT_EDIT.txt',
-  doNotEditWarning('`.cursor/hooks.json`', '`.agents/hooks.json`'),
-);
-
 console.log(
-  '[sync] agent config updated (.claude/skills, .mcp.json, .cursor/mcp.json, .claude/settings.json, .cursor/hooks.json)',
+  '[sync] agent config updated (.claude/skills, .mcp.json, .cursor/mcp.json)',
 );

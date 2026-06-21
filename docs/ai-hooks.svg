@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="910" height="260" viewBox="0 0 910 260" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="910" height="260" fill="#ffffff"/>
+
+  <!-- ===================== EDGES: config -> stop hook (runs) ===================== -->
+  <line x1="270" y1="70" x2="326" y2="70" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="270" y1="190" x2="326" y2="190" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- ===================== EDGES: stop hook -> shared (delegates) ===================== -->
+  <line x1="564" y1="70" x2="620" y2="120" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="564" y1="190" x2="620" y2="146" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- ===================== CLAUDE: name above its config ===================== -->
+  <text x="155" y="38" text-anchor="middle" fill="#1565c0" font-size="16" font-weight="bold">Claude Code</text>
+  <!-- ===================== CURSOR: name below its config ===================== -->
+  <text x="155" y="240" text-anchor="middle" fill="#00897b" font-size="16" font-weight="bold">Cursor AI</text>
+
+  <!-- ===================== PER-PLATFORM CONFIG FILES ===================== -->
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="40" y="48" width="230" height="44" rx="2" fill="#fffbf0" stroke="#1565c0" stroke-width="1.8" stroke-dasharray="5,3"/>
+    <text x="155" y="75" text-anchor="middle" fill="#111">.claude/settings.json</text>
+
+    <rect x="40" y="168" width="230" height="44" rx="2" fill="#fffbf0" stroke="#00897b" stroke-width="1.8" stroke-dasharray="5,3"/>
+    <text x="155" y="195" text-anchor="middle" fill="#111">.cursor/hooks.json</text>
+  </g>
+
+  <!-- ===================== STOP HOOK SCRIPTS ===================== -->
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="330" y="48" width="234" height="44" rx="2" fill="#ffffff" stroke="#1565c0" stroke-width="1.8"/>
+    <text x="447" y="75" text-anchor="middle" fill="#111">claude-stop-hook.mjs</text>
+
+    <rect x="330" y="168" width="234" height="44" rx="2" fill="#ffffff" stroke="#00897b" stroke-width="1.8"/>
+    <text x="447" y="195" text-anchor="middle" fill="#111">cursor-stop-hook.mjs</text>
+  </g>
+
+  <!-- ===================== SHARED / GENERAL ===================== -->
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="624" y="108" width="250" height="50" rx="2" fill="#eef7ee" stroke="#2e7d32" stroke-width="2"/>
+    <text x="749" y="128" text-anchor="middle" fill="#111" font-weight="bold">run-checks.mjs</text>
+    <text x="749" y="146" text-anchor="middle" fill="#2e7d32" font-size="11" font-style="italic" font-family="Helvetica, Arial, sans-serif">&#171; shared / general &#187;</text>
+  </g>
+
+  <!-- ===================== EDGE LABELS ===================== -->
+  <g font-size="11" font-style="italic" text-anchor="middle"
+     style="paint-order:stroke; stroke:#ffffff; stroke-width:3px; stroke-linejoin:round;">
+    <text x="298" y="62" fill="#555">runs</text>
+    <text x="298" y="182" fill="#555">runs</text>
+    <text x="600" y="86" fill="#555">delegates</text>
+    <text x="600" y="180" fill="#555">delegates</text>
+  </g>
+</svg>

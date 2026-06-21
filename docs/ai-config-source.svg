@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="210" viewBox="0 0 240 210" font-family="Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="240" height="210" fill="#ffffff"/>
+
+  <!-- ===================== SOURCE (.agents) ===================== -->
+  <rect x="20" y="20" width="200" height="175" rx="12" fill="#fff8f0" stroke="#b25400" stroke-width="1.5"/>
+  <text x="120" y="44" text-anchor="middle" fill="#b25400" font-size="13" font-weight="bold">.agents/  &#171;source&#187;</text>
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="40" y="60" width="160" height="40" rx="2" fill="#fff3e0" stroke="#b25400"/>
+    <text x="120" y="85" text-anchor="middle" fill="#111">skills/</text>
+
+    <rect x="40" y="135" width="160" height="40" rx="2" fill="#fff3e0" stroke="#b25400"/>
+    <text x="120" y="160" text-anchor="middle" fill="#111">mcp.json</text>
+  </g>
+</svg>

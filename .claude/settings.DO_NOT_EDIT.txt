@@ -1,5 +1,0 @@
-DO NOT EDIT `.claude/settings.json`.
-
-This is a generated copy produced by `npm run sync:agent-config`
-from `.agents/hooks.json`. Any change here is overwritten on the next sync.
-Edit `.agents/hooks.json` instead.

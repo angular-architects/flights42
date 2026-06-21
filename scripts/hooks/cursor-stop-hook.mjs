@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import { runChecks } from '../ci-checks.mjs';
+import { runChecks } from '../run-checks.mjs';
 import { readInput } from './read-input.mjs';
 
 const input = await readInput();
