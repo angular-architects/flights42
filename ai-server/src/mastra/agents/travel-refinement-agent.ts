@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { modelAdvancedTasks } from '../config.js';
+import { model, modelAdvancedTasks } from '../config.js';
 import { findHotelsTool } from '../tools/find-hotels.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { travelRefinementAgentPrompt } from './travel-refinement-agent.prompt.js';
@@ -14,12 +14,4 @@ export const travelRefinementAgent = new Agent({
   model: modelAdvancedTasks,
   tools: { searchFlightsTool, findHotelsTool },
   memory: new Memory(),
-  defaultOptions: {
-    providerOptions: {
-      openai: {
-        reasoningEffort: 'low',
-        textVerbosity: 'low',
-      } as OpenAILanguageModelResponsesOptions,
-    },
-  },
 });

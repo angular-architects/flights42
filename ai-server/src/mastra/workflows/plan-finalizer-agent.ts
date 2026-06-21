@@ -34,12 +34,4 @@ export const planFinalizerAgent = new Agent({
   name: 'Flight42 Plan Finalizer',
   instructions: planFinalizerAgentPrompt,
   model: modelAdvancedTasks,
-  defaultOptions: {
-    providerOptions: {
-      openai: {
-        reasoningEffort: 'low',
-        textVerbosity: 'low',
-      } as OpenAILanguageModelResponsesOptions,
-    },
-  },
 });
