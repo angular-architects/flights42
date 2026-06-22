@@ -1,0 +1,17 @@
+/* Dedicated TypeScript project used by the tsarch architecture tests.
+   It is read directly by tsarch (no `extends` resolution), so the relevant
+   options as well as `include`/`exclude` must be specified literally here. */
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "paths": {
+      "@flights42/ui-common": ["./projects/ui-common/src/public-api.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "src/app/testing/**", "node_modules"]
+}
