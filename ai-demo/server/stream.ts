@@ -9,11 +9,14 @@ const ENCODER = new TextEncoder();
 export function streamNative(
   agent: Agent,
   prompt: string,
+  threadId: string,
 ): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const stream = await agent.stream(prompt);
+        const stream = await agent.stream(prompt, {
+          memory: { thread: threadId, resource: threadId },
+        });
         for await (const chunk of stream.fullStream) {
           controller.enqueue(ENCODER.encode(`${JSON.stringify(chunk)}\n`));
         }
@@ -28,8 +31,8 @@ export function streamNative(
 export function streamAgUi(
   agent: Agent,
   prompt: string,
+  threadId: string,
 ): ReadableStream<Uint8Array> {
-  const threadId = randomUUID();
   const input: RunAgentInput = {
     threadId,
     runId: randomUUID(),

@@ -1,17 +1,22 @@
-import { stdout } from 'node:process';
+import { randomUUID } from 'node:crypto';
+import process, { stdout } from 'node:process';
 
 import { closeInput, readLine } from './input.js';
 import { detailFor, extractText } from './utils.js';
 
-const SHOW_DETAILS = true;
+const SHOW_DETAILS = process.argv.includes('--details');
 
 const url = process.env.AI_DEMO_URL ?? 'http://localhost:4555';
+
+// One thread per client session so the agent remembers earlier turns. The
+// server uses this id as both the thread and the owning resource.
+const threadId = randomUUID();
 
 async function ask(prompt: string): Promise<void> {
   const response = await fetch(`${url}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, threadId }),
   });
 
   if (!response.body) {
