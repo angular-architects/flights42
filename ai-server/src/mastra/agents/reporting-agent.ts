@@ -119,7 +119,7 @@ export const reportingAgent = new Agent({
   id: 'reportingAgent',
   name: 'Flight42 Reporting Assistant',
   instructions: reportingAgentPrompt,
-  model: modelAdvancedTasks,
+  model: model,
   tools: {
     executeJavaScript: executeJavaScriptTool,
   },
