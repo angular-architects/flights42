@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
 
 import { model } from './config.js';
 import { weatherTool } from './weather-tool.js';
@@ -15,5 +16,5 @@ export const weatherAgent = new Agent({
     `,
   model,
   tools: { getWeather: weatherTool },
-  // memory: new Memory(),
+  memory: new Memory(),
 });
