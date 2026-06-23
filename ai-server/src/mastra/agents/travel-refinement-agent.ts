@@ -10,7 +10,7 @@ export const travelRefinementAgent = new Agent({
   id: 'travelRefinementAgent',
   name: 'Flight42 Travel Refinement',
   instructions: travelRefinementAgentPrompt,
-  model: model,
+  model: modelAdvancedTasks,
   tools: { searchFlightsTool, findHotelsTool },
   memory: new Memory(),
 });
