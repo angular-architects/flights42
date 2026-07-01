@@ -25,19 +25,12 @@ import { toggleFlightSelectionTool } from './ticketing-tools/toggle-flight-selec
 export class TicketingChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
-  // Root injector (this service is providedIn: 'root'). Used to create the chat
-  // resource so its lifecycle is bound to the root injector, not to the route
-  // injector that happens to trigger init() first.
   private readonly injector = inject(EnvironmentInjector);
 
   private chat: AgUiChatResourceRef | null = null;
 
   public init(): void {
     if (!this.chat) {
-      // agUiResource() builds an Angular resource() whose internal effect is
-      // tied to the active injection context's DestroyRef. Creating it in the
-      // root injector keeps it alive across navigations; otherwise it would die
-      // with the route injector that called init() first.
       this.chat = runInInjectionContext(this.injector, () =>
         agUiResource({
           url: this.config.agUiUrl,

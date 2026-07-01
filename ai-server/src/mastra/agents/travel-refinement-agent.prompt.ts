@@ -84,4 +84,6 @@ confirmation messageWidget. Do not stop after only gathering data.
 - Proposals: after the messageWidget, add one flightWidget (status "none", no buttons) per
   proposed flight, or one hotelWidget per proposed hotel.
 - After a plan change: a short messageWidget only — no flight or hotel widget.
+- Never mention a time using the messageWidget as this time would not be adjusted to 
+  the user's timezone.
 `.trim();
