@@ -11,6 +11,7 @@ import { AgUiChatResourceRef } from '@internal/ag-ui-client';
 import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
+import { VoiceService } from '../voice/voice-service';
 
 @Component({
   selector: 'app-assistant-chat',
@@ -20,6 +21,7 @@ import { ChatRegistry } from '../chat-registry';
 })
 export class AssistantChat {
   private chatRegistry = inject(ChatRegistry);
+  protected readonly voice = inject(VoiceService);
 
   private composerInput =
     viewChild<ElementRef<HTMLInputElement>>('composerInput');
@@ -67,6 +69,9 @@ export class AssistantChat {
   }
 
   protected submit() {
+    if (this.voice.dictating()) {
+      this.voice.stopDictation();
+    }
     const message = this.message();
     this.message.set('');
     this.chat?.sendMessage({ role: 'user', content: message });
@@ -74,5 +79,28 @@ export class AssistantChat {
 
   protected stop(): void {
     this.chat?.stop();
+  }
+
+  protected toggleDictation(): void {
+    if (this.voice.dictating()) {
+      this.voice.stopDictation();
+      return;
+    }
+    this.voice.startDictation(this.message(), {
+      onText: (text) => {
+        this.message.set(text);
+      },
+      onSilence: () => {
+        this.submit();
+      },
+    });
+  }
+
+  protected toggleReading(): void {
+    this.voice.toggleReading();
+  }
+
+  protected setLanguage(language: string): void {
+    this.voice.setLanguage(language);
   }
 }

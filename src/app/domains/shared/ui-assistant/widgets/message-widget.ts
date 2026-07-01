@@ -1,7 +1,15 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+} from '@angular/core';
+import { AG_UI_WIDGET_ID, defineAgUiComponent } from '@internal/ag-ui-client';
 import { MarkdownComponent } from 'ngx-markdown';
 import { z } from 'zod';
+
+import { VoiceService } from '../voice/voice-service';
 
 @Component({
   selector: 'app-message-widget',
@@ -16,6 +24,29 @@ import { z } from 'zod';
 })
 export class MessageWidget {
   readonly text = input.required<string>();
+
+  private readonly voice = inject(VoiceService);
+  private readonly widgetId = inject(AG_UI_WIDGET_ID, { optional: true });
+
+  constructor() {
+    // Read the widget's text aloud once it stops changing (widget args stream
+    // in incrementally, so we debounce to avoid reading partial content).
+    // De-duplication lives in the service, keyed by the stable widget id, so
+    // re-created widgets don't repeat.
+    effect((onCleanup) => {
+      const text = this.text();
+      if (!this.voice.readingEnabled()) {
+        return;
+      }
+
+      const handle = setTimeout(() => {
+        this.voice.readMessage(this.widgetId, text);
+      }, 600);
+      onCleanup(() => {
+        clearTimeout(handle);
+      });
+    });
+  }
 }
 
 export const messageWidget = defineAgUiComponent({

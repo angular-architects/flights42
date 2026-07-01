@@ -41,6 +41,37 @@
         </div>
       </div>
       <div class="ai-actions">
+        @if (voice.languages().length) {
+          <select
+            class="lang-select"
+            [ngModel]="voice.language()"
+            (ngModelChange)="setLanguage($event)"
+            name="voiceLanguage"
+            title="Sprache"
+            aria-label="Sprache">
+            @for (language of voice.languages(); track language) {
+              <option [value]="language">
+                {{ voice.describeLanguage(language) }}
+              </option>
+            }
+          </select>
+        }
+        <button
+          (click)="toggleReading()"
+          class="icon-btn"
+          [attr.aria-pressed]="voice.readingEnabled()"
+          [title]="
+            voice.readingEnabled()
+              ? 'Vorlesen deaktivieren'
+              : 'Vorlesen aktivieren'
+          "
+          [attr.aria-label]="
+            voice.readingEnabled()
+              ? 'Vorlesen deaktivieren'
+              : 'Vorlesen aktivieren'
+          ">
+          {{ voice.readingEnabled() ? '🔊' : '🔇' }}
+        </button>
         <button
           (click)="toggle()"
           class="icon-btn"
@@ -80,25 +111,45 @@
           class="composer-input"
           name="message"
           placeholder="Your Question ..." />
-        @if (chat.isLoading()) {
-          <button
-            type="button"
-            class="stop-btn"
-            (click)="stop()"
-            title="Aktuellen Run abbrechen"
-            aria-label="Aktuellen Run abbrechen">
-            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-              <rect
-                x="6"
-                y="6"
-                width="12"
-                height="12"
-                rx="1.5"
-                fill="currentColor" />
-            </svg>
-            <span>Stop</span>
-          </button>
-        }
+        <div class="composer-actions">
+          @if (voice.dictationSupported) {
+            <button
+              type="button"
+              class="icon-btn mic-btn"
+              [class.active]="voice.dictating()"
+              [attr.aria-pressed]="voice.dictating()"
+              (click)="toggleDictation()"
+              [title]="voice.dictating() ? 'Diktat beenden' : 'Diktat starten'"
+              [attr.aria-label]="
+                voice.dictating() ? 'Diktat beenden' : 'Diktat starten'
+              ">
+              🎙️
+            </button>
+          }
+          @if (chat.isLoading()) {
+            <button
+              type="button"
+              class="stop-btn"
+              (click)="stop()"
+              title="Aktuellen Run abbrechen"
+              aria-label="Aktuellen Run abbrechen">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                aria-hidden="true">
+                <rect
+                  x="6"
+                  y="6"
+                  width="12"
+                  height="12"
+                  rx="1.5"
+                  fill="currentColor" />
+              </svg>
+              <span>Stop</span>
+            </button>
+          }
+        </div>
       </div>
     </form>
   </aside>

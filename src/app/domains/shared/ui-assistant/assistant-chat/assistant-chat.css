@@ -110,6 +110,18 @@
   gap: 6px;
 }
 
+:host ::ng-deep .lang-select {
+  max-width: 150px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 0 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 :host ::ng-deep .icon-btn {
   display: grid;
   place-items: center;
@@ -190,6 +202,35 @@
   grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: end;
+}
+
+:host ::ng-deep .composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:host ::ng-deep .mic-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+  box-shadow: var(--shadow);
+}
+
+:host ::ng-deep .mic-btn.active {
+  border-color: var(--accent);
+  background: var(--surface-2);
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
 }
 
 :host ::ng-deep .composer-input {

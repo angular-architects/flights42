@@ -1,9 +1,11 @@
+import { byQuality, isNaturalVoice } from './voice-quality';
+
 const languageNames = new Intl.DisplayNames([navigator.language], {
   type: 'language',
 });
 
 export function getVoices(): SpeechSynthesisVoice[] {
-  return speechSynthesis.getVoices();
+  return speechSynthesis.getVoices().filter(isNaturalVoice);
 }
 
 export function getLanguages(): string[] {
@@ -17,9 +19,11 @@ export function getLanguages(): string[] {
 }
 
 export function getVoicesForLanguage(language: string): SpeechSynthesisVoice[] {
-  return getVoices().filter((voice) => {
-    return voice.lang === language;
-  });
+  return getVoices()
+    .filter((voice) => {
+      return voice.lang === language;
+    })
+    .sort(byQuality);
 }
 
 export function describeLanguage(language: string): string {
