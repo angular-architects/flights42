@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice API Demo</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        max-width: 720px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      textarea {
+        width: 100%;
+        min-height: 12rem;
+        padding: 0.75rem;
+        font: inherit;
+        box-sizing: border-box;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin: 0.75rem 0;
+      }
+      button {
+        padding: 0.5rem 1rem;
+        font: inherit;
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        outline: 2px solid tomato;
+      }
+      select,
+      input[type='range'] {
+        font: inherit;
+      }
+      label {
+        display: inline-flex;
+        gap: 0.4rem;
+        align-items: center;
+      }
+      #status {
+        min-height: 1.5rem;
+        color: gray;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Voice API Demo</h1>
+
+    <div class="row">
+      <label>
+        Language
+        <select id="languages"></select>
+      </label>
+      <label>
+        Voice
+        <select id="voices"></select>
+      </label>
+    </div>
+
+    <textarea id="text" placeholder="Dictate or type here …"></textarea>
+
+    <div class="row">
+      <button id="dictate" type="button" aria-pressed="false">
+        🎙️ Start dictation
+      </button>
+      <button id="speak" type="button">🔊 Read aloud</button>
+      <button id="stop" type="button">⏹️ Stop</button>
+    </div>
+
+    <div class="row">
+      <label>
+        Rate
+        <input id="rate" type="range" min="0.5" max="2" step="0.1" value="1" />
+      </label>
+    </div>
+
+    <p id="status"></p>
+
+    <script type="module" src="./src/ui.ts"></script>
+  </body>
+</html>
