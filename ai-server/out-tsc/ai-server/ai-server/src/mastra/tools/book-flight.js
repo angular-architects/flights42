@@ -1,0 +1,61 @@
+import { createTool } from '@mastra/core/tools';
+import { z } from 'zod';
+import {
+  addBooking,
+  fetchFlight,
+  isBooked,
+} from '../data/booked-flights-store.js';
+import { formatFlightDate } from '../utils/format-date.js';
+const flightSchema = z.object({
+  id: z.number(),
+  from: z.string(),
+  to: z.string(),
+  date: z.string(),
+  delay: z.number(),
+});
+// Shape mirrors Mastra's tool-result convention (`result: string`) with
+// additive domain fields (`flight`, `code`).
+const resultSchema = z.union([
+  z.object({
+    ok: z.literal(true),
+    result: z.string(),
+    flight: flightSchema,
+  }),
+  z.object({
+    ok: z.literal(false),
+    result: z.string(),
+    code: z.string(),
+  }),
+]);
+export const bookFlightTool = createTool({
+  id: 'bookFlight',
+  description:
+    'Books a flight for the current passenger. Fails if the flight does not exist or is already booked.',
+  inputSchema: z.object({
+    flightId: z.number().describe('The id of the flight to book.'),
+  }),
+  outputSchema: resultSchema,
+  execute: async ({ flightId }) => {
+    if (isBooked(flightId)) {
+      return {
+        ok: false,
+        result: `Flight ${flightId} is already booked.`,
+        code: 'ALREADY_BOOKED',
+      };
+    }
+    const flight = await fetchFlight(flightId);
+    if (!flight) {
+      return {
+        ok: false,
+        result: `Flight ${flightId} does not exist.`,
+        code: 'NOT_FOUND',
+      };
+    }
+    addBooking(flightId);
+    return {
+      ok: true,
+      result: `Booked flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}.`,
+      flight,
+    };
+  },
+});
