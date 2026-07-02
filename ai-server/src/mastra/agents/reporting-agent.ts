@@ -1,7 +1,6 @@
 import { Agent } from '@mastra/core/agent';
-import { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 
-import { model, modelAdvancedTasks } from '../config.js';
+import { modelAdvancedTasks } from '../config.js';
 import { executeJavaScriptTool } from '../tools/execute-javascript.js';
 
 const reportingAgentPrompt = `
