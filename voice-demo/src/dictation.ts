@@ -1,7 +1,7 @@
-const SpeechRecognitionCtor =
+const SpeechRecognition =
   window.SpeechRecognition ?? window.webkitSpeechRecognition;
 
-export const dictationSupported = Boolean(SpeechRecognitionCtor);
+export const dictationSupported = Boolean(SpeechRecognition);
 
 export interface DictationHandlers {
   onText: (text: string) => void;
@@ -20,11 +20,11 @@ export class Dictation {
   }
 
   start(language: string, initialText: string): void {
-    if (!SpeechRecognitionCtor) {
+    if (!SpeechRecognition) {
       return;
     }
 
-    const recognition = new SpeechRecognitionCtor();
+    const recognition = new SpeechRecognition();
     recognition.lang = language;
     recognition.continuous = true;
     recognition.interimResults = true;

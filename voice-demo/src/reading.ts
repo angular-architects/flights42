@@ -12,6 +12,7 @@ export function readAloud(options: ReadOptions): void {
 
   const utterance = new SpeechSynthesisUtterance(options.text);
   utterance.lang = options.language;
+
   if (options.voice) {
     utterance.voice = options.voice;
   }
@@ -24,9 +25,9 @@ export function readAloud(options: ReadOptions): void {
     utterance.addEventListener('end', options.onEnd);
   }
 
-  speechSynthesis.speak(utterance);
+  window.speechSynthesis.speak(utterance);
 }
 
 export function stopReading(): void {
-  speechSynthesis.cancel();
+  window.speechSynthesis.cancel();
 }
