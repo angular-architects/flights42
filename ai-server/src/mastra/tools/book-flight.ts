@@ -9,6 +9,7 @@ import {
 } from '../data/booked-flights-store.js';
 import { formatFlightDate } from '../utils/format-date.js';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
