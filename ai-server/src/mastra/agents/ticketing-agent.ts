@@ -29,5 +29,6 @@ export const ticketingAgent = new Agent({
     // ...hotelsMcpTools,
   },
   inputProcessors: [blockedWordsGuard, offTopicGuard],
+  outputProcessors: [],
   memory: new Memory(),
 });
