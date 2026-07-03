@@ -3,9 +3,8 @@ import { Memory } from '@mastra/memory';
 
 // import { initMcpServer } from '@internal/ag-ui-server';
 import { model } from '../config.js';
-import { maskPassengerPiiProcessor } from '../processors/mask-passenger-pii.js';
+import { blockedWordsGuard } from '../processors/blocked-words-guard.js';
 import { offTopicGuard } from '../processors/off-topic-guard.js';
-import { answerRelevancyScorer } from '../scorers/answer-relevancy.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
@@ -29,13 +28,6 @@ export const ticketingAgent = new Agent({
     getPassengerTool,
     // ...hotelsMcpTools,
   },
-  inputProcessors: [offTopicGuard],
-  outputProcessors: [maskPassengerPiiProcessor],
-  scorers: {
-    answerRelevancy: {
-      scorer: answerRelevancyScorer,
-      sampling: { type: 'ratio', rate: 1 },
-    },
-  },
+  inputProcessors: [blockedWordsGuard, offTopicGuard],
   memory: new Memory(),
 });

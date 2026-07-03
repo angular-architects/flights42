@@ -2,12 +2,6 @@ import { ModerationProcessor } from '@mastra/core/processors';
 
 import { model } from '../config.js';
 
-/**
- * Input guard that blocks off-topic requests (e.g. jokes, general knowledge,
- * coding help) before they reach the LLM. Built on the built-in
- * ModerationProcessor with a custom `off-topic` category and `strategy: 'block'`,
- * so flagged requests abort the run via tripwire.
- */
 export const offTopicGuard = new ModerationProcessor({
   model,
   categories: ['off-topic'],
