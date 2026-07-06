@@ -32,12 +32,6 @@ await bridge.connect(
 
 await waitForInitialization(bridge);
 
-bridge.sendHostContextChange({
-  availableDisplayModes: ['fullscreen'],
-  displayMode: 'fullscreen',
-  theme: 'light',
-});
-
 bridge.sendToolInput({
   arguments: {
     city: 'Graz',
@@ -55,6 +49,12 @@ bridge.sendToolResult({
     city: 'Graz',
     hotels: ['Grand Palace', 'Skyline Suites', 'Biz Hotel'],
   },
+});
+
+bridge.sendHostContextChange({
+  availableDisplayModes: ['fullscreen'],
+  displayMode: 'fullscreen',
+  theme: 'light',
 });
 
 function waitForInitialization(bridge: AppBridge): Promise<void> {
