@@ -119,6 +119,12 @@ export interface A2uiCustomCatalog {
   functions?: A2uiCustomCatalogFunction[];
 }
 
+export function createCustomCatalog<const TCatalog extends A2uiCustomCatalog>(
+  catalog: TCatalog,
+): TCatalog {
+  return catalog;
+}
+
 export interface AgUiResourceOptions {
   url: string;
   tools: AgUiClientToolDefinition<never>[];

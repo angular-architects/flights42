@@ -76,13 +76,14 @@ function toFunctionImplementation(
  * With a descriptor a `BasicCatalogBase` (auto-merging `BASIC_FUNCTIONS`) is
  * built, registered at `A2UI_RENDERER_CONFIG`, and the descriptor is stored
  * at `A2UI_CUSTOM_CATALOG` so `agUiResource` can forward catalog metadata to
- * the agent. Set `sendCatalogDescription: false` to forward only the catalog
- * id (recommended for production with a trusted server-side registry).
+ * the agent. Set `options.sendCatalogDescription: false` to forward only the
+ * catalog id (recommended for production with a trusted server-side registry).
  */
 export function provideA2uiCatalog(
-  catalogWithOptions?: A2uiCustomCatalog & ProvideA2uiCatalogOptions,
+  catalog?: A2uiCustomCatalog,
+  options?: ProvideA2uiCatalogOptions,
 ): EnvironmentProviders {
-  if (!catalogWithOptions) {
+  if (!catalog) {
     return makeEnvironmentProviders([
       {
         provide: A2UI_RENDERER_CONFIG,
@@ -94,7 +95,7 @@ export function provideA2uiCatalog(
     ]);
   }
 
-  const { sendCatalogDescription = true, ...catalog } = catalogWithOptions;
+  const { sendCatalogDescription = true } = options ?? {};
 
   const rendererCatalog = new BasicCatalogBase({
     id: catalog.id,

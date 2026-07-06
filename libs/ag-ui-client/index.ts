@@ -1,3 +1,4 @@
+export * from './a2ui-action-handlers';
 export * from './a2ui-schema';
 export * from './ag-ui-resource';
 export * from './ag-ui-types';

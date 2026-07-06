@@ -14,12 +14,12 @@ import {
   agUiResource,
   type AgUiToolCall,
   type AgUiWidget,
+  registerHandlers,
   WidgetContainerComponent,
 } from '@internal/ag-ui-client';
 
 import { ConfigService } from '../../domains/shared/util-common/config-service';
 import { checkInAction } from '../../domains/ticketing/ai/actions/check-in-action';
-import { registerHandlers } from '../../domains/ticketing/ai/register-handlers';
 import { dashboardFlightSearchAction } from './actions/dashboard-flight-search-action';
 import { examplePrompts } from './example-prompts';
 import { submitFlightSearchTool } from './tools/submit-flight-search.tool';

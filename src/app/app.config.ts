@@ -13,7 +13,7 @@ import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
-import { ticketingExtraComponents } from './domains/ticketing/ai/custom-catalog/ticketing-extra-components';
+import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,9 +27,7 @@ export const appConfig: ApplicationConfig = {
     // In production, set sendCatalogDescription: false and let the server
     // resolve the catalog id against its own trusted registry to avoid
     // prompt-injection attacks via untrusted component metadata.
-    provideA2uiCatalog({
-      id: 'https://a2ui.org/specification/v0_9/basic_catalog.json',
-      components: ticketingExtraComponents,
+    provideA2uiCatalog(customCatalog, {
       sendCatalogDescription: true,
     }),
     provideMarkdownRenderer(async (markdown) =>
