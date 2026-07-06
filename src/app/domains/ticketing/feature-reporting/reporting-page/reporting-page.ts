@@ -51,6 +51,7 @@ export class ReportingPage {
     description:
       'Renders the supplied data as a bar chart in the user interface.',
     schema: renderChartSchema,
+    followUpAfterExecution: false,
     execute: ({ title, data }) => {
       this.chartTitle.set(title);
       this.chartData.set(data);
