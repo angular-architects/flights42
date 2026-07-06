@@ -135,11 +135,6 @@ export function createSurfaceMessages(
             variant: 'body',
           },
           {
-            id: 'miles-progress',
-            component: 'MilesProgress',
-            passenger: { path: '/passenger' },
-          },
-          {
             id: 'increase-button',
             component: 'Button',
             child: 'increase-button-label',
@@ -161,23 +156,21 @@ export function createSurfaceMessages(
             text: 'Increase Miles',
             variant: 'body',
           },
+          {
+            id: 'miles-progress',
+            component: 'MilesProgress',
+            passenger: { path: '/passenger' },
+          },
         ],
       },
     },
-    toUpdateMessage(surfaceId, passenger),
-  ];
-}
-
-export function toUpdateMessage(
-  surfaceId: string,
-  passenger: Passenger,
-): A2uiMessage {
-  return {
-    version: 'v0.9',
-    updateDataModel: {
-      surfaceId,
-      path: '/passenger',
-      value: passenger,
+    {
+      version: 'v0.9',
+      updateDataModel: {
+        surfaceId,
+        path: '/passenger',
+        value: passenger,
+      },
     },
-  };
+  ];
 }

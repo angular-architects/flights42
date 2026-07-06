@@ -3,7 +3,7 @@ import {
   binding,
   createCustomComponent,
 } from '@internal/ag-ui-client';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { TicketWidget } from './ticket/ticket-widget';
 

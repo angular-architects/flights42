@@ -14,7 +14,6 @@ import {
   InjectionToken,
   makeEnvironmentProviders,
 } from '@angular/core';
-import type { ZodTypeAny } from 'zod';
 
 import { type A2uiCustomCatalogFunction } from './a2ui-schema';
 import {
@@ -49,20 +48,21 @@ function toAngularComponentImplementation(
   return {
     name: entry.name,
     component: entry.component,
-    schema: entry.schema,
-  } as unknown as AngularComponentImplementation;
+    schema: entry.schema as unknown,
+  } as AngularComponentImplementation;
 }
 
 function toFunctionImplementation(
   fn: A2uiCustomCatalogFunction,
 ): FunctionImplementation {
-  return {
+  const implementation: FunctionImplementation = {
     name: fn.name,
     returnType: fn.returnType,
-    schema: fn.schema as unknown as ZodTypeAny,
+    schema: fn.schema as unknown as FunctionImplementation['schema'],
     execute: (args: Record<string, unknown>) =>
       fn.execute(fn.schema.parse(args)),
-  } as unknown as FunctionImplementation;
+  };
+  return implementation;
 }
 
 /**

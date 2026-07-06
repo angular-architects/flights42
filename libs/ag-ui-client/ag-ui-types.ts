@@ -1,6 +1,7 @@
 import { type InputContentPart, type UserMessage } from '@ag-ui/core';
 import { ResourceRef, Type } from '@angular/core';
 import { z } from 'zod';
+import type { z as z3 } from 'zod/v3';
 
 import { type A2uiCustomCatalogFunction } from './a2ui-schema';
 
@@ -109,7 +110,7 @@ export interface A2uiCustomCatalogComponent {
   name: string;
   description: string;
   component: Type<unknown>;
-  schema: z.ZodTypeAny;
+  schema: z3.ZodTypeAny;
 }
 
 export interface A2uiCustomCatalog {

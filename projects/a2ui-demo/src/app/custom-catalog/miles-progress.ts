@@ -1,3 +1,4 @@
+import type { AngularComponentImplementation } from '@a2ui/angular/v0_9';
 import { DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -5,6 +6,7 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { z } from 'zod/v3';
 
 import {
   calcNextThreshold,
@@ -12,6 +14,7 @@ import {
   calcRemainingMiles,
 } from './miles-calc';
 import { initialContext, MilesProgressContext } from './miles-progress-context';
+import { binding } from './utils';
 
 @Component({
   selector: 'app-miles-progress',
@@ -49,3 +52,23 @@ export class MilesProgress {
     calcProgressPercent(this.nextThreshold(), this.passenger().bonusMiles),
   );
 }
+
+const passengerSchema = z.object({
+  id: z.number(),
+  firstName: z.string(),
+  lastName: z.string(),
+  bonusMiles: z.number(),
+});
+
+const milesProgressSchema = z
+  .object({
+    passenger: binding(passengerSchema).optional(),
+    weight: z.number().optional(),
+  })
+  .strict();
+
+export const milesProgressEntry = {
+  name: 'MilesProgress',
+  component: MilesProgress,
+  schema: milesProgressSchema as unknown,
+} as AngularComponentImplementation;

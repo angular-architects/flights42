@@ -8,6 +8,6 @@ interface CheckInActionContext {
 
 export function checkInAction(action: A2uiClientAction): void {
   const router = inject(Router);
-  const context = action.context as unknown as CheckInActionContext;
+  const context = action.context as CheckInActionContext;
   router.navigate(['/checkin', { ticketId: context.flightId }]);
 }

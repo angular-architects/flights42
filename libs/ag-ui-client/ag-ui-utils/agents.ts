@@ -9,7 +9,7 @@ import {
   type ResourceStreamItem,
   type WritableSignal,
 } from '@angular/core';
-import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import {
   type A2uiCustomCatalog,
@@ -75,7 +75,7 @@ function buildCatalogContext(
   >((acc, entry) => {
     acc[entry.name] = {
       description: entry.description,
-      schema: z.toJSONSchema(entry.schema),
+      schema: zodToJsonSchema(entry.schema),
     };
     return acc;
   }, {});
@@ -86,7 +86,7 @@ function buildCatalogContext(
     acc[fn.name] = {
       description: fn.description,
       returnType: fn.returnType,
-      schema: z.toJSONSchema(fn.schema),
+      schema: zodToJsonSchema(fn.schema),
     };
     return acc;
   }, {});

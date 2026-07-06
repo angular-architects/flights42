@@ -1,6 +1,6 @@
 import type { BoundProperty } from '@a2ui/angular/v0_9';
 import type { Signal, Type } from '@angular/core';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 type StripPathBinding<T> = T extends { path: string } ? never : T;
 
