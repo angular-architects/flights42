@@ -118,16 +118,16 @@ export function createSurfaceMessages(
             variant: 'body',
           },
 
-          // TODO: Use Custom MilesProgress component
-          //       Replace the following Text component by a MilesProgress
-          // HINT: Switch to custom catalog in app.config.ts first
-          { id: 'miles-progress', component: 'Text' },
-
           // TODO: Add button with label "Increase Miles"
           //       Replace the following text component by a button
           //       Trigger an action increaseMiles providing a context with:
           //       id, firstName, lastName, bonusMiles
           { id: 'increase-button', component: 'Text' },
+
+          // TODO: Use Custom MilesProgress component
+          //       Replace the following Text component by a MilesProgress
+          // HINT: Switch to custom catalog in app.config.ts first
+          { id: 'miles-progress', component: 'Text' },
         ],
       },
     },

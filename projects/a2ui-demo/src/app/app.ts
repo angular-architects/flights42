@@ -7,11 +7,7 @@ import {
   inject,
 } from '@angular/core';
 
-import {
-  createSurfaceMessages,
-  type Passenger,
-  toUpdateMessage,
-} from './passenger-card';
+import { createSurfaceMessages, type Passenger } from './passenger-card';
 
 @Component({
   selector: 'app-root',
@@ -51,8 +47,7 @@ export class App {
         // TODO: Add handler for increaseMiles action:
         //       1. Get the passenger from the action context
         //       2. Update its bonusMiles by 300 and write it back
-        // Hint: For writing back, use
-        //       renderer.processMessages and toUpdateMessage
+        // Hint: For writing back, use renderer.processMessages
       },
     );
 
