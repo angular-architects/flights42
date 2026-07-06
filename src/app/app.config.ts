@@ -6,7 +6,6 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { provideHashbrown } from '@hashbrownai/angular';
 import { provideA2uiCatalog } from '@internal/ag-ui-client';
 import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
@@ -19,7 +18,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideAppInitializer(() => inject(ConfigService).load()),
-    // provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes, withComponentInputBinding()),
     // Demo-simplification: sendCatalogDescription forwards the full
     // descriptor (component schemas etc.) to the agent so the LLM can build
@@ -33,16 +31,6 @@ export const appConfig: ApplicationConfig = {
     provideMarkdownRenderer(async (markdown) =>
       marked.parse(String(markdown ?? '')),
     ),
-    provideHashbrown({
-      baseUrl: 'http://localhost:3000/api/chat',
-      emulateStructuredOutput: true,
-      middleware: [
-        (request) => {
-          console.log('[Hashbrown Request]', request);
-          return request;
-        },
-      ],
-    }),
     provideMarkdown(),
   ],
 };
