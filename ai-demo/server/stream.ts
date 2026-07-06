@@ -1,60 +1,84 @@
-import { randomUUID } from 'node:crypto';
-
 import type { RunAgentInput } from '@ag-ui/core';
 import { MastraAgent } from '@ag-ui/mastra';
 import type { Agent } from '@mastra/core/agent';
 
+export const SSE_HEADERS = {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  Connection: 'keep-alive',
+} as const;
+
 const ENCODER = new TextEncoder();
 
-export function streamNative(
-  agent: Agent,
-  prompt: string,
-  threadId: string,
-): ReadableStream<Uint8Array> {
-  return new ReadableStream<Uint8Array>({
-    async start(controller) {
-      try {
-        const stream = await agent.stream(prompt, {
-          memory: { thread: threadId, resource: threadId },
-        });
-        for await (const chunk of stream.fullStream) {
-          controller.enqueue(ENCODER.encode(`${JSON.stringify(chunk)}\n`));
-        }
-        controller.close();
-      } catch (error) {
-        controller.error(error);
-      }
-    },
+function serializeEvent(event: unknown): string {
+  return `data: ${JSON.stringify(event)}\n\n`;
+}
+
+function serializeError(err: unknown): string {
+  return serializeEvent({
+    type: 'RUN_ERROR',
+    message: err instanceof Error ? err.message : String(err),
+    code: 'run_error',
   });
 }
 
 export function streamAgUi(
   agent: Agent,
-  prompt: string,
-  threadId: string,
+  input: RunAgentInput,
 ): ReadableStream<Uint8Array> {
-  const input: RunAgentInput = {
-    threadId,
-    runId: randomUUID(),
-    messages: [{ id: randomUUID(), role: 'user', content: prompt }],
-    tools: [],
-    context: [],
-  };
-
-  const aguiAgent = new MastraAgent({ agent, resourceId: threadId });
+  const aguiAgent = new MastraAgent({ agent, resourceId: input.threadId });
 
   let subscription: { unsubscribe(): void } | undefined;
+  let closed = false;
+
+  const safeEnqueue = (
+    controller: ReadableStreamDefaultController<Uint8Array>,
+    chunk: Uint8Array,
+  ): void => {
+    if (closed) {
+      return;
+    }
+    try {
+      controller.enqueue(chunk);
+    } catch {
+      closed = true;
+      subscription?.unsubscribe();
+    }
+  };
+
+  const safeClose = (
+    controller: ReadableStreamDefaultController<Uint8Array>,
+  ): void => {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    try {
+      controller.close();
+    } catch {
+      // Controller already closed by the runtime (e.g. client disconnect).
+    }
+  };
 
   return new ReadableStream<Uint8Array>({
     start(controller) {
+      safeEnqueue(controller, ENCODER.encode(':\n\n'));
+
       subscription = aguiAgent.run(input).subscribe({
-        next: (event) =>
-          controller.enqueue(ENCODER.encode(`${JSON.stringify(event)}\n`)),
-        error: (error) => controller.error(error),
-        complete: () => controller.close(),
+        next: (event) => {
+          safeEnqueue(controller, ENCODER.encode(serializeEvent(event)));
+        },
+        error: (error) => {
+          safeEnqueue(controller, ENCODER.encode(serializeError(error)));
+          safeClose(controller);
+        },
+        complete: () => {
+          safeClose(controller);
+        },
       });
     },
     cancel() {
+      closed = true;
       subscription?.unsubscribe();
     },
   });

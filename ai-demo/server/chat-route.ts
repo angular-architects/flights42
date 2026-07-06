@@ -1,38 +1,33 @@
-import process from 'node:process';
-
+import type { RunAgentInput } from '@ag-ui/core';
 import type { ContextWithMastra } from '@mastra/core/server';
 
-import { streamAgUi, streamNative } from './stream.js';
-
-// Set AI_DEMO_AG_UI=1 to stream the AG-UI protocol instead of the native format.
-const useAgUI = process.env.AI_DEMO_AG_UI === '1';
-
-const NDJSON_HEADERS = {
-  'Content-Type': 'application/x-ndjson; charset=utf-8',
-  'Cache-Control': 'no-cache, no-transform',
-};
+import { SSE_HEADERS, streamAgUi } from './stream.js';
 
 export async function chatRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
-  let prompt = '';
-  let threadId = '';
+  let input: RunAgentInput;
   try {
-    const body = (await c.req.json()) as {
-      prompt?: unknown;
-      threadId?: unknown;
-    };
-    prompt = String(body?.prompt ?? '').trim();
-    threadId = String(body?.threadId ?? '').trim();
+    input = (await c.req.json()) as RunAgentInput;
   } catch {
-    prompt = '';
+    return c.json(
+      { error: 'invalid_request', message: 'Invalid JSON body' },
+      400,
+    );
+  }
+
+  if (!input?.threadId || !input?.runId || !Array.isArray(input.messages)) {
+    return c.json(
+      {
+        error: 'invalid_request',
+        message: 'Missing threadId, runId, or messages',
+      },
+      400,
+    );
   }
 
   const agent = c.get('mastra').getAgent('weatherAgent');
+  const stream = streamAgUi(agent, input);
 
-  const stream = useAgUI
-    ? streamAgUi(agent, prompt, threadId)
-    : streamNative(agent, prompt, threadId);
-
-  return new Response(stream, { headers: NDJSON_HEADERS });
+  return new Response(stream, { headers: { ...SSE_HEADERS } });
 }
