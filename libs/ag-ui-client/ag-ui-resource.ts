@@ -1,4 +1,5 @@
 import { A2uiRendererService } from '@a2ui/angular/v0_9';
+import type { AgentSubscriber, RunAgentInput } from '@ag-ui/client';
 import { HttpAgent, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -15,7 +16,11 @@ import {
   type AgUiChatMessageAttachment,
   type AgUiChatResourceRef,
   type AgUiClientToolDefinition,
+  type AgUiInterrupt,
+  type AgUiRegisteredComponent,
   type AgUiResourceOptions,
+  type AgUiResumePayload,
+  type AgUiResumeRequest,
   type UserMessageContent,
   type UserMessageContentPart,
 } from './ag-ui-types';
@@ -23,19 +28,51 @@ import { runUntilSettled } from './ag-ui-utils/agents';
 import {
   appendErrorMessage,
   filterPublicMessages,
+  friendlyErrorMessage,
   readMessages,
 } from './ag-ui-utils/messages';
 import { type PendingRun } from './ag-ui-utils/tools';
-import { A2UI_CUSTOM_CATALOG } from './provide-a2ui-catalog';
+import { readRegisteredComponents } from './ag-ui-utils/widgets';
 
 interface StreamOptions {
   params: PendingRun | undefined;
   abortSignal: AbortSignal;
 }
 
+interface RunAgentCompatParameters extends Partial<
+  Pick<RunAgentInput, 'runId' | 'tools' | 'context' | 'forwardedProps'>
+> {
+  abortController?: AbortController;
+  resume?: AgUiResumeRequest;
+}
+
+class InterruptAwareHttpAgent extends HttpAgent {
+  runAgentCompat(
+    parameters?: RunAgentCompatParameters,
+    subscriber?: AgentSubscriber,
+  ) {
+    return super.runAgent(parameters, subscriber);
+  }
+
+  protected override prepareRunAgentInput(
+    parameters?: RunAgentCompatParameters,
+  ): RunAgentInput {
+    const input = super.prepareRunAgentInput(parameters);
+    if (!parameters?.resume) {
+      return input;
+    }
+
+    return {
+      ...input,
+      resume: parameters.resume,
+    } as RunAgentInput;
+  }
+}
+
 interface SendMessageOptions {
   role: 'user';
   content: UserMessageContent;
+  hidden?: boolean;
 }
 
 interface NormalizedUserMessageContent {
@@ -65,6 +102,17 @@ const ATTACHMENT_LABELS: Record<
   document: '[Dokument hochgeladen]',
   binary: '[Datei hochgeladen]',
 };
+
+function prependTextToContent(
+  content: UserMessageContent,
+  text: string,
+): UserMessageContent {
+  if (typeof content === 'string') {
+    return `${text}\n\n${content}`;
+  }
+
+  return [{ type: 'text', text }, ...content];
+}
 
 function normalizeUserMessageContent(
   content: UserMessageContent,
@@ -128,26 +176,32 @@ export function agUiResource(
   const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
   const renderer = inject(A2uiRendererService);
-  const a2uiCatalog =
-    inject(A2UI_CUSTOM_CATALOG, { optional: true }) ?? undefined;
-  const readForwardedProps = (): Record<string, unknown> =>
-    options.forwardedProps ? options.forwardedProps() : {};
-  const createAgent = (): HttpAgent =>
-    new HttpAgent({ url: options.url, threadId: randomUUID() });
+  const createAgent = (): InterruptAwareHttpAgent =>
+    new InterruptAwareHttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();
   const tools = options.tools;
   const toolMap = new Map<string, AgUiClientToolDefinition<never>>(
     tools.map((tool: AgUiClientToolDefinition<never>) => [tool.name, tool]),
   );
+  const componentMap = new Map<string, AgUiRegisteredComponent>(
+    readRegisteredComponents(tools).map((component) => [
+      component.name,
+      component,
+    ]),
+  );
 
   const pendingRun = signal<PendingRun | undefined>(undefined);
+  const interrupt = signal<AgUiInterrupt | null>(null);
   const messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>> =
     signal({
       value: [],
     });
 
   const isLoading = signal<boolean>(false);
-  let activeRunRequestId: string | null = null;
+  const firstMessagePreamble = options.firstMessagePreamble;
+  let firstMessagePending = true;
+
+  let activeRunRequestId = '';
 
   const stream = async (streamOptions: StreamOptions) => {
     const { params, abortSignal } = streamOptions;
@@ -164,21 +218,23 @@ export function agUiResource(
       agent.abortRun();
     });
 
-    void runUntilSettled({
+    runUntilSettled({
       agent,
       tools,
       toolMap,
+      componentMap,
       renderer,
       environmentInjector,
       runId: params.id,
+      resume: params.resume,
       model: options.model,
       useServerMemory,
-      a2uiCatalog,
+      forwardedProps: options.forwardedProps,
       abortSignal,
+      interrupt,
       messageStream,
       isLoading,
       maxLocalTurns,
-      extraForwardedProps: readForwardedProps(),
     })
       .catch((error: unknown) => {
         if (abortSignal.aborted || activeRunRequestId !== runRequestId) {
@@ -188,9 +244,10 @@ export function agUiResource(
         messageStream.update((item) => ({
           value: appendErrorMessage(
             readMessages(item),
-            error instanceof Error ? error.message : 'Unknown AG-UI error',
+            friendlyErrorMessage(error, 'Unknown AG-UI error'),
           ),
         }));
+        isLoading.set(false);
       })
       .finally(() => {
         if (activeRunRequestId === runRequestId) {
@@ -212,11 +269,22 @@ export function agUiResource(
       agent.abortRun();
     }
 
+    interrupt.set(null);
+
     const id = randomUUID();
 
     if (useServerMemory) {
       agent.messages = [];
     }
+
+    let agentContent = normalized.agentContent;
+    if (firstMessagePending) {
+      const preamble = firstMessagePreamble?.()?.trim();
+      if (preamble) {
+        agentContent = prependTextToContent(agentContent, preamble);
+      }
+    }
+    firstMessagePending = false;
 
     // The structured `agentContent` (string | UserMessageContentPart[])
     // travels to the agent untouched; only the local chat bubble uses
@@ -224,22 +292,25 @@ export function agUiResource(
     agent.addMessage({
       id,
       role: 'user' as const,
-      content: normalized.agentContent,
+      content: agentContent,
     });
 
-    messageStream.update((item) => ({
-      value: [
-        ...readMessages(item),
-        {
-          id,
-          role: 'user' as const,
-          content: normalized.displayContent,
-          widgets: [],
-          toolCalls: [],
-          attachments: normalized.attachments,
-        },
-      ],
-    }));
+    if (!message.hidden) {
+      messageStream.update((item) => ({
+        value: [
+          ...readMessages(item),
+          {
+            id,
+            role: 'user' as const,
+            content: normalized.displayContent,
+            widgets: [],
+            toolCalls: [],
+            workflowSteps: [],
+            attachments: normalized.attachments,
+          },
+        ],
+      }));
+    }
 
     pendingRun.set({ id: randomUUID() });
   };
@@ -249,13 +320,32 @@ export function agUiResource(
       return;
     }
 
+    interrupt.set(null);
     pendingRun.set({ id: randomUUID() });
+  };
+
+  const resumeInterrupt = (payload: AgUiResumePayload): void => {
+    const activeInterrupt = interrupt();
+    if (!activeInterrupt) {
+      return;
+    }
+
+    interrupt.set(null);
+    pendingRun.set({
+      id: randomUUID(),
+      resume: {
+        interruptId: activeInterrupt.id,
+        payload,
+      },
+    });
   };
 
   const reset = (): void => {
     agent.abortRun();
     agent = createAgent();
     isLoading.set(false);
+    interrupt.set(null);
+    firstMessagePending = true;
     pendingRun.set(undefined);
     messageStream.set({ value: [] });
   };
@@ -270,18 +360,30 @@ export function agUiResource(
     defaultValue: [],
     stream,
   });
-  const publicValue = linkedSignal(() => filterPublicMessages(chat.value()));
+
+  // Derive the exposed value from `messageStream` instead of `chat.value()`:
+  // every `sendMessage` changes the resource params, which resets the resource
+  // value to its default (`[]`) until the new stream emits. That transient
+  // empty list would tear down and recreate every rendered message, including
+  // expensive iframe-backed MCP app widgets.
+  const liveValue = linkedSignal(() => readMessages(messageStream()));
+  const publicValue = linkedSignal(() =>
+    filterPublicMessages(readMessages(messageStream())),
+  );
 
   return {
     ...chat,
-    value: hideInternal ? publicValue : chat.value,
+    value: hideInternal ? publicValue : liveValue,
     isLoading,
+    interrupt: interrupt.asReadonly(),
     sendMessage,
+    resumeInterrupt,
     resendMessages,
     reset,
     dispose,
     stop: () => {
       agent.abortRun();
+      isLoading.set(false);
     },
-  } satisfies AgUiChatResourceRef;
+  };
 }

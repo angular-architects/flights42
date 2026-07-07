@@ -16,10 +16,20 @@ export async function agUiRouteHandler(
     return parsed.response;
   }
 
+  const mode = (
+    parsed.input.forwardedProps as { agentMode?: unknown } | undefined
+  )?.agentMode;
+  const effectiveAgentId =
+    mode === 'plan'
+      ? 'planningAgent'
+      : mode === 'execution'
+        ? 'ticketingAgent'
+        : (agentId ?? '');
+
   const agent = getExtendedLocalAgent({
     mastra: mastraInstance,
-    agentId: agentId ?? '',
-    resourceId: agentId ?? '',
+    agentId: effectiveAgentId,
+    resourceId: parsed.input.threadId,
     requestContext,
   });
 

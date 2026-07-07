@@ -6,28 +6,32 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { provideA2uiCatalog } from '@internal/ag-ui-client';
+import {
+  MCP_APPS_SERVER_URL,
+  provideA2uiCatalog,
+  provideMcpApps,
+} from '@internal/ag-ui-client';
 import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
 import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
+import { mcpAppsConfig } from './mcp-apps.config';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideAppInitializer(() => inject(ConfigService).load()),
     provideRouter(routes, withComponentInputBinding()),
-    // Demo-simplification: sendCatalogDescription forwards the full
-    // descriptor (component schemas etc.) to the agent so the LLM can build
-    // valid A2UI messages without server-side knowledge of the catalog.
-    // In production, set sendCatalogDescription: false and let the server
-    // resolve the catalog id against its own trusted registry to avoid
-    // prompt-injection attacks via untrusted component metadata.
     provideA2uiCatalog(customCatalog, {
-      sendCatalogDescription: true,
+      sendCatalogDescription: false,
     }),
+    {
+      provide: MCP_APPS_SERVER_URL,
+      useFactory: () => inject(ConfigService).mcpServerUrl,
+    },
+    provideMcpApps(mcpAppsConfig),
     provideMarkdownRenderer(async (markdown) =>
       marked.parse(String(markdown ?? '')),
     ),

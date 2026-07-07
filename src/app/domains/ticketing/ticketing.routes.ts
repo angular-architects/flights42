@@ -8,7 +8,6 @@ import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advan
 import { BookingNavigation } from './feature-booking/booking-navigation';
 import { FlightEdit } from './feature-booking/flight-edit/flight-edit';
 import { FlightSearch } from './feature-booking/flight-search/flight-search';
-// import { FlightStore } from './feature-booking/flight-search/flight-store';
 import { PassengerEdit } from './feature-booking/passenger-edit/passenger-edit';
 import { passengerResolver } from './feature-booking/passenger-edit/passenger-resolver';
 import { PassengerSearch } from './feature-booking/passenger-search/passenger-search';
@@ -16,6 +15,7 @@ import { ProtoFlightEdit } from './feature-booking/proto-flight-edit/proto-fligh
 import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/reactive-flight-search';
 import { SummaryPage } from './feature-booking/summary-page/summary-page';
 import { ReportingPage } from './feature-reporting/reporting-page/reporting-page';
+import { TravelPlannerPage } from './feature-travel-planner/travel-planner-page';
 
 export const bookingRoutes: Routes = [
   {
@@ -72,6 +72,10 @@ export const bookingRoutes: Routes = [
   {
     path: 'reporting',
     component: ReportingPage,
+  },
+  {
+    path: 'travel-planner',
+    component: TravelPlannerPage,
   },
 ];
 

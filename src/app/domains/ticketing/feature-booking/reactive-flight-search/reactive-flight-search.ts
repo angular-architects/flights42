@@ -12,8 +12,8 @@ import { RouterLink } from '@angular/router';
 
 import { appSettings } from '../../../shared/util-common/app-settings';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
+import { FlightStore } from '../../data/flight-store';
 import { FlightCard } from '../../ui/flight-card/flight-card';
-import { FlightStore } from '../flight-search/flight-store';
 
 @Component({
   selector: 'app-flight-search',

@@ -1,6 +1,9 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { toDateOnly } from '../utils/format-date.js';
+import { canonicalCity, cityCandidates } from './city-aliases.js';
+
 const FLIGHT_API_BASE = 'https://demo.angulararchitects.io/api/flight';
 
 export const flightSchema = z.object({
@@ -10,6 +13,8 @@ export const flightSchema = z.object({
   date: z.string(),
   delay: z.number(),
 });
+
+export type Flight = z.infer<typeof flightSchema>;
 
 interface RawFlight {
   id: number;
@@ -58,11 +63,38 @@ export async function fetchFlights(
   const raw = (await response.json()) as RawFlight[];
   return raw.map((entry) => ({
     id: entry.id,
-    from: entry.from,
-    to: entry.to,
+    from: canonicalCity(entry.from),
+    to: canonicalCity(entry.to),
     date: entry.date,
     delay: normaliseDelay(entry),
   }));
+}
+
+export async function searchFlights(
+  from: string,
+  to: string,
+  date?: string,
+): Promise<Flight[]> {
+  let flights: Flight[] = [];
+
+  for (const fromCity of cityCandidates(from)) {
+    for (const toCity of cityCandidates(to)) {
+      flights = await fetchFlights(fromCity, toCity);
+      if (flights.length > 0) {
+        break;
+      }
+    }
+    if (flights.length > 0) {
+      break;
+    }
+  }
+
+  if (!date) {
+    return flights;
+  }
+
+  const day = toDateOnly(date);
+  return flights.filter((flight) => toDateOnly(flight.date) === day);
 }
 
 export const searchFlightsTool = createTool({
@@ -75,12 +107,16 @@ export const searchFlightsTool = createTool({
   inputSchema: z.object({
     from: z.string().describe('Departure city name, e.g. "Graz"'),
     to: z.string().describe('Destination city name, e.g. "Hamburg"'),
+    date: z
+      .string()
+      .optional()
+      .describe('Optional ISO date without time, e.g. "2026-06-23".'),
   }),
   outputSchema: z.object({
     flights: z.array(flightSchema),
   }),
-  execute: async ({ from, to }) => {
-    const flights = await fetchFlights(from, to);
+  execute: async ({ from, to, date }) => {
+    const flights = await searchFlights(from, to, date);
     return { flights };
   },
 });

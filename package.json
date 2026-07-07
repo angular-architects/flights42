@@ -7,6 +7,10 @@
     "ai-server": "mastra dev --dir ai-server/src/mastra",
     "ai-server:build": "mastra build --dir ai-server/src/mastra",
     "ai-server:start": "mastra start --dir ai-server/src/mastra",
+    "mcp-server": "concurrently \"npm run mcp-server:app:watch\" \"tsx watch mcp-server/src/server.ts\"",
+    "mcp-server:app:build": "vite build --config mcp-server/vite.config.ts",
+    "mcp-server:app:watch": "vite build --config mcp-server/vite.config.ts --watch",
+    "mcp-server:start": "npm run mcp-server:app:build && tsx mcp-server/src/server.ts",
     "agent": "npm run ai-server",
     "agent:build": "npm run ai-server:build",
     "agent:start": "npm run ai-server:start",
@@ -17,6 +21,8 @@
     "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
     "ai-demo-server": "mastra dev --dir ai-demo/server",
     "ai-demo-client": "node --watch --import tsx ai-demo/client/index.ts",
+    "mcp-apps-demo": "vite --config mcp-apps-demo/vite.config.ts --open /host.html",
+    "mcp-apps-demo:build": "vite build --config mcp-apps-demo/vite.config.ts",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -88,8 +94,7 @@
     "quickjs-emscripten": "^0.32.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zod": "^4.3.5",
-    "zod-to-json-schema": "^3.25.1"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@angular/build": "^21.2.16",

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
-import { FlightStore } from '../../../domains/ticketing/feature-booking/flight-search/flight-store';
+import { FlightStore } from '../../../domains/ticketing/data/flight-store';
 
 export const submitFlightSearchTool = defineAgUiTool({
   name: 'submitFlightSearch',

@@ -8,8 +8,8 @@ import { page } from 'vitest/browser';
 
 import { createTestFlight } from '../../../../testing/create-test-flight';
 import { provideTestConfig } from '../../../../testing/provide-test-config';
+import { FlightStore } from '../../data/flight-store';
 import { FlightSearch } from './flight-search';
-import { FlightStore } from './flight-store';
 
 describe('flight-search', () => {
   let component: FlightSearch;

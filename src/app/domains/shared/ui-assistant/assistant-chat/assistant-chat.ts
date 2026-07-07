@@ -6,11 +6,20 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AgUiChatResourceRef } from '@internal/ag-ui-client';
+import {
+  AgUiChatResourceRef,
+  type AgUiResumePayload,
+} from '@internal/ag-ui-client';
 
+import {
+  AgentMode,
+  AgentModeService,
+} from '../../util-common/agent-mode-service';
 import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
+
+const DEFAULT_GREETING = 'Hi! How can I help you?';
 
 @Component({
   selector: 'app-assistant-chat',
@@ -20,6 +29,9 @@ import { ChatRegistry } from '../chat-registry';
 })
 export class AssistantChat {
   private chatRegistry = inject(ChatRegistry);
+  private agentMode = inject(AgentModeService);
+
+  protected mode = this.agentMode.mode;
 
   private composerInput =
     viewChild<ElementRef<HTMLInputElement>>('composerInput');
@@ -33,12 +45,23 @@ export class AssistantChat {
 
   protected readonly panelVisible = signal(false);
   protected readonly message = signal('');
+  protected readonly greeting = signal<string>(DEFAULT_GREETING);
+  protected readonly showModeSelector = signal(true);
 
   protected chat: AgUiChatResourceRef | null = null;
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
       this.chat = chatInfo.chat;
+      this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
+      this.showModeSelector.set(chatInfo.showModeSelector ?? true);
+    });
+
+    this.chatRegistry.openRequested.subscribe(() => {
+      if (!this.panelVisible()) {
+        this.panelVisible.set(true);
+        this.handlePanelOpened();
+      }
     });
   }
 
@@ -74,5 +97,13 @@ export class AssistantChat {
 
   protected stop(): void {
     this.chat?.stop();
+  }
+
+  protected resumeInterrupt(payload: AgUiResumePayload): void {
+    this.chat?.resumeInterrupt(payload);
+  }
+
+  protected setMode(mode: AgentMode): void {
+    this.agentMode.mode.set(mode);
   }
 }

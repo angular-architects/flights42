@@ -93,7 +93,7 @@
 }
 
 <section class="dashboard-output">
-  @for (widget of widgets(); track widget.a2uiSurfaceId) {
+  @for (widget of widgets(); track widget.id) {
     <app-widget-container [widget]="widget" />
   }
 </section>

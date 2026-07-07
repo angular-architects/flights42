@@ -10,9 +10,15 @@ import { z } from 'zod';
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
+  type AgUiRegisteredComponent,
+  type AgUiResumeRequest,
   type AgUiToolCall,
 } from '../ag-ui-types';
-import { readMessages, replaceMessage } from './messages';
+import { readMessages, replaceMessage, scopeRenderId } from './messages';
+import {
+  appendWidgetsFromPendingToolResult,
+  upsertActionWidgetForToolCall,
+} from './widgets';
 
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 type ToolMessage = Extract<Message, { role: 'tool' }>;
@@ -20,6 +26,7 @@ type AssistantToolCall = NonNullable<AssistantMessage['toolCalls']>[number];
 
 export interface PendingRun {
   id: string;
+  resume?: AgUiResumeRequest;
 }
 
 export interface PendingToolExecution {
@@ -31,43 +38,52 @@ export interface PendingToolExecution {
 interface ExecutePendingToolsOptions {
   agent: HttpAgent;
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   environmentInjector: EnvironmentInjector;
   pendingLocalCalls: PendingToolExecution[];
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+  runId: string;
 }
 
 interface ExecuteToolOptions {
   agent: HttpAgent;
   tool: AgUiClientToolDefinition<never>;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   environmentInjector: EnvironmentInjector;
   pendingCall: PendingToolExecution;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+  runId: string;
 }
 
 interface RecordToolErrorOptions {
   agent: HttpAgent;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   pendingCall: PendingToolExecution;
   error: unknown;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
+  runId: string;
 }
 
 export function upsertToolCall(
   messages: AgUiChatMessage[],
   toolCall: AgUiToolCall,
+  runId: string,
 ): AgUiChatMessage[] {
+  const messageId = scopeRenderId(runId, toolCall.id);
   const toolCallMessageIndex = messages.findIndex(
-    (message) => message.id === toolCall.id,
+    (message) => message.id === messageId,
   );
 
   if (toolCallMessageIndex === -1) {
     return [
       ...messages,
       {
-        id: toolCall.id,
+        id: messageId,
         role: 'assistant',
         content: '',
         widgets: [],
         toolCalls: [toolCall],
+        workflowSteps: [],
       },
     ];
   }
@@ -236,9 +252,11 @@ export async function executePendingTools(
   const {
     agent,
     toolMap,
+    componentMap,
     environmentInjector,
     pendingLocalCalls,
     messageStream,
+    runId,
   } = options;
 
   let sentAnyToolResult = false;
@@ -253,17 +271,21 @@ export async function executePendingTools(
       const sentToolResult = await executeTool({
         agent,
         tool,
+        componentMap,
         environmentInjector,
         pendingCall,
         messageStream,
+        runId,
       });
       sentAnyToolResult ||= sentToolResult;
     } catch (error) {
       recordToolError({
         agent,
+        componentMap,
         pendingCall,
         error,
         messageStream,
+        runId,
       });
     }
   }
@@ -272,8 +294,15 @@ export async function executePendingTools(
 }
 
 async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
-  const { agent, tool, environmentInjector, pendingCall, messageStream } =
-    options;
+  const {
+    agent,
+    tool,
+    componentMap,
+    environmentInjector,
+    pendingCall,
+    messageStream,
+    runId,
+  } = options;
 
   const result = await runInInjectionContext(environmentInjector, () =>
     tool.execute(pendingCall.toolCallArgs as never),
@@ -282,25 +311,84 @@ async function executeTool(options: ExecuteToolOptions): Promise<boolean> {
   if (result === undefined) {
     addToolResultMessage(agent, pendingCall.toolCallId, { ok: true });
 
-    messageStream.update((item) => ({
-      value: completeToolCall(readMessages(item), pendingCall.toolCallId),
-    }));
+    messageStream.update((item) => {
+      const nextMessages = updateToolCall(
+        readMessages(item),
+        pendingCall.toolCallId,
+        {
+          status: 'complete',
+          result: { ok: true },
+          error: undefined,
+        },
+      );
+      const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
+
+      return {
+        value: toolCall
+          ? upsertActionWidgetForToolCall(
+              nextMessages,
+              toolCall,
+              componentMap,
+              runId,
+            )
+          : nextMessages,
+      };
+    });
 
     return true;
   }
 
+  const serializedResult = JSON.stringify(result);
+
   addToolResultMessage(agent, pendingCall.toolCallId, result);
 
-  messageStream.update((item) => ({
-    value: completeToolCall(readMessages(item), pendingCall.toolCallId),
-  }));
+  messageStream.update((item) => {
+    const nextMessages = updateToolCall(
+      readMessages(item),
+      pendingCall.toolCallId,
+      {
+        status: 'complete',
+        result,
+        error: undefined,
+      },
+    );
+    const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
+    const messagesWithActionWidget = toolCall
+      ? upsertActionWidgetForToolCall(
+          nextMessages,
+          toolCall,
+          componentMap,
+          runId,
+        )
+      : nextMessages;
+
+    return {
+      value: appendWidgetsFromPendingToolResult(
+        messagesWithActionWidget,
+        pendingCall,
+        serializedResult,
+        componentMap,
+        runId,
+        environmentInjector,
+      ),
+    };
+  });
 
   return true;
 }
 
 function recordToolError(options: RecordToolErrorOptions): void {
-  const { agent, pendingCall, error, messageStream } = options;
+  const { agent, pendingCall, error, messageStream, componentMap, runId } =
+    options;
   const message = formatToolErrorMessage(pendingCall.toolCallName, error);
+
+  if (pendingCall.toolCallName === 'showComponents') {
+    console.error('AG-UI showComponents call rejected', {
+      toolCallId: pendingCall.toolCallId,
+      args: pendingCall.toolCallArgs,
+      error,
+    });
+  }
 
   agent.addMessage({
     id: randomUUID(),
@@ -311,9 +399,27 @@ function recordToolError(options: RecordToolErrorOptions): void {
   });
 
   messageStream.update((item) => ({
-    value: updateToolCall(readMessages(item), pendingCall.toolCallId, {
-      status: 'error',
-    }),
+    value: (() => {
+      const nextMessages = updateToolCall(
+        readMessages(item),
+        pendingCall.toolCallId,
+        {
+          status: 'error',
+          error: message,
+          result: { error: message },
+        },
+      );
+      const toolCall = findToolCall(nextMessages, pendingCall.toolCallId);
+
+      return toolCall
+        ? upsertActionWidgetForToolCall(
+            nextMessages,
+            toolCall,
+            componentMap,
+            runId,
+          )
+        : nextMessages;
+    })(),
   }));
 }
 
@@ -336,6 +442,24 @@ function hasToolResult(messages: Message[], toolCallId: string): boolean {
   return messages.some(
     (message) => message.role === 'tool' && message.toolCallId === toolCallId,
   );
+}
+
+function findToolCall(
+  messages: AgUiChatMessage[],
+  toolCallId: string,
+): AgUiToolCall | undefined {
+  for (const message of messages) {
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
+    if (toolCall) {
+      return toolCall;
+    }
+  }
+
+  return undefined;
 }
 
 function collectAssistantToolCallIds(messages: Message[]): Set<string> {

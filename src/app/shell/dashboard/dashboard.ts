@@ -13,7 +13,7 @@ import {
   type AgUiChatMessage,
   agUiResource,
   type AgUiToolCall,
-  type AgUiWidget,
+  type AgUiWidgetInstance,
   registerHandlers,
   WidgetContainerComponent,
 } from '@internal/ag-ui-client';
@@ -47,7 +47,7 @@ export class Dashboard {
     forwardedProps: () => ({ preventCaching: this.preventCaching() }),
   });
 
-  protected readonly widgets = computed<AgUiWidget[]>(() =>
+  protected readonly widgets = computed<AgUiWidgetInstance[]>(() =>
     collectWidgets(this.chat.value()),
   );
 
@@ -138,14 +138,14 @@ export class Dashboard {
   }
 }
 
-function collectWidgets(messages: AgUiChatMessage[]): AgUiWidget[] {
+function collectWidgets(messages: AgUiChatMessage[]): AgUiWidgetInstance[] {
   return messages.flatMap((message) =>
     message.role === 'assistant' ? message.widgets : [],
   );
 }
 
 function hasOutput(
-  widgets: AgUiWidget[],
+  widgets: AgUiWidgetInstance[],
   errorMessage: string | null,
 ): boolean {
   return widgets.length > 0 || errorMessage !== null;

@@ -2,7 +2,7 @@ import type { A2uiClientAction } from '@a2ui/web_core/v0_9';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { FlightStore } from '../../../domains/ticketing/feature-booking/flight-search/flight-store';
+import { FlightStore } from '../../../domains/ticketing/data/flight-store';
 
 interface DashboardFlightSearchContext {
   from?: string;

@@ -9,6 +9,19 @@ export function readMessages(
   return 'value' in item ? item.value : [];
 }
 
+/**
+ * Scopes a client-side render identity (message id / widget id) to the current
+ * run. Tool-call ids are only guaranteed unique *within* a single run — some
+ * providers reset them per response — so using them raw as Angular @for track
+ * keys lets a later run's card collide with an earlier one and clobber it.
+ * Prefixing with the run id keeps the protocol-level toolCallId intact while
+ * making the rendered identities globally unique. The runId is constant for the
+ * lifetime of a tool call, so the id stays stable across streaming rebuilds.
+ */
+export function scopeRenderId(runId: string, id: string): string {
+  return `${runId}:${id}`;
+}
+
 export function replaceMessage(
   messages: AgUiChatMessage[],
   index: number,
@@ -19,44 +32,19 @@ export function replaceMessage(
   return nextMessages;
 }
 
-function isHiddenA2uiFormResponse(message: AgUiChatMessage): boolean {
-  if (message.role !== 'user') {
-    return false;
-  }
-
-  const parsed = safeParseJson(message.content);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return false;
-  }
-
-  const payload = parsed as Record<string, unknown>;
-  return payload['type'] === 'a2ui_form_response';
-}
-
-function safeParseJson(value: string): unknown {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return undefined;
-  }
-}
-
 export function filterPublicMessages(
   messages: AgUiChatMessage[],
 ): AgUiChatMessage[] {
   return messages.flatMap((message) => {
-    if (isHiddenA2uiFormResponse(message)) {
-      return [];
-    }
-
     const filteredToolCalls = message.toolCalls.filter(
       (toolCall) => toolCall.name !== 'showComponents',
     );
     const hasContent = message.content.trim().length > 0;
     const hasToolCalls = filteredToolCalls.length > 0;
     const hasWidgets = message.widgets.length > 0;
+    const hasWorkflowSteps = message.workflowSteps.length > 0;
 
-    if (!hasContent && !hasToolCalls && !hasWidgets) {
+    if (!hasContent && !hasToolCalls && !hasWidgets && !hasWorkflowSteps) {
       return [];
     }
 
@@ -86,6 +74,7 @@ export function upsertAssistantMessage(
         content,
         widgets: [],
         toolCalls: [],
+        workflowSteps: [],
       },
     ];
   }
@@ -133,6 +122,7 @@ export function appendErrorMessage(
       content: errorMessage,
       widgets: [],
       toolCalls: [],
+      workflowSteps: [],
     },
   ];
 }

@@ -41,6 +41,16 @@
         </div>
       </div>
       <div class="ai-actions">
+        @if (showModeSelector()) {
+          <select
+            class="mode-select"
+            aria-label="Agent mode"
+            [value]="mode()"
+            (change)="setMode($any($event.target).value)">
+            <option value="plan">Plan</option>
+            <option value="execution">Execution</option>
+          </select>
+        }
         <button
           (click)="toggle()"
           class="icon-btn"
@@ -65,6 +75,9 @@
       #messagesContainer>
       <app-chat-messages
         [messages]="chat.value()"
+        [greeting]="greeting()"
+        [interrupt]="chat.interrupt()"
+        (resumeInterrupt)="resumeInterrupt($event)"
         [pending]="chat.isLoading()" />
     </section>
 

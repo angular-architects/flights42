@@ -1,5 +1,12 @@
 import { type InputContentPart, type UserMessage } from '@ag-ui/core';
-import { ResourceRef, Type } from '@angular/core';
+import {
+  type InputSignal,
+  type InputSignalWithTransform,
+  ResourceRef,
+  type Signal,
+  Type,
+} from '@angular/core';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import type { z as z3 } from 'zod/v3';
 
@@ -7,37 +14,23 @@ import { type A2uiCustomCatalogFunction } from './a2ui-schema';
 
 /**
  * Re-export of the AG-UI core `InputContentPart` discriminated union
- * (text / image / audio / video / document / binary). Mirrors the array
- * variant of `UserMessage.content` so consumers of this lib can build
- * multimodal user messages without importing from `@ag-ui/core` directly.
+ * (text / image / audio / video / document / binary). Lets consumers of
+ * this lib build multimodal user messages without importing from
+ * `@ag-ui/core` directly.
  */
 export type UserMessageContentPart = InputContentPart;
 
 /**
  * Content that `agUiResource.sendMessage` accepts for `role: 'user'`.
- * Mirrors `UserMessage['content']` from `@ag-ui/core`: either a plain
- * string or an array of typed content parts (text + image / audio /
- * video / document / binary).
+ * Either a plain string or an array of typed content parts.
  */
 export type UserMessageContent = UserMessage['content'];
-
-export interface AgUiWidget {
-  name: string;
-  a2uiSurfaceId: string;
-}
-
-export interface AgUiToolCall {
-  id: string;
-  name: string;
-  args: unknown;
-  status: 'pending' | 'complete' | 'error';
-}
 
 /**
  * `attachments` describes non-text parts of a user message (e.g.
  * uploaded images) that should be surfaced to the renderer as a
  * lightweight badge while the structured payload travels separately to
- * the agent. `content` keeps the textual placeholder used for display.
+ * the agent.
  */
 export interface AgUiChatMessageAttachment {
   type: 'image' | 'audio' | 'video' | 'document' | 'binary';
@@ -46,64 +39,180 @@ export interface AgUiChatMessageAttachment {
   label?: string;
 }
 
-export interface AgUiChatMessage {
+export interface AgUiWidget {
   id: string;
-  role: 'user' | 'assistant' | 'error';
-  content: string;
-  widgets: AgUiWidget[];
-  toolCalls: AgUiToolCall[];
-  attachments?: AgUiChatMessageAttachment[];
-}
-
-type ToolExecuteFn<TArgs> = {
-  bivarianceHack: (args: TArgs) => Promise<unknown> | unknown;
-}['bivarianceHack'];
-
-export interface AgUiClientToolDefinition<TArgs = unknown> {
   name: string;
-  description: string;
-  parameters?: Record<string, unknown>;
-  parse?: (args: unknown) => unknown;
-  execute: ToolExecuteFn<TArgs>;
+  component: Type<unknown>;
 }
 
-interface AgUiToolWithSchema<TSchema extends z.ZodTypeAny> {
+export interface AgUiA2uiWidget {
+  kind: 'a2ui';
+  id: string;
   name: string;
-  description: string;
-  schema: TSchema;
-  execute: (args: z.infer<TSchema>) => Promise<unknown> | unknown;
+  a2uiSurfaceId: string;
 }
 
-interface AgUiToolWithoutSchema {
-  name: string;
-  description: string;
-  execute: () => Promise<unknown> | unknown;
+export interface AgUiActionData<TInput = unknown, TResult = unknown> {
+  toolCallId: string;
+  toolName: string;
+  status: AgUiToolCallStatus;
+  input: TInput;
+  result?: TResult;
+  error?: string;
 }
 
-export function defineAgUiTool<const TSchema extends z.ZodTypeAny>(
-  tool: AgUiToolWithSchema<TSchema>,
-): AgUiClientToolDefinition<z.infer<TSchema>>;
-export function defineAgUiTool(
-  tool: AgUiToolWithoutSchema,
-): AgUiClientToolDefinition<void>;
-export function defineAgUiTool(
-  tool: AgUiToolWithSchema<z.ZodTypeAny> | AgUiToolWithoutSchema,
-): AgUiClientToolDefinition {
-  if (!('schema' in tool)) {
-    return {
-      name: tool.name,
-      description: tool.description,
-      execute: () => tool.execute(),
-    };
+export interface AgUiResultWidget extends AgUiWidget {
+  kind?: 'result';
+  props: Record<string, unknown>;
+}
+
+export interface AgUiActionWidget extends AgUiWidget {
+  kind: 'action';
+  toolCallId: string;
+  data: AgUiActionData;
+}
+
+export interface AgUiActionCard<
+  TActionData extends AgUiActionData = AgUiActionData,
+> {
+  actionData: InputSignal<TActionData>;
+}
+
+export type AgUiWidgetInstance =
+  | AgUiResultWidget
+  | AgUiActionWidget
+  | AgUiA2uiWidget;
+
+export interface AgUiMcpAppsSnapshotContent {
+  serverId: string;
+  resourceUri: string;
+  result: CallToolResult;
+  toolInput: Record<string, unknown>;
+}
+
+type UnwrapInputSignalWriteType<Field> =
+  Field extends InputSignalWithTransform<infer _Read, infer WriteT>
+    ? WriteT
+    : never;
+
+type UnwrapDirectiveSignalInputs<Dir, Fields extends keyof Dir> = {
+  [P in Fields]: UnwrapInputSignalWriteType<Dir[P]>;
+};
+
+type NonNeverProperties<TValue> = {
+  [TKey in keyof TValue as [TValue[TKey]] extends [never]
+    ? never
+    : TKey]: TValue[TKey];
+};
+
+export type ComponentSignalInputs<TComponent> = NonNeverProperties<
+  UnwrapDirectiveSignalInputs<TComponent, keyof TComponent>
+>;
+
+type ActionDataInputForComponent<TComponent> =
+  ComponentSignalInputs<TComponent> extends {
+    actionData: infer TActionData;
   }
+    ? TActionData
+    : never;
 
+type ActionCardComponentGuard<TComponent> =
+  ActionDataInputForComponent<TComponent> extends AgUiActionData
+    ? unknown
+    : {
+        __actionDataError: 'Action components must expose an actionData input typed as AgUiActionData.';
+      };
+
+type SchemaPropsForComponent<
+  TComponent,
+  TProps extends Record<string, unknown>,
+> = TProps & {
+  [TKey in keyof TProps]: TKey extends keyof ComponentSignalInputs<TComponent>
+    ? TProps[TKey] extends ComponentSignalInputs<TComponent>[TKey]
+      ? TProps[TKey]
+      : never
+    : never;
+};
+
+export interface AgUiResultRegisteredComponent<
+  TComponent = unknown,
+  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
+  TName extends string = string,
+> {
+  kind?: 'result';
+  name: TName;
+  description: string;
+  component: Type<TComponent>;
+  schema: z.ZodType<TProps>;
+  clientOnly?: true;
+  /**
+   * Optional client-side hook to freeze live client state into the widget's
+   * props at the moment the widget instance is created. It receives the props
+   * the model supplied (matching `schema`) and returns the props the component
+   * actually renders. Invoked inside an Angular injection context, so it may
+   * call `inject(...)`. Use this for components whose data lives in a mutable
+   * client store: capturing it here makes the rendered card immutable, so the
+   * card keeps showing the state as it was even if Angular re-creates the
+   * component (e.g. on @for re-keying) instead of reading the now-current store.
+   */
+  captureProps?: (props: Record<string, unknown>) => Record<string, unknown>;
+}
+
+export interface AgUiActionRegisteredComponent<
+  TComponent = unknown,
+  TToolName extends string = string,
+> {
+  kind: 'action';
+  name: TToolName;
+  component: Type<TComponent>;
+  toolName: TToolName;
+  clientOnly?: true;
+}
+
+export type AgUiRegisteredComponent<
+  TComponent = unknown,
+  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
+  TName extends string = string,
+> =
+  | AgUiResultRegisteredComponent<TComponent, TProps, TName>
+  | AgUiActionRegisteredComponent<TComponent, TName>;
+
+export function defineAgUiComponent<
+  const TName extends string,
+  TComponent,
+  TProps extends Record<string, unknown> = ComponentSignalInputs<TComponent>,
+>(component: {
+  name: TName;
+  description: string;
+  component: Type<TComponent>;
+  schema: z.ZodType<SchemaPropsForComponent<TComponent, TProps>>;
+  clientOnly?: true;
+  captureProps?: (props: Record<string, unknown>) => Record<string, unknown>;
+}): AgUiResultRegisteredComponent<TComponent, TProps, TName>;
+export function defineAgUiComponent(component: {
+  kind?: 'result';
+  name: string;
+  description: string;
+  component: Type<unknown>;
+  schema: z.ZodType<Record<string, unknown>>;
+  clientOnly?: true;
+  captureProps?: (props: Record<string, unknown>) => Record<string, unknown>;
+}): AgUiRegisteredComponent {
+  return component as AgUiRegisteredComponent;
+}
+
+export function defineActionCard<const TToolName extends string, TComponent>(
+  component: {
+    toolName: TToolName;
+    component: Type<TComponent>;
+    clientOnly?: true;
+  } & ActionCardComponentGuard<TComponent>,
+): AgUiActionRegisteredComponent<TComponent, TToolName> {
   return {
-    name: tool.name,
-    description: tool.description,
-    parameters: z.toJSONSchema(tool.schema) as Record<string, unknown>,
-    parse: (args) => tool.schema.parse(args),
-    execute: (args) => tool.execute(tool.schema.parse(args)),
-  };
+    kind: 'action',
+    name: component.toolName,
+    ...component,
+  } as AgUiActionRegisteredComponent<TComponent, TToolName>;
 }
 
 export interface A2uiCustomCatalogComponent {
@@ -125,6 +234,139 @@ export function createCustomCatalog<const TCatalog extends A2uiCustomCatalog>(
   return catalog;
 }
 
+export type AgUiToolCallStatus = 'pending' | 'interrupt' | 'complete' | 'error';
+
+export interface AgUiToolCall {
+  id: string;
+  name: string;
+  args: unknown;
+  status: AgUiToolCallStatus;
+  result?: unknown;
+  error?: string;
+  /**
+   * Optional: name of the workflow step this tool call was made from. Set by
+   * the server when the call was emitted via the AG-UI bridge from inside a
+   * workflow step. Used by the UI to nest tool calls under their parent step.
+   */
+  stepName?: string;
+}
+
+export type AgUiWorkflowStepStatus = 'pending' | 'complete';
+
+export interface AgUiWorkflowStep {
+  name: string;
+  status: AgUiWorkflowStepStatus;
+}
+
+export interface AgUiChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'error';
+  content: string;
+  widgets: AgUiWidgetInstance[];
+  toolCalls: AgUiToolCall[];
+  workflowSteps: AgUiWorkflowStep[];
+  attachments?: AgUiChatMessageAttachment[];
+}
+
+export interface AgUiInterruptPayload {
+  kind: 'approval' | 'suspend';
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
+  resumeSchema?: unknown;
+  suspendPayload?: unknown;
+}
+
+export interface AgUiInterrupt {
+  id: string;
+  reason: string;
+  payload: AgUiInterruptPayload;
+}
+
+/**
+ * Payload sent back to the agent when resuming an interrupt. For built-in
+ * approvals this is `{ approved: boolean }`; for suspended tools it must
+ * match the tool's `resumeSchema` (e.g. `{ selection: 'creditCard' }`).
+ */
+export type AgUiResumePayload = Record<string, unknown>;
+
+/**
+ * Choice button offered by a suspended tool via the `options` array in its
+ * suspend payload. `payload` is forwarded verbatim as the resume payload.
+ */
+export interface AgUiInterruptOption {
+  id: string;
+  label: string;
+  payload: AgUiResumePayload;
+  variant?: 'primary' | 'default' | 'danger';
+}
+
+export interface AgUiResumeRequest {
+  interruptId?: string;
+  payload?: unknown;
+}
+
+type ToolExecuteFn<TArgs> = {
+  bivarianceHack: (args: TArgs) => Promise<unknown> | unknown;
+}['bivarianceHack'];
+
+export interface AgUiClientToolDefinition<TArgs = unknown> {
+  name: string;
+  description: string;
+  registeredComponents?: readonly AgUiRegisteredComponent[];
+  followUpAfterExecution?: boolean;
+  parameters?: Record<string, unknown>;
+  parse?: (args: unknown) => unknown;
+  execute: ToolExecuteFn<TArgs>;
+}
+
+interface AgUiToolWithSchema<TSchema extends z.ZodTypeAny> {
+  name: string;
+  description: string;
+  schema: TSchema;
+  execute: (args: z.infer<TSchema>) => Promise<unknown> | unknown;
+  registeredComponents?: readonly AgUiRegisteredComponent[];
+  followUpAfterExecution?: boolean;
+}
+
+interface AgUiToolWithoutSchema {
+  name: string;
+  description: string;
+  execute: () => Promise<unknown> | unknown;
+  registeredComponents?: readonly AgUiRegisteredComponent[];
+  followUpAfterExecution?: boolean;
+}
+
+export function defineAgUiTool<const TSchema extends z.ZodTypeAny>(
+  tool: AgUiToolWithSchema<TSchema>,
+): AgUiClientToolDefinition<z.infer<TSchema>>;
+export function defineAgUiTool(
+  tool: AgUiToolWithoutSchema,
+): AgUiClientToolDefinition<void>;
+export function defineAgUiTool(
+  tool: AgUiToolWithSchema<z.ZodTypeAny> | AgUiToolWithoutSchema,
+): AgUiClientToolDefinition {
+  if (!('schema' in tool)) {
+    return {
+      name: tool.name,
+      description: tool.description,
+      registeredComponents: tool.registeredComponents,
+      followUpAfterExecution: tool.followUpAfterExecution ?? true,
+      execute: () => tool.execute(),
+    };
+  }
+
+  return {
+    name: tool.name,
+    description: tool.description,
+    registeredComponents: tool.registeredComponents,
+    followUpAfterExecution: tool.followUpAfterExecution ?? true,
+    parameters: z.toJSONSchema(tool.schema) as Record<string, unknown>,
+    parse: (args) => tool.schema.parse(args),
+    execute: (args) => tool.execute(tool.schema.parse(args)),
+  };
+}
+
 export interface AgUiResourceOptions {
   url: string;
   tools: AgUiClientToolDefinition<never>[];
@@ -132,19 +374,23 @@ export interface AgUiResourceOptions {
   useServerMemory?: boolean;
   maxLocalTurns?: number;
   model?: string;
-  /**
-   * Optional provider for additional `forwardedProps` attached to every
-   * AG-UI run. The function is invoked once before each run so
-   * signal-backed values (e.g. a "prevent caching" toggle in the UI)
-   * are read fresh each time. Values are merged with the built-in
-   * `modelHint` (set from `model`); the built-in fields take
-   * precedence on key collisions.
-   */
   forwardedProps?: () => Record<string, unknown>;
+  /**
+   * Optional hidden text prepended to the first user message of a fresh
+   * session. Useful for seeding server-memory chats with context such as the
+   * user's original preferences without rendering that context in the chat UI.
+   */
+  firstMessagePreamble?: () => string | undefined;
 }
 
 export interface AgUiChatResourceRef extends ResourceRef<AgUiChatMessage[]> {
-  sendMessage: (message: { role: 'user'; content: UserMessageContent }) => void;
+  sendMessage: (message: {
+    role: 'user';
+    content: UserMessageContent;
+    hidden?: boolean;
+  }) => void;
+  interrupt: Signal<AgUiInterrupt | null>;
+  resumeInterrupt: (payload: AgUiResumePayload) => void;
   resendMessages: () => void;
   stop: (clearStreamingMessage?: boolean) => void;
   reset: () => void;

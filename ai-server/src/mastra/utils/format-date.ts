@@ -1,3 +1,7 @@
+export function toDateOnly(iso: string): string {
+  return iso.slice(0, 10);
+}
+
 export function formatFlightDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {

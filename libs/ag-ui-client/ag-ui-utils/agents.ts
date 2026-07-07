@@ -1,28 +1,32 @@
-import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import {
   type AgentSubscriber,
+  type BaseEvent,
+  EventType,
   type HttpAgent,
   randomUUID,
 } from '@ag-ui/client';
+import type { A2uiRendererService } from '@a2ui/angular/v0_9';
 import {
   type EnvironmentInjector,
   type ResourceStreamItem,
   type WritableSignal,
 } from '@angular/core';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import {
-  type A2uiCustomCatalog,
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
+  type AgUiInterrupt,
+  type AgUiResumeRequest,
+  type AgUiRegisteredComponent,
+  type AgUiWorkflowStep,
 } from '../ag-ui-types';
 import {
   appendErrorMessage,
+  friendlyErrorMessage,
   readMessages,
   upsertAssistantMessage,
 } from './messages';
 import {
-  completeToolCall,
   executePendingTools,
   keepToolCallMessages,
   normalizeAgentMessagesForRun,
@@ -30,90 +34,60 @@ import {
   updateToolCall,
   upsertToolCall,
 } from './tools';
-import { appendA2uiSurfaceFromActivitySnapshot } from './widgets';
+import {
+  upsertActionWidgetForToolCall,
+  upsertWidgetFromActivitySnapshot,
+} from './widgets';
 
-export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
+interface RunAgentCompatParameters {
+  runId?: string;
+  tools?: RunAgentInputTool[];
+  context?: unknown;
+  forwardedProps?: Record<string, unknown>;
+  abortController?: AbortController;
+  resume?: AgUiResumeRequest;
+}
 
-function buildForwardedProps(
-  model: string | undefined,
-  extras: Record<string, unknown> | undefined,
-): Record<string, unknown> | undefined {
-  const merged: Record<string, unknown> = { ...(extras ?? {}) };
-  if (model) {
-    merged['modelHint'] = model;
-  }
-  return Object.keys(merged).length > 0 ? merged : undefined;
+interface RunAgentInputTool {
+  name: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
+}
+
+interface InterruptAwareHttpAgent extends HttpAgent {
+  runAgentCompat(
+    parameters?: RunAgentCompatParameters,
+    subscriber?: AgentSubscriber,
+  ): Promise<{
+    result: unknown;
+    newMessages: unknown[];
+  }>;
+}
+
+interface InterruptAwareRunFinishedEvent extends BaseEvent {
+  type: EventType.RUN_FINISHED;
+  outcome?: 'success' | 'interrupt';
+  interrupt?: AgUiInterrupt;
 }
 
 export interface RunAgentOptions {
-  agent: HttpAgent;
+  agent: InterruptAwareHttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   renderer: A2uiRendererService;
   runId: string;
+  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
-  a2uiCatalog?: A2uiCustomCatalog;
+  forwardedProps?: () => Record<string, unknown>;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
-  /**
-   * Caller-supplied extra fields merged into the run's `forwardedProps`.
-   * The built-in `modelHint` (set from `model`) takes precedence on
-   * conflicting keys.
-   */
-  extraForwardedProps?: Record<string, unknown>;
-}
-
-function buildCatalogContext(
-  catalog: A2uiCustomCatalog | undefined,
-): { description: string; value: string }[] | undefined {
-  if (!catalog) {
-    return undefined;
-  }
-
-  const components = catalog.components.reduce<
-    Record<string, { description: string; schema: unknown }>
-  >((acc, entry) => {
-    acc[entry.name] = {
-      description: entry.description,
-      schema: zodToJsonSchema(entry.schema),
-    };
-    return acc;
-  }, {});
-
-  const functions = (catalog.functions ?? []).reduce<
-    Record<string, { description: string; returnType: string; schema: unknown }>
-  >((acc, fn) => {
-    acc[fn.name] = {
-      description: fn.description,
-      returnType: fn.returnType,
-      schema: zodToJsonSchema(fn.schema),
-    };
-    return acc;
-  }, {});
-
-  const payload: {
-    catalogId: string;
-    components?: typeof components;
-    functions?: typeof functions;
-  } = { catalogId: catalog.id };
-  if (Object.keys(components).length > 0) {
-    payload.components = components;
-  }
-  if (Object.keys(functions).length > 0) {
-    payload.functions = functions;
-  }
-
-  return [
-    {
-      description: A2UI_CATALOG_CONTEXT_DESCRIPTION,
-      value: JSON.stringify(payload),
-    },
-  ];
 }
 
 interface RunAgentResult {
   pendingLocalCalls: PendingToolExecution[];
   followUpToolCallIds: string[];
+  interrupt: AgUiInterrupt | null;
 }
 
 export async function runAgent(
@@ -123,17 +97,66 @@ export async function runAgent(
     agent,
     tools,
     toolMap,
+    componentMap,
     renderer,
     model,
     useServerMemory,
-    a2uiCatalog,
+    forwardedProps,
     messageStream,
-    extraForwardedProps,
   } = options;
   const { runId } = options;
 
   const pendingLocalCalls: PendingToolExecution[] = [];
   const followUpToolCallIds: string[] = [];
+  let interrupt: AgUiInterrupt | null = null;
+
+  // Workflow steps arrive as STEP_STARTED / STEP_FINISHED with only `stepName`.
+  // Track them on a synthetic per-run "workflow" message so the UI can render
+  // progress without coupling to a specific tool call.
+  const workflowMessageId = `workflow-steps:${runId}`;
+  let workflowMessageInitialized = false;
+  const ensureWorkflowMessage = (
+    messages: AgUiChatMessage[],
+  ): AgUiChatMessage[] => {
+    if (workflowMessageInitialized) {
+      return messages;
+    }
+    workflowMessageInitialized = true;
+    return [
+      ...messages,
+      {
+        id: workflowMessageId,
+        role: 'assistant',
+        content: '',
+        widgets: [],
+        toolCalls: [],
+        workflowSteps: [],
+      },
+    ];
+  };
+  const updateWorkflowSteps = (
+    messages: AgUiChatMessage[],
+    update: (steps: AgUiWorkflowStep[]) => AgUiWorkflowStep[],
+  ): AgUiChatMessage[] => {
+    const ensured = ensureWorkflowMessage(messages);
+    const index = ensured.findIndex(
+      (message) => message.id === workflowMessageId,
+    );
+    if (index === -1) {
+      return ensured;
+    }
+    const message = ensured[index];
+    if (message.role !== 'assistant') {
+      return ensured;
+    }
+    const nextSteps = update(message.workflowSteps);
+    if (nextSteps === message.workflowSteps) {
+      return ensured;
+    }
+    const next = [...ensured];
+    next[index] = { ...message, workflowSteps: nextSteps };
+    return next;
+  };
 
   const subscriber: AgentSubscriber = {
     onTextMessageStartEvent: ({ event }) => {
@@ -169,38 +192,119 @@ export async function runAgent(
         ),
       }));
     },
+    onStepStartedEvent: ({ event }) => {
+      const stepName = (event as { stepName?: string }).stepName;
+      if (!stepName) {
+        return;
+      }
+      messageStream.update((item) => ({
+        value: updateWorkflowSteps(readMessages(item), (steps) => {
+          if (steps.some((step) => step.name === stepName)) {
+            return steps;
+          }
+          return [...steps, { name: stepName, status: 'pending' }];
+        }),
+      }));
+    },
+    onStepFinishedEvent: ({ event }) => {
+      const stepName = (event as { stepName?: string }).stepName;
+      if (!stepName) {
+        return;
+      }
+      messageStream.update((item) => ({
+        value: updateWorkflowSteps(readMessages(item), (steps) => {
+          const index = steps.findIndex((step) => step.name === stepName);
+          if (index === -1) {
+            return [...steps, { name: stepName, status: 'complete' }];
+          }
+          if (steps[index].status === 'complete') {
+            return steps;
+          }
+          const next = [...steps];
+          next[index] = { ...next[index], status: 'complete' };
+          return next;
+        }),
+      }));
+    },
     onToolCallStartEvent: ({ event }) => {
+      // The server may attach an optional `stepName` field when the call was
+      // emitted from inside a workflow step (via the AG-UI bridge). AG-UI's
+      // `BaseEvent` strips unknown fields off its TS surface, so we read it
+      // through a typed shadow.
+      const stepName = (event as { stepName?: unknown }).stepName;
+
       messageStream.update((item) => {
         const messages = readMessages(item);
+        const toolCall = {
+          id: event.toolCallId,
+          name: event.toolCallName,
+          args: {},
+          status: 'pending' as const,
+          ...(typeof stepName === 'string' && stepName.length > 0
+            ? { stepName }
+            : {}),
+        };
 
         return {
-          value: upsertToolCall(messages, {
-            id: event.toolCallId,
-            name: event.toolCallName,
-            args: {},
-            status: 'pending',
-          }),
+          value: upsertActionWidgetForToolCall(
+            upsertToolCall(messages, toolCall, runId),
+            toolCall,
+            componentMap,
+            runId,
+          ),
         };
       });
     },
     onToolCallArgsEvent: ({ event, toolCallName, partialToolCallArgs }) => {
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: partialToolCallArgs,
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: partialToolCallArgs,
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+                runId,
+              )
+            : nextMessages,
+        };
+      });
     },
     onToolCallEndEvent: ({ event, toolCallArgs, toolCallName }) => {
       const normalizedToolCallArgs = toolCallArgs ?? {};
 
-      messageStream.update((item) => ({
-        value: updateToolCall(readMessages(item), event.toolCallId, {
-          name: toolCallName,
-          args: normalizedToolCallArgs,
-          status: 'pending',
-        }),
-      }));
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            name: toolCallName,
+            args: normalizedToolCallArgs,
+            status: 'pending',
+          },
+        );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+                runId,
+              )
+            : nextMessages,
+        };
+      });
 
       const toolDefinition = toolMap.get(toolCallName);
       if (!toolDefinition) {
@@ -213,47 +317,103 @@ export async function runAgent(
         toolCallArgs: normalizedToolCallArgs,
       });
 
-      followUpToolCallIds.push(event.toolCallId);
+      if (toolDefinition.followUpAfterExecution ?? true) {
+        followUpToolCallIds.push(event.toolCallId);
+      }
     },
     onToolCallResultEvent: ({ event }) => {
-      messageStream.update((item) => ({
-        value: completeToolCall(readMessages(item), event.toolCallId),
-      }));
-    },
-    onActivitySnapshotEvent: ({ event }) => {
-      if (event.activityType !== 'a2ui-surface') {
-        return;
-      }
+      const result = safeParseJson(event.content);
+      const error = readToolErrorMessage(result);
 
       messageStream.update((item) => {
-        const messages = readMessages(item);
-        const withSurface = appendA2uiSurfaceFromActivitySnapshot(
-          messages,
-          event.messageId,
-          event.content,
-          renderer,
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          event.toolCallId,
+          {
+            status: error ? 'error' : 'complete',
+            result,
+            error,
+          },
         );
+        const toolCall = findToolCall(nextMessages, event.toolCallId);
 
         return {
-          value: completeToolCall(withSurface, event.messageId),
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+                runId,
+              )
+            : nextMessages,
         };
       });
     },
+    onActivitySnapshotEvent: ({ event }) => {
+      messageStream.update((item) => ({
+        value: upsertWidgetFromActivitySnapshot(
+          readMessages(item),
+          event.messageId,
+          event.activityType,
+          event.content,
+          componentMap,
+          renderer,
+        ),
+      }));
+    },
     onRunErrorEvent: ({ event }) => {
+      const message =
+        event.code === 'abort'
+          ? 'Request was aborted.'
+          : event.message || 'Unknown AG-UI run error';
+
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          readMessages(item),
-          event.message || 'Unknown AG-UI run error',
+          markPendingToolCallsAsError(readMessages(item), componentMap, runId),
+          message,
         ),
       }));
     },
     onRunFailed: ({ error }) => {
       messageStream.update((item) => ({
         value: appendErrorMessage(
-          readMessages(item),
-          error instanceof Error ? error.message : 'Unknown AG-UI run failure',
+          markPendingToolCallsAsError(readMessages(item), componentMap, runId),
+          friendlyErrorMessage(error, 'Unknown AG-UI run failure'),
         ),
       }));
+    },
+    onRunFinishedEvent: ({ event }) => {
+      const interruptEvent = event as InterruptAwareRunFinishedEvent;
+      const activeInterrupt = interruptEvent.interrupt;
+      if (interruptEvent.outcome !== 'interrupt' || !activeInterrupt) {
+        return;
+      }
+
+      interrupt = activeInterrupt;
+      messageStream.update((item) => {
+        const nextMessages = updateToolCall(
+          readMessages(item),
+          activeInterrupt.payload.toolCallId,
+          {
+            status: 'interrupt',
+          },
+        );
+        const toolCall = findToolCall(
+          nextMessages,
+          activeInterrupt.payload.toolCallId,
+        );
+
+        return {
+          value: toolCall
+            ? upsertActionWidgetForToolCall(
+                nextMessages,
+                toolCall,
+                componentMap,
+                runId,
+              )
+            : nextMessages,
+        };
+      });
     },
   };
 
@@ -269,14 +429,20 @@ export async function runAgent(
       : normalizeAgentMessagesForRun(agent.messages),
   );
 
-  const forwardedProps = buildForwardedProps(model, extraForwardedProps);
+  const mergedForwardedProps: Record<string, unknown> = {
+    ...(model ? { modelHint: model } : {}),
+    ...(forwardedProps?.() ?? {}),
+  };
 
-  await agent.runAgent(
+  await agent.runAgentCompat(
     {
       runId,
       tools: toolsToOffer,
-      forwardedProps,
-      context: buildCatalogContext(a2uiCatalog),
+      forwardedProps:
+        Object.keys(mergedForwardedProps).length > 0
+          ? mergedForwardedProps
+          : undefined,
+      resume: options.resume,
     },
     subscriber,
   );
@@ -284,29 +450,99 @@ export async function runAgent(
   return {
     pendingLocalCalls,
     followUpToolCallIds,
+    interrupt,
   };
 }
 
+function markPendingToolCallsAsError(
+  messages: AgUiChatMessage[],
+  componentMap: Map<string, AgUiRegisteredComponent>,
+  runId: string,
+): AgUiChatMessage[] {
+  return messages.reduce<AgUiChatMessage[]>((currentMessages, message) => {
+    if (message.role !== 'assistant') {
+      return currentMessages;
+    }
+
+    return message.toolCalls.reduce<AgUiChatMessage[]>(
+      (nextMessages, toolCall) => {
+        if (toolCall.status !== 'pending') {
+          return nextMessages;
+        }
+
+        const updatedMessages = updateToolCall(nextMessages, toolCall.id, {
+          status: 'error',
+          error: 'Tool execution did not complete.',
+        });
+        const updatedToolCall = findToolCall(updatedMessages, toolCall.id);
+
+        return updatedToolCall
+          ? upsertActionWidgetForToolCall(
+              updatedMessages,
+              updatedToolCall,
+              componentMap,
+              runId,
+            )
+          : updatedMessages;
+      },
+      currentMessages,
+    );
+  }, messages);
+}
+
+function findToolCall(messages: AgUiChatMessage[], toolCallId: string) {
+  for (const message of messages) {
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCall = message.toolCalls.find((entry) => entry.id === toolCallId);
+    if (toolCall) {
+      return toolCall;
+    }
+  }
+
+  return undefined;
+}
+
+function readToolErrorMessage(content: unknown): string | undefined {
+  return content &&
+    typeof content === 'object' &&
+    'error' in content &&
+    typeof (content as { error?: unknown }).error === 'string'
+    ? (content as { error: string }).error
+    : undefined;
+}
+
+function safeParseJson(content: unknown): unknown {
+  if (typeof content !== 'string') {
+    return content;
+  }
+
+  try {
+    return JSON.parse(content);
+  } catch {
+    return content;
+  }
+}
+
 export interface RunUntilSettledOptions {
-  agent: HttpAgent;
+  agent: InterruptAwareHttpAgent;
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
+  componentMap: Map<string, AgUiRegisteredComponent>;
   renderer: A2uiRendererService;
   environmentInjector: EnvironmentInjector;
   runId: string;
+  interrupt: WritableSignal<AgUiInterrupt | null>;
+  resume?: AgUiResumeRequest;
   model?: string;
   useServerMemory?: boolean;
-  a2uiCatalog?: A2uiCustomCatalog;
+  forwardedProps?: () => Record<string, unknown>;
   abortSignal: AbortSignal;
   messageStream: WritableSignal<ResourceStreamItem<AgUiChatMessage[]>>;
   isLoading: WritableSignal<boolean>;
   maxLocalTurns: number;
-  /**
-   * Caller-supplied extra fields merged into every `forwardedProps`
-   * payload of the runs spawned for this turn (initial run + tool
-   * follow-ups). See `RunAgentOptions.extraForwardedProps`.
-   */
-  extraForwardedProps?: Record<string, unknown>;
 }
 
 export async function runUntilSettled(
@@ -316,16 +552,18 @@ export async function runUntilSettled(
     agent,
     tools,
     toolMap,
+    componentMap,
     renderer,
     environmentInjector,
     runId,
+    interrupt,
+    resume,
     model,
     useServerMemory,
-    a2uiCatalog,
+    forwardedProps,
     abortSignal,
     messageStream,
     maxLocalTurns,
-    extraForwardedProps,
   } = options;
 
   let done = false;
@@ -348,14 +586,20 @@ export async function runUntilSettled(
       agent,
       tools,
       toolMap,
+      componentMap,
       renderer,
       runId: currentRunId,
+      resume: turnCount === 1 ? resume : undefined,
       model,
       useServerMemory,
-      a2uiCatalog,
+      forwardedProps,
       messageStream,
-      extraForwardedProps,
     });
+
+    if (runResult.interrupt) {
+      interrupt.set(runResult.interrupt);
+      break;
+    }
 
     if (useServerMemory) {
       agent.setMessages(
@@ -366,10 +610,20 @@ export async function runUntilSettled(
     await executePendingTools({
       agent,
       toolMap,
+      componentMap,
       environmentInjector,
       pendingLocalCalls: runResult.pendingLocalCalls,
       messageStream,
+      runId: currentRunId,
     });
+
+    messageStream.update((item) => ({
+      value: markPendingToolCallsAsError(
+        readMessages(item),
+        componentMap,
+        currentRunId,
+      ),
+    }));
 
     done = runResult.followUpToolCallIds.length === 0;
     currentRunId = randomUUID();

@@ -1,6 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 
-import { FlightStore } from '../flight-search/flight-store';
+import { FlightStore } from '../../data/flight-store';
 import { PassengerStore } from '../passenger-search/passenger-store';
 
 @Injectable({ providedIn: 'root' })

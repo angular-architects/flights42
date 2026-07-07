@@ -10,8 +10,13 @@ import {
 
 import { checkinAgent } from './agents/checkin-agent.js';
 import { dashboardAgent } from './agents/dashboard-agent.js';
+import { hotelAgent } from './agents/hotel-agent.js';
+import { packageAgent } from './agents/package-agent.js';
+import { planningAgent } from './agents/planning-agent.js';
 import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
+import { travelPlannerAgent } from './agents/travel-planner-agent.js';
+import { travelRefinementAgent } from './agents/travel-refinement-agent.js';
 import { agUiRouteHandler } from './routes/ag-ui-route.js';
 import {
   bookFlightHandler,
@@ -21,14 +26,21 @@ import {
 import { getChartHandler } from './routes/charts-route.js';
 import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
 import { getDashboardImageHandler } from './routes/images-route.js';
+import { packageTourWorkflow } from './workflows/package-tour-workflow.js';
 
 export const mastra = new Mastra({
   agents: {
     ticketingAgent,
+    planningAgent,
+    packageAgent,
+    hotelAgent,
+    travelPlannerAgent,
+    travelRefinementAgent,
     reportingAgent,
     checkinAgent,
     dashboardAgent,
   },
+  workflows: { packageTourWorkflow },
   storage: new LibSQLStore({
     id: 'flights42-storage',
     url: 'file:./flights42.db',

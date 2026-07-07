@@ -1,9 +1,13 @@
 import { JsonPipe } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
+  type AgUiActionWidget,
   AgUiChatMessage,
+  AgUiInterrupt,
+  type AgUiInterruptOption,
+  type AgUiResumePayload,
   WidgetContainerComponent,
 } from '@internal/ag-ui-client';
 
@@ -25,8 +29,17 @@ import { ToolStatusComponent } from '../tool-status';
 })
 export class ChatMessages {
   readonly messages = input.required<AgUiChatMessage[]>();
+  readonly interrupt = input<AgUiInterrupt | null>(null);
   readonly pending = input<boolean>(false);
+  readonly greeting = input<string>('Hi! How can I help you?');
+  readonly resumeInterrupt = output<AgUiResumePayload>();
   protected readonly showIndicator = computed(() => this.pending());
+  protected readonly interruptModel = computed(() =>
+    toInterruptModel(this.interrupt()),
+  );
+
+  protected readonly approvePayload: AgUiResumePayload = { approved: true };
+  protected readonly rejectPayload: AgUiResumePayload = { approved: false };
 
   protected readonly icons = {
     user: '💬',
@@ -63,6 +76,55 @@ export class ChatMessages {
         typeof message.content === 'string' ? message.content : String(''),
       hasContent: this.hasContent(message),
       icon: this.icons[message.role] || '❓',
+      toolCalls: message.toolCalls.filter(
+        (toolCall) => !hasActionWidget(message, toolCall.id),
+      ),
     })),
+  );
+}
+
+interface InterruptPayload {
+  message?: string;
+  options?: AgUiInterruptOption[];
+}
+
+interface InterruptModel {
+  id: AgUiInterrupt['id'];
+  reason: AgUiInterrupt['reason'];
+  payload: AgUiInterrupt['payload'];
+  message: string;
+  options: AgUiInterruptOption[];
+}
+
+function toInterruptModel(
+  interrupt: AgUiInterrupt | null,
+): InterruptModel | null {
+  if (!interrupt) {
+    return null;
+  }
+
+  const suspendPayload = interrupt.payload.suspendPayload as
+    | InterruptPayload
+    | undefined;
+
+  return {
+    ...interrupt,
+    message:
+      typeof suspendPayload?.message === 'string'
+        ? suspendPayload.message
+        : `Tool Call: ${interrupt.payload.toolName}`,
+    options: Array.isArray(suspendPayload?.options)
+      ? suspendPayload.options
+      : [],
+  };
+}
+
+function hasActionWidget(
+  message: AgUiChatMessage,
+  toolCallId: string,
+): boolean {
+  return message.widgets.some(
+    (widget): widget is AgUiActionWidget =>
+      widget.kind === 'action' && widget.toolCallId === toolCallId,
   );
 }

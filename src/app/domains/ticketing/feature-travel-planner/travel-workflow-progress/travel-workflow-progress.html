@@ -1,0 +1,67 @@
+@if (loading() || workflowSteps().length > 0) {
+  <div class="step-tracker-row">
+    <div class="step-tracker">
+      @for (
+        step of stepPipeline();
+        track step.id;
+        let i = $index;
+        let last = $last
+      ) {
+        <div class="step-node" [attr.data-state]="step.state">
+          <div class="step-icon">
+            @if (step.state === 'done') {
+              ✓
+            } @else if (step.state === 'active') {
+              <span class="step-spinner"></span>
+            } @else {
+              {{ i + 1 }}
+            }
+          </div>
+          <span class="step-label">{{ step.label }}</span>
+        </div>
+        @if (!last) {
+          <div
+            class="step-connector"
+            [class.done]="step.state === 'done'"></div>
+        }
+      }
+    </div>
+    <button
+      type="button"
+      class="step-more-btn"
+      [disabled]="!canToggleDetails()"
+      (click)="toggleToolDetails()">
+      {{ showToolDetails() ? 'Less' : 'More' }}
+    </button>
+  </div>
+}
+
+@if (showToolDetails() && canToggleDetails()) {
+  <div class="tool-details-layer" role="dialog" aria-label="Workflow details">
+    <header class="tool-details-header">
+      <h2>Workflow progress</h2>
+      <button
+        type="button"
+        class="tool-details-close"
+        (click)="toggleToolDetails()">
+        Close
+      </button>
+    </header>
+
+    <ol class="tool-details-list">
+      @for (toolCall of toolCalls(); track toolCall.id) {
+        <li class="tool-details-item" [attr.data-status]="toolCall.status">
+          <div class="tool-details-item-head">
+            <span class="tool-details-name">{{ toolCall.name }}</span>
+            <span class="tool-details-status">{{ toolCall.status }}</span>
+          </div>
+          @if (formatToolArgs(toolCall.args)) {
+            <pre class="tool-details-args">{{
+              formatToolArgs(toolCall.args)
+            }}</pre>
+          }
+        </li>
+      }
+    </ol>
+  </div>
+}
