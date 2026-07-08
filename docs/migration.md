@@ -33,8 +33,7 @@ code.
 The CopilotKit registration should expose the same intent:
 
 ```ts
-registerFrontendTool({
-  agentId: 'ticketingAgent',
+export const showComponentsTool = createFrontendTool({
   name: 'showComponents',
   description: 'Render registered flights UI components in the chat.',
   parameters: showComponentsSchema,
@@ -108,10 +107,9 @@ The migration decision is:
 ## Tool registration
 
 Tool definitions should stay in dedicated files, similar to the current
-`defineAgUiTool` setup. The registration itself should happen in the provider
-function for the corresponding Copilot agent, because that is also where the
-matching `agentId`, AG-UI `HttpAgent`, and `injectAgentStore(agentId)` are
-known.
+`defineAgUiTool` setup. The tool definitions should not know the concrete
+`agentId`. The agent binding happens centrally when the agent store is
+initialized.
 
 See `docs/client-tools-and-components.md` for the conceptual distinction between
 browser-executed frontend tools, component selection through
@@ -120,115 +118,289 @@ browser-executed frontend tools, component selection through
 
 The preferred shape is:
 
-- always expose frontend tools and render-tool-call configs through factory
-  functions, even when a constant object would be enough
+- expose frontend tools, render-tool-call configs, and human-in-the-loop configs
+  as named constants when they do not need use-case-specific behavior
+- use small identity helpers such as `createFrontendTool(...)`,
+  `createRenderToolCall(...)`, and `createHumanInTheLoop(...)` for type
+  inference and to forbid `agentId` on the tool definition
 - keep schema, name, description, and handler together in the frontend tool
-  factory
+  definition
 - derive named TypeScript types next to their Zod schemas, and do not use
   `z.infer<typeof schema>` ad hoc in renderer or tool signatures
 - keep tool name, args schema, and component together in the render-tool-call
-  factory
+  definition
 - call `registerFrontendTool`, `registerRenderToolCall`, or
-  `registerHumanInTheLoop` from the use-case owner during synchronous
-  initialization
+  `registerHumanInTheLoop` from the agent-store initialization helper
 - let the handler use Angular `inject(...)` when it needs stores, router, or
   other scoped services
 - avoid registering tools at module top level
 - avoid registering the same `agentId + toolName` from multiple live component
   instances
 
-Frontend tools use a small factory whose variable part is the `agentId`:
+Frontend tools use a small identity helper for type inference. The exported
+domain tool itself should have the short domain name, without a `create` prefix:
 
 ```ts
-export function createFindFlightsTool(
-  agentId: string,
-): FrontendToolConfig<FindFlightsArgs> {
-  return {
-    agentId,
-    name: 'findFlights',
-    description: 'Searches for flights and opens the result page.',
-    parameters: findFlightsSchema,
-    handler: async ({ from, to }) => {
-      const flightStore = inject(FlightStore);
-      const router = inject(Router);
+const findFlightsSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+});
 
-      flightStore.updateFilter(from, to);
-      await router.navigate(['/ticketing/booking/flight-search']);
+export type FindFlightsArgs = z.infer<typeof findFlightsSchema>;
 
-      return { ok: true };
-    },
-  };
-}
+export const findFlightsTool = createFrontendTool({
+  name: 'findFlights',
+  description: 'Searches for flights and opens the result page.',
+  parameters: findFlightsSchema,
+  handler: async ({ from, to }) => {
+    const flightStore = inject(FlightStore);
+    const router = inject(Router);
+
+    flightStore.updateFilter(from, to);
+    await router.navigate(['/ticketing/booking/flight-search']);
+
+    return { ok: true };
+  },
+});
 ```
 
 Render tool calls follow the same pattern:
 
 ```ts
-export function createBookFlightRenderToolCall(
-  agentId: string,
-): RenderToolCallConfig<BookFlightArgs> {
-  return {
-    agentId,
-    name: 'bookFlightTool',
-    args: bookFlightArgsSchema,
-    component: BookFlightToolCallRenderer,
-  };
-}
+const bookFlightArgsSchema = z.object({
+  flightId: z.number(),
+});
+
+export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
+
+export const bookFlightRenderTool = createRenderToolCall({
+  name: 'bookFlightTool',
+  args: bookFlightArgsSchema,
+  component: BookFlightToolCallRenderer,
+});
 ```
 
-The owner registers the factory results for the relevant agent:
+Human-in-the-loop tools should use the same approach with
+`createHumanInTheLoop(...)`.
+
+The local identity helpers should be thin TypeScript helpers. They should not
+register anything and should not inject anything:
 
 ```ts
-registerFrontendTool(createFindFlightsTool('ticketing.execute'));
-registerFrontendTool(createFindFlightsTool('travel-planner'));
-registerRenderToolCall(createBookFlightRenderToolCall('ticketing.execute'));
+type WithoutAgentId<T> = Omit<T, 'agentId'> & {
+  agentId?: never;
+};
+
+export function createFrontendTool<Args extends Record<string, unknown>>(
+  tool: WithoutAgentId<FrontendToolConfig<Args>>,
+): WithoutAgentId<FrontendToolConfig<Args>> {
+  return tool;
+}
 ```
 
 No additional mode parameter is planned. If a use case needs different
 semantics, description, parameters, or behavior, it should get a separate tool
-factory or explicit tool variant.
+definition or explicit tool variant.
 
-## Agent providers
-
-Each use case should expose a `provide...CopilotAgent()` function. This provider
-function initializes the self-managed AG-UI `HttpAgent` for the existing
-`/ag-ui/:agentId` route and registers the tools, tool-call renderers,
-human-in-the-loop tools, and activity renderers for the same `agentId`.
-
-The provider should not add a custom `onDestroy` cleanup for the `HttpAgent`. If
-the route/use case is initialized again, the agent entry for the same `agentId`
-is overwritten. CopilotKit's own `DestroyRef` handling still owns the lifetime
-of `registerFrontendTool`, `registerRenderToolCall`, and
-`registerHumanInTheLoop` registrations.
+The generic `agentStore(...)` helper is responsible for creating an
+`InjectionToken` whose factory adds the concrete `agentId` to every tool
+definition:
 
 ```ts
-export function provideTicketingCopilotAgent(): EnvironmentProviders {
-  return makeEnvironmentProviders([
-    provideEnvironmentInitializer(() => {
-      const config = inject(ConfigService);
-      const copilotKit = inject(CopilotKit);
-      const agentId = 'ticketingAgent';
+for (const tool of config.frontendTools ?? []) {
+  registerFrontendTool({ ...tool, agentId: config.agentId });
+}
 
-      copilotKit.updateRuntime({
-        selfManagedAgents: {
-          ...copilotKit.agents(),
-          [agentId]: new HttpAgent({
-            agentId,
-            url: config.agUiUrlFor(agentId),
-          }),
-        },
-      });
+for (const toolCall of config.renderToolCalls ?? []) {
+  registerRenderToolCall({ ...toolCall, agentId: config.agentId });
+}
 
-      registerFrontendTool(createFindFlightsTool(agentId));
-      registerRenderToolCall(createBookFlightRenderToolCall(agentId));
-      registerHumanInTheLoop(createRequestApprovalTool(agentId));
-    }),
-  ]);
+for (const tool of config.humanInTheLoop ?? []) {
+  registerHumanInTheLoop({ ...tool, agentId: config.agentId });
 }
 ```
 
+Keep using `registerFrontendTool`, `registerRenderToolCall`, and
+`registerHumanInTheLoop` instead of calling `copilotKit.addFrontendTool(...)`
+directly. `registerFrontendTool` captures the current Angular `Injector`,
+passes it to CopilotKit, and wires `DestroyRef` cleanup. The injector matters
+because CopilotKit runs frontend tool handlers through that injection context,
+so handlers can safely call Angular `inject(...)`.
+
+## Agent store initialization
+
+Each use case should expose an `InjectionToken` for its CopilotKit agent store.
+The token factory initializes the self-managed AG-UI `HttpAgent` for the
+existing `/ag-ui/:agentId` route, registers frontend tools, tool-call renderers,
+human-in-the-loop tools, and activity renderers for the same `agentId`, and then
+returns the app-facing agent store.
+
+Shared CopilotKit code should use two layers:
+
+- `src/app/domains/shared/util-copilotkit` is the base layer for generic
+  CopilotKit helpers that should ideally come from `@copilotkit/angular`
+  itself. This layer should not know flights-specific assistant details.
+- `src/app/domains/shared/ui-assistant` is the app-specific assistant layer. It
+  can build on `util-copilotkit` and contain flights assistant details such as
+  MCP Apps rendering and assistant-shell integration.
+
+Do not place new CopilotKit helpers in `libs/ag-ui-client`. That library is
+legacy AG-UI client infrastructure; the new helpers are CopilotKit-native
+infrastructure.
+
+Use this split:
+
+- `src/app/domains/shared/util-copilotkit/tool-definition.ts` for the pure
+  TypeScript identity helpers `createFrontendTool(...)`,
+  `createRenderToolCall(...)`, and `createHumanInTheLoop(...)`
+- `src/app/domains/shared/util-copilotkit/agent-store.ts` for the public
+  `agentStore(...)` token helper, the app-facing `CopilotAgentStore` type, and
+  the private `createAgentStore(...)` implementation detail
+- `src/app/domains/shared/ui-assistant/copilot/mcp-apps/...` for CopilotKit MCP
+  Apps activity rendering and related assistant UI integration
+
+Feature-specific agent store tokens and tool definitions stay in the owning
+feature, for example `src/app/domains/ticketing/ai/ticketing-agent-store.ts`
+and `src/app/domains/ticketing/ai/tools/find-flights.tool.ts`.
+
+The preferred use-case token shape is:
+
+```ts
+export const TICKETING_AGENT_ID = 'ticketingAgent';
+
+export const TicketingAgentStore = agentStore({
+  agentId: TICKETING_AGENT_ID,
+  url: () => inject(ConfigService).agUiUrlFor(TICKETING_AGENT_ID),
+  frontendTools: [findFlightsTool, toggleFlightSelectionTool],
+  renderToolCalls: [bookFlightRenderTool, cancelFlightRenderTool],
+  humanInTheLoop: [requestApprovalTool],
+});
+```
+
+Use PascalCase for concrete agent store tokens, for example
+`TicketingAgentStore`, so consumers can treat them like class-like DI entries
+at the injection site. Define `url` as a factory so runtime configuration can be
+read through Angular `inject(...)` inside the token factory.
+
 This replaces `agUiResource` in migrated use cases while keeping the existing
 server routes.
+
+Using `providedIn: 'root'` does not imply eager loading. If the token is only
+referenced from a lazy feature, its code can still live in that lazy chunk. The
+scope decision is about lifetime: `providedIn: 'root'` gives one store
+initialization for the application, while route providers would give one per
+route environment injector.
+
+The public shared helper should be called `agentStore(...)`. It creates an
+`InjectionToken<CopilotAgentStore>` and keeps the actual store creation inside
+`util-copilotkit/agent-store.ts`. The internal implementation can still use a
+private `createAgentStore(...)` function, but that function should not be
+exported.
+
+CopilotKit's native `injectAgentStore(agentId)` returns a `Signal<AgentStore>`.
+`createAgentStore(...)` should keep that as an internal detail and return a
+flat store object instead. The app code should name injected stores
+`agentStore`, for example:
+
+```ts
+protected readonly agentStore = inject(TicketingAgentStore);
+```
+
+The app-facing API should expose signals as properties and convenience methods
+as methods:
+
+```ts
+export interface CopilotAgentStore {
+  messages: Signal<Message[]>;
+  isRunning: Signal<boolean>;
+  state: Signal<unknown>;
+  sendMessage(message: string): Promise<void>;
+}
+```
+
+This lets components use the store idiomatically:
+
+```ts
+await this.agentStore.sendMessage(message);
+this.agentStore.messages();
+this.agentStore.isRunning();
+```
+
+The initial `sendMessage(...)` helper is text-only. It trims empty input, adds a
+user message to the underlying agent, and runs the agent through CopilotKit's
+core so registered frontend tools and context participate in the run.
+
+```ts
+export function agentStore(
+  config: AgentStoreConfig,
+): InjectionToken<CopilotAgentStore> {
+  return new InjectionToken<CopilotAgentStore>(`${config.agentId} AgentStore`, {
+    providedIn: config.providedIn === undefined ? 'root' : config.providedIn,
+    factory: () =>
+      createAgentStore({
+        ...config,
+        url: config.url(),
+      }),
+  });
+}
+
+function createAgentStore(config: ResolvedAgentStoreConfig): CopilotAgentStore {
+  const copilotKit = inject(CopilotKit);
+
+  copilotKit.updateRuntime({
+    selfManagedAgents: {
+      ...copilotKit.agents(),
+      [config.agentId]: new HttpAgent({
+        agentId: config.agentId,
+        url: config.url,
+      }),
+    },
+  });
+
+  for (const tool of config.frontendTools ?? []) {
+    registerFrontendTool({ ...tool, agentId: config.agentId });
+  }
+
+  for (const toolCall of config.renderToolCalls ?? []) {
+    registerRenderToolCall({ ...toolCall, agentId: config.agentId });
+  }
+
+  for (const tool of config.humanInTheLoop ?? []) {
+    registerHumanInTheLoop({ ...tool, agentId: config.agentId });
+  }
+
+  const nativeStore = injectAgentStore(config.agentId);
+
+  return {
+    messages: computed(() => nativeStore().messages()),
+    isRunning: computed(() => nativeStore().isRunning()),
+    state: computed(() => nativeStore().state()),
+    sendMessage: async (message) => {
+      const content = message.trim();
+
+      if (!content) {
+        return;
+      }
+
+      const agent = nativeStore().agent;
+
+      agent.addMessage({
+        id: randomUUID(),
+        role: 'user',
+        content,
+      });
+
+      await copilotKit.core.runAgent({ agent });
+    },
+  };
+}
+```
+
+Do not add a custom `onDestroy` cleanup for the `HttpAgent`. If the route/use
+case is initialized again, the agent entry for the same `agentId` is
+overwritten. CopilotKit's own `DestroyRef` handling still owns the lifetime of
+`registerFrontendTool`, `registerRenderToolCall`, and `registerHumanInTheLoop`
+registrations.
 
 ## Runtime URL
 
@@ -283,16 +455,18 @@ old `ChatRegistry` and `AgUiChatMessage` model unchanged.
 3. Migrate `showComponents` to `registerFrontendTool` while preserving the
    flights component mapping internally, without depending on
    `@a2ui/angular/v0_9`.
-4. Migrate one browser tool, for example `findFlights`, by keeping the tool
-   factory in its own file and registering it from the use-case
-   `provide...CopilotAgent()` function.
-5. Migrate one action-card renderer, for example `bookFlightTool`, using the
-   same factory-and-owner-registration pattern and updating the card component
-   itself to the CopilotKit tool-call API.
-6. Migrate MCP Apps rendering to a custom CopilotKit activity renderer.
-7. Migrate one human-in-the-loop approval/options flow directly to
+4. Add the use-case store token, for example `TicketingAgentStore`, and define
+   it through `agentStore(...)`.
+5. Migrate one browser tool, for example `findFlights`, by keeping the tool
+   definition in its own file and registering it through the use-case
+   `agentStore(...)` call.
+6. Migrate one action-card renderer, for example `bookFlightTool`, using the
+   same constant-definition and store-registration pattern and updating the card
+   component itself to the CopilotKit tool-call API.
+7. Migrate MCP Apps rendering to a custom CopilotKit activity renderer.
+8. Migrate one human-in-the-loop approval/options flow directly to
    `registerHumanInTheLoop`.
-8. Revisit the assistant shell and decide whether direct store usage remains
+9. Revisit the assistant shell and decide whether direct store usage remains
    sufficient or whether parts of `<copilot-chat>` should be adopted.
 
 ## Non-goals for the first step
