@@ -66,8 +66,25 @@ interface InterruptAwareHttpAgent extends HttpAgent {
 
 interface InterruptAwareRunFinishedEvent extends BaseEvent {
   type: EventType.RUN_FINISHED;
-  outcome?: 'success' | 'interrupt';
+  outcome?:
+    | 'success'
+    | 'interrupt'
+    | {
+        type: 'success';
+      }
+    | {
+        type: 'interrupt';
+        interrupts: NewAgUiInterrupt[];
+      };
   interrupt?: AgUiInterrupt;
+}
+
+interface NewAgUiInterrupt {
+  id: string;
+  reason: string;
+  message?: string;
+  toolCallId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface RunAgentOptions {
@@ -384,8 +401,8 @@ export async function runAgent(
     },
     onRunFinishedEvent: ({ event }) => {
       const interruptEvent = event as InterruptAwareRunFinishedEvent;
-      const activeInterrupt = interruptEvent.interrupt;
-      if (interruptEvent.outcome !== 'interrupt' || !activeInterrupt) {
+      const activeInterrupt = normalizeInterrupt(interruptEvent);
+      if (!activeInterrupt) {
         return;
       }
 
@@ -451,6 +468,59 @@ export async function runAgent(
     pendingLocalCalls,
     followUpToolCallIds,
     interrupt,
+  };
+}
+
+function normalizeInterrupt(
+  event: InterruptAwareRunFinishedEvent,
+): AgUiInterrupt | null {
+  if (event.outcome === 'interrupt' && event.interrupt) {
+    return event.interrupt;
+  }
+
+  if (
+    typeof event.outcome !== 'object' ||
+    event.outcome?.type !== 'interrupt'
+  ) {
+    return null;
+  }
+
+  const interrupt = event.outcome.interrupts[0];
+  if (!interrupt) {
+    return null;
+  }
+
+  const payload = toLegacyInterruptPayload(interrupt.metadata);
+  if (!payload) {
+    return null;
+  }
+
+  return {
+    id: interrupt.id,
+    reason: interrupt.reason,
+    payload,
+  };
+}
+
+function toLegacyInterruptPayload(
+  payload: Record<string, unknown> | undefined,
+): AgUiInterrupt['payload'] | null {
+  if (
+    !payload ||
+    (payload['kind'] !== 'approval' && payload['kind'] !== 'suspend') ||
+    typeof payload['toolCallId'] !== 'string' ||
+    typeof payload['toolName'] !== 'string'
+  ) {
+    return null;
+  }
+
+  return {
+    kind: payload['kind'],
+    toolCallId: payload['toolCallId'],
+    toolName: payload['toolName'],
+    args: payload['args'],
+    resumeSchema: payload['resumeSchema'],
+    suspendPayload: payload['suspendPayload'],
   };
 }
 

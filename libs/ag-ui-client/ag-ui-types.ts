@@ -1,4 +1,8 @@
-import { type InputContentPart, type UserMessage } from '@ag-ui/core';
+import {
+  type InputContentPart,
+  type ResumeEntry,
+  type UserMessage,
+} from '@ag-ui/core';
 import {
   type InputSignal,
   type InputSignalWithTransform,
@@ -301,10 +305,7 @@ export interface AgUiInterruptOption {
   variant?: 'primary' | 'default' | 'danger';
 }
 
-export interface AgUiResumeRequest {
-  interruptId?: string;
-  payload?: unknown;
-}
+export type AgUiResumeRequest = ResumeEntry[];
 
 type ToolExecuteFn<TArgs> = {
   bivarianceHack: (args: TArgs) => Promise<unknown> | unknown;

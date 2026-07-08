@@ -80,6 +80,16 @@ export class PlanWidget {
       return;
     }
     this.agentMode.mode.set('execution');
+    if (this.chatRegistry.agentStore) {
+      void this.chatRegistry.agentStore.sendMessage(
+        this.buildExecutionMessage(),
+        {
+          hidden: true,
+        },
+      );
+      return;
+    }
+
     this.chatRegistry.chat?.sendMessage({
       role: 'user',
       content: this.buildExecutionMessage(),

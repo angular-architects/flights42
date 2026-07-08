@@ -1,4 +1,4 @@
-import { BaseEvent, RunAgentInput } from '@ag-ui/client';
+import { BaseEvent, ResumeEntry, RunAgentInput } from '@ag-ui/client';
 import { AbstractAgent, EventType, randomUUID } from '@ag-ui/client';
 import type { Message } from '@ag-ui/core';
 import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
@@ -34,13 +34,8 @@ interface ClientToolDefinition {
   inputSchema?: Record<string, unknown>;
 }
 
-interface InterruptResumeInput {
-  interruptId?: string;
-  payload?: unknown;
-}
-
 interface InterruptAwareRunAgentInput extends RunAgentInput {
-  resume?: InterruptResumeInput;
+  resume?: ResumeEntry[];
 }
 
 type InterruptKind = 'approval' | 'suspend';
@@ -562,6 +557,12 @@ function parseInterruptId(
   };
 }
 
+function getResolvedResume(
+  resume: readonly ResumeEntry[] | undefined,
+): ResumeEntry | undefined {
+  return resume?.find((entry) => entry.status === 'resolved');
+}
+
 function readApproved(value: unknown): boolean | undefined {
   const record = asRecord(value);
   const approved = record?.['approved'];
@@ -759,25 +760,42 @@ export class ExtendedMastraAgent extends AbstractAgent {
           observer.next(activityEvent);
         },
         onRunInterrupted: (interrupt) => {
+          const responseSchema = safeParseJson(interrupt.resumeSchema ?? '');
+          const interruptPayload = {
+            kind: interrupt.kind,
+            toolCallId: interrupt.toolCallId,
+            toolName: interrupt.toolName,
+            args: interrupt.args,
+            resumeSchema: responseSchema,
+            suspendPayload: interrupt.suspendPayload,
+          };
+          const agUiInterrupt = {
+            id: createInterruptId(interrupt),
+            reason:
+              interrupt.kind === 'approval'
+                ? 'human_approval'
+                : 'tool_suspended',
+            message:
+              interrupt.kind === 'approval'
+                ? `Approve ${interrupt.toolName}?`
+                : `Tool suspended: ${interrupt.toolName}`,
+            toolCallId: interrupt.toolCallId,
+            responseSchema,
+            metadata: interruptPayload,
+          };
+
           observer.next({
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
-            outcome: 'interrupt',
+            outcome: {
+              type: 'interrupt',
+              interrupts: [agUiInterrupt],
+            },
             interrupt: {
-              id: createInterruptId(interrupt),
-              reason:
-                interrupt.kind === 'approval'
-                  ? 'human_approval'
-                  : 'tool_suspended',
-              payload: {
-                kind: interrupt.kind,
-                toolCallId: interrupt.toolCallId,
-                toolName: interrupt.toolName,
-                args: interrupt.args,
-                resumeSchema: safeParseJson(interrupt.resumeSchema ?? ''),
-                suspendPayload: interrupt.suspendPayload,
-              },
+              id: agUiInterrupt.id,
+              reason: agUiInterrupt.reason,
+              payload: interruptPayload,
             },
           } as BaseEvent);
           observer.complete();
@@ -787,7 +805,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
-            outcome: 'success',
+            outcome: {
+              type: 'success',
+            },
           };
           observer.next(finishedEvent);
           observer.complete();
@@ -1036,11 +1056,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
     messages: CoreMessage[],
     clientTools: Record<string, ClientToolDefinition>,
   ) {
-    const interrupt = parseInterruptId(input.resume?.interruptId);
+    const resume = getResolvedResume(input.resume);
+    const interrupt = parseInterruptId(resume?.interruptId);
 
     if (interrupt) {
       if (interrupt.kind === 'approval') {
-        const approved = readApproved(input.resume?.payload);
+        const approved = readApproved(resume?.payload);
         if (approved === undefined) {
           throw new Error(
             'Approval resume payload must include an approved boolean.',
@@ -1068,7 +1089,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
         });
       }
 
-      return this.agent.resumeStream(input.resume?.payload, {
+      return this.agent.resumeStream(resume?.payload, {
         runId: interrupt.runId,
         toolCallId: interrupt.toolCallId,
         memory: { thread: input.threadId, resource: this.resourceId },

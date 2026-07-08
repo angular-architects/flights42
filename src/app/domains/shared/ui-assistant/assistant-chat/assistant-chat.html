@@ -1,4 +1,4 @@
-@if (chat) {
+@if (chat || copilotAgentStore) {
   <button
     (click)="toggle()"
     id="ai-toggle"
@@ -73,12 +73,35 @@
       class="ai-messages"
       aria-live="polite"
       #messagesContainer>
-      <app-chat-messages
-        [messages]="chat.value()"
-        [greeting]="greeting()"
-        [interrupt]="chat.interrupt()"
-        (resumeInterrupt)="resumeInterrupt($event)"
-        [pending]="chat.isLoading()" />
+      @if (chat) {
+        <app-chat-messages
+          [messages]="chat.value()"
+          [greeting]="greeting()"
+          [interrupt]="chat.interrupt()"
+          (resumeInterrupt)="resumeInterrupt($event)"
+          [pending]="chat.isLoading()" />
+      }
+
+      @if (copilotAgentStore; as store) {
+        <article class="msg assistant">
+          <div class="avatar">🤖</div>
+          <div>
+            <div class="bubble">
+              {{ greeting() }}
+            </div>
+            <div class="meta"></div>
+          </div>
+        </article>
+
+        <copilot-chat-message-view
+          [messages]="store.messages()"
+          [isLoading]="store.isRunning()"
+          [agentId]="effectiveCopilotAgentId()" />
+
+        <app-copilot-interrupts
+          [interrupts]="store.pendingInterrupts()"
+          (resumeInterrupt)="resumeInterrupt($event)" />
+      }
     </section>
 
     <form
@@ -93,7 +116,10 @@
           class="composer-input"
           name="message"
           placeholder="Your Question ..." />
-        @if (chat.isLoading()) {
+        @if (
+          (chat && chat.isLoading()) ||
+          (copilotAgentStore && copilotAgentStore.isRunning())
+        ) {
           <button
             type="button"
             class="stop-btn"

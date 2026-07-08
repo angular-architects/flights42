@@ -1,5 +1,5 @@
 import { A2uiRendererService } from '@a2ui/angular/v0_9';
-import type { AgentSubscriber, RunAgentInput } from '@ag-ui/client';
+import type { AgentSubscriber, RunAgentParameters } from '@ag-ui/client';
 import { HttpAgent, randomUUID } from '@ag-ui/client';
 import {
   EnvironmentInjector,
@@ -39,33 +39,12 @@ interface StreamOptions {
   abortSignal: AbortSignal;
 }
 
-interface RunAgentCompatParameters extends Partial<
-  Pick<RunAgentInput, 'runId' | 'tools' | 'context' | 'forwardedProps'>
-> {
-  abortController?: AbortController;
-  resume?: AgUiResumeRequest;
-}
-
 class InterruptAwareHttpAgent extends HttpAgent {
   runAgentCompat(
-    parameters?: RunAgentCompatParameters,
+    parameters?: RunAgentParameters,
     subscriber?: AgentSubscriber,
   ) {
     return super.runAgent(parameters, subscriber);
-  }
-
-  protected override prepareRunAgentInput(
-    parameters?: RunAgentCompatParameters,
-  ): RunAgentInput {
-    const input = super.prepareRunAgentInput(parameters);
-    if (!parameters?.resume) {
-      return input;
-    }
-
-    return {
-      ...input,
-      resume: parameters.resume,
-    } as RunAgentInput;
   }
 }
 
@@ -333,10 +312,13 @@ export function agUiResource(
     interrupt.set(null);
     pendingRun.set({
       id: randomUUID(),
-      resume: {
-        interruptId: activeInterrupt.id,
-        payload,
-      },
+      resume: [
+        {
+          status: 'resolved',
+          interruptId: activeInterrupt.id,
+          payload,
+        },
+      ],
     });
   };
 

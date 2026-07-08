@@ -6,6 +6,7 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideCopilotKit } from '@copilotkit/angular';
 import {
   MCP_APPS_SERVER_URL,
   provideA2uiCatalog,
@@ -27,6 +28,7 @@ export const appConfig: ApplicationConfig = {
     provideA2uiCatalog(customCatalog, {
       sendCatalogDescription: false,
     }),
+    provideCopilotKit({}),
     {
       provide: MCP_APPS_SERVER_URL,
       useFactory: () => inject(ConfigService).mcpServerUrl,
