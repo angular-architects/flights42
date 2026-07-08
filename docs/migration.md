@@ -312,9 +312,26 @@ as methods:
 ```ts
 export interface CopilotAgentStore {
   messages: Signal<Message[]>;
+  allMessages: Signal<Message[]>;
   isRunning: Signal<boolean>;
   state: Signal<unknown>;
-  sendMessage(message: string): Promise<void>;
+
+  sendMessage(content: string, options?: SendMessageOptions): Promise<void>;
+  sendMessage(
+    content: UserMessage['content'],
+    options?: SendMessageOptions,
+  ): Promise<void>;
+  sendMessage(
+    message: Pick<UserMessage, 'content'> & Partial<Pick<UserMessage, 'id'>>,
+    options?: SendMessageOptions,
+  ): Promise<void>;
+
+  stop(): void;
+  reset(): void;
+}
+
+export interface SendMessageOptions {
+  hidden?: boolean;
 }
 ```
 
@@ -326,9 +343,51 @@ this.agentStore.messages();
 this.agentStore.isRunning();
 ```
 
-The initial `sendMessage(...)` helper is text-only. It trims empty input, adds a
-user message to the underlying agent, and runs the agent through CopilotKit's
-core so registered frontend tools and context participate in the run.
+The `sendMessage(...)` helper trims empty text input, adds a user message to the
+underlying agent, and runs the agent through CopilotKit's core so registered
+frontend tools and context participate in the run. The API should support three
+call shapes:
+
+- a plain text string
+- a `UserMessage['content']` value, including multimodal content parts
+- a message-like object with `content` and an optional `id`
+
+`role` is not part of the public input shape. `sendMessage(...)` always sends a
+user message and fills in `role: 'user'` and a new UUID when no `id` is
+provided.
+
+`hidden` is UI/store metadata and should live in `SendMessageOptions`, not on
+the message object itself:
+
+```ts
+await this.agentStore.sendMessage(message, { hidden: true });
+```
+
+Hidden messages are still sent to the agent. Their message IDs are stored in a
+signal-backed `Set`, and `messages` filters them out automatically. The store
+also exposes `allMessages` for the unfiltered stream. Prefer `allMessages` over
+`rawMessages`, because it reads less like an internal implementation detail.
+
+The store should also expose `stop()` and `reset()` to stay aligned with the
+current assistant UI. `stop()` cancels the active run. `reset()` cancels the
+active run, clears visible and hidden message state, and resets the local agent
+session state.
+
+The agent-store config should support `useServerMemory?: boolean`, matching the
+current `agUiResource` option name. Prefer this over `useMemory`, because it
+states where conversation memory is owned. When `useServerMemory` is enabled,
+the client should avoid resending local history in the same way the current
+implementation does.
+
+The `url` option should accept either a string or a factory:
+
+```ts
+url: string | (() => string);
+```
+
+When `url` is a factory, `agentStore(...)` resolves it inside the
+`InjectionToken` factory, so Angular `inject(...)` calls inside the URL factory
+are valid.
 
 ```ts
 export function agentStore(
@@ -339,7 +398,7 @@ export function agentStore(
     factory: () =>
       createAgentStore({
         ...config,
-        url: config.url(),
+        url: typeof config.url === 'function' ? config.url() : config.url,
       }),
   });
 }
@@ -370,27 +429,41 @@ function createAgentStore(config: ResolvedAgentStoreConfig): CopilotAgentStore {
   }
 
   const nativeStore = injectAgentStore(config.agentId);
+  const hiddenMessageIds = signal(new Set<string>());
+  const allMessages = computed(() => nativeStore().messages());
 
   return {
-    messages: computed(() => nativeStore().messages()),
+    allMessages,
+    messages: computed(() =>
+      allMessages().filter((message) => !hiddenMessageIds().has(message.id)),
+    ),
     isRunning: computed(() => nativeStore().isRunning()),
     state: computed(() => nativeStore().state()),
-    sendMessage: async (message) => {
-      const content = message.trim();
+    sendMessage: async (input, options) => {
+      const message = normalizeUserMessage(input);
 
-      if (!content) {
+      if (!message) {
         return;
       }
 
       const agent = nativeStore().agent;
 
-      agent.addMessage({
-        id: randomUUID(),
-        role: 'user',
-        content,
-      });
+      if (options?.hidden) {
+        hiddenMessageIds.update((current) => new Set(current).add(message.id));
+      }
+
+      agent.addMessage(message);
 
       await copilotKit.core.runAgent({ agent });
+    },
+    stop: () => {
+      nativeStore().agent.abortRun();
+    },
+    reset: () => {
+      nativeStore().agent.abortRun();
+      hiddenMessageIds.set(new Set());
+      // Reset strategy must be verified against CopilotKit's AgentStore API
+      // during implementation.
     },
   };
 }
