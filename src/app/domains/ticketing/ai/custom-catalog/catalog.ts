@@ -1,5 +1,4 @@
-import { createCustomCatalog } from '@internal/ag-ui-client';
-
+import { createCustomCatalog } from '../../../shared/util-copilotkit/a2ui/types';
 import { ticketingExtraComponents } from './ticketing-extra-components';
 
 export const customCatalog = createCustomCatalog({

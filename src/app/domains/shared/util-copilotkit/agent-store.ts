@@ -56,7 +56,15 @@ type AnyHumanInTheLoop = WithoutAgentId<HumanInTheLoopConfig<any>>;
 class ServerMemoryHttpAgent extends HttpAgent {
   private readonly sentMessageIds = new Set<string>();
 
-  constructor(config: HttpAgentConfig) {
+  constructor(
+    config: HttpAgentConfig,
+    /** Persistent forwarded props (e.g. `agentMode`) re-attached to EVERY
+     *  request. See `requestInit` for why. */
+    private readonly persistentForwardedProps: () => Record<
+      string,
+      unknown
+    > = () => ({}),
+  ) {
     super(config);
     this.subscribe({
       onRunFinalized: () => this.markAllSent(),
@@ -70,7 +78,16 @@ class ServerMemoryHttpAgent extends HttpAgent {
     // Everything currently local either goes out now or is already known to the
     // server, so mark it all — the next run must not resend earlier turns.
     this.markAllSent(input.messages);
-    return super.requestInit({ ...input, messages });
+    // CopilotKit's automatic follow-up runs (which feed frontend-tool results
+    // back to the agent) call `runAgent({ agent })` without forwardedProps, so
+    // they drop `agentMode`. Without it the server falls back to the default
+    // agent and the plan/execution selection flips mid-turn. Re-attach the
+    // persistent props on every request (explicit per-run props still win).
+    const forwardedProps = {
+      ...this.persistentForwardedProps(),
+      ...input.forwardedProps,
+    };
+    return super.requestInit({ ...input, messages, forwardedProps });
   }
 
   private markAllSent(
@@ -188,13 +205,20 @@ function createAgentStore(config: ResolvedAgentStoreConfig): CopilotAgentStore {
   // can use Angular `inject(...)` even though they run outside the token factory.
   const envInjector = inject(EnvironmentInjector);
 
+  const forwardedPropsFor = (): Record<string, unknown> => ({
+    ...(config.model ? { modelHint: config.model } : {}),
+    ...(config.forwardedProps
+      ? runInInjectionContext(envInjector, () => config.forwardedProps!())
+      : {}),
+  });
+
   const agentConfig = {
     agentId: config.agentId,
     url: config.url,
     threadId: randomUUID(),
   };
   const httpAgent = config.useServerMemory
-    ? new ServerMemoryHttpAgent(agentConfig)
+    ? new ServerMemoryHttpAgent(agentConfig, forwardedPropsFor)
     : new HttpAgent(agentConfig);
 
   copilotKit.updateRuntime({
@@ -230,13 +254,6 @@ function createAgentStore(config: ResolvedAgentStoreConfig): CopilotAgentStore {
       ),
   );
   let firstMessagePending = true;
-
-  const forwardedPropsFor = (): Record<string, unknown> => ({
-    ...(config.model ? { modelHint: config.model } : {}),
-    ...(config.forwardedProps
-      ? runInInjectionContext(envInjector, () => config.forwardedProps!())
-      : {}),
-  });
 
   return {
     allMessages,

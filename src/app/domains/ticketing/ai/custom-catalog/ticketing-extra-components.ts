@@ -1,10 +1,10 @@
-import {
-  A2uiCustomCatalogComponent,
-  binding,
-  createCustomComponent,
-} from '@internal/ag-ui-client';
 import { z } from 'zod/v3';
 
+import {
+  binding,
+  createCustomComponent,
+} from '../../../shared/util-copilotkit/a2ui/a2ui-schema';
+import { A2uiCustomCatalogComponent } from '../../../shared/util-copilotkit/a2ui/types';
 import { TicketWidget } from './ticket/ticket-widget';
 
 export const ticketWidgetEntry = createCustomComponent({

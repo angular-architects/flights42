@@ -2,8 +2,8 @@ import { provideMarkdownRenderer } from '@a2ui/angular/v0_9';
 import { NgComponentOutlet } from '@angular/common';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideA2uiCatalog } from '@internal/ag-ui-client';
 
+import { provideA2uiCatalog } from '../../../util-copilotkit/a2ui/provide-a2ui-catalog';
 import { A2uiActivityRenderer } from './a2ui-activity-renderer';
 
 const BASIC_CATALOG_ID =

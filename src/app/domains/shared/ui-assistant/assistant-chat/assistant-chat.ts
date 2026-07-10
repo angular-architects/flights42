@@ -98,10 +98,6 @@ export class AssistantChat {
     this.store?.stop();
   }
 
-  protected resumeInterrupt(payload: unknown): void {
-    void this.store?.resumeInterrupt(payload);
-  }
-
   protected setMode(mode: AgentMode): void {
     this.agentMode.mode.set(mode);
   }

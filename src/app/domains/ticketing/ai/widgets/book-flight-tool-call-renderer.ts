@@ -6,10 +6,13 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
+import {
+  type HumanInTheLoopToolCall,
+  type HumanInTheLoopToolRenderer,
+} from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createRenderToolCall } from '../../../shared/util-copilotkit/tool-definition';
+import { createHumanInTheLoop } from '../../../shared/util-copilotkit/tool-definition';
 import {
   BookingClient,
   type FlightMutationFlight,
@@ -30,6 +33,9 @@ const PAYMENT_METHOD_LABELS: Record<FlightPaymentMethod, string> = {
   miles: 'Bonus miles',
 };
 
+// The user either picks a payment method or cancels the booking altogether.
+type BookSelection = FlightPaymentMethod | 'cancel';
+
 const bookFlightArgsSchema = z.object({
   flightId: z.number(),
 });
@@ -44,22 +50,48 @@ export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
       <div class="card-body">
         <p class="action-title">{{ titleText() }}</p>
 
-        @if (contextText(); as context) {
-          <p class="action-context">{{ context }}</p>
-        }
-
-        <p class="status-line">Status: {{ statusLabel() }}</p>
-
-        @if (paymentMethodLabel(); as paymentLabel) {
-          <p class="payment-line">Payment: {{ paymentLabel }}</p>
-        }
-
-        @if (showUndo()) {
-          <p>
-            <button class="btn btn-default" type="button" (click)="undo()">
-              Undo
-            </button>
+        @if (awaitingChoice()) {
+          <p class="prompt">
+            How would you like to pay for flight #{{ flightId() }}?
           </p>
+          <div class="approval-actions">
+            <button
+              class="btn btn-default"
+              type="button"
+              (click)="choose('creditCard')">
+              Pay with credit card
+            </button>
+            <button
+              class="btn btn-default"
+              type="button"
+              (click)="choose('miles')">
+              Pay with bonus miles
+            </button>
+            <button
+              class="btn btn-default"
+              type="button"
+              (click)="choose('cancel')">
+              Cancel
+            </button>
+          </div>
+        } @else {
+          @if (contextText(); as context) {
+            <p class="action-context">{{ context }}</p>
+          }
+
+          <p class="status-line">Status: {{ statusLabel() }}</p>
+
+          @if (paymentMethodLabel(); as paymentLabel) {
+            <p class="payment-line">Payment: {{ paymentLabel }}</p>
+          }
+
+          @if (showUndo()) {
+            <p>
+              <button class="btn btn-default" type="button" (click)="undo()">
+                Undo
+              </button>
+            </p>
+          }
         }
       </div>
     </div>
@@ -110,12 +142,32 @@ export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
     .status-line {
       line-height: 1.4;
     }
+
+    /* Options are stacked vertically. */
+    .approval-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .approval-actions .btn {
+      width: 100%;
+    }
   `,
 })
-export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> {
+export class BookFlightToolCallRenderer implements HumanInTheLoopToolRenderer<BookFlightArgs> {
   private readonly bookingClient = inject(BookingClient);
 
-  readonly toolCall = input.required<AngularToolCall<BookFlightArgs>>();
+  readonly toolCall = input.required<HumanInTheLoopToolCall<BookFlightArgs>>();
+
+  // Set as soon as the user picks; drives the transition from the choice UI to
+  // the result UI even before the tool call flips to `complete`.
+  private readonly selection = signal<BookSelection | undefined>(undefined);
+  private readonly outcome = signal<FlightMutationResult | undefined>(
+    undefined,
+  );
 
   private readonly undoPending = signal(false);
   private readonly undoResult = signal<FlightMutationResult | undefined>(
@@ -126,7 +178,18 @@ export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> 
     () => this.toolCall().status === 'complete',
   );
 
+  protected readonly awaitingChoice = computed(
+    () => this.selection() === undefined && !this.complete(),
+  );
+
+  // Prefer the outcome executed here; fall back to the tool-call result if this
+  // component was recreated after completion and lost its local state.
   private readonly result = computed<FlightMutationResult | undefined>(() => {
+    const local = this.outcome();
+    if (local) {
+      return local;
+    }
+
     const call = this.toolCall();
     return call.status === 'complete'
       ? toFlightMutationResult(parseToolResult(call.result))
@@ -145,7 +208,7 @@ export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> 
     getActionStatusLabel(
       this.undoPending(),
       this.undoResult(),
-      this.complete(),
+      this.complete() || this.outcome() !== undefined,
       this.result(),
     ),
   );
@@ -154,7 +217,7 @@ export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> 
     shouldShowUndo(
       this.undoPending(),
       this.undoResult(),
-      this.complete(),
+      this.complete() || this.outcome() !== undefined,
       this.result(),
     ),
   );
@@ -172,6 +235,37 @@ export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> 
     return PAYMENT_METHOD_LABELS[result.paymentMethod];
   });
 
+  protected async choose(selection: BookSelection): Promise<void> {
+    if (this.selection() !== undefined) {
+      return;
+    }
+    this.selection.set(selection);
+
+    const respond = this.toolCall().respond;
+
+    if (selection === 'cancel') {
+      const result: FlightMutationResult = {
+        ok: false,
+        result: `Booking of flight ${this.flightId()} was cancelled by the user.`,
+        code: 'USER_CANCELLED',
+      };
+      this.outcome.set(result);
+      respond(result);
+      return;
+    }
+
+    let result: FlightMutationResult;
+    try {
+      const booked = await this.bookingClient.bookFlight(this.flightId());
+      result = booked.ok ? { ...booked, paymentMethod: selection } : booked;
+    } catch (error) {
+      result = toLoadFailedResult(error, this.flightId(), 'book');
+    }
+
+    this.outcome.set(result);
+    respond(result);
+  }
+
   protected async undo(): Promise<void> {
     this.undoPending.set(true);
 
@@ -186,7 +280,7 @@ export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> 
     }
   }
 
-  private flightId(): number {
+  protected flightId(): number {
     const argId = this.toolCall().args.flightId;
     const fallback = typeof argId === 'number' ? argId : 0;
     const result = this.result();
@@ -204,8 +298,10 @@ export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> 
   }
 }
 
-export const bookFlightRenderTool = createRenderToolCall({
+export const bookFlightHitlTool = createHumanInTheLoop({
   name: 'bookFlightTool',
-  args: bookFlightArgsSchema,
+  description:
+    'Books a flight for the current passenger. The passenger chooses a payment method (credit card or bonus miles) directly in the rendered card, or cancels. Only pass the flightId; do not ask for the payment method in text.',
+  parameters: bookFlightArgsSchema,
   component: BookFlightToolCallRenderer,
 });

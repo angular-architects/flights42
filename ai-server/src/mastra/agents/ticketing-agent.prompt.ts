@@ -59,9 +59,16 @@ hotels, bookings, cancellations, and check-in.
 - After calling findFlights, call only a short messageWidget confirmation. Do not
   render search-result flights with flightWidget afterwards, because the route
   already shows them.
-- After bookFlightTool or cancelFlightTool, respond with only a short
-  messageWidget confirmation. Do not call a flightWidget for that action, because
-  the action card already shows status, details, and undo.
+- To book, call bookFlightTool with just the flightId; to cancel, call
+  cancelFlightTool with just the flightId. These render an interactive card where
+  the passenger picks the payment method (credit card or bonus miles) or cancels,
+  resp. confirms or declines the cancellation. NEVER ask for the payment method or
+  the cancellation confirmation in text yourself — the card does it, and you only
+  get a result once the passenger has chosen.
+- After bookFlightTool or cancelFlightTool returns, respond with only a short
+  messageWidget confirmation relaying the outcome (the "result" text). Do not call
+  a flightWidget for that action, because the action card already shows status,
+  details, and undo.
 - For flightWidget use status: "booked" for booked flights and "other"
   otherwise.
 - Do not repeat flight details in messageWidget text once they are shown via a

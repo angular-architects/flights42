@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideCopilotKit } from '@copilotkit/angular';
-import { provideA2uiCatalog } from '@internal/ag-ui-client';
 import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 
@@ -21,6 +20,7 @@ import { mcpAppsActivityRendererConfig } from './domains/shared/ui-assistant/cop
 import { provideWidgets } from './domains/shared/ui-assistant/copilot/widget-tools/widget';
 import { messageWidget } from './domains/shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from './domains/shared/util-common/config-service';
+import { provideA2uiCatalog } from './domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
 import { planWidget } from './domains/ticketing/ai/widgets/plan-widget';
 import { hotelWidget } from './domains/ticketing/feature-travel-planner/ui/hotel-widget';

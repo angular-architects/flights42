@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { registerHandlers } from '@internal/ag-ui-client';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
+import { registerHandlers } from '../../shared/util-copilotkit/a2ui/a2ui-action-handlers';
 import { checkInAction } from './actions/check-in-action';
 import { submitAnswerAction } from './actions/submit-answer-action';
 import {

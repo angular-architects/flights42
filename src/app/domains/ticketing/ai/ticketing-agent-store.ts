@@ -20,8 +20,8 @@ import { setPlanTool } from './tools/set-plan.tool';
 import { swapPlanStepsTool } from './tools/swap-plan-steps.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 import { updatePlanStepTool } from './tools/update-plan-step.tool';
-import { bookFlightRenderTool } from './widgets/book-flight-tool-call-renderer';
-import { cancelFlightRenderTool } from './widgets/cancel-flight-tool-call-renderer';
+import { bookFlightHitlTool } from './widgets/book-flight-tool-call-renderer';
+import { cancelFlightHitlTool } from './widgets/cancel-flight-tool-call-renderer';
 import { planWidget } from './widgets/plan-widget';
 
 export const TICKETING_AGENT_ID = 'ticketingAgent';
@@ -55,5 +55,5 @@ export const TicketingAgentStore = agentStore({
     ...planTools,
     ...widgetTools([messageWidget, flightWidget, planWidget]),
   ],
-  renderToolCalls: [bookFlightRenderTool, cancelFlightRenderTool],
+  humanInTheLoop: [bookFlightHitlTool, cancelFlightHitlTool],
 });

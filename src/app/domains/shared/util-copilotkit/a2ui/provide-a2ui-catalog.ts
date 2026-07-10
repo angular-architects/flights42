@@ -19,7 +19,7 @@ import { type A2uiCustomCatalogFunction } from './a2ui-schema';
 import {
   type A2uiCustomCatalog,
   type A2uiCustomCatalogComponent,
-} from './ag-ui-types';
+} from './types';
 
 /**
  * Holds the descriptor of the registered A2UI custom catalog so consumers
