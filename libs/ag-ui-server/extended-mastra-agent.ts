@@ -144,6 +144,25 @@ function readToolName(value: unknown): string | undefined {
   return getNestedString(record, 'toolName');
 }
 
+/**
+ * Detects a tool result that carries an A2UI surface (`{ surfaceId, messages }`,
+ * e.g. from the server-built `showTable` tool) and returns the surface id plus
+ * its operation list so the caller can forward it as an `a2ui-surface`
+ * ACTIVITY_SNAPSHOT. Shape-based, so any tool that returns a surface works.
+ */
+function getA2uiSurface(
+  result: unknown,
+): { surfaceId: string; operations: unknown[] } | null {
+  const record = asRecord(result);
+  const surfaceId = record?.['surfaceId'];
+  const operations = record?.['messages'];
+  return typeof surfaceId === 'string' &&
+    Array.isArray(operations) &&
+    operations.length > 0
+    ? { surfaceId, operations }
+    : null;
+}
+
 function finalizeActiveToolCall(
   activeToolCallId: string | undefined,
   activeToolName: string | undefined,
@@ -763,21 +782,30 @@ export class ExtendedMastraAgent extends AbstractAgent {
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
-            outcome: 'interrupt',
-            interrupt: {
-              id: createInterruptId(interrupt),
-              reason:
-                interrupt.kind === 'approval'
-                  ? 'human_approval'
-                  : 'tool_suspended',
-              payload: {
-                kind: interrupt.kind,
-                toolCallId: interrupt.toolCallId,
-                toolName: interrupt.toolName,
-                args: interrupt.args,
-                resumeSchema: safeParseJson(interrupt.resumeSchema ?? ''),
-                suspendPayload: interrupt.suspendPayload,
-              },
+            // Same schema requirement as the success case: `outcome` is a
+            // discriminated union. Interrupts live under `outcome.interrupts`
+            // as an array; the client copies it verbatim into
+            // `agent.pendingInterrupts`. Extra tool context goes in `metadata`,
+            // which is where the client reads it from.
+            outcome: {
+              type: 'interrupt',
+              interrupts: [
+                {
+                  id: createInterruptId(interrupt),
+                  reason:
+                    interrupt.kind === 'approval'
+                      ? 'human_approval'
+                      : 'tool_suspended',
+                  toolCallId: interrupt.toolCallId,
+                  metadata: {
+                    kind: interrupt.kind,
+                    toolName: interrupt.toolName,
+                    args: interrupt.args,
+                    resumeSchema: safeParseJson(interrupt.resumeSchema ?? ''),
+                    suspendPayload: interrupt.suspendPayload,
+                  },
+                },
+              ],
             },
           } as BaseEvent);
           observer.complete();
@@ -787,8 +815,13 @@ export class ExtendedMastraAgent extends AbstractAgent {
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
-            outcome: 'success',
-          };
+            // @ag-ui/core validates `outcome` as a discriminated union
+            // (`{ type: 'success' }` | `{ type: 'interrupt', ... }`), not a
+            // bare string. A string fails Zod parsing on the client and aborts
+            // the whole run — so preceding tool-call events never commit and
+            // frontend tools never execute.
+            outcome: { type: 'success' },
+          } as BaseEvent;
           observer.next(finishedEvent);
           observer.complete();
         },
@@ -962,6 +995,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             const pending = pendingToolCalls.get(payload.payload.toolCallId);
             if (pending) {
               const metadata = getMcpAppToolMetadata(pending.toolName);
+              const a2uiSurface = getA2uiSurface(payload.payload.result);
               if (metadata) {
                 handlers.onActivitySnapshot({
                   messageId: assistantMessageId,
@@ -971,6 +1005,17 @@ export class ExtendedMastraAgent extends AbstractAgent {
                     pending.args,
                     payload.payload.result,
                   ),
+                });
+              } else if (a2uiSurface) {
+                // Key the activity by the surface id (unique per surface, like
+                // the dashboard route) rather than the assistant message id.
+                // A2UI_SNAPSHOT replaces any existing message whose id matches,
+                // so reusing the assistant message id would overwrite the
+                // tool-call message and breaks on the second surface in a thread.
+                handlers.onActivitySnapshot({
+                  messageId: a2uiSurface.surfaceId,
+                  activityType: 'a2ui-surface',
+                  content: { operations: a2uiSurface.operations },
                 });
               }
               pendingToolCalls.delete(payload.payload.toolCallId);

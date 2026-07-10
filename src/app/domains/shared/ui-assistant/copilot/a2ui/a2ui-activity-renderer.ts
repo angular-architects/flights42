@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   input,
+  type OnInit,
 } from '@angular/core';
 import {
   type ActivityRenderer,
@@ -43,7 +44,9 @@ export const a2uiSurfaceContentSchema: AngularActivityContentSchema<A2uiSurfaceC
     }
   `,
 })
-export class A2uiActivityRenderer implements ActivityRenderer<A2uiSurfaceContent> {
+export class A2uiActivityRenderer
+  implements ActivityRenderer<A2uiSurfaceContent>, OnInit
+{
   readonly activityType = input.required<string>();
   readonly content = input.required<A2uiSurfaceContent>();
   readonly message = input.required<ActivityMessage>();
@@ -51,11 +54,17 @@ export class A2uiActivityRenderer implements ActivityRenderer<A2uiSurfaceContent
 
   private readonly renderer = inject(A2uiRendererService);
 
-  protected readonly surfaceId = computed(() => {
-    const operations = this.content().operations;
-    this.renderer.processMessages(operations);
+  ngOnInit(): void {
+    // Feed the surface into the shared renderer HERE, not inside the `surfaceId`
+    // computed. `processMessages` writes the renderer's version signal, and a
+    // side effect / signal write inside a `computed` is invalid in Angular.
+    // `ngOnInit` runs before this view is first rendered, so the surface is in
+    // the model by the time `surfaceId` is read below.
+    this.renderer.processMessages(this.content().operations);
+  }
 
-    const surfaceId = getRenderedSurfaceId(operations);
+  protected readonly surfaceId = computed(() => {
+    const surfaceId = getRenderedSurfaceId(this.content().operations);
     return surfaceId && this.renderer.surfaceGroup.getSurface(surfaceId)
       ? surfaceId
       : null;

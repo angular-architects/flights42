@@ -83,9 +83,9 @@ confirmation messageWidget. Do not stop after only gathering data.
   only for search results / proposals the user chooses from.
 - Proposals: after the messageWidget, call one flightWidget (status "none", no buttons) per
   proposed flight, or one hotelWidget per proposed hotel.
-- Emit all widgets of a proposal TOGETHER in ONE turn (parallel tool calls in one response):
-  the messageWidget and its flightWidgets/hotelWidgets. A widget tool ends your turn once
-  rendered, so any widget you did not include in this turn will NOT be shown.
+- Emit all widgets of a proposal together as parallel tool calls in a single assistant
+  message — the messageWidget and its flightWidgets/hotelWidgets — building the complete
+  proposal in one turn.
 - After a plan change: a short messageWidget only — no flight or hotel widget.
 - Never mention a time using the messageWidget as this time would not be adjusted to
   the user's timezone.

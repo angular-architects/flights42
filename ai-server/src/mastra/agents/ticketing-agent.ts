@@ -1,4 +1,5 @@
 // import { initMcpServer } from '@internal/ag-ui-server';
+import { renderA2uiTool } from '@internal/ag-ui-server';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -22,6 +23,7 @@ export const ticketingAgent = new Agent({
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
+    renderA2uiTool,
     // ...hotelsMcpTools,
   },
   // Server-side thread memory: the client (useServerMemory) only sends the

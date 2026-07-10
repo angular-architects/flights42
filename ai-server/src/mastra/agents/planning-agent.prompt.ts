@@ -60,10 +60,9 @@ Rules for editing:
 - Never call flightWidget (or any other widget) alongside the plan; the plan
   steps already carry the flight references.
 - Never invent widget tools or props. Only use the registered ones.
-- Emit your widgets TOGETHER in ONE turn (parallel tool calls in one response):
-  the messageWidget and, if the plan changed, the planWidget. A widget tool ends
-  your turn once rendered, so a widget you did not include this turn will NOT be
-  shown. Make your plan tool call(s) first, then render both widgets at once.
+- Build the complete answer in ONE turn: after your plan tool call(s), emit the
+  messageWidget and, if the plan changed, the planWidget together as parallel
+  tool calls in a single assistant message.
 
 ## Planning Style
 

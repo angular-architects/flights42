@@ -54,6 +54,49 @@ function collectReferencedChildIds(components: ComponentEntry[]): string[] {
   return ids;
 }
 
+// The wire schema (`AnyComponentSchema`) is a passthrough, so a Card carrying a
+// `children` array parses fine yet renders empty — the v0.9 renderer reads only
+// `child`. These sets let us reject that mismatch so the model self-corrects.
+const SINGLE_CHILD_COMPONENTS = new Set(['Card', 'Button', 'Modal']);
+const MULTI_CHILD_COMPONENTS = new Set(['Row', 'Column', 'List']);
+
+function validateChildShape(messages: A2uiMessage[]): void {
+  const updateComponentsMessages = messages.filter(
+    (m): m is UpdateComponentsMsg => 'updateComponents' in m,
+  );
+
+  for (const message of updateComponentsMessages) {
+    const components = message.updateComponents.components as ComponentEntry[];
+    for (const component of components) {
+      const name = component['component'];
+      if (typeof name !== 'string') {
+        continue;
+      }
+
+      const id =
+        typeof component['id'] === 'string' ? component['id'] : '<unknown>';
+
+      if (
+        SINGLE_CHILD_COMPONENTS.has(name) &&
+        Array.isArray(component['children'])
+      ) {
+        throw new Error(
+          `renderA2uiTool: component "${id}" (${name}) uses "children", but ${name} takes a SINGLE "child" (one component id). To show multiple elements, wrap them in a Column or Row and set that container's id as "child".`,
+        );
+      }
+
+      if (
+        MULTI_CHILD_COMPONENTS.has(name) &&
+        typeof component['child'] === 'string'
+      ) {
+        throw new Error(
+          `renderA2uiTool: component "${id}" (${name}) uses "child", but ${name} takes a "children" array of component ids.`,
+        );
+      }
+    }
+  }
+}
+
 function validateReferentialIntegrity(messages: A2uiMessage[]): void {
   const updateComponentsMessages = messages.filter(
     (m): m is UpdateComponentsMsg => 'updateComponents' in m,
@@ -103,6 +146,10 @@ export const renderA2uiTool = createTool({
     '  `updateComponents.components` array.',
     '- Any component from the A2UI basic catalog may be used (Column, Row, Card, Text,',
     '  Button, TextField, CheckBox, Image, ...).',
+    '- Container nesting: Row, Column and List take a `children` ARRAY of ids. Card,',
+    '  Button and Modal take a SINGLE `child` (one id), NOT `children` — to place',
+    '  several elements in a Card, wrap them in a Column/Row and pass that container',
+    '  id as the Card `child`. A Card with `children` renders EMPTY.',
     '- Bind dynamic values via `{ path: "/..." }` and provide the data through',
     '  `updateDataModel`.',
   ].join('\n'),
@@ -180,6 +227,7 @@ export const renderA2uiTool = createTool({
       );
     }
 
+    validateChildShape(messages);
     validateReferentialIntegrity(messages);
 
     return { surfaceId, messages };

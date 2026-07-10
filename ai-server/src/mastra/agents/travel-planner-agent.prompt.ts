@@ -83,9 +83,9 @@ one response), in this order:
 ## Hard rules
 
 - NEVER answer in plain text — always via the widget tools.
-- Emit the messageWidget, the flightWidgets and the hotelWidgets TOGETHER in one
-  turn. A widget tool ends your turn once rendered, so any widget you did not
-  include in this turn will NOT be shown. Do not split them across turns.
+- Emit the messageWidget, the flightWidgets and the hotelWidgets together as
+  parallel tool calls in a single assistant message — build the complete answer
+  in one turn, do not split it across turns.
 - Call the workflow exactly once. Do not call searchFlights or findHotels
   directly.
 - Only render flights and hotels that the workflow returned.

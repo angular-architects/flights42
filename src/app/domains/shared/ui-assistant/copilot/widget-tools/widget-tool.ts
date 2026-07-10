@@ -7,16 +7,18 @@ import { WidgetToolRenderer } from './widget-tool-renderer';
 /**
  * Turns a widget definition into a model-callable frontend tool that renders the
  * widget as its tool-call component ("component as tool"). The tool name is the
- * widget name and its parameters are the widget's props schema. The handler
- * passes the args through so the renderer can read them back.
+ * widget name and its parameters are the widget's props schema.
  *
- * `followUp: false` makes the widget terminal — like the former `showComponents`
- * tool. A frontend-tool call ends the server run, and re-running to "continue"
- * after a purely-rendering tool is fragile (the server re-processes the client
- * tool call and its thought signature, which hangs). Instead the model is
- * prompted to emit all of a turn's widgets as parallel tool calls in ONE
- * assistant message; a single message can carry many tool calls, and they all
- * render.
+ * `followUp: false` keeps the widget terminal: once a turn's widgets are
+ * rendered the run ends, so the loading indicator stops immediately with no
+ * extra (empty) follow-up run to wait through. This is a standard CopilotKit
+ * tool flag, not custom infrastructure.
+ *
+ * It does NOT drive reliability: `followUp` is never sent to the model (only
+ * name/description/parameters are), so batching all of an answer's widgets into
+ * one assistant message is a matter of the prompt, not this flag. The renderer
+ * reads props from the tool call, not the handler result, so the handler only
+ * needs to acknowledge.
  */
 export function createWidgetTool(widget: Widget) {
   return createFrontendTool<Record<string, unknown>>({
@@ -25,7 +27,7 @@ export function createWidgetTool(widget: Widget) {
     parameters: widget.schema as z.ZodType<Record<string, unknown>>,
     component: WidgetToolRenderer,
     followUp: false,
-    handler: async (args) => args,
+    handler: async () => ({ shown: true }),
   });
 }
 
