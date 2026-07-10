@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { appSettings } from '../../../shared/util-common/app-settings';
 import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { LanguageService } from '../../../shared/util-common/language';
+import { LoggerService } from '../../../shared/util-common/logger/logger';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from './flight-store';
 
@@ -25,6 +26,7 @@ import { FlightStore } from './flight-store';
 export class FlightSearch {
   private flightStore = inject(FlightStore);
   private languageService = inject(LanguageService);
+  private logger = inject(LoggerService);
 
   protected readonly filter = delegatedSignal(
     () => ({
@@ -52,6 +54,7 @@ export class FlightSearch {
   });
 
   constructor() {
+    this.logger.info('flight-search', 'FlightSearch created');
     console.log('user language', this.languageService.getUserLang());
 
     effect(() => {

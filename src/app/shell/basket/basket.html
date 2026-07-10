@@ -1,0 +1,15 @@
+<div class="card">
+  <div class="card-header">
+    <h2 class="title">Basket</h2>
+  </div>
+
+  <div class="card-body">
+    <ul>
+      @for (item of items(); track item.id) {
+        <li>
+          <p>#{{ item.id }}: {{ item.route }}</p>
+        </li>
+      }
+    </ul>
+  </div>
+</div>

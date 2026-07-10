@@ -1,17 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
-import {
-  NavigationCancel,
-  NavigationEnd,
-  NavigationError,
-  NavigationStart,
-  Router,
-  RouterOutlet,
-} from '@angular/router';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 import { Navbar } from './shell/navbar/navbar';
 import { Sidebar } from './shell/sidebar/sidebar';
@@ -24,22 +12,5 @@ import { Sidebar } from './shell/sidebar/sidebar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  private readonly router = inject(Router);
-
   private readonly title = signal('flights42');
-  protected readonly isLoading = signal(false);
-
-  constructor() {
-    this.router.events.subscribe((events) => {
-      if (events instanceof NavigationStart) {
-        this.isLoading.set(true);
-      } else if (
-        events instanceof NavigationEnd ||
-        events instanceof NavigationError ||
-        events instanceof NavigationCancel
-      ) {
-        this.isLoading.set(false);
-      }
-    });
-  }
 }
