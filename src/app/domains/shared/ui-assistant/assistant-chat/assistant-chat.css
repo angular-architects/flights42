@@ -199,6 +199,47 @@
   color: var(--text);
 }
 
+/* A2UI surfaces in the chat: theme the built-in Card & Button via the exposed
+ * CSS variables (not specificity fights) so they match our native ".card" and
+ * outline ".btn" look. */
+:host ::ng-deep .bubble.bubble--a2ui {
+  width: 95%;
+  font-family: var(--font-family);
+
+  --a2ui-card-background: var(--color-white);
+  --a2ui-card-border: 0.5px solid rgba(0, 0, 0, 0.08);
+  --a2ui-card-border-radius: 12px;
+  --a2ui-card-box-shadow: none;
+  --a2ui-card-padding: 0.9rem 1rem;
+  --a2ui-card-margin: 0;
+  --a2ui-font-family-title: var(--font-family);
+
+  --a2ui-button-background: transparent;
+  --a2ui-button-border: 1px solid var(--color-primary);
+  --a2ui-button-border-radius: var(--border-radius);
+  --a2ui-button-box-shadow: none;
+  --a2ui-button-font-weight: var(--font-weight-bold);
+  --a2ui-button-padding: 6px 16px;
+  --a2ui-button-margin: 0;
+  --a2ui-color-on-secondary: var(--color-primary);
+}
+
+:host ::ng-deep .bubble--a2ui .a2ui-button:hover {
+  background: rgba(92, 68, 228, 0.06);
+}
+
+/* Cards fill the row: equal width (flex) and equal height (Row stretches by
+ * default; the inner card box then fills the stretched host). */
+:host ::ng-deep .bubble--a2ui a2ui-v09-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+:host ::ng-deep .bubble--a2ui a2ui-v09-card .a2ui-card {
+  height: 100%;
+  box-sizing: border-box;
+}
+
 :host ::ng-deep .meta {
   margin-top: 6px;
   font-size: 12px;

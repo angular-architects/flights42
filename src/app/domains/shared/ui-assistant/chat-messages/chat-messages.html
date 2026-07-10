@@ -61,7 +61,9 @@
     <article class="msg assistant">
       <div class="avatar">🤖</div>
       <div>
-        <div class="bubble">
+        <div
+          class="bubble"
+          [class.bubble--a2ui]="message.activityType === 'a2ui-surface'">
           <app-copilot-activity [message]="message" [agentId]="agentId()" />
         </div>
         <div class="meta"></div>
