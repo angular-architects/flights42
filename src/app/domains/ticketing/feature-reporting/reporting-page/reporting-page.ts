@@ -3,31 +3,27 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
-  effect,
   ElementRef,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  agUiResource,
-  type AgUiToolCall,
-  defineAgUiTool,
-} from '@internal/ag-ui-client';
+import { type Message } from '@copilotkit/angular';
 import { Chart } from 'chart.js/auto';
-import { z } from 'zod';
 
-import { ConfigService } from '../../../shared/util-common/config-service';
 import { CHART_COLORS } from '../chart/chart-colors';
 import { DataItem } from '../chart/data-item';
 import { examplePrompts } from './example-prompts';
+import { ReportingAgentStore } from './reporting-agent-store';
+import { ReportingChartStore } from './reporting-chart-store';
 
-const renderChartSchema = z.object({
-  title: z.string(),
-  data: z.array(z.object({ name: z.string(), value: z.number() })),
-});
+interface ReportingToolCall {
+  id: string;
+  name: string;
+  args: unknown;
+  status: 'pending' | 'complete';
+}
 
 @Component({
   selector: 'app-reporting-page',
@@ -37,49 +33,28 @@ const renderChartSchema = z.object({
   styleUrl: './reporting-page.css',
 })
 export class ReportingPage {
-  private readonly config = inject(ConfigService);
-  private readonly destroyRef = inject(DestroyRef);
+  protected readonly chat = inject(ReportingAgentStore);
+  private readonly chartStore = inject(ReportingChartStore);
 
   protected readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('chart');
 
-  protected readonly chartData = signal<DataItem[]>([]);
-  protected readonly chartTitle = signal<string | null>(null);
+  protected readonly chartData = this.chartStore.data;
+  protected readonly chartTitle = this.chartStore.title;
   protected readonly message = signal('');
 
-  private readonly renderChartTool = defineAgUiTool({
-    name: 'renderChart',
-    description:
-      'Renders the supplied data as a bar chart in the user interface.',
-    schema: renderChartSchema,
-    execute: ({ title, data }) => {
-      this.chartTitle.set(title);
-      this.chartData.set(data);
-      return { ok: true };
-    },
-  });
-
-  protected readonly chat = agUiResource({
-    url: this.config.agUiUrlFor('reportingAgent'),
-    model: this.config.model,
-    useServerMemory: false,
-    tools: [this.renderChartTool],
-  });
-
-  protected readonly errorMessage = computed<string | null>(() =>
-    getErrorMessage(this.chat.value()),
-  );
-
   protected readonly assistantMessage = computed<string>(() =>
-    getAssistantMessage(this.chat.value()),
+    getAssistantMessage(this.chat.messages()),
   );
 
-  protected readonly allToolCalls = computed<AgUiToolCall[]>(() =>
-    getAllToolCalls(this.chat.value()),
+  protected readonly allToolCalls = computed<ReportingToolCall[]>(() =>
+    collectToolCalls(this.chat.messages()),
   );
 
   protected readonly currentStatus = computed<string>(() =>
-    getCurrentStatus(this.allToolCalls(), this.chat.isLoading()),
+    getCurrentStatus(this.allToolCalls(), this.chat.isRunning()),
   );
+
+  protected readonly errorMessage = computed<string | null>(() => null);
 
   protected readonly showToolDetails = signal(false);
 
@@ -103,18 +78,6 @@ export class ReportingPage {
         renderChart(data, canvas);
       }
     });
-
-    effect(() => {
-      if (this.chat.isLoading()) {
-        return;
-      }
-      const calls = this.allToolCalls();
-      if (calls.length > 0) {
-        console.debug('[reporting] tool calls', calls);
-      }
-    });
-
-    this.destroyRef.onDestroy(() => this.chat.dispose());
   }
 
   protected submit(): void {
@@ -122,12 +85,11 @@ export class ReportingPage {
     if (!content) {
       return;
     }
-    this.chartData.set([]);
-    this.chartTitle.set(null);
+    this.chartStore.clear();
     this.showToolDetails.set(false);
     this.showCodeDetails.set(false);
     this.chat.reset();
-    this.chat.sendMessage({ role: 'user', content });
+    void this.chat.sendMessage(content);
   }
 
   protected toggleToolDetails(): void {
@@ -148,36 +110,48 @@ export class ReportingPage {
   }
 }
 
-function getErrorMessage(
-  messages: readonly { role: string; content: string }[],
-): string | null {
-  const errorMessage = messages.find((message) => message.role === 'error');
-  return errorMessage?.content ?? null;
-}
-
-function getAssistantMessage(
-  messages: readonly { role: string; content: string }[],
-): string {
+function getAssistantMessage(messages: readonly Message[]): string {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i];
-    if (message.role === 'assistant' && message.content.trim().length > 0) {
+    if (
+      message.role === 'assistant' &&
+      typeof message.content === 'string' &&
+      message.content.trim().length > 0
+    ) {
       return message.content;
     }
   }
   return '';
 }
 
-function getAllToolCalls(
-  messages: readonly { role: string; toolCalls?: AgUiToolCall[] }[],
-): AgUiToolCall[] {
-  return messages.flatMap((message) =>
-    message.role === 'assistant' ? (message.toolCalls ?? []) : [],
-  );
+function collectToolCalls(messages: readonly Message[]): ReportingToolCall[] {
+  const resolved = new Set<string>();
+  for (const message of messages) {
+    if (message.role === 'tool') {
+      resolved.add(message.toolCallId);
+    }
+  }
+
+  const calls: ReportingToolCall[] = [];
+  for (const message of messages) {
+    if (message.role !== 'assistant' || !message.toolCalls) {
+      continue;
+    }
+    for (const toolCall of message.toolCalls) {
+      calls.push({
+        id: toolCall.id,
+        name: toolCall.function.name,
+        args: parseToolArguments(toolCall.function.arguments),
+        status: resolved.has(toolCall.id) ? 'complete' : 'pending',
+      });
+    }
+  }
+  return calls;
 }
 
 function getCurrentStatus(
-  toolCalls: readonly AgUiToolCall[],
-  isLoading: boolean,
+  toolCalls: readonly ReportingToolCall[],
+  isRunning: boolean,
 ): string {
   for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
     const toolCall = toolCalls[i];
@@ -185,11 +159,11 @@ function getCurrentStatus(
       return `Running tool: ${toolCall.name}`;
     }
   }
-  return isLoading ? 'Thinking' : 'Ready';
+  return isRunning ? 'Thinking' : 'Ready';
 }
 
 function getLatestJavaScriptCode(
-  toolCalls: readonly AgUiToolCall[],
+  toolCalls: readonly ReportingToolCall[],
 ): string | null {
   for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
     const code = extractJavaScriptCodeFromToolCall(toolCalls[i]);
@@ -240,7 +214,7 @@ function formatToolArgs(args: unknown): string {
 }
 
 function extractJavaScriptCodeFromToolCall(
-  toolCall: AgUiToolCall,
+  toolCall: ReportingToolCall,
 ): string | null {
   const args = coerceArgsObject(toolCall.args);
   if (!args) {
@@ -251,6 +225,14 @@ function extractJavaScriptCodeFromToolCall(
     return code;
   }
   return null;
+}
+
+function parseToolArguments(args: string): unknown {
+  try {
+    return JSON.parse(args);
+  } catch {
+    return args;
+  }
 }
 
 function coerceArgsObject(args: unknown): Record<string, unknown> | null {

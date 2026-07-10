@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { planStepInputSchema } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
 
-export const addPlanStepTool = defineAgUiTool({
+export const addPlanStepTool = createFrontendTool({
   name: 'addPlanStep',
   description: `
     Adds a single step to the current plan. Appends it at the end unless a 1-based
@@ -26,7 +26,7 @@ export const addPlanStepTool = defineAgUiTool({
         "position": 1
       })
   `,
-  schema: z.object({
+  parameters: z.object({
     step: planStepInputSchema.describe('The step to add.'),
     position: z
       .number()
@@ -40,7 +40,7 @@ export const addPlanStepTool = defineAgUiTool({
           'When omitted (or null) the step is appended at the end.',
       ),
   }),
-  execute: (args) => {
+  handler: async (args) => {
     const store = inject(PlanStore);
     store.addStep(args.step, args.position ?? undefined);
     return { stepCount: store.steps().length };

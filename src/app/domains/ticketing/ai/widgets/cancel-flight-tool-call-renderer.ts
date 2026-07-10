@@ -6,12 +6,10 @@ import {
   input,
   signal,
 } from '@angular/core';
-import {
-  type AgUiActionCard,
-  type AgUiActionData,
-  defineActionCard,
-} from '@internal/ag-ui-client';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
+import { z } from 'zod';
 
+import { createRenderToolCall } from '../../../shared/util-copilotkit/tool-definition';
 import {
   BookingClient,
   type FlightMutationFlight,
@@ -20,22 +18,20 @@ import {
 import {
   getActionStatusLabel,
   getFlightContextText,
+  parseToolResult,
   shouldShowUndo,
   toFlightMutationResult,
   toLoadFailedResult,
 } from './card-utils';
 
-interface CancelFlightInput {
-  flightId: number;
-}
+const cancelFlightArgsSchema = z.object({
+  flightId: z.number(),
+});
 
-type CancelFlightActionData = AgUiActionData<
-  CancelFlightInput,
-  FlightMutationResult
->;
+export type CancelFlightArgs = z.infer<typeof cancelFlightArgsSchema>;
 
 @Component({
-  selector: 'app-cancel-flight-action-card',
+  selector: 'app-cancel-flight-tool-call-renderer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card">
@@ -102,18 +98,29 @@ type CancelFlightActionData = AgUiActionData<
     }
   `,
 })
-export class CancelFlightActionCard implements AgUiActionCard<CancelFlightActionData> {
+export class CancelFlightToolCallRenderer implements ToolRenderer<CancelFlightArgs> {
   private readonly bookingClient = inject(BookingClient);
 
-  readonly actionData = input.required<CancelFlightActionData>();
+  readonly toolCall = input.required<AngularToolCall<CancelFlightArgs>>();
 
   private readonly undoPending = signal(false);
   private readonly undoResult = signal<FlightMutationResult | undefined>(
     undefined,
   );
 
-  protected readonly titleText = computed(() =>
-    getCancelFlightTitle(this.flightId()),
+  private readonly complete = computed(
+    () => this.toolCall().status === 'complete',
+  );
+
+  private readonly result = computed<FlightMutationResult | undefined>(() => {
+    const call = this.toolCall();
+    return call.status === 'complete'
+      ? toFlightMutationResult(parseToolResult(call.result))
+      : undefined;
+  });
+
+  protected readonly titleText = computed(
+    () => `Cancel Flight #${this.flightId()}`,
   );
 
   protected readonly contextText = computed(() =>
@@ -124,8 +131,7 @@ export class CancelFlightActionCard implements AgUiActionCard<CancelFlightAction
     getActionStatusLabel(
       this.undoPending(),
       this.undoResult(),
-      this.actionData().status,
-      this.actionData().error,
+      this.complete(),
       this.result(),
     ),
   );
@@ -134,7 +140,7 @@ export class CancelFlightActionCard implements AgUiActionCard<CancelFlightAction
     shouldShowUndo(
       this.undoPending(),
       this.undoResult(),
-      this.actionData().status,
+      this.complete(),
       this.result(),
     ),
   );
@@ -151,15 +157,11 @@ export class CancelFlightActionCard implements AgUiActionCard<CancelFlightAction
     }
   }
 
-  private result(): FlightMutationResult | undefined {
-    return toFlightMutationResult(this.actionData().result);
-  }
-
   private flightId(): number {
+    const argId = this.toolCall().args.flightId;
+    const fallback = typeof argId === 'number' ? argId : 0;
     const result = this.result();
-    return result?.ok
-      ? (result.flight?.id ?? this.actionData().input.flightId)
-      : this.actionData().input.flightId;
+    return result?.ok ? (result.flight?.id ?? fallback) : fallback;
   }
 
   private flightDetails(): FlightMutationFlight | undefined {
@@ -173,11 +175,8 @@ export class CancelFlightActionCard implements AgUiActionCard<CancelFlightAction
   }
 }
 
-function getCancelFlightTitle(flightId: number): string {
-  return `Cancel Flight #${flightId}`;
-}
-
-export const cancelFlightActionCard = defineActionCard({
-  toolName: 'cancelFlightTool',
-  component: CancelFlightActionCard,
+export const cancelFlightRenderTool = createRenderToolCall({
+  name: 'cancelFlightTool',
+  args: cancelFlightArgsSchema,
+  component: CancelFlightToolCallRenderer,
 });

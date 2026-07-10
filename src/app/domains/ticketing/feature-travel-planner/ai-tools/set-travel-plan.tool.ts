@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { TravelPlanStore } from '../travel-plan-store';
 import { planFlightSchema, planHotelSchema } from './plan-schemas';
 
-export const setTravelPlanTool = defineAgUiTool({
+export const setTravelPlanTool = createFrontendTool({
   name: 'setTravelPlan',
   description: `
 Replaces the ENTIRE travel plan with a new, fully consistent one (flights in
@@ -15,7 +15,7 @@ changes the destination city (a hotel must be swapped) or the connecting/return
 flight. Build the complete new plan first (search any new flights/hotels via the
 sub-agents), then commit it here in one go. Only call on explicit user request.
   `.trim(),
-  schema: z.object({
+  parameters: z.object({
     summary: z
       .string()
       .optional()
@@ -29,7 +29,7 @@ sub-agents), then commit it here in one go. Only call on explicit user request.
       .array(planHotelSchema)
       .describe('The complete list of hotels, one per overnight city.'),
   }),
-  execute: (args) => {
+  handler: async (args) => {
     const store = inject(TravelPlanStore);
     store.setPlan({
       summary: args.summary ?? store.summary(),

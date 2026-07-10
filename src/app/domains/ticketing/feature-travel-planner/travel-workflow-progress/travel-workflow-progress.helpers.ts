@@ -1,9 +1,4 @@
-import type {
-  AgUiChatMessage,
-  AgUiToolCall,
-  AgUiWorkflowStep,
-  AgUiWorkflowStepStatus,
-} from '@internal/ag-ui-client';
+import { type Message } from '@copilotkit/angular';
 
 export const PIPELINE_STEPS = [
   { id: 'findFlights', label: 'Flights' },
@@ -19,21 +14,53 @@ export interface PipelineStep {
   state: PipelineStepState;
 }
 
-export function selectVisibleToolCalls(
-  messages: AgUiChatMessage[],
-): AgUiToolCall[] {
-  return messages
-    .filter((message) => message.role === 'assistant')
-    .flatMap((message) => message.toolCalls)
-    .filter((toolCall) => toolCall.name !== 'showComponents');
+export interface WorkflowToolCall {
+  id: string;
+  name: string;
+  args: unknown;
+  status: 'pending' | 'complete';
 }
 
-export function selectWorkflowSteps(
-  messages: AgUiChatMessage[],
-): AgUiWorkflowStep[] {
-  return messages
-    .filter((message) => message.role === 'assistant')
-    .flatMap((message) => message.workflowSteps);
+/** Widget render tools are UI-only and not interesting for the detail list. */
+const WIDGET_TOOL_NAMES = new Set([
+  'messageWidget',
+  'flightWidget',
+  'hotelWidget',
+  'planWidget',
+]);
+
+/**
+ * Tool calls the agent made, excluding the widget render tools (which are
+ * UI-only and not interesting for the workflow detail list).
+ */
+export function selectVisibleToolCalls(
+  messages: readonly Message[],
+): WorkflowToolCall[] {
+  const resolved = new Set<string>();
+  for (const message of messages) {
+    if (message.role === 'tool') {
+      resolved.add(message.toolCallId);
+    }
+  }
+
+  const calls: WorkflowToolCall[] = [];
+  for (const message of messages) {
+    if (message.role !== 'assistant' || !message.toolCalls) {
+      continue;
+    }
+    for (const toolCall of message.toolCalls) {
+      if (WIDGET_TOOL_NAMES.has(toolCall.function.name)) {
+        continue;
+      }
+      calls.push({
+        id: toolCall.id,
+        name: toolCall.function.name,
+        args: parseToolArguments(toolCall.function.arguments),
+        status: resolved.has(toolCall.id) ? 'complete' : 'pending',
+      });
+    }
+  }
+  return calls;
 }
 
 export function formatToolArgsValue(args: unknown): string | null {
@@ -44,34 +71,22 @@ export function formatToolArgsValue(args: unknown): string | null {
   return text.length > 0 ? text : null;
 }
 
-function safeStringify(args: unknown): string {
-  try {
-    return JSON.stringify(args, null, 2);
-  } catch {
-    return String(args);
-  }
-}
-
+/**
+ * Derives the 3-node pipeline from the rendered widgets. CopilotKit's headless
+ * store does not surface the server's STEP_STARTED/STEP_FINISHED events, so
+ * progress is inferred from which widgets have appeared plus the run state.
+ */
 export function buildPipeline(
-  steps: AgUiWorkflowStep[],
+  flightsReady: boolean,
+  hotelsReady: boolean,
   isLoading: boolean,
   hasWidgets: boolean,
 ): PipelineStep[] {
-  const status = new Map(steps.map((step) => [step.name, step.status]));
-
-  const activeDataStep = isLoading
-    ? ['findFlights', 'findHotels'].find((id) => status.get(id) !== 'complete')
-    : undefined;
-
-  const finalizeActive =
-    status.has('finalize') || (isLoading && !activeDataStep);
-
   const context: PipelineStateContext = {
-    status,
+    flightsReady,
+    hotelsReady,
     isLoading,
     hasWidgets,
-    activeDataStep,
-    finalizeActive,
   };
 
   return PIPELINE_STEPS.map(({ id, label }) => ({
@@ -82,31 +97,52 @@ export function buildPipeline(
 }
 
 interface PipelineStateContext {
-  status: Map<string, AgUiWorkflowStepStatus>;
+  flightsReady: boolean;
+  hotelsReady: boolean;
   isLoading: boolean;
   hasWidgets: boolean;
-  activeDataStep: string | undefined;
-  finalizeActive: boolean;
 }
 
 function resolvePipelineStepState(
   id: string,
   context: PipelineStateContext,
 ): PipelineStepState {
-  const { status, isLoading, hasWidgets, activeDataStep, finalizeActive } =
-    context;
+  const { flightsReady, hotelsReady, isLoading, hasWidgets } = context;
+  const finished = !isLoading && hasWidgets;
 
-  if (id === 'finalize') {
-    if (!isLoading && hasWidgets) {
+  if (id === 'findFlights') {
+    if (flightsReady || finished) {
       return 'done';
     }
-    return finalizeActive ? 'active' : 'upcoming';
+    return isLoading ? 'active' : 'upcoming';
   }
-  if (status.get(id) === 'complete') {
+
+  if (id === 'findHotels') {
+    if (hotelsReady || finished) {
+      return 'done';
+    }
+    return isLoading && flightsReady ? 'active' : 'upcoming';
+  }
+
+  // finalize
+  if (finished) {
     return 'done';
   }
-  if (status.get(id) === 'pending' || id === activeDataStep) {
-    return 'active';
+  return isLoading && flightsReady && hotelsReady ? 'active' : 'upcoming';
+}
+
+function parseToolArguments(args: string): unknown {
+  try {
+    return JSON.parse(args);
+  } catch {
+    return args;
   }
-  return 'upcoming';
+}
+
+function safeStringify(args: unknown): string {
+  try {
+    return JSON.stringify(args, null, 2);
+  } catch {
+    return String(args);
+  }
 }

@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { MarkdownComponent } from 'ngx-markdown';
 import { z } from 'zod';
+
+import { defineWidget } from '../copilot/widget-tools/widget';
 
 @Component({
   selector: 'app-message-widget',
@@ -18,12 +19,12 @@ export class MessageWidget {
   readonly text = input.required<string>();
 }
 
-export const messageWidget = defineAgUiComponent({
+export const messageWidget = defineWidget({
   name: 'messageWidget',
   description: [
-    'Textual message to the user rendered as Markdown.',
-    'MUST be the FIRST component in every showComponents call.',
-    'Use this to provide the natural-language answer before any other widget.',
+    'Renders a textual message to the user as Markdown.',
+    'Call this to give your natural-language answer; it can be combined with',
+    'other widget tools in the same turn (call it first).',
   ].join('\n'),
   component: MessageWidget,
   schema: z.object({

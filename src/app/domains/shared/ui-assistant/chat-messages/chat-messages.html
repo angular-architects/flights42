@@ -8,34 +8,66 @@
   </div>
 </article>
 
-@for (message of messageModels(); track message.id) {
-  <article
-    class="msg"
-    [class.assistant]="message.role === 'assistant'"
-    [class.user]="message.role === 'user'"
-    [class.error]="message.role === 'error'">
-    <div class="avatar">{{ message.icon }}</div>
-    <div>
-      <div class="bubble">
-        @if (message.contentString) {
-          <app-message [data]="message.contentString"></app-message>
-        }
-        @for (widget of message.widgets; track widget.id) {
-          <app-widget-container [widget]="widget" />
-        }
-
-        @for (toolCall of message.toolCalls; track toolCall.id) {
-          <div class="tool-call" [title]="toolCall.args | json">
-            Tool Call: {{ toolCall.name }}
-            <app-tool-status
-              class="ml-5"
-              [pending]="toolCall.status === 'pending'" />
-          </div>
-        }
+@for (message of messages(); track message.id) {
+  @if (message.role === 'user') {
+    <article class="msg user">
+      <div class="avatar">💬</div>
+      <div>
+        <div class="bubble">
+          @if (userText(message.content); as text) {
+            <app-message [data]="text"></app-message>
+          }
+          @for (attachment of userAttachments(message.content); track $index) {
+            <span class="attachment-badge">{{ attachment.label }}</span>
+          }
+        </div>
+        <div class="meta"></div>
       </div>
-      <div class="meta"></div>
-    </div>
-  </article>
+    </article>
+  }
+
+  @if (message.role === 'assistant') {
+    @if (message.content) {
+      <article class="msg assistant">
+        <div class="avatar">🤖</div>
+        <div>
+          <div class="bubble">
+            <app-message [data]="message.content"></app-message>
+          </div>
+          <div class="meta"></div>
+        </div>
+      </article>
+    }
+
+    @for (call of message.toolCalls ?? []; track call.id) {
+      <article class="msg assistant">
+        <div class="avatar">🤖</div>
+        <div>
+          <div class="bubble">
+            <app-tool-call-view
+              [toolCall]="call"
+              [message]="message"
+              [messages]="messages()"
+              [agentId]="agentId()"
+              [isLoading]="pending()" />
+          </div>
+          <div class="meta"></div>
+        </div>
+      </article>
+    }
+  }
+
+  @if (message.role === 'activity') {
+    <article class="msg assistant">
+      <div class="avatar">🤖</div>
+      <div>
+        <div class="bubble">
+          <app-copilot-activity [message]="message" [agentId]="agentId()" />
+        </div>
+        <div class="meta"></div>
+      </div>
+    </article>
+  }
 }
 
 @let activeInterrupt = interruptModel();
@@ -46,9 +78,7 @@
     <div>
       <div class="bubble">
         <strong>Approval needed</strong>
-        <div [title]="activeInterrupt.payload.args | json">
-          {{ activeInterrupt.message }}
-        </div>
+        <div>{{ activeInterrupt.message }}</div>
         <div class="approval-actions">
           @if (activeInterrupt.options.length > 0) {
             @for (option of activeInterrupt.options; track option.id) {
@@ -87,7 +117,7 @@
   </article>
 }
 
-@if (showIndicator()) {
+@if (pending()) {
   <article class="msg assistant">
     <div class="avatar">🤖</div>
     <div>

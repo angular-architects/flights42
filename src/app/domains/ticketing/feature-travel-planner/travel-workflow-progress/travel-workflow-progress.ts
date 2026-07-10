@@ -5,24 +5,21 @@ import {
   input,
   signal,
 } from '@angular/core';
-import type {
-  AgUiChatMessage,
-  AgUiToolCall,
-  AgUiWorkflowStep,
-} from '@internal/ag-ui-client';
+import { type Message } from '@copilotkit/angular';
 
 import {
   buildPipeline,
   formatToolArgsValue,
   type PipelineStep,
   selectVisibleToolCalls,
-  selectWorkflowSteps,
+  type WorkflowToolCall,
 } from './travel-workflow-progress.helpers';
 
 /**
  * Renders the workflow step tracker and the tool-call history behind the
- * "More" button. Derives everything from the chat messages, so the page only
- * has to pass the raw messages plus loading state and widget count.
+ * "More" button. The pipeline is derived from which widgets have appeared plus
+ * the run state (see `buildPipeline`), so the page passes the raw messages,
+ * loading state, and per-widget readiness flags.
  */
 @Component({
   selector: 'app-travel-workflow-progress',
@@ -31,20 +28,27 @@ import {
   styleUrl: './travel-workflow-progress.css',
 })
 export class TravelWorkflowProgress {
-  readonly messages = input.required<AgUiChatMessage[]>();
+  readonly messages = input.required<Message[]>();
   readonly loading = input.required<boolean>();
-  readonly widgetCount = input.required<number>();
+  readonly flightsReady = input.required<boolean>();
+  readonly hotelsReady = input.required<boolean>();
+  readonly hasWidgets = input.required<boolean>();
 
-  protected readonly toolCalls = computed<AgUiToolCall[]>(() =>
+  protected readonly toolCalls = computed<WorkflowToolCall[]>(() =>
     selectVisibleToolCalls(this.messages()),
   );
 
-  protected readonly workflowSteps = computed<AgUiWorkflowStep[]>(() =>
-    selectWorkflowSteps(this.messages()),
+  protected readonly stepPipeline = computed<PipelineStep[]>(() =>
+    buildPipeline(
+      this.flightsReady(),
+      this.hotelsReady(),
+      this.loading(),
+      this.hasWidgets(),
+    ),
   );
 
-  protected readonly stepPipeline = computed<PipelineStep[]>(() =>
-    buildPipeline(this.workflowSteps(), this.loading(), this.widgetCount() > 0),
+  protected readonly showTracker = computed(
+    () => this.loading() || this.hasWidgets() || this.toolCalls().length > 0,
   );
 
   protected readonly canToggleDetails = computed(

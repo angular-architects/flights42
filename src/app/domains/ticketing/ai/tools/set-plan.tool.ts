@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { planStepInputSchema } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
 
-export const setPlanTool = defineAgUiTool({
+export const setPlanTool = createFrontendTool({
   name: 'setPlan',
   description: `
     Creates or replaces the WHOLE co-plan at once. Use this only to draft the
@@ -22,7 +22,7 @@ export const setPlanTool = defineAgUiTool({
         ]
       })
   `,
-  schema: z.object({
+  parameters: z.object({
     title: z
       .string()
       .optional()
@@ -31,7 +31,7 @@ export const setPlanTool = defineAgUiTool({
       .array(planStepInputSchema)
       .describe('Ordered steps; the array order IS the execution order.'),
   }),
-  execute: (args) => {
+  handler: async (args) => {
     const store = inject(PlanStore);
     store.setPlan(args);
     return { stepCount: args.steps.length };

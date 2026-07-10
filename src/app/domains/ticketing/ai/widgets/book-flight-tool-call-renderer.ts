@@ -6,12 +6,10 @@ import {
   input,
   signal,
 } from '@angular/core';
-import {
-  type AgUiActionCard,
-  type AgUiActionData,
-  defineActionCard,
-} from '@internal/ag-ui-client';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
+import { z } from 'zod';
 
+import { createRenderToolCall } from '../../../shared/util-copilotkit/tool-definition';
 import {
   BookingClient,
   type FlightMutationFlight,
@@ -21,6 +19,7 @@ import {
 import {
   getActionStatusLabel,
   getFlightContextText,
+  parseToolResult,
   shouldShowUndo,
   toFlightMutationResult,
   toLoadFailedResult,
@@ -31,17 +30,14 @@ const PAYMENT_METHOD_LABELS: Record<FlightPaymentMethod, string> = {
   miles: 'Bonus miles',
 };
 
-interface BookFlightInput {
-  flightId: number;
-}
+const bookFlightArgsSchema = z.object({
+  flightId: z.number(),
+});
 
-type BookFlightActionData = AgUiActionData<
-  BookFlightInput,
-  FlightMutationResult
->;
+export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
 
 @Component({
-  selector: 'app-book-flight-action-card',
+  selector: 'app-book-flight-tool-call-renderer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card">
@@ -116,18 +112,29 @@ type BookFlightActionData = AgUiActionData<
     }
   `,
 })
-export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData> {
+export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> {
   private readonly bookingClient = inject(BookingClient);
 
-  readonly actionData = input.required<BookFlightActionData>();
+  readonly toolCall = input.required<AngularToolCall<BookFlightArgs>>();
 
   private readonly undoPending = signal(false);
   private readonly undoResult = signal<FlightMutationResult | undefined>(
     undefined,
   );
 
-  protected readonly titleText = computed(() =>
-    getBookFlightTitle(this.flightId()),
+  private readonly complete = computed(
+    () => this.toolCall().status === 'complete',
+  );
+
+  private readonly result = computed<FlightMutationResult | undefined>(() => {
+    const call = this.toolCall();
+    return call.status === 'complete'
+      ? toFlightMutationResult(parseToolResult(call.result))
+      : undefined;
+  });
+
+  protected readonly titleText = computed(
+    () => `Book Flight #${this.flightId()}`,
   );
 
   protected readonly contextText = computed(() =>
@@ -138,8 +145,7 @@ export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData
     getActionStatusLabel(
       this.undoPending(),
       this.undoResult(),
-      this.actionData().status,
-      this.actionData().error,
+      this.complete(),
       this.result(),
     ),
   );
@@ -148,7 +154,7 @@ export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData
     shouldShowUndo(
       this.undoPending(),
       this.undoResult(),
-      this.actionData().status,
+      this.complete(),
       this.result(),
     ),
   );
@@ -180,15 +186,11 @@ export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData
     }
   }
 
-  private result(): FlightMutationResult | undefined {
-    return toFlightMutationResult(this.actionData().result);
-  }
-
   private flightId(): number {
+    const argId = this.toolCall().args.flightId;
+    const fallback = typeof argId === 'number' ? argId : 0;
     const result = this.result();
-    return result?.ok
-      ? (result.flight?.id ?? this.actionData().input.flightId)
-      : this.actionData().input.flightId;
+    return result?.ok ? (result.flight?.id ?? fallback) : fallback;
   }
 
   private flightDetails(): FlightMutationFlight | undefined {
@@ -202,11 +204,8 @@ export class BookFlightActionCard implements AgUiActionCard<BookFlightActionData
   }
 }
 
-function getBookFlightTitle(flightId: number): string {
-  return `Book Flight #${flightId}`;
-}
-
-export const bookFlightActionCard = defineActionCard({
-  toolName: 'bookFlightTool',
-  component: BookFlightActionCard,
+export const bookFlightRenderTool = createRenderToolCall({
+  name: 'bookFlightTool',
+  args: bookFlightArgsSchema,
+  component: BookFlightToolCallRenderer,
 });

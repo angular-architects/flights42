@@ -1,9 +1,8 @@
-import { DestroyRef, inject, Injectable } from '@angular/core';
-import { type AgUiChatResourceRef, agUiResource } from '@internal/ag-ui-client';
+import { inject, Injectable } from '@angular/core';
 
-import { ConfigService } from '../../shared/util-common/config-service';
+import { type CopilotAgentStore } from '../../shared/util-copilotkit/agent-store';
+import { CheckinAgentStore } from './checkin-agent-store';
 import { CheckinTicketStore } from './checkin-ticket-store';
-import { fillCheckinFormClientTool } from './fill-checkin-form.tool';
 
 /**
  * Max edge length (in CSS pixels) the uploaded ticket image is
@@ -18,25 +17,12 @@ const JPEG_QUALITY = 0.85;
 
 @Injectable({ providedIn: 'root' })
 export class CheckinChatService {
-  private readonly config = inject(ConfigService);
   private readonly ticketStore = inject(CheckinTicketStore);
-  private readonly destroyRef = inject(DestroyRef);
 
-  // No memory: every uploaded ticket is a fresh extraction. We
-  // explicitly disable server memory so previous threads can't leak
-  // into this stateless flow.
-  readonly chat: AgUiChatResourceRef = agUiResource({
-    url: this.config.agUiUrlFor('checkinAgent'),
-    model: this.config.model,
-    useServerMemory: false,
-    tools: [fillCheckinFormClientTool],
-  });
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.chat.dispose();
-    });
-  }
+  // No memory: every uploaded ticket is a fresh extraction. Server memory is
+  // disabled on the agent store so previous threads can't leak into this
+  // stateless flow.
+  readonly chat: CopilotAgentStore = inject(CheckinAgentStore);
 
   /**
    * Reads the file, optionally downscales it to keep the token cost
@@ -59,23 +45,20 @@ export class CheckinChatService {
       const { base64, mimeType } = await this.fileToBase64Image(file);
       this.ticketStore.setStatus('analyzing');
 
-      this.chat.sendMessage({
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Here is my ticket or ID document. Please extract the relevant fields.',
+      await this.chat.sendMessage([
+        {
+          type: 'text',
+          text: 'Here is my ticket or ID document. Please extract the relevant fields.',
+        },
+        {
+          type: 'image',
+          source: {
+            type: 'data',
+            value: base64,
+            mimeType,
           },
-          {
-            type: 'image',
-            source: {
-              type: 'data',
-              value: base64,
-              mimeType,
-            },
-          },
-        ],
-      });
+        },
+      ]);
     } catch (error) {
       this.ticketStore.setStatus(
         'error',

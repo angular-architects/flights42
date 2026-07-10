@@ -7,9 +7,9 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
+import { defineWidget } from '../../shared/ui-assistant/copilot/widget-tools/widget';
 import { FlightInfo } from '../data/flight-info';
 import { FlightStore } from '../data/flight-store';
 
@@ -120,11 +120,11 @@ export class FlightWidget {
   }
 }
 
-export const flightWidget = defineAgUiComponent({
+export const flightWidget = defineWidget({
   name: 'flightWidget',
   description: [
     'Interactive card displaying one concrete flight.',
-    'Use after showComponents whenever users should see flights: booked flight lists, specific booked-flight confirmations (e.g. "Did I book Paris?"), or current search/working-set flights.',
+    'Call this whenever users should see flights: booked flight lists, specific booked-flight confirmations (e.g. "Did I book Paris?"), or current search/working-set flights.',
     'For booked flights use status: "booked"; for search/current flights use status: "other".',
     'Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.',
   ].join('\n'),

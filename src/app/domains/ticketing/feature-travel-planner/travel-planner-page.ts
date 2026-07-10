@@ -7,32 +7,30 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  type AgUiChatMessage,
-  agUiResource,
-  type AgUiResultWidget,
-  type AgUiWidgetInstance,
-  createShowComponentsTool,
-} from '@internal/ag-ui-client';
+import { type Message } from '@copilotkit/angular';
 import { addDays, format } from 'date-fns';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
-import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
-import { ConfigService } from '../../shared/util-common/config-service';
 import { featureFlags } from '../../shared/util-common/feature-flags';
 import { FlightInfo } from '../data/flight-info';
-import { FlightWidget, flightWidget } from '../ui/flight-widget';
+import { FlightWidget } from '../ui/flight-widget';
 import { type PlanHotel, TravelPlanStore } from './travel-plan-store';
+import { TravelPlannerAgentStore } from './travel-planner-agent-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { TravelRefinementChatService } from './travel-refinement-chat-service';
 import { TravelWorkflowProgress } from './travel-workflow-progress/travel-workflow-progress';
-import { HotelWidget, hotelWidget } from './ui/hotel-widget';
+import { HotelWidget } from './ui/hotel-widget';
 
 const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },
   { value: 2, label: '2 days' },
   { value: 3, label: '3 days' },
 ] as const;
+
+interface ShownComponent {
+  name: string;
+  props: Record<string, unknown>;
+}
 
 @Component({
   selector: 'app-travel-planner-page',
@@ -47,8 +45,6 @@ const DURATION_OPTIONS = [
   styleUrl: './travel-planner-page.css',
 })
 export class TravelPlannerPage {
-  private readonly config = inject(ConfigService);
-
   private readonly fb = inject(FormBuilder);
 
   private readonly refinementChat = inject(TravelRefinementChatService);
@@ -59,6 +55,8 @@ export class TravelPlannerPage {
 
   private readonly requestStore = inject(TravelPlannerRequestStore);
 
+  protected readonly chat = inject(TravelPlannerAgentStore);
+
   protected readonly durations = DURATION_OPTIONS;
 
   protected readonly form = this.fb.nonNullable.group({
@@ -68,34 +66,35 @@ export class TravelPlannerPage {
     preferences: [this.requestStore.preferences()],
   });
 
-  protected readonly chat = agUiResource({
-    url: `${this.config.aiServerUrl}/ag-ui/travelPlannerAgent`,
-    model: this.config.model,
-    useServerMemory: false,
-    tools: [
-      createShowComponentsTool([messageWidget, flightWidget, hotelWidget]),
-    ],
-  });
-
-  protected readonly widgets = computed(() =>
-    selectAssistantWidgets(this.chat.value()),
-  );
-
-  protected readonly messageWidgets = computed(() =>
-    selectWidgetsByName(this.widgets(), 'messageWidget'),
+  private readonly shownComponents = computed<ShownComponent[]>(() =>
+    collectShownComponents(this.chat.messages()),
   );
 
   protected readonly flightWidgets = computed(() =>
-    selectWidgetsByName(this.widgets(), 'flightWidget'),
+    selectByName(this.shownComponents(), 'flightWidget'),
   );
 
   protected readonly hotelWidgets = computed(() =>
-    selectWidgetsByName(this.widgets(), 'hotelWidget'),
+    selectByName(this.shownComponents(), 'hotelWidget'),
   );
 
-  protected readonly errorMessage = computed<string | null>(() =>
-    readErrorMessage(this.chat.value()),
+  protected readonly messageWidgets = computed(() =>
+    selectByName(this.shownComponents(), 'messageWidget'),
   );
+
+  protected readonly widgetCount = computed(
+    () => this.flightWidgets().length + this.hotelWidgets().length,
+  );
+
+  protected readonly flightsReady = computed(
+    () => this.flightWidgets().length > 0,
+  );
+
+  protected readonly hotelsReady = computed(
+    () => this.hotelWidgets().length > 0,
+  );
+
+  protected readonly errorMessage = computed<string | null>(() => null);
 
   /** True between starting a generation and syncing its result into the store. */
   private readonly awaitingPlan = signal(false);
@@ -110,12 +109,8 @@ export class TravelPlannerPage {
     effect(() => this.syncGeneratedPlan());
   }
 
-  /**
-   * Once a generation finishes, copies the produced flights/hotels into the
-   * plan store (single source of truth) and opens the refinement chat.
-   */
   private syncGeneratedPlan(): void {
-    const loading = this.chat.isLoading();
+    const loading = this.chat.isRunning();
     if (loading || !this.awaitingPlan()) {
       return;
     }
@@ -144,7 +139,7 @@ export class TravelPlannerPage {
   }
 
   protected submit(): void {
-    if (this.form.invalid || this.chat.isLoading()) {
+    if (this.form.invalid || this.chat.isRunning()) {
       return;
     }
 
@@ -185,7 +180,7 @@ export class TravelPlannerPage {
       `${nights} ${nights === 1 ? 'night' : 'nights'}).` +
       preferenceText;
 
-    this.chat.sendMessage({ role: 'user', content });
+    void this.chat.sendMessage(content);
   }
 
   protected stop(): void {
@@ -198,25 +193,54 @@ function trimTime(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
-function selectAssistantWidgets(
-  messages: AgUiChatMessage[],
-): AgUiWidgetInstance[] {
-  return messages
-    .filter((message) => message.role === 'assistant')
-    .flatMap((message) => message.widgets);
+const WIDGET_TOOL_NAMES = ['flightWidget', 'hotelWidget', 'messageWidget'];
+
+/**
+ * Extracts the widgets the agent rendered via the per-widget tools (each tool's
+ * arguments ARE the widget props). Reads the tool result when available, falling
+ * back to the (identical) call arguments while the run is still in progress.
+ */
+function collectShownComponents(
+  messages: readonly Message[],
+): ShownComponent[] {
+  const results = new Map<string, string>();
+  for (const message of messages) {
+    if (message.role === 'tool') {
+      results.set(message.toolCallId, message.content);
+    }
+  }
+
+  const components: ShownComponent[] = [];
+  for (const message of messages) {
+    if (message.role !== 'assistant' || !message.toolCalls) {
+      continue;
+    }
+    for (const toolCall of message.toolCalls) {
+      const name = toolCall.function.name;
+      if (!WIDGET_TOOL_NAMES.includes(name)) {
+        continue;
+      }
+      const raw = results.get(toolCall.id) ?? toolCall.function.arguments;
+      const props = safeParseJson(raw);
+      if (props && typeof props === 'object') {
+        components.push({ name, props: props as Record<string, unknown> });
+      }
+    }
+  }
+  return components;
 }
 
-function selectWidgetsByName(
-  widgets: AgUiWidgetInstance[],
+function selectByName(
+  components: ShownComponent[],
   name: string,
-): AgUiResultWidget[] {
-  return widgets.filter(
-    (widget): widget is AgUiResultWidget =>
-      widget.kind !== 'action' && widget.name === name,
-  );
+): ShownComponent[] {
+  return components.filter((component) => component.name === name);
 }
 
-function readErrorMessage(messages: AgUiChatMessage[]): string | null {
-  const error = messages.find((message) => message.role === 'error');
-  return error?.content ?? null;
+function safeParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
 }

@@ -46,21 +46,24 @@ Rules for editing:
 ## Output Rules
 
 - NEVER write plain text answers to the user. Plain text replies are forbidden.
-  ALWAYS answer by calling the showComponents tool.
-- The FIRST (and usually ONLY) component in every showComponents call MUST be a
-  messageWidget. Its "text" field carries your natural-language answer (Markdown
-  allowed). Keep it short — do NOT enumerate the plan steps inside the
-  messageWidget; the planWidget already shows them.
+  ALWAYS answer by calling widget tools (each widget is its own tool).
+- ALWAYS start with a messageWidget call (usually the ONLY widget). Its "text"
+  field carries your natural-language answer (Markdown allowed). Keep it short —
+  do NOT enumerate the plan steps inside the messageWidget; the planWidget
+  already shows them.
 - The planWidget snapshots the plan from the store and takes NO arguments.
-  Append it AFTER the messageWidget WHENEVER the plan changes — both for the
+  Call it AFTER the messageWidget WHENEVER the plan changes — both for the
   initial draft and after EVERY edit — so the user always sees the updated plan.
   Each planWidget freezes the plan as it is right after your edit; earlier cards
   in the chat keep showing the older versions. So always make your plan tool
-  call(s) FIRST, then call showComponents with the messageWidget and the
-  planWidget.
-- Never append flightWidgets (or any other widget) alongside the plan; the plan
+  call(s) FIRST, then call messageWidget and planWidget.
+- Never call flightWidget (or any other widget) alongside the plan; the plan
   steps already carry the flight references.
-- Never invent component or tool names. Only use the registered ones.
+- Never invent widget tools or props. Only use the registered ones.
+- Emit your widgets TOGETHER in ONE turn (parallel tool calls in one response):
+  the messageWidget and, if the plan changed, the planWidget. A widget tool ends
+  your turn once rendered, so a widget you did not include this turn will NOT be
+  shown. Make your plan tool call(s) first, then render both widgets at once.
 
 ## Planning Style
 

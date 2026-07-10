@@ -1,9 +1,10 @@
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
+import { z } from 'zod';
 
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { PlanStore } from '../plan/plan-store';
 
-export const getPlanTool = defineAgUiTool({
+export const getPlanTool = createFrontendTool({
   name: 'getPlan',
   description: `
     Returns the current co-plan as the canonical source of truth: its title and an
@@ -26,7 +27,8 @@ export const getPlanTool = defineAgUiTool({
           ]
         }
   `,
-  execute: () => {
+  parameters: z.object({}),
+  handler: async () => {
     const store = inject(PlanStore);
     return {
       title: store.title(),

@@ -6,16 +6,13 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  AgUiChatResourceRef,
-  type AgUiResumePayload,
-} from '@internal/ag-ui-client';
 
 import {
   AgentMode,
   AgentModeService,
 } from '../../util-common/agent-mode-service';
 import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
+import { type CopilotAgentStore } from '../../util-copilotkit/agent-store';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
 
@@ -48,11 +45,13 @@ export class AssistantChat {
   protected readonly greeting = signal<string>(DEFAULT_GREETING);
   protected readonly showModeSelector = signal(true);
 
-  protected chat: AgUiChatResourceRef | null = null;
+  protected store: CopilotAgentStore | null = null;
+  protected agentId: string | null = null;
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
-      this.chat = chatInfo.chat;
+      this.store = chatInfo.store;
+      this.agentId = chatInfo.agentId;
       this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
       this.showModeSelector.set(chatInfo.showModeSelector ?? true);
     });
@@ -92,15 +91,15 @@ export class AssistantChat {
   protected submit() {
     const message = this.message();
     this.message.set('');
-    this.chat?.sendMessage({ role: 'user', content: message });
+    void this.store?.sendMessage(message);
   }
 
   protected stop(): void {
-    this.chat?.stop();
+    this.store?.stop();
   }
 
-  protected resumeInterrupt(payload: AgUiResumePayload): void {
-    this.chat?.resumeInterrupt(payload);
+  protected resumeInterrupt(payload: unknown): void {
+    void this.store?.resumeInterrupt(payload);
   }
 
   protected setMode(mode: AgentMode): void {

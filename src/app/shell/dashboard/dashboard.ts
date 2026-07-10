@@ -3,91 +3,67 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
-  effect,
   inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  type AgUiChatMessage,
-  agUiResource,
-  type AgUiToolCall,
-  type AgUiWidgetInstance,
-  registerHandlers,
-  WidgetContainerComponent,
-} from '@internal/ag-ui-client';
+import { type Message } from '@copilotkit/angular';
+import { registerHandlers } from '@internal/ag-ui-client';
 
-import { ConfigService } from '../../domains/shared/util-common/config-service';
+import { CopilotActivity } from '../../domains/shared/ui-assistant/copilot/activity/copilot-activity';
 import { checkInAction } from '../../domains/ticketing/ai/actions/check-in-action';
 import { dashboardFlightSearchAction } from './actions/dashboard-flight-search-action';
+import {
+  DASHBOARD_AGENT_ID,
+  DashboardAgentStore,
+} from './dashboard-agent-store';
+import { DashboardPrefs } from './dashboard-prefs';
 import { examplePrompts } from './example-prompts';
-import { submitFlightSearchTool } from './tools/submit-flight-search.tool';
+
+type ActivityMessage = Extract<Message, { role: 'activity' }>;
+
+interface DashboardToolCall {
+  id: string;
+  name: string;
+  args: unknown;
+  status: 'pending' | 'complete';
+}
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, WidgetContainerComponent],
+  imports: [FormsModule, CopilotActivity],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  private readonly config = inject(ConfigService);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly renderer = inject(A2uiRendererService);
 
+  protected readonly agentId = DASHBOARD_AGENT_ID;
+  protected readonly chat = inject(DashboardAgentStore);
   protected readonly message = signal('');
-  protected readonly preventCaching = signal(false);
+  protected readonly preventCaching = inject(DashboardPrefs).preventCaching;
 
-  protected readonly chat = agUiResource({
-    url: this.config.agUiUrlFor('dashboardAgent'),
-    model: this.config.model,
-    useServerMemory: false,
-    tools: [submitFlightSearchTool],
-    forwardedProps: () => ({ preventCaching: this.preventCaching() }),
-  });
-
-  protected readonly widgets = computed<AgUiWidgetInstance[]>(() =>
-    collectWidgets(this.chat.value()),
+  protected readonly activities = computed<ActivityMessage[]>(() =>
+    this.chat.messages().filter(isActivityMessage),
   );
 
-  protected readonly hasOutput = computed(() =>
-    hasOutput(this.widgets(), this.errorMessage()),
-  );
+  protected readonly hasOutput = computed(() => this.activities().length > 0);
 
-  protected readonly errorMessage = computed<string | null>(() =>
-    extractErrorMessage(this.chat.value()),
-  );
-
-  protected readonly allToolCalls = computed<AgUiToolCall[]>(() =>
-    collectToolCalls(this.chat.value()),
+  protected readonly allToolCalls = computed<DashboardToolCall[]>(() =>
+    collectToolCalls(this.chat.messages()),
   );
 
   protected readonly currentStatus = computed<string>(() =>
-    deriveCurrentStatus(this.allToolCalls(), this.chat.isLoading()),
+    deriveCurrentStatus(this.allToolCalls(), this.chat.isRunning()),
   );
 
   protected readonly showToolDetails = signal(false);
-
-  private generationStartTime: number | null = null;
 
   constructor() {
     registerHandlers({
       checkIn: (action) => checkInAction(action),
       dashboardFlightSearch: (action) => dashboardFlightSearchAction(action),
-    });
-
-    effect(() => {
-      const widgetCount = this.widgets().length;
-      if (widgetCount > 0 && this.generationStartTime !== null) {
-        const elapsedMs = performance.now() - this.generationStartTime;
-        console.log(`Dashboard angezeigt nach ${elapsedMs.toFixed(0)} ms`);
-        this.generationStartTime = null;
-      }
-    });
-
-    this.destroyRef.onDestroy(() => {
-      this.chat.dispose();
     });
   }
 
@@ -99,8 +75,7 @@ export class Dashboard {
     this.clearRenderedSurfaces();
     this.chat.reset();
     this.showToolDetails.set(false);
-    this.generationStartTime = performance.now();
-    this.chat.sendMessage({ role: 'user', content });
+    void this.chat.sendMessage(content);
   }
 
   protected useExamplePrompt(index: number): void {
@@ -117,7 +92,6 @@ export class Dashboard {
     this.chat.reset();
     this.showToolDetails.set(false);
     this.message.set('');
-    this.generationStartTime = null;
   }
 
   protected toggleToolDetails(): void {
@@ -138,33 +112,38 @@ export class Dashboard {
   }
 }
 
-function collectWidgets(messages: AgUiChatMessage[]): AgUiWidgetInstance[] {
-  return messages.flatMap((message) =>
-    message.role === 'assistant' ? message.widgets : [],
-  );
+function isActivityMessage(message: Message): message is ActivityMessage {
+  return message.role === 'activity';
 }
 
-function hasOutput(
-  widgets: AgUiWidgetInstance[],
-  errorMessage: string | null,
-): boolean {
-  return widgets.length > 0 || errorMessage !== null;
-}
+function collectToolCalls(messages: readonly Message[]): DashboardToolCall[] {
+  const resolved = new Set<string>();
+  for (const message of messages) {
+    if (message.role === 'tool') {
+      resolved.add(message.toolCallId);
+    }
+  }
 
-function extractErrorMessage(messages: AgUiChatMessage[]): string | null {
-  const errorMessage = messages.find((message) => message.role === 'error');
-  return errorMessage?.content ?? null;
-}
-
-function collectToolCalls(messages: AgUiChatMessage[]): AgUiToolCall[] {
-  return messages.flatMap((message) =>
-    message.role === 'assistant' ? message.toolCalls : [],
-  );
+  const calls: DashboardToolCall[] = [];
+  for (const message of messages) {
+    if (message.role !== 'assistant' || !message.toolCalls) {
+      continue;
+    }
+    for (const toolCall of message.toolCalls) {
+      calls.push({
+        id: toolCall.id,
+        name: toolCall.function.name,
+        args: parseToolArguments(toolCall.function.arguments),
+        status: resolved.has(toolCall.id) ? 'complete' : 'pending',
+      });
+    }
+  }
+  return calls;
 }
 
 function deriveCurrentStatus(
-  toolCalls: AgUiToolCall[],
-  isLoading: boolean,
+  toolCalls: readonly DashboardToolCall[],
+  isRunning: boolean,
 ): string {
   for (let i = toolCalls.length - 1; i >= 0; i -= 1) {
     const toolCall = toolCalls[i];
@@ -172,7 +151,15 @@ function deriveCurrentStatus(
       return `Running tool: ${toolCall.name}`;
     }
   }
-  return isLoading ? 'Thinking' : 'Ready';
+  return isRunning ? 'Thinking' : 'Ready';
+}
+
+function parseToolArguments(args: string): unknown {
+  try {
+    return JSON.parse(args);
+  } catch {
+    return args;
+  }
 }
 
 function formatToolArgs(args: unknown): string {

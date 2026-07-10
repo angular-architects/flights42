@@ -4,8 +4,9 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
+
+import { defineWidget } from '../../../shared/ui-assistant/copilot/widget-tools/widget';
 
 const hotelSchema = z.object({
   id: z.string().describe('Stable hotel id (e.g. "grand-palace").'),
@@ -111,7 +112,7 @@ export class HotelWidget {
   );
 }
 
-export const hotelWidget = defineAgUiComponent({
+export const hotelWidget = defineWidget({
   name: 'hotelWidget',
   description: [
     'Display card for a single hotel proposal (name, stars, image, city).',

@@ -1,4 +1,7 @@
-import type { McpAppsConfig, StyleVariables } from '@internal/ag-ui-client';
+import type {
+  McpAppsConfig,
+  StyleVariables,
+} from './domains/shared/ui-assistant/copilot/mcp-apps/mcp-apps.provider';
 
 export const mcpAppsConfig: McpAppsConfig = {
   hostInfo: {

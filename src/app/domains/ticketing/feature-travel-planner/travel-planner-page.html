@@ -42,19 +42,21 @@
     <button
       type="submit"
       class="btn-primary"
-      [disabled]="form.invalid || chat.isLoading()">
+      [disabled]="form.invalid || chat.isRunning()">
       Generate Travel Plan
     </button>
-    @if (chat.isLoading()) {
+    @if (chat.isRunning()) {
       <button type="button" (click)="stop()">Stop</button>
     }
   </div>
 </form>
 
 <app-travel-workflow-progress
-  [messages]="chat.value()"
-  [loading]="chat.isLoading()"
-  [widgetCount]="widgets().length" />
+  [messages]="chat.messages()"
+  [loading]="chat.isRunning()"
+  [flightsReady]="flightsReady()"
+  [hotelsReady]="hotelsReady()"
+  [hasWidgets]="widgetCount() > 0" />
 
 @if (errorMessage(); as error) {
   <p class="planner-error">{{ error }}</p>

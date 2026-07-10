@@ -15,14 +15,18 @@ import {
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { z } from 'zod';
 
 import {
-  type AgUiMcpAppsSnapshotContent,
-  defineAgUiComponent,
-} from '../ag-ui-types';
-import { MCP_APPS_CONFIG, MCP_APPS_SERVER_URL } from './mcp-apps.provider';
+  MCP_APPS_CONFIG,
+  MCP_APPS_SERVER_URL,
+  type McpAppsSnapshotContent,
+} from './mcp-apps.provider';
 
+/**
+ * Hosts an interactive MCP App inside a sandboxed iframe. Loads the resource
+ * HTML over an MCP client, wires an `AppBridge`, and forwards tool input and
+ * result. Custom flights host code with no CopilotKit-native equivalent.
+ */
 @Component({
   selector: 'app-mcp-apps-widget',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,7 +58,7 @@ export class McpAppsWidgetComponent {
   private readonly mcpAppsConfig = inject(MCP_APPS_CONFIG);
   private readonly mcpAppsServerUrl = inject(MCP_APPS_SERVER_URL);
 
-  readonly data = input.required<AgUiMcpAppsSnapshotContent>();
+  readonly data = input.required<McpAppsSnapshotContent>();
 
   private readonly appFrame =
     viewChild.required<ElementRef<HTMLIFrameElement>>('appFrame');
@@ -77,7 +81,7 @@ export class McpAppsWidgetComponent {
 
   private async renderApp(
     frame: HTMLIFrameElement,
-    data: AgUiMcpAppsSnapshotContent,
+    data: McpAppsSnapshotContent,
   ): Promise<void> {
     this.error.set('');
 
@@ -190,20 +194,3 @@ function whenInitialized(bridge: AppBridge): Promise<void> {
     };
   });
 }
-
-const mcpAppsSchema = z.object({
-  data: z.object({
-    serverId: z.string(),
-    resourceUri: z.string(),
-    result: z.unknown(),
-    toolInput: z.record(z.string(), z.unknown()),
-  }),
-});
-
-export const mcpAppsWidgetComponent = defineAgUiComponent({
-  name: 'mcpAppsWidget',
-  description: 'Renders an interactive MCP App inside an iframe.',
-  clientOnly: true,
-  component: McpAppsWidgetComponent,
-  schema: mcpAppsSchema as z.ZodType<{ data: AgUiMcpAppsSnapshotContent }>,
-});

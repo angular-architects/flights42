@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { model, modelAdvancedTasks } from '../config.js';
+import { modelAdvancedTasks } from '../config.js';
 import { findHotelsTool } from '../tools/find-hotels.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { travelRefinementAgentPrompt } from './travel-refinement-agent.prompt.js';
@@ -12,5 +12,7 @@ export const travelRefinementAgent = new Agent({
   instructions: travelRefinementAgentPrompt,
   model: modelAdvancedTasks,
   tools: { searchFlightsTool, findHotelsTool },
+  // Server-side thread memory: the client (useServerMemory) only sends the delta
+  // each run, so the thread supplies the earlier context without duplication.
   memory: new Memory(),
 });

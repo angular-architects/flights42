@@ -9,18 +9,18 @@
     placeholder="Describe your dashboard..."></textarea>
 
   <div class="prompt-actions">
-    <button type="submit" class="btn-primary" [disabled]="chat.isLoading()">
+    <button type="submit" class="btn-primary" [disabled]="chat.isRunning()">
       Generate
     </button>
     <button
       type="button"
-      [disabled]="chat.isLoading()"
+      [disabled]="chat.isRunning()"
       (click)="useExamplePrompt(0)">
       Example #1
     </button>
     <button
       type="button"
-      [disabled]="chat.isLoading()"
+      [disabled]="chat.isRunning()"
       (click)="useExamplePrompt(1)">
       Example #2
     </button>
@@ -38,10 +38,10 @@
   </div>
 </form>
 
-@if (chat.isLoading() || allToolCalls().length > 0) {
+@if (chat.isRunning() || allToolCalls().length > 0) {
   <div class="tool-status">
     <span class="tool-status-text">{{ currentStatus() }}</span>
-    @if (chat.isLoading()) {
+    @if (chat.isRunning()) {
       <div class="ai-wait-indicator tool-status-dots" aria-hidden="true">
         <span></span>
         <span></span>
@@ -88,12 +88,8 @@
   </div>
 }
 
-@if (errorMessage(); as error) {
-  <p class="dashboard-error">{{ error }}</p>
-}
-
 <section class="dashboard-output">
-  @for (widget of widgets(); track widget.id) {
-    <app-widget-container [widget]="widget" />
+  @for (activity of activities(); track activity.id) {
+    <app-copilot-activity [message]="activity" [agentId]="agentId" />
   }
 </section>

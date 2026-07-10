@@ -1,9 +1,10 @@
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
+import { z } from 'zod';
 
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { PlanStore } from '../plan/plan-store';
 
-export const reversePlanTool = defineAgUiTool({
+export const reversePlanTool = createFrontendTool({
   name: 'reversePlan',
   description: `
     Reverses the order of ALL steps in the plan (the first step becomes the last,
@@ -14,7 +15,8 @@ export const reversePlanTool = defineAgUiTool({
     Example — user: "Reverse the order of the steps."
       reversePlan()
   `,
-  execute: () => {
+  parameters: z.object({}),
+  handler: async () => {
     const store = inject(PlanStore);
     store.reverse();
     return { stepCount: store.steps().length };

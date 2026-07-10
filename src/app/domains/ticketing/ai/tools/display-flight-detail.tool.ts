@@ -1,18 +1,19 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
-export const displayFlightDetailTool = defineAgUiTool({
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
+
+export const displayFlightDetailTool = createFrontendTool({
   name: 'displayFlightDetail',
   description:
     'Routes to the detail of a flight. This detail view can be used to edit the flight.',
-  schema: z.object({
+  parameters: z.object({
     flightId: z.number().describe('flightId of the flight to display'),
   }),
-  execute: async (args) => {
+  handler: async ({ flightId }) => {
     const router = inject(Router);
-    await router.navigate(['/ticketing/booking/flight-edit', args.flightId]);
+    await router.navigate(['/ticketing/booking/flight-edit', flightId]);
     return { ok: true };
   },
 });

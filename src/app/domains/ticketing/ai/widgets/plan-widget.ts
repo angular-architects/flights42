@@ -5,10 +5,10 @@ import {
   inject,
   input,
 } from '@angular/core';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
+import { defineWidget } from '../../../shared/ui-assistant/copilot/widget-tools/widget';
 import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
 import { PlanStep } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
@@ -80,9 +80,7 @@ export class PlanWidget {
       return;
     }
     this.agentMode.mode.set('execution');
-    this.chatRegistry.chat?.sendMessage({
-      role: 'user',
-      content: this.buildExecutionMessage(),
+    void this.chatRegistry.store?.sendMessage(this.buildExecutionMessage(), {
       hidden: true,
     });
   }
@@ -113,7 +111,7 @@ export class PlanWidget {
   }
 }
 
-export const planWidget = defineAgUiComponent({
+export const planWidget = defineWidget({
   name: 'planWidget',
   description: `
     Renders the current co-plan. The plan itself is held in the client-side
@@ -121,10 +119,10 @@ export const planWidget = defineAgUiComponent({
     removePlanStep, updatePlanStep, movePlanStep, swapPlanSteps, reversePlan,
     clearPlan).
     This widget takes NO arguments — the client snapshots the plan from that
-    store at the moment the widget is created. Append it after the messageWidget
-    whenever the plan changes (the initial draft and after every edit) so the
-    user sees the updated plan; each card freezes the plan as it was at that
-    moment. The widget renders an "Execute" button.`,
+    store at the moment the widget is rendered. Call it whenever the plan changes
+    (the initial draft and after every edit) so the user sees the updated plan;
+    each card freezes the plan as it was at that moment. The widget renders an
+    "Execute" button.`,
   component: PlanWidget,
   schema: z.object({}),
   captureProps: () => {

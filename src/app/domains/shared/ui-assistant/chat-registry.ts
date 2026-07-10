@@ -1,9 +1,12 @@
 import { Injectable } from '@angular/core';
-import { AgUiChatResourceRef } from '@internal/ag-ui-client';
 import { BehaviorSubject, Subject } from 'rxjs';
 
+import { type CopilotAgentStore } from '../util-copilotkit/agent-store';
+
 export interface ChatInfo {
-  chat: AgUiChatResourceRef | null;
+  store: CopilotAgentStore | null;
+  /** Agent id backing the store; needed to render tool calls and activities. */
+  agentId: string | null;
   /** Greeting shown as the first assistant message. Undefined = component default. */
   greeting?: string;
   showModeSelector?: boolean;
@@ -11,30 +14,34 @@ export interface ChatInfo {
 
 @Injectable({ providedIn: 'root' })
 export class ChatRegistry {
-  private _chat: AgUiChatResourceRef | null = null;
-  private readonly _chatInfo = new BehaviorSubject<ChatInfo>({ chat: null });
+  private _store: CopilotAgentStore | null = null;
+  private readonly _chatInfo = new BehaviorSubject<ChatInfo>({
+    store: null,
+    agentId: null,
+  });
   public readonly chatInfo = this._chatInfo.asObservable();
   private readonly _openRequested = new Subject<void>();
   public readonly openRequested = this._openRequested.asObservable();
 
-  public get chat(): AgUiChatResourceRef | null {
-    return this._chat;
+  public get store(): CopilotAgentStore | null {
+    return this._store;
   }
 
   public setChat(
-    chat: AgUiChatResourceRef,
+    store: CopilotAgentStore,
+    agentId: string,
     greeting?: string,
     showModeSelector = true,
-  ) {
-    if (chat !== this._chat) {
-      this._chat = chat;
-      this._chatInfo.next({ chat, greeting, showModeSelector });
+  ): void {
+    if (store !== this._store) {
+      this._store = store;
+      this._chatInfo.next({ store, agentId, greeting, showModeSelector });
     }
   }
 
   public clearChat(): void {
-    this._chat = null;
-    this._chatInfo.next({ chat: null });
+    this._store = null;
+    this._chatInfo.next({ store: null, agentId: null });
   }
 
   public requestOpen(): void {

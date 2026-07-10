@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { FlightStore } from '../../data/flight-store';
 
-export const findFlightsTool = defineAgUiTool({
+export const findFlightsTool = createFrontendTool({
   name: 'findFlights',
   description: `
     Searches for flights and redirects the user to the result page where the found flights are shown.
@@ -16,14 +16,15 @@ export const findFlightsTool = defineAgUiTool({
     - Do not render flights or flight lists in the chat after this tool: the user is taken to the booking flight-search route where results appear.
     - If needed, send at most one short text confirmation after the tool call has completed.
   `,
-  schema: z.object({
+  parameters: z.object({
     from: z.string().describe('airport of departure'),
     to: z.string().describe('airport of destination'),
   }),
-  execute: async (args) => {
+  handler: async ({ from, to }) => {
     const store = inject(FlightStore);
     const router = inject(Router);
-    store.updateFilter(args.from, args.to);
+    store.updateFilter(from, to);
     await router.navigate(['/ticketing/booking/flight-search']);
+    return { ok: true };
   },
 });

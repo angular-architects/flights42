@@ -1,13 +1,15 @@
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
+import { z } from 'zod';
 
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { FlightStore } from '../../data/flight-store';
 
-export const getCurrentBasketTool = defineAgUiTool({
+export const getCurrentBasketTool = createFrontendTool({
   name: 'getCurrentBasket',
   description:
     'Returns all selected flights as an object mapping flightIds to booleans.',
-  execute: () => {
+  parameters: z.object({}),
+  handler: async () => {
     const store = inject(FlightStore);
     return store.basket();
   },

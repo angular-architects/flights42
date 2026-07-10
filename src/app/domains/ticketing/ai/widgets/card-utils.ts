@@ -1,10 +1,19 @@
-import { type AgUiToolCallStatus } from '@internal/ag-ui-client';
-
 import { formatUiDateTime } from '../../../shared/util-common/date-utils';
 import {
   type FlightMutationFlight,
   type FlightMutationResult,
 } from '../../data/flight-mutation-client';
+
+export function parseToolResult(result: string | undefined): unknown {
+  if (result === undefined) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(result);
+  } catch {
+    return result;
+  }
+}
 
 export function toFlightMutationResult(
   value: unknown,
@@ -55,8 +64,7 @@ export function getFlightContextText(
 export function getActionStatusLabel(
   undoPending: boolean,
   undoResult: FlightMutationResult | undefined,
-  status: AgUiToolCallStatus,
-  error: string | undefined,
+  complete: boolean,
   result: FlightMutationResult | undefined,
 ): string {
   if (undoPending) {
@@ -67,37 +75,32 @@ export function getActionStatusLabel(
     return undoResult.ok ? 'Undone' : 'Failed';
   }
 
-  switch (status) {
-    case 'interrupt':
-      return 'Waiting for approval';
-    case 'pending':
-      return 'Started';
-    case 'error':
-      return error ?? 'Failed';
-    case 'complete':
-      if (result?.ok) {
-        return 'Success';
-      }
-
-      if (result?.code === 'USER_CANCELLED') {
-        return 'Cancelled';
-      }
-
-      return 'Failed';
+  if (!complete) {
+    return 'Started';
   }
+
+  if (result?.ok) {
+    return 'Success';
+  }
+
+  if (result?.code === 'USER_CANCELLED') {
+    return 'Cancelled';
+  }
+
+  return 'Failed';
 }
 
 export function shouldShowUndo(
   undoPending: boolean,
   undoResult: FlightMutationResult | undefined,
-  status: AgUiToolCallStatus,
+  complete: boolean,
   result: FlightMutationResult | undefined,
 ): boolean {
   if (undoPending || undoResult) {
     return false;
   }
 
-  return status === 'complete' && !!result?.ok;
+  return complete && !!result?.ok;
 }
 
 function isStructuredResult(value: unknown): value is FlightMutationResult {

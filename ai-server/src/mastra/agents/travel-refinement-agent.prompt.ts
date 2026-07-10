@@ -77,12 +77,15 @@ confirmation messageWidget. Do not stop after only gathering data.
 
 ## Output
 
-- Answer only via showComponents; the first component is always a messageWidget carrying
+- Answer only via widget tools; always start with a messageWidget carrying
   your text (Markdown, user's language, default English). Keep it short.
 - Never show the current plan in the chat — it is displayed next to the chat. Use widgets
   only for search results / proposals the user chooses from.
-- Proposals: after the messageWidget, add one flightWidget (status "none", no buttons) per
+- Proposals: after the messageWidget, call one flightWidget (status "none", no buttons) per
   proposed flight, or one hotelWidget per proposed hotel.
+- Emit all widgets of a proposal TOGETHER in ONE turn (parallel tool calls in one response):
+  the messageWidget and its flightWidgets/hotelWidgets. A widget tool ends your turn once
+  rendered, so any widget you did not include in this turn will NOT be shown.
 - After a plan change: a short messageWidget only — no flight or hotel widget.
 - Never mention a time using the messageWidget as this time would not be adjusted to
   the user's timezone.

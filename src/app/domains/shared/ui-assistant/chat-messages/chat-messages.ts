@@ -1,130 +1,91 @@
-import { JsonPipe } from '@angular/common';
+import { type InputContentPart } from '@ag-ui/core';
+import { type Interrupt } from '@ag-ui/core';
 import { Component, computed, input, output } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-  type AgUiActionWidget,
-  AgUiChatMessage,
-  AgUiInterrupt,
-  type AgUiInterruptOption,
-  type AgUiResumePayload,
-  WidgetContainerComponent,
-} from '@internal/ag-ui-client';
+import { type Message } from '@copilotkit/angular';
 
+import { CopilotActivity } from '../copilot/activity/copilot-activity';
 import { MessageComponent } from '../message';
-import { ToolStatusComponent } from '../tool-status';
+import { ToolCallView } from './tool-call-view';
+
+const ATTACHMENT_LABELS: Record<string, string> = {
+  image: '[Bild hochgeladen]',
+  audio: '[Audio hochgeladen]',
+  video: '[Video hochgeladen]',
+  document: '[Dokument hochgeladen]',
+  binary: '[Datei hochgeladen]',
+};
+
+export interface InterruptOption {
+  id: string;
+  label: string;
+  payload: Record<string, unknown>;
+  variant?: 'primary' | 'default' | 'danger';
+}
+
+interface InterruptModel {
+  id: string;
+  message: string;
+  options: InterruptOption[];
+}
 
 @Component({
   selector: 'app-chat-messages',
-  imports: [
-    MatIconModule,
-    JsonPipe,
-    MatTooltipModule,
-    WidgetContainerComponent,
-    MessageComponent,
-    ToolStatusComponent,
-  ],
+  imports: [ToolCallView, CopilotActivity, MessageComponent],
   templateUrl: './chat-messages.html',
   styleUrls: ['./chat-messages.css'],
 })
 export class ChatMessages {
-  readonly messages = input.required<AgUiChatMessage[]>();
-  readonly interrupt = input<AgUiInterrupt | null>(null);
+  readonly messages = input.required<Message[]>();
+  readonly agentId = input.required<string>();
   readonly pending = input<boolean>(false);
   readonly greeting = input<string>('Hi! How can I help you?');
-  readonly resumeInterrupt = output<AgUiResumePayload>();
-  protected readonly showIndicator = computed(() => this.pending());
-  protected readonly interruptModel = computed(() =>
-    toInterruptModel(this.interrupt()),
+  readonly pendingInterrupts = input<Interrupt[]>([]);
+  readonly resumeInterrupt = output<unknown>();
+
+  protected readonly approvePayload = { approved: true };
+  protected readonly rejectPayload = { approved: false };
+
+  protected readonly interruptModel = computed<InterruptModel | null>(() =>
+    toInterruptModel(this.pendingInterrupts()[0]),
   );
 
-  protected readonly approvePayload: AgUiResumePayload = { approved: true };
-  protected readonly rejectPayload: AgUiResumePayload = { approved: false };
-
-  protected readonly icons = {
-    user: '💬',
-    assistant: '🤖',
-    error: '⚡️',
-  };
-
-  private hasContent(message: AgUiChatMessage): boolean {
-    const content = message.content as unknown;
-
-    if (content == null) {
-      return false;
-    }
-
+  protected userText(content: string | InputContentPart[]): string {
     if (typeof content === 'string') {
-      return content.trim().length > 0;
+      return content;
     }
 
-    if (
-      typeof content === 'object' &&
-      'ui' in content &&
-      Array.isArray((content as { ui: unknown[] }).ui)
-    ) {
-      return (content as { ui: unknown[] }).ui.length > 0;
-    }
-
-    return true;
+    return content
+      .filter((part) => part.type === 'text')
+      .map((part) => (part as { text: string }).text)
+      .join(' ')
+      .trim();
   }
 
-  protected readonly messageModels = computed(() =>
-    this.messages().map((message) => ({
-      ...message,
-      contentString:
-        typeof message.content === 'string' ? message.content : String(''),
-      hasContent: this.hasContent(message),
-      icon: this.icons[message.role] || '❓',
-      toolCalls: message.toolCalls.filter(
-        (toolCall) => !hasActionWidget(message, toolCall.id),
-      ),
-    })),
-  );
-}
+  protected userAttachments(
+    content: string | InputContentPart[],
+  ): { label: string }[] {
+    if (typeof content === 'string') {
+      return [];
+    }
 
-interface InterruptPayload {
-  message?: string;
-  options?: AgUiInterruptOption[];
-}
-
-interface InterruptModel {
-  id: AgUiInterrupt['id'];
-  reason: AgUiInterrupt['reason'];
-  payload: AgUiInterrupt['payload'];
-  message: string;
-  options: AgUiInterruptOption[];
+    return content
+      .filter((part) => part.type !== 'text')
+      .map((part) => ({ label: ATTACHMENT_LABELS[part.type] ?? '[Anhang]' }));
+  }
 }
 
 function toInterruptModel(
-  interrupt: AgUiInterrupt | null,
+  interrupt: Interrupt | undefined,
 ): InterruptModel | null {
   if (!interrupt) {
     return null;
   }
 
-  const suspendPayload = interrupt.payload.suspendPayload as
-    | InterruptPayload
-    | undefined;
+  const options = interrupt.metadata?.['options'];
 
   return {
-    ...interrupt,
-    message:
-      typeof suspendPayload?.message === 'string'
-        ? suspendPayload.message
-        : `Tool Call: ${interrupt.payload.toolName}`,
-    options: Array.isArray(suspendPayload?.options)
-      ? suspendPayload.options
-      : [],
+    id: interrupt.id,
+    message: interrupt.message ?? interrupt.reason,
+    options: Array.isArray(options) ? (options as InterruptOption[]) : [],
   };
-}
-
-function hasActionWidget(
-  message: AgUiChatMessage,
-  toolCallId: string,
-): boolean {
-  return message.widgets.some(
-    (widget): widget is AgUiActionWidget =>
-      widget.kind === 'action' && widget.toolCallId === toolCallId,
-  );
 }
