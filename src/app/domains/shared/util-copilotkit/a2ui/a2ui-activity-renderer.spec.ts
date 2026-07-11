@@ -3,8 +3,8 @@ import { NgComponentOutlet } from '@angular/common';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { provideA2uiCatalog } from '../../../util-copilotkit/a2ui/provide-a2ui-catalog';
 import { A2uiActivityRenderer } from './a2ui-activity-renderer';
+import { provideA2uiCatalog } from './provide-a2ui-catalog';
 
 const BASIC_CATALOG_ID =
   'https://a2ui.org/specification/v0_9/basic_catalog.json';

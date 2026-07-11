@@ -9,8 +9,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { type Message } from '@copilotkit/angular';
 
-import { CopilotActivity } from '../../domains/shared/ui-assistant/copilot/activity/copilot-activity';
 import { registerHandlers } from '../../domains/shared/util-copilotkit/a2ui/a2ui-action-handlers';
+import { CopilotActivity } from '../../domains/shared/util-copilotkit/activity/copilot-activity';
 import { checkInAction } from '../../domains/ticketing/ai/actions/check-in-action';
 import { dashboardFlightSearchAction } from './actions/dashboard-flight-search-action';
 import {

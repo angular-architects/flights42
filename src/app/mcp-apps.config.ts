@@ -1,7 +1,7 @@
 import type {
   McpAppsConfig,
   StyleVariables,
-} from './domains/shared/ui-assistant/copilot/mcp-apps/mcp-apps.provider';
+} from './domains/shared/util-copilotkit/mcp-apps/mcp-apps.provider';
 
 export const mcpAppsConfig: McpAppsConfig = {
   hostInfo: {
