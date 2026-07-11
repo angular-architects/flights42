@@ -1,5 +1,5 @@
 import { type InputContentPart, type Interrupt } from '@ag-ui/core';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { type Message } from '@copilotkit/angular';
 
 import { CopilotActivity } from '../copilot/activity/copilot-activity';
@@ -43,11 +43,29 @@ export class ChatMessages {
   readonly pendingInterrupts = input<Interrupt[]>([]);
   readonly resumeInterrupt = output<Record<string, unknown>>();
 
+  // Set the instant an option is clicked so the card hides immediately,
+  // instead of waiting for the resume round-trip to clear it from
+  // `pendingInterrupts()` (and to stop a second click firing meanwhile).
+  private readonly resolvedInterruptId = signal<string | null>(null);
+
   // Only one interrupt is ever open in practice (the ticketing tools process
-  // one book/cancel step at a time) — render the first.
-  protected readonly activeInterrupt = computed<InterruptModel | null>(() =>
-    toInterruptModel(this.pendingInterrupts()[0]),
-  );
+  // one book/cancel step at a time) — render the first, unless it was just
+  // answered locally.
+  protected readonly activeInterrupt = computed<InterruptModel | null>(() => {
+    const interrupt = this.pendingInterrupts()[0];
+    if (!interrupt || interrupt.id === this.resolvedInterruptId()) {
+      return null;
+    }
+    return toInterruptModel(interrupt);
+  });
+
+  protected resolveInterrupt(
+    interruptId: string,
+    payload: Record<string, unknown>,
+  ): void {
+    this.resolvedInterruptId.set(interruptId);
+    this.resumeInterrupt.emit(payload);
+  }
 
   protected userText(content: string | InputContentPart[]): string {
     if (typeof content === 'string') {

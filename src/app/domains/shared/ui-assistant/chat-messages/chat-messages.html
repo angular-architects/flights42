@@ -88,20 +88,20 @@
               "
               [class.btn-primary]="option.variant === 'primary'"
               [class.btn-danger]="option.variant === 'danger'"
-              (click)="resumeInterrupt.emit(option.payload)">
+              (click)="resolveInterrupt(interrupt.id, option.payload)">
               {{ option.label }}
             </button>
           } @empty {
             <button
               type="button"
               class="btn btn-default"
-              (click)="resumeInterrupt.emit({ approved: true })">
+              (click)="resolveInterrupt(interrupt.id, { approved: true })">
               Accept
             </button>
             <button
               type="button"
               class="btn btn-default"
-              (click)="resumeInterrupt.emit({ approved: false })">
+              (click)="resolveInterrupt(interrupt.id, { approved: false })">
               Decline
             </button>
           }
