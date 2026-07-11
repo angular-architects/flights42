@@ -63,27 +63,9 @@
           @for (option of interrupt.options; track option.id) {
             <button
               type="button"
-              class="btn"
-              [class.btn-default]="
-                !option.variant || option.variant === 'default'
-              "
-              [class.btn-primary]="option.variant === 'primary'"
-              [class.btn-danger]="option.variant === 'danger'"
+              class="btn btn-default"
               (click)="resolveInterrupt(interrupt.id, option.payload)">
               {{ option.label }}
-            </button>
-          } @empty {
-            <button
-              type="button"
-              class="btn btn-default"
-              (click)="resolveInterrupt(interrupt.id, { approved: true })">
-              Accept
-            </button>
-            <button
-              type="button"
-              class="btn btn-default"
-              (click)="resolveInterrupt(interrupt.id, { approved: false })">
-              Decline
             </button>
           }
         </div>

@@ -30,7 +30,6 @@ interface InterruptOption {
   id: string;
   label: string;
   payload: Record<string, unknown>;
-  variant?: 'primary' | 'default' | 'danger';
 }
 
 interface InterruptModel {
@@ -38,6 +37,11 @@ interface InterruptModel {
   message: string;
   options: InterruptOption[];
 }
+
+const DEFAULT_INTERRUPT_OPTIONS: InterruptOption[] = [
+  { id: 'accept', label: 'Accept', payload: { approved: true } },
+  { id: 'decline', label: 'Decline', payload: { approved: false } },
+];
 
 interface ChatActivityView {
   message: ActivityMessage;
@@ -138,14 +142,16 @@ function toInterruptModel(interrupt: Interrupt): InterruptModel {
   const metadata = interrupt.metadata as InterruptMetadata | undefined;
   const suspendPayload = metadata?.suspendPayload;
 
+  const options = Array.isArray(suspendPayload?.options)
+    ? (suspendPayload.options as InterruptOption[])
+    : [];
+
   return {
     id: interrupt.id,
     message:
       typeof suspendPayload?.message === 'string'
         ? suspendPayload.message
         : (interrupt.message ?? 'Approval needed'),
-    options: Array.isArray(suspendPayload?.options)
-      ? (suspendPayload.options as InterruptOption[])
-      : [],
+    options: options.length > 0 ? options : DEFAULT_INTERRUPT_OPTIONS,
   };
 }
