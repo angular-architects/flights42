@@ -11,21 +11,15 @@ import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
-import { fallbackToolCard } from './domains/shared/ui-assistant/chat-messages/fallback-tool-card';
 import { a2uiActivityRendererConfig } from './domains/shared/ui-assistant/copilot/a2ui/a2ui-activity-renderer';
 import {
   MCP_APPS_SERVER_URL,
   provideMcpApps,
 } from './domains/shared/ui-assistant/copilot/mcp-apps/mcp-apps.provider';
 import { mcpAppsActivityRendererConfig } from './domains/shared/ui-assistant/copilot/mcp-apps/mcp-apps-activity-renderer';
-import { provideWidgets } from './domains/shared/ui-assistant/copilot/widget-tools/widget-registry';
-import { messageWidget } from './domains/shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from './domains/shared/util-common/config-service';
 import { provideA2uiCatalog } from './domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
-import { planWidget } from './domains/ticketing/ai/widgets/plan-widget';
-import { hotelWidget } from './domains/ticketing/feature-travel-planner/ui/hotel-widget';
-import { flightWidget } from './domains/ticketing/ui/flight-widget';
 import { mcpAppsConfig } from './mcp-apps.config';
 
 export const appConfig: ApplicationConfig = {
@@ -38,9 +32,7 @@ export const appConfig: ApplicationConfig = {
         mcpAppsActivityRendererConfig,
         a2uiActivityRendererConfig,
       ],
-      renderToolCalls: [fallbackToolCard],
     }),
-    provideWidgets([messageWidget, flightWidget, planWidget, hotelWidget]),
     // A2UI catalog: registers the custom components with the renderer AND
     // exposes their descriptor at A2UI_CUSTOM_CATALOG so the ticketing agent
     // store can forward it — the server lists the components in its system

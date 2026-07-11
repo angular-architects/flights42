@@ -7,9 +7,10 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { componentTool } from '../../shared/ui-assistant/copilot/widget-tools/component-tool';
+import { createFrontendTool } from '../../shared/util-copilotkit/tool-definition';
 import { FlightInfo } from '../data/flight-info';
 import { FlightStore } from '../data/flight-store';
 
@@ -20,6 +21,13 @@ const flightSchema = z.object({
   date: z.string().describe('Departure date in ISO format'),
   delay: z.number().describe('Delay in minutes'),
 });
+
+const flightWidgetSchema = z.object({
+  flight: flightSchema,
+  status: z.enum(['booked', 'other', 'none']).describe('Status of the flight'),
+});
+
+type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
 
 @Component({
   selector: 'app-flight-widget',
@@ -120,7 +128,29 @@ export class FlightWidget {
   }
 }
 
-export const flightWidget = componentTool({
+@Component({
+  selector: 'app-flight-widget-tool',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlightWidget],
+  template: `
+    @let flight = toolCall().args.flight;
+    @if (flight) {
+      <app-flight-widget
+        [flight]="flight"
+        [status]="toolCall().args.status ?? 'other'" />
+    }
+  `,
+  styles: `
+    :host {
+      display: block;
+    }
+  `,
+})
+export class FlightWidgetTool implements ToolRenderer<FlightWidgetArgs> {
+  readonly toolCall = input.required<AngularToolCall<FlightWidgetArgs>>();
+}
+
+export const flightWidget = createFrontendTool({
   name: 'flightWidget',
   description: [
     'Interactive card displaying one concrete flight.',
@@ -128,11 +158,8 @@ export const flightWidget = componentTool({
     'For booked flights use status: "booked"; for search/current flights use status: "other".',
     'Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.',
   ].join('\n'),
-  component: FlightWidget,
-  schema: z.object({
-    flight: flightSchema,
-    status: z
-      .enum(['booked', 'other', 'none'])
-      .describe('Status of the flight'),
-  }),
+  parameters: flightWidgetSchema,
+  component: FlightWidgetTool,
+  followUp: false,
+  handler: async () => ({ shown: true }),
 });

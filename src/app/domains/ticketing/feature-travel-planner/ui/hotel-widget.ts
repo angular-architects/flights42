@@ -4,9 +4,10 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { componentTool } from '../../../shared/ui-assistant/copilot/widget-tools/component-tool';
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 
 const hotelSchema = z.object({
   id: z.string().describe('Stable hotel id (e.g. "grand-palace").'),
@@ -19,6 +20,12 @@ const hotelSchema = z.object({
 });
 
 type Hotel = z.infer<typeof hotelSchema>;
+
+const hotelWidgetSchema = z.object({
+  hotel: hotelSchema,
+});
+
+type HotelWidgetArgs = z.infer<typeof hotelWidgetSchema>;
 
 @Component({
   selector: 'app-hotel-widget',
@@ -112,15 +119,35 @@ export class HotelWidget {
   );
 }
 
-export const hotelWidget = componentTool({
+@Component({
+  selector: 'app-hotel-widget-tool',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [HotelWidget],
+  template: `
+    @let hotel = toolCall().args.hotel;
+    @if (hotel) {
+      <app-hotel-widget [hotel]="hotel" />
+    }
+  `,
+  styles: `
+    :host {
+      display: block;
+    }
+  `,
+})
+export class HotelWidgetTool implements ToolRenderer<HotelWidgetArgs> {
+  readonly toolCall = input.required<AngularToolCall<HotelWidgetArgs>>();
+}
+
+export const hotelWidget = createFrontendTool({
   name: 'hotelWidget',
   description: [
     'Display card for a single hotel proposal (name, stars, image, city).',
     'Use this whenever the package planner proposes a hotel.',
     'This widget is read-only: no buttons, no selection, purely informative.',
   ].join('\n'),
-  component: HotelWidget,
-  schema: z.object({
-    hotel: hotelSchema,
-  }),
+  parameters: hotelWidgetSchema,
+  component: HotelWidgetTool,
+  followUp: false,
+  handler: async () => ({ shown: true }),
 });

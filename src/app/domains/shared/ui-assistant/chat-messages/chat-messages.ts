@@ -1,4 +1,5 @@
 import { type Interrupt } from '@ag-ui/core';
+import { JsonPipe } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { type Message, RenderToolCalls } from '@copilotkit/angular';
 
@@ -59,7 +60,7 @@ interface ChatMessageView {
 
 @Component({
   selector: 'app-chat-messages',
-  imports: [RenderToolCalls, CopilotActivity, MessageComponent],
+  imports: [RenderToolCalls, CopilotActivity, MessageComponent, JsonPipe],
   templateUrl: './chat-messages.html',
   styleUrls: ['./chat-messages.css'],
 })

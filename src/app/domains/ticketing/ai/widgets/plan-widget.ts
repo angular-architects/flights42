@@ -5,65 +5,95 @@ import {
   inject,
   input,
 } from '@angular/core';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
 import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
-import { componentTool } from '../../../shared/ui-assistant/copilot/widget-tools/component-tool';
 import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
+import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { PlanStep } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
+
+const planWidgetSchema = z.object({});
+
+type PlanWidgetArgs = z.infer<typeof planWidgetSchema>;
+
+interface PlanSnapshot {
+  title: string;
+  steps: PlanStep[];
+}
 
 @Component({
   selector: 'app-plan-widget',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="plan-card">
-      <div class="plan-header">
-        <span class="plan-badge">Plan</span>
-        @if (title()) {
-          <h3 class="plan-title">{{ title() }}</h3>
-        }
-      </div>
-
-      @if (isEmpty()) {
-        <p class="plan-empty">No steps yet.</p>
-      } @else {
-        <ol class="plan-steps">
-          @for (step of steps(); track step.id) {
-            <li class="plan-step">
-              <span class="step-kind" [attr.data-kind]="step.action">
-                {{ labelForAction(step.action) }}
-                @if (step.flightId) {
-                  #{{ step.flightId }}
-                }
-              </span>
-              <span class="step-desc">{{ step.description }}</span>
-            </li>
+    @let snapshot = plan();
+    @if (snapshot) {
+      <div class="plan-card">
+        <div class="plan-header">
+          <span class="plan-badge">Plan</span>
+          @if (snapshot.title) {
+            <h3 class="plan-title">{{ snapshot.title }}</h3>
           }
-        </ol>
-      }
+        </div>
 
-      <div class="plan-actions">
-        <button
-          type="button"
-          class="execute-btn"
-          [disabled]="isEmpty()"
-          (click)="execute()">
-          Execute
-        </button>
+        @if (snapshot.steps.length === 0) {
+          <p class="plan-empty">No steps yet.</p>
+        } @else {
+          <ol class="plan-steps">
+            @for (step of snapshot.steps; track step.id) {
+              <li class="plan-step">
+                <span class="step-kind" [attr.data-kind]="step.action">
+                  {{ labelForAction(step.action) }}
+                  @if (step.flightId) {
+                    #{{ step.flightId }}
+                  }
+                </span>
+                <span class="step-desc">{{ step.description }}</span>
+              </li>
+            }
+          </ol>
+        }
+
+        <div class="plan-actions">
+          <button
+            type="button"
+            class="execute-btn"
+            [disabled]="snapshot.steps.length === 0"
+            (click)="execute()">
+            Execute
+          </button>
+        </div>
       </div>
-    </div>
+    }
   `,
   styleUrls: ['./plan-widget.css'],
 })
-export class PlanWidget {
+export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
+  private readonly store = inject(PlanStore);
 
-  readonly title = input('');
-  readonly steps = input<PlanStep[]>([]);
+  readonly toolCall = input.required<AngularToolCall<PlanWidgetArgs>>();
 
-  protected readonly isEmpty = computed(() => this.steps().length === 0);
+  // The plan lives in a mutable store; each rendered card must freeze the plan
+  // as it was the moment its tool call finished. Snapshot once (skipping the
+  // in-progress phase) and keep returning that frozen copy.
+  private frozen: PlanSnapshot | null = null;
+
+  protected readonly plan = computed<PlanSnapshot | null>(() => {
+    if (this.frozen) {
+      return this.frozen;
+    }
+    if (this.toolCall().status === 'in-progress') {
+      return null;
+    }
+    this.frozen = {
+      title: this.store.title(),
+      steps: this.store.steps().map((step) => ({ ...step })),
+    };
+    return this.frozen;
+  });
 
   protected labelForAction(action: PlanStep['action']): string {
     if (action === 'book') {
@@ -76,13 +106,15 @@ export class PlanWidget {
   }
 
   protected execute(): void {
-    if (this.isEmpty()) {
+    const steps = this.plan()?.steps ?? [];
+    if (steps.length === 0) {
       return;
     }
     this.agentMode.mode.set('execution');
-    void this.chatRegistry.store?.sendMessage(this.buildExecutionMessage(), {
-      hidden: true,
-    });
+    void this.chatRegistry.store?.sendMessage(
+      this.buildExecutionMessage(steps),
+      { hidden: true },
+    );
   }
 
   private verbForAction(action: PlanStep['action']): string {
@@ -95,8 +127,8 @@ export class PlanWidget {
     return 'Do';
   }
 
-  private buildExecutionMessage(): string {
-    const lines = this.steps()
+  private buildExecutionMessage(steps: PlanStep[]): string {
+    const lines = steps
       .map((step, index) => {
         const verb = this.verbForAction(step.action);
         const flight = step.flightId != null ? ` flight ${step.flightId}` : '';
@@ -111,7 +143,7 @@ export class PlanWidget {
   }
 }
 
-export const planWidget = componentTool({
+export const planWidget = createFrontendTool({
   name: 'planWidget',
   description: `
     Renders the current co-plan. The plan itself is held in the client-side
@@ -123,13 +155,8 @@ export const planWidget = componentTool({
     (the initial draft and after every edit) so the user sees the updated plan;
     each card freezes the plan as it was at that moment. The widget renders an
     "Execute" button.`,
+  parameters: planWidgetSchema,
   component: PlanWidget,
-  schema: z.object({}),
-  captureProps: () => {
-    const store = inject(PlanStore);
-    return {
-      title: store.title(),
-      steps: store.steps().map((step) => ({ ...step })),
-    };
-  },
+  followUp: false,
+  handler: async () => ({ shown: true }),
 });

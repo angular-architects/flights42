@@ -8,7 +8,7 @@ import {
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createRenderToolCall } from '../../util-copilotkit/tool-definition';
+import { createRenderToolCall } from './tool-definition';
 
 const fallbackToolArgsSchema = z.record(z.string(), z.unknown());
 

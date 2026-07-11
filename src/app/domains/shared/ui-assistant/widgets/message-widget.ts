@@ -1,8 +1,20 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { MarkdownComponent } from 'ngx-markdown';
 import { z } from 'zod';
 
-import { componentTool } from '../copilot/widget-tools/component-tool';
+import { createFrontendTool } from '../../util-copilotkit/tool-definition';
+
+const messageWidgetSchema = z.object({
+  text: z.string().describe('Markdown-formatted text to show to the user'),
+});
+
+type MessageWidgetArgs = z.infer<typeof messageWidgetSchema>;
 
 @Component({
   selector: 'app-message-widget',
@@ -15,19 +27,21 @@ import { componentTool } from '../copilot/widget-tools/component-tool';
     }
   `,
 })
-export class MessageWidget {
-  readonly text = input.required<string>();
+export class MessageWidget implements ToolRenderer<MessageWidgetArgs> {
+  readonly toolCall = input.required<AngularToolCall<MessageWidgetArgs>>();
+
+  protected readonly text = computed(() => this.toolCall().args.text ?? '');
 }
 
-export const messageWidget = componentTool({
+export const messageWidget = createFrontendTool({
   name: 'messageWidget',
   description: [
     'Renders a textual message to the user as Markdown.',
     'Call this to give your natural-language answer; it can be combined with',
     'other widget tools in the same turn (call it first).',
   ].join('\n'),
+  parameters: messageWidgetSchema,
   component: MessageWidget,
-  schema: z.object({
-    text: z.string().describe('Markdown-formatted text to show to the user'),
-  }),
+  followUp: false,
+  handler: async () => ({ shown: true }),
 });

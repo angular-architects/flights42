@@ -31,15 +31,15 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
-import { type WithoutAgentId } from './tool-definition';
+import { FallbackToolCard, fallbackToolCard } from './fallback-tool-card';
 
 // Tool collections are heterogeneous (each tool has its own args type), so the
 // element type erases the args to keep the array assignable. The concrete args
 // types are preserved on each individual tool definition.
 /* eslint-disable @typescript-eslint/no-explicit-any */
-type AnyFrontendTool = WithoutAgentId<FrontendToolConfig<any>>;
-type AnyRenderToolCall = WithoutAgentId<RenderToolCallConfig<any>>;
-type AnyHumanInTheLoop = WithoutAgentId<HumanInTheLoopConfig<any>>;
+type AnyFrontendTool = FrontendToolConfig<any>;
+type AnyRenderToolCall = RenderToolCallConfig<any>;
+type AnyHumanInTheLoop = HumanInTheLoopConfig<any>;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
@@ -264,8 +264,26 @@ function createAgentStore(config: ResolvedAgentStoreConfig): CopilotAgentStore {
     },
   });
 
+  // Default renderer so client-side tools without their own `component` still
+  // show a tool-call card (a tool's own `component` still wins via the spread).
   for (const tool of config.frontendTools ?? []) {
-    registerFrontendTool({ ...tool, agentId: config.agentId });
+    registerFrontendTool({
+      ...tool,
+      component: tool.component || FallbackToolCard,
+      agentId: config.agentId,
+    });
+  }
+
+  // `*` catch-all so any tool call without a matching renderer (e.g. a
+  // server-side tool) still shows a card. `pickRenderer` matches the star
+  // agent-agnostically, so a single global entry covers every agent — register
+  // it only if no earlier store already did, instead of once per app-level
+  // `renderToolCalls` listing.
+  const registeredFallback = copilotKit
+    .toolCallRenderConfigs()
+    .find((renderer) => renderer.name === '*');
+  if (!registeredFallback) {
+    registerRenderToolCall(fallbackToolCard);
   }
 
   for (const toolCall of config.renderToolCalls ?? []) {
