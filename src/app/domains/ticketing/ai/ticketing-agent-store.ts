@@ -20,8 +20,8 @@ import { setPlanTool } from './tools/set-plan.tool';
 import { swapPlanStepsTool } from './tools/swap-plan-steps.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 import { updatePlanStepTool } from './tools/update-plan-step.tool';
-import { bookFlightHitlTool } from './widgets/book-flight-tool-call-renderer';
-import { cancelFlightHitlTool } from './widgets/cancel-flight-tool-call-renderer';
+import { bookFlightRenderTool } from './widgets/book-flight-tool-call-renderer';
+import { cancelFlightRenderTool } from './widgets/cancel-flight-tool-call-renderer';
 import { planWidget } from './widgets/plan-widget';
 
 export const TICKETING_AGENT_ID = 'ticketingAgent';
@@ -55,5 +55,11 @@ export const TicketingAgentStore = agentStore({
     ...planTools,
     ...widgetTools([messageWidget, flightWidget, planWidget]),
   ],
-  humanInTheLoop: [bookFlightHitlTool, cancelFlightHitlTool],
+  // bookFlightTool / cancelFlightTool are server-side Mastra tools that
+  // suspend for the payment/confirmation choice (see ai-server/src/mastra/
+  // tools/book-flight.ts, cancel-flight.ts); the suspend surfaces as an AG-UI
+  // interrupt (see ChatMessages' pendingInterrupts handling), not a
+  // client-side human-in-the-loop tool. These renderers only display the
+  // completed tool's result.
+  renderToolCalls: [bookFlightRenderTool, cancelFlightRenderTool],
 });

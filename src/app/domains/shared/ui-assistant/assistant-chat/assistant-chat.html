@@ -77,7 +77,9 @@
         [messages]="store.messages()"
         [agentId]="agentId"
         [greeting]="greeting()"
-        [pending]="store.isRunning()" />
+        [pending]="store.isRunning()"
+        [pendingInterrupts]="store.pendingInterrupts()"
+        (resumeInterrupt)="store.resumeInterrupt($event)" />
     </section>
 
     <form

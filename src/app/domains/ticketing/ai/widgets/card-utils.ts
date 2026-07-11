@@ -18,9 +18,9 @@ export function parseToolResult(result: string | undefined): unknown {
 export function toFlightMutationResult(
   value: unknown,
 ): FlightMutationResult | undefined {
-  // Mastra's built-in `requireApproval: true` decline streams a plain string
-  // ("Tool call was not approved by the user") as the tool result. Normalize
-  // it to our shape so the card can treat it like a user cancellation.
+  // Defensive fallback: an unparseable tool result surfaces as a plain
+  // string (see `parseToolResult`'s catch branch). Normalize it to our shape
+  // so the card can still show something instead of silently rendering blank.
   if (typeof value === 'string') {
     return {
       ok: false,

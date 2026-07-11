@@ -37,3 +37,20 @@ app-widget-container {
   display: block;
   margin: 0;
 }
+
+.interrupt-message {
+  margin: 0;
+}
+
+.interrupt-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.interrupt-actions .btn {
+  width: 100%;
+  white-space: nowrap;
+}

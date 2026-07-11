@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, of, throwError } from 'rxjs';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 
@@ -47,13 +47,17 @@ export class BookingClient {
 
   bookFlight(flightId: number): Promise<FlightMutationResult> {
     return firstValueFrom(
-      this.http.post<FlightMutationResult>(this.bookingUrl(flightId), {}),
+      this.http
+        .post<FlightMutationResult>(this.bookingUrl(flightId), {})
+        .pipe(catchError(recoverStructuredError)),
     );
   }
 
   cancelFlight(flightId: number): Promise<FlightMutationResult> {
     return firstValueFrom(
-      this.http.delete<FlightMutationResult>(this.bookingUrl(flightId)),
+      this.http
+        .delete<FlightMutationResult>(this.bookingUrl(flightId))
+        .pipe(catchError(recoverStructuredError)),
     );
   }
 
@@ -63,4 +67,28 @@ export class BookingClient {
       this.config.agUiUrl,
     ).toString();
   }
+}
+
+// The bookings route answers declined mutations (already booked, not booked,
+// not found) with a structured FlightMutationResult body on a non-2xx status
+// (409/404/400). HttpClient throws on those regardless of the body, which
+// would otherwise discard the real reason in favor of a generic "could not
+// book/cancel" message — recover it here so the caller still sees `ok: false`
+// with the server's actual `result`/`code` instead of an exception.
+function recoverStructuredError(error: unknown) {
+  if (
+    error instanceof HttpErrorResponse &&
+    isFlightMutationResult(error.error)
+  ) {
+    return of(error.error);
+  }
+  return throwError(() => error);
+}
+
+function isFlightMutationResult(value: unknown): value is FlightMutationResult {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const record = value as { ok?: unknown; result?: unknown };
+  return typeof record.ok === 'boolean' && typeof record.result === 'string';
 }

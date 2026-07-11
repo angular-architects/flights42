@@ -72,6 +72,46 @@
   }
 }
 
+@if (activeInterrupt(); as interrupt) {
+  <article class="msg assistant">
+    <div class="avatar">🤖</div>
+    <div>
+      <div class="bubble">
+        <p class="interrupt-message">{{ interrupt.message }}</p>
+        <div class="interrupt-actions">
+          @for (option of interrupt.options; track option.id) {
+            <button
+              type="button"
+              class="btn"
+              [class.btn-default]="
+                !option.variant || option.variant === 'default'
+              "
+              [class.btn-primary]="option.variant === 'primary'"
+              [class.btn-danger]="option.variant === 'danger'"
+              (click)="resumeInterrupt.emit(option.payload)">
+              {{ option.label }}
+            </button>
+          } @empty {
+            <button
+              type="button"
+              class="btn btn-default"
+              (click)="resumeInterrupt.emit({ approved: true })">
+              Accept
+            </button>
+            <button
+              type="button"
+              class="btn btn-default"
+              (click)="resumeInterrupt.emit({ approved: false })">
+              Decline
+            </button>
+          }
+        </div>
+      </div>
+      <div class="meta"></div>
+    </div>
+  </article>
+}
+
 @if (pending()) {
   <article class="msg assistant">
     <div class="avatar">🤖</div>

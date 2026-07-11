@@ -34,15 +34,6 @@ interface ClientToolDefinition {
   inputSchema?: Record<string, unknown>;
 }
 
-interface InterruptResumeInput {
-  interruptId?: string;
-  payload?: unknown;
-}
-
-interface InterruptAwareRunAgentInput extends RunAgentInput {
-  resume?: InterruptResumeInput;
-}
-
 type InterruptKind = 'approval' | 'suspend';
 
 interface InterruptDescriptor {
@@ -714,8 +705,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
       };
       attachBridge(this.requestContext, bridge);
 
-      const interruptAwareInput = input as InterruptAwareRunAgentInput;
-
       const startedEvent: BaseEvent = {
         type: EventType.RUN_STARTED,
         threadId: input.threadId,
@@ -723,7 +712,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       };
       observer.next(startedEvent);
 
-      void this.streamMastraAgent(interruptAwareInput, initialMessageId, {
+      void this.streamMastraAgent(input, initialMessageId, {
         onTextPart: (delta, messageId) => {
           const textEvent: BaseEvent = {
             type: EventType.TEXT_MESSAGE_CHUNK,
@@ -833,7 +822,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
   }
 
   private async streamMastraAgent(
-    input: InterruptAwareRunAgentInput,
+    input: RunAgentInput,
     assistantMessageId: string,
     handlers: {
       onTextPart: (delta: string, messageId: string) => void;
@@ -1077,15 +1066,21 @@ export class ExtendedMastraAgent extends AbstractAgent {
   }
 
   private async createMastraStream(
-    input: InterruptAwareRunAgentInput,
+    input: RunAgentInput,
     messages: CoreMessage[],
     clientTools: Record<string, ClientToolDefinition>,
   ) {
-    const interrupt = parseInterruptId(input.resume?.interruptId);
+    // `resume` is an array of ResumeEntry (one per resolved interrupt) per
+    // the AG-UI wire schema; `resumeInterrupt()` on the client always
+    // resolves every currently pending interrupt with the same payload, so
+    // for our single-interrupt-at-a-time flow the first entry is the one
+    // that matters.
+    const resumeEntry = input.resume?.[0];
+    const interrupt = parseInterruptId(resumeEntry?.interruptId);
 
     if (interrupt) {
       if (interrupt.kind === 'approval') {
-        const approved = readApproved(input.resume?.payload);
+        const approved = readApproved(resumeEntry?.payload);
         if (approved === undefined) {
           throw new Error(
             'Approval resume payload must include an approved boolean.',
@@ -1113,7 +1108,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
         });
       }
 
-      return this.agent.resumeStream(input.resume?.payload, {
+      return this.agent.resumeStream(resumeEntry?.payload, {
         runId: interrupt.runId,
         toolCallId: interrupt.toolCallId,
         memory: { thread: input.threadId, resource: this.resourceId },

@@ -6,13 +6,10 @@ import {
   input,
   signal,
 } from '@angular/core';
-import {
-  type HumanInTheLoopToolCall,
-  type HumanInTheLoopToolRenderer,
-} from '@copilotkit/angular';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createHumanInTheLoop } from '../../../shared/util-copilotkit/tool-definition';
+import { createRenderToolCall } from '../../../shared/util-copilotkit/tool-definition';
 import {
   BookingClient,
   type FlightMutationFlight,
@@ -41,33 +38,18 @@ export type CancelFlightArgs = z.infer<typeof cancelFlightArgsSchema>;
       <div class="card-body">
         <p class="action-title">{{ titleText() }}</p>
 
-        @if (awaitingChoice()) {
-          <p class="prompt">Cancel flight #{{ flightId() }}?</p>
-          <div class="approval-actions approval-actions--inline">
-            <button
-              class="btn btn-default"
-              type="button"
-              (click)="decide(false)">
-              Keep booking
-            </button>
-            <button class="btn btn-danger" type="button" (click)="decide(true)">
-              Cancel flight
-            </button>
-          </div>
-        } @else {
-          @if (contextText(); as context) {
-            <p class="action-context">{{ context }}</p>
-          }
+        @if (contextText(); as context) {
+          <p class="action-context">{{ context }}</p>
+        }
 
-          <p class="status-line">Status: {{ statusLabel() }}</p>
+        <p class="status-line">Status: {{ statusLabel() }}</p>
 
-          @if (showUndo()) {
-            <p>
-              <button class="btn btn-default" type="button" (click)="undo()">
-                Undo
-              </button>
-            </p>
-          }
+        @if (showUndo()) {
+          <p>
+            <button class="btn btn-default" type="button" (click)="undo()">
+              Undo
+            </button>
+          </p>
         }
       </div>
     </div>
@@ -114,33 +96,12 @@ export type CancelFlightArgs = z.infer<typeof cancelFlightArgsSchema>;
     .status-line {
       line-height: 1.4;
     }
-
-    /* Binary choice: buttons sit side by side. */
-    .approval-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .approval-actions--inline {
-      flex-direction: row;
-    }
-
-    .approval-actions--inline .btn {
-      flex: 1;
-    }
   `,
 })
-export class CancelFlightToolCallRenderer implements HumanInTheLoopToolRenderer<CancelFlightArgs> {
+export class CancelFlightToolCallRenderer implements ToolRenderer<CancelFlightArgs> {
   private readonly bookingClient = inject(BookingClient);
 
-  readonly toolCall =
-    input.required<HumanInTheLoopToolCall<CancelFlightArgs>>();
-
-  private readonly decided = signal(false);
-  private readonly outcome = signal<FlightMutationResult | undefined>(
-    undefined,
-  );
+  readonly toolCall = input.required<AngularToolCall<CancelFlightArgs>>();
 
   private readonly undoPending = signal(false);
   private readonly undoResult = signal<FlightMutationResult | undefined>(
@@ -151,18 +112,11 @@ export class CancelFlightToolCallRenderer implements HumanInTheLoopToolRenderer<
     () => this.toolCall().status === 'complete',
   );
 
-  protected readonly awaitingChoice = computed(
-    () => !this.decided() && !this.complete(),
-  );
-
-  // Prefer the outcome executed here; fall back to the tool-call result if this
-  // component was recreated after completion and lost its local state.
+  // The cancellation itself now runs server-side (cancelFlightTool suspends
+  // for the Accept/Decline choice and completes the mutation on resume) —
+  // this card is a pure result view. Its "tool" message content is the
+  // tool's own return value directly, no client-side wrapping involved.
   private readonly result = computed<FlightMutationResult | undefined>(() => {
-    const local = this.outcome();
-    if (local) {
-      return local;
-    }
-
     const call = this.toolCall();
     return call.status === 'complete'
       ? toFlightMutationResult(parseToolResult(call.result))
@@ -181,7 +135,7 @@ export class CancelFlightToolCallRenderer implements HumanInTheLoopToolRenderer<
     getActionStatusLabel(
       this.undoPending(),
       this.undoResult(),
-      this.complete() || this.outcome() !== undefined,
+      this.complete(),
       this.result(),
     ),
   );
@@ -190,40 +144,10 @@ export class CancelFlightToolCallRenderer implements HumanInTheLoopToolRenderer<
     shouldShowUndo(
       this.undoPending(),
       this.undoResult(),
-      this.complete() || this.outcome() !== undefined,
+      this.complete(),
       this.result(),
     ),
   );
-
-  protected async decide(approved: boolean): Promise<void> {
-    if (this.decided()) {
-      return;
-    }
-    this.decided.set(true);
-
-    const respond = this.toolCall().respond;
-
-    if (!approved) {
-      const result: FlightMutationResult = {
-        ok: false,
-        result: `Cancellation of flight ${this.flightId()} was declined by the user.`,
-        code: 'USER_CANCELLED',
-      };
-      this.outcome.set(result);
-      respond(result);
-      return;
-    }
-
-    let result: FlightMutationResult;
-    try {
-      result = await this.bookingClient.cancelFlight(this.flightId());
-    } catch (error) {
-      result = toLoadFailedResult(error, this.flightId(), 'cancel');
-    }
-
-    this.outcome.set(result);
-    respond(result);
-  }
 
   protected async undo(): Promise<void> {
     this.undoPending.set(true);
@@ -255,10 +179,8 @@ export class CancelFlightToolCallRenderer implements HumanInTheLoopToolRenderer<
   }
 }
 
-export const cancelFlightHitlTool = createHumanInTheLoop({
+export const cancelFlightRenderTool = createRenderToolCall({
   name: 'cancelFlightTool',
-  description:
-    'Cancels a previously booked flight for the current passenger. The passenger confirms or declines the cancellation directly in the rendered card. Only pass the flightId; do not ask for confirmation in text.',
-  parameters: cancelFlightArgsSchema,
+  args: cancelFlightArgsSchema,
   component: CancelFlightToolCallRenderer,
 });

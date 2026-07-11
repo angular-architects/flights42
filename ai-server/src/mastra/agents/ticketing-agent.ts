@@ -4,6 +4,8 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
 import { model } from '../config.js';
+import { bookFlightTool } from '../tools/book-flight.js';
+import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
@@ -19,10 +21,8 @@ export const ticketingAgent = new Agent({
   model,
   tools: {
     findBookedFlightsTool,
-    // bookFlightTool / cancelFlightTool are client-side human-in-the-loop tools
-    // (registered via CopilotKit's registerHumanInTheLoop); the passenger picks
-    // a payment method / confirms in the rendered card, and the client executes
-    // the mutation via the /bookings REST route.
+    bookFlightTool,
+    cancelFlightTool,
     renderA2uiTool,
     // ...hotelsMcpTools,
   },
