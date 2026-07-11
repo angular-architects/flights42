@@ -11,6 +11,7 @@ import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
+import { fallbackToolCard } from './domains/shared/ui-assistant/chat-messages/fallback-tool-card';
 import { a2uiActivityRendererConfig } from './domains/shared/ui-assistant/copilot/a2ui/a2ui-activity-renderer';
 import {
   MCP_APPS_SERVER_URL,
@@ -37,6 +38,7 @@ export const appConfig: ApplicationConfig = {
         mcpAppsActivityRendererConfig,
         a2uiActivityRendererConfig,
       ],
+      renderToolCalls: [fallbackToolCard],
     }),
     provideWidgets([messageWidget, flightWidget, planWidget, hotelWidget]),
     // A2UI catalog: registers the custom components with the renderer AND

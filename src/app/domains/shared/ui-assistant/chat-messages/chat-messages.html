@@ -8,63 +8,44 @@
   </div>
 </article>
 
-@for (message of messages(); track message.id) {
-  @if (message.role === 'user') {
-    <article class="msg user">
-      <div class="avatar">💬</div>
+@for (view of views(); track view.id) {
+  @if (view.text) {
+    <article class="msg {{ view.variant }}">
+      <div class="avatar">{{ view.avatar }}</div>
       <div>
         <div class="bubble">
-          @if (userText(message.content); as text) {
-            <app-message [data]="text"></app-message>
-          }
-          @for (attachment of userAttachments(message.content); track $index) {
-            <span class="attachment-badge">{{ attachment.label }}</span>
-          }
+          <app-message [data]="view.text"></app-message>
         </div>
         <div class="meta"></div>
       </div>
     </article>
   }
 
-  @if (message.role === 'assistant') {
-    @if (message.content) {
-      <article class="msg assistant">
-        <div class="avatar">🤖</div>
-        <div>
-          <div class="bubble">
-            <app-message [data]="message.content"></app-message>
-          </div>
-          <div class="meta"></div>
+  @for (call of view.toolCalls; track call.id) {
+    <article class="msg {{ view.variant }}">
+      <div class="avatar">{{ view.avatar }}</div>
+      <div>
+        <div class="bubble">
+          <copilot-render-tool-calls
+            [message]="call.message"
+            [messages]="messages()"
+            [agentId]="agentId()"
+            [isLoading]="pending()" />
         </div>
-      </article>
-    }
-
-    @for (call of message.toolCalls ?? []; track call.id) {
-      <article class="msg assistant">
-        <div class="avatar">🤖</div>
-        <div>
-          <div class="bubble">
-            <app-tool-call-view
-              [toolCall]="call"
-              [message]="message"
-              [messages]="messages()"
-              [agentId]="agentId()"
-              [isLoading]="pending()" />
-          </div>
-          <div class="meta"></div>
-        </div>
-      </article>
-    }
+        <div class="meta"></div>
+      </div>
+    </article>
   }
 
-  @if (message.role === 'activity') {
-    <article class="msg assistant">
-      <div class="avatar">🤖</div>
+  @if (view.activity) {
+    @let activity = view.activity;
+    <article class="msg {{ view.variant }}">
+      <div class="avatar">{{ view.avatar }}</div>
       <div>
-        <div
-          class="bubble"
-          [class.bubble--a2ui]="message.activityType === 'a2ui-surface'">
-          <app-copilot-activity [message]="message" [agentId]="agentId()" />
+        <div class="bubble" [class.bubble--a2ui]="activity.isSurface">
+          <app-copilot-activity
+            [message]="activity.message"
+            [agentId]="agentId()" />
         </div>
         <div class="meta"></div>
       </div>
@@ -72,7 +53,7 @@
   }
 }
 
-@if (activeInterrupt(); as interrupt) {
+@for (interrupt of interrupts(); track interrupt.id) {
   <article class="msg assistant">
     <div class="avatar">🤖</div>
     <div>
