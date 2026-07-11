@@ -31,7 +31,7 @@ const cancelFlightArgsSchema = z.object({
 export type CancelFlightArgs = z.infer<typeof cancelFlightArgsSchema>;
 
 @Component({
-  selector: 'app-cancel-flight-tool-call-renderer',
+  selector: 'app-cancel-flight-action-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card">
@@ -98,7 +98,7 @@ export type CancelFlightArgs = z.infer<typeof cancelFlightArgsSchema>;
     }
   `,
 })
-export class CancelFlightToolCallRenderer implements ToolRenderer<CancelFlightArgs> {
+export class CancelFlightActionCard implements ToolRenderer<CancelFlightArgs> {
   private readonly bookingClient = inject(BookingClient);
 
   readonly toolCall = input.required<AngularToolCall<CancelFlightArgs>>();
@@ -179,8 +179,8 @@ export class CancelFlightToolCallRenderer implements ToolRenderer<CancelFlightAr
   }
 }
 
-export const cancelFlightRenderTool = createRenderToolCall({
+export const cancelFlightActionCard = createRenderToolCall({
   name: 'cancelFlightTool',
   args: cancelFlightArgsSchema,
-  component: CancelFlightToolCallRenderer,
+  component: CancelFlightActionCard,
 });

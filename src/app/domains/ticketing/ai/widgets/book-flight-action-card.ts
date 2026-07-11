@@ -37,7 +37,7 @@ const bookFlightArgsSchema = z.object({
 export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
 
 @Component({
-  selector: 'app-book-flight-tool-call-renderer',
+  selector: 'app-book-flight-action-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card">
@@ -112,7 +112,7 @@ export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
     }
   `,
 })
-export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> {
+export class BookFlightActionCard implements ToolRenderer<BookFlightArgs> {
   private readonly bookingClient = inject(BookingClient);
 
   readonly toolCall = input.required<AngularToolCall<BookFlightArgs>>();
@@ -208,8 +208,8 @@ export class BookFlightToolCallRenderer implements ToolRenderer<BookFlightArgs> 
   }
 }
 
-export const bookFlightRenderTool = createRenderToolCall({
+export const bookFlightActionCard = createRenderToolCall({
   name: 'bookFlightTool',
   args: bookFlightArgsSchema,
-  component: BookFlightToolCallRenderer,
+  component: BookFlightActionCard,
 });

@@ -22,8 +22,8 @@ import { setPlanTool } from './tools/set-plan.tool';
 import { swapPlanStepsTool } from './tools/swap-plan-steps.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 import { updatePlanStepTool } from './tools/update-plan-step.tool';
-import { bookFlightRenderTool } from './widgets/book-flight-tool-call-renderer';
-import { cancelFlightRenderTool } from './widgets/cancel-flight-tool-call-renderer';
+import { bookFlightActionCard } from './widgets/book-flight-action-card';
+import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { planWidget } from './widgets/plan-widget';
 
 export const TICKETING_AGENT_ID = 'ticketingAgent';
@@ -42,7 +42,6 @@ const planTools = [
 
 const widgets = [messageWidget, flightWidget, planWidget];
 
-// The custom A2UI catalog is static, so serialize it once and reuse it.
 let catalogContext: Context[] | undefined;
 
 function buildCatalogContext(): Context[] {
@@ -52,15 +51,10 @@ function buildCatalogContext(): Context[] {
 
 export const TicketingAgentStore = agentStore({
   agentId: TICKETING_AGENT_ID,
-  // Ticketing uses the default AG-UI url; the server swaps the effective agent
-  // (planning vs. ticketing) based on the forwarded `agentMode`.
   url: () => inject(ConfigService).agUiUrl,
   model: () => inject(ConfigService).model,
   useServerMemory: true,
   forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
-  // Forward the custom A2UI catalog so the server lists its components in the
-  // system prompt (see addCustomCatalogInstructions), letting the agent answer
-  // with custom components via renderA2uiTool.
   context: () => (catalogContext ??= buildCatalogContext()),
   frontendTools: [
     findFlightsTool,
@@ -71,11 +65,5 @@ export const TicketingAgentStore = agentStore({
     ...planTools,
     ...widgets,
   ],
-  // bookFlightTool / cancelFlightTool are server-side Mastra tools that
-  // suspend for the payment/confirmation choice (see ai-server/src/mastra/
-  // tools/book-flight.ts, cancel-flight.ts); the suspend surfaces as an AG-UI
-  // interrupt (see ChatMessages' pendingInterrupts handling), not a
-  // client-side human-in-the-loop tool. These renderers only display the
-  // completed tool's result.
-  renderToolCalls: [bookFlightRenderTool, cancelFlightRenderTool],
+  renderToolCalls: [bookFlightActionCard, cancelFlightActionCard],
 });
