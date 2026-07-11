@@ -17,7 +17,7 @@ import {
   provideMcpApps,
 } from './domains/shared/ui-assistant/copilot/mcp-apps/mcp-apps.provider';
 import { mcpAppsActivityRendererConfig } from './domains/shared/ui-assistant/copilot/mcp-apps/mcp-apps-activity-renderer';
-import { provideWidgets } from './domains/shared/ui-assistant/copilot/widget-tools/widget';
+import { provideWidgets } from './domains/shared/ui-assistant/copilot/widget-tools/widget-registry';
 import { messageWidget } from './domains/shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from './domains/shared/util-common/config-service';
 import { provideA2uiCatalog } from './domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog';
@@ -39,10 +39,11 @@ export const appConfig: ApplicationConfig = {
       ],
     }),
     provideWidgets([messageWidget, flightWidget, planWidget, hotelWidget]),
-    // Legacy A2UI catalog + renderer, still used for server-driven A2UI surfaces.
-    provideA2uiCatalog(customCatalog, {
-      sendCatalogDescription: false,
-    }),
+    // A2UI catalog: registers the custom components with the renderer AND
+    // exposes their descriptor at A2UI_CUSTOM_CATALOG so the ticketing agent
+    // store can forward it — the server lists the components in its system
+    // prompt (addCustomCatalogInstructions) and renders them via renderA2uiTool.
+    provideA2uiCatalog(customCatalog),
     {
       provide: MCP_APPS_SERVER_URL,
       useFactory: () => inject(ConfigService).mcpServerUrl,

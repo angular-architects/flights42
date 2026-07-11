@@ -1,3 +1,4 @@
+export * from './add-custom-catalog-instructions.js';
 export * from './extended-mastra-agent.js';
 export * from './mcp-apps-registry.js';
 export * from './mcp-utils.js';

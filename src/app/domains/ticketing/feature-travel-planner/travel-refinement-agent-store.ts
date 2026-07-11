@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 
-import { widgetTools } from '../../shared/ui-assistant/copilot/widget-tools/widget-tool';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { agentStore } from '../../shared/util-copilotkit/agent-store';
@@ -17,6 +16,8 @@ import { hotelWidget } from './ui/hotel-widget';
 
 export const TRAVEL_REFINEMENT_AGENT_ID = 'travelRefinementAgent';
 
+const widgets = [messageWidget, flightWidget, hotelWidget];
+
 export const TravelRefinementAgentStore = agentStore({
   agentId: TRAVEL_REFINEMENT_AGENT_ID,
   url: () => inject(ConfigService).agUiUrlFor(TRAVEL_REFINEMENT_AGENT_ID),
@@ -32,7 +33,7 @@ export const TravelRefinementAgentStore = agentStore({
     replaceFlightInPlanTool,
     addHotelToPlanTool,
     removeHotelFromPlanTool,
-    ...widgetTools([messageWidget, flightWidget, hotelWidget]),
+    ...widgets,
   ],
 });
 

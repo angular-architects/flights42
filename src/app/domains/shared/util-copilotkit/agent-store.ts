@@ -5,6 +5,7 @@ import {
   randomUUID,
 } from '@ag-ui/client';
 import {
+  type Context,
   type Interrupt,
   type RunAgentInput,
   type UserMessage,
@@ -64,6 +65,10 @@ class ServerMemoryHttpAgent extends HttpAgent {
       string,
       unknown
     > = () => ({}),
+    /** Persistent AG-UI context entries (e.g. the A2UI custom catalog)
+     *  re-attached to EVERY request, including CopilotKit's context-less
+     *  follow-up runs — same reasoning as `persistentForwardedProps`. */
+    private readonly persistentContext: () => readonly Context[] = () => [],
   ) {
     super(config);
     this.subscribe({
@@ -87,7 +92,14 @@ class ServerMemoryHttpAgent extends HttpAgent {
       ...this.persistentForwardedProps(),
       ...input.forwardedProps,
     };
-    return super.requestInit({ ...input, messages, forwardedProps });
+    // Same follow-up-run problem as forwardedProps: re-attach the persistent
+    // AG-UI context so the server keeps seeing e.g. the custom catalog. Per-run
+    // entries win over persistent ones sharing a description.
+    const context = mergePersistentContext(
+      this.persistentContext(),
+      input.context,
+    );
+    return super.requestInit({ ...input, messages, forwardedProps, context });
   }
 
   private markAllSent(
@@ -101,6 +113,19 @@ class ServerMemoryHttpAgent extends HttpAgent {
   clearSentHistory(): void {
     this.sentMessageIds.clear();
   }
+}
+
+/** Prepends persistent context entries, skipping any whose `description` a
+ *  per-run entry already provides (per-run wins). */
+function mergePersistentContext(
+  persistent: readonly Context[],
+  incoming: readonly Context[] = [],
+): Context[] {
+  const present = new Set(incoming.map((entry) => entry.description));
+  return [
+    ...persistent.filter((entry) => !present.has(entry.description)),
+    ...incoming,
+  ];
 }
 
 export interface SendMessageOptions {
@@ -159,6 +184,12 @@ export interface AgentStoreConfig {
   /** Extra per-run forwarded props (e.g. `{ agentMode }`). Evaluated on every
    *  run so reactive values are read fresh. */
   forwardedProps?: () => Record<string, unknown>;
+  /** Extra AG-UI context entries forwarded to the agent as `context` (e.g. the
+   *  A2UI custom-catalog description the server injects into its system prompt).
+   *  Evaluated in an injection context and re-attached to every request,
+   *  including CopilotKit's follow-up runs. Only honored for `useServerMemory`
+   *  agents (the ones whose request path re-attaches persistent context). */
+  context?: () => readonly Context[];
   /** Hidden text prepended to the first user message of a fresh session. */
   firstMessagePreamble?: () => string | undefined;
   /** For agents configured with server-side (thread) memory: the client keeps
@@ -212,13 +243,18 @@ function createAgentStore(config: ResolvedAgentStoreConfig): CopilotAgentStore {
       : {}),
   });
 
+  const contextFor = (): readonly Context[] =>
+    config.context
+      ? runInInjectionContext(envInjector, () => config.context!())
+      : [];
+
   const agentConfig = {
     agentId: config.agentId,
     url: config.url,
     threadId: randomUUID(),
   };
   const httpAgent = config.useServerMemory
-    ? new ServerMemoryHttpAgent(agentConfig, forwardedPropsFor)
+    ? new ServerMemoryHttpAgent(agentConfig, forwardedPropsFor, contextFor)
     : new HttpAgent(agentConfig);
 
   copilotKit.updateRuntime({

@@ -8,7 +8,7 @@ import {
 import { z } from 'zod';
 
 import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
-import { defineWidget } from '../../../shared/ui-assistant/copilot/widget-tools/widget';
+import { componentTool } from '../../../shared/ui-assistant/copilot/widget-tools/component-tool';
 import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
 import { PlanStep } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
@@ -111,7 +111,7 @@ export class PlanWidget {
   }
 }
 
-export const planWidget = defineWidget({
+export const planWidget = componentTool({
   name: 'planWidget',
   description: `
     Renders the current co-plan. The plan itself is held in the client-side

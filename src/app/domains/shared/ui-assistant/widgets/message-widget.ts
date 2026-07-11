@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MarkdownComponent } from 'ngx-markdown';
 import { z } from 'zod';
 
-import { defineWidget } from '../copilot/widget-tools/widget';
+import { componentTool } from '../copilot/widget-tools/component-tool';
 
 @Component({
   selector: 'app-message-widget',
@@ -19,7 +19,7 @@ export class MessageWidget {
   readonly text = input.required<string>();
 }
 
-export const messageWidget = defineWidget({
+export const messageWidget = componentTool({
   name: 'messageWidget',
   description: [
     'Renders a textual message to the user as Markdown.',

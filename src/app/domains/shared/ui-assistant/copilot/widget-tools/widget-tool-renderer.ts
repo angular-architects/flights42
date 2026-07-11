@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 
-import { WIDGET_REGISTRY } from './widget';
+import { WIDGET_REGISTRY } from './widget-registry';
 
 interface WidgetView {
   component: Type<unknown>;
@@ -19,10 +19,11 @@ interface WidgetView {
 }
 
 /**
- * Shared tool-call renderer for every widget tool. It looks the widget up by
- * the tool-call name in the registry and renders it with the call arguments.
- * Captured props (e.g. `planWidget`) are frozen once the arguments are final, so
- * a widget keeps showing the state as it was even if its store changes later.
+ * Shared tool-call renderer for every component-tool. It looks the render
+ * metadata up by the tool-call name in the registry and renders the component
+ * with the call arguments. Captured props (e.g. `planWidget`) are frozen once
+ * the arguments are final, so a card keeps showing the state as it was even if
+ * its store changes later.
  */
 @Component({
   selector: 'app-widget-tool-renderer',
@@ -53,29 +54,29 @@ export class WidgetToolRenderer implements ToolRenderer {
       return this.frozen;
     }
 
-    const widget = call.name ? this.registry.get(call.name) : undefined;
-    if (!widget) {
+    const render = call.name ? this.registry.get(call.name) : undefined;
+    if (!render) {
       return null;
     }
 
-    // While arguments are still streaming, render data widgets live but hold off
-    // on `captureProps` widgets (they take no args and would snapshot the store
-    // too early).
+    // While arguments are still streaming, render data components live but hold
+    // off on `captureProps` components (they take no args and would snapshot the
+    // store too early).
     if (call.status === 'in-progress') {
-      return widget.captureProps
+      return render.captureProps
         ? null
         : {
-            component: widget.component,
+            component: render.component,
             props: (call.args ?? {}) as Record<string, unknown>,
           };
     }
 
     const args = (call.args ?? {}) as Record<string, unknown>;
-    const props = widget.captureProps
-      ? runInInjectionContext(this.injector, () => widget.captureProps!(args))
+    const props = render.captureProps
+      ? runInInjectionContext(this.injector, () => render.captureProps!(args))
       : args;
 
-    this.frozen = { component: widget.component, props };
+    this.frozen = { component: render.component, props };
     return this.frozen;
   });
 }

@@ -1,9 +1,11 @@
+import { type Context } from '@ag-ui/core';
 import { inject } from '@angular/core';
 
-import { widgetTools } from '../../shared/ui-assistant/copilot/widget-tools/widget-tool';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
+import { catalogToContextEntry } from '../../shared/util-copilotkit/a2ui/catalog-context';
+import { A2UI_CUSTOM_CATALOG } from '../../shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { agentStore } from '../../shared/util-copilotkit/agent-store';
 import { flightWidget } from '../ui/flight-widget';
 import { addPlanStepTool } from './tools/add-plan-step.tool';
@@ -38,6 +40,16 @@ const planTools = [
   clearPlanTool,
 ];
 
+const widgets = [messageWidget, flightWidget, planWidget];
+
+// The custom A2UI catalog is static, so serialize it once and reuse it.
+let catalogContext: Context[] | undefined;
+
+function buildCatalogContext(): Context[] {
+  const entry = catalogToContextEntry(inject(A2UI_CUSTOM_CATALOG));
+  return entry ? [entry] : [];
+}
+
 export const TicketingAgentStore = agentStore({
   agentId: TICKETING_AGENT_ID,
   // Ticketing uses the default AG-UI url; the server swaps the effective agent
@@ -46,6 +58,10 @@ export const TicketingAgentStore = agentStore({
   model: () => inject(ConfigService).model,
   useServerMemory: true,
   forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
+  // Forward the custom A2UI catalog so the server lists its components in the
+  // system prompt (see addCustomCatalogInstructions), letting the agent answer
+  // with custom components via renderA2uiTool.
+  context: () => (catalogContext ??= buildCatalogContext()),
   frontendTools: [
     findFlightsTool,
     getLoadedFlightsTool,
@@ -53,7 +69,7 @@ export const TicketingAgentStore = agentStore({
     getCurrentBasketTool,
     displayFlightDetailTool,
     ...planTools,
-    ...widgetTools([messageWidget, flightWidget, planWidget]),
+    ...widgets,
   ],
   // bookFlightTool / cancelFlightTool are server-side Mastra tools that
   // suspend for the payment/confirmation choice (see ai-server/src/mastra/

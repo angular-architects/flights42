@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { z } from 'zod';
 
-import { defineWidget } from '../../../shared/ui-assistant/copilot/widget-tools/widget';
+import { componentTool } from '../../../shared/ui-assistant/copilot/widget-tools/component-tool';
 
 const hotelSchema = z.object({
   id: z.string().describe('Stable hotel id (e.g. "grand-palace").'),
@@ -112,7 +112,7 @@ export class HotelWidget {
   );
 }
 
-export const hotelWidget = defineWidget({
+export const hotelWidget = componentTool({
   name: 'hotelWidget',
   description: [
     'Display card for a single hotel proposal (name, stars, image, city).',

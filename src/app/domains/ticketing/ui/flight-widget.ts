@@ -9,7 +9,7 @@ import {
 import { Router } from '@angular/router';
 import { z } from 'zod';
 
-import { defineWidget } from '../../shared/ui-assistant/copilot/widget-tools/widget';
+import { componentTool } from '../../shared/ui-assistant/copilot/widget-tools/component-tool';
 import { FlightInfo } from '../data/flight-info';
 import { FlightStore } from '../data/flight-store';
 
@@ -120,7 +120,7 @@ export class FlightWidget {
   }
 }
 
-export const flightWidget = defineWidget({
+export const flightWidget = componentTool({
   name: 'flightWidget',
   description: [
     'Interactive card displaying one concrete flight.',

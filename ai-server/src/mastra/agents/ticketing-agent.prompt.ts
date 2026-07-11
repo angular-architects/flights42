@@ -56,6 +56,15 @@ hotels, bookings, cancellations, and check-in.
   confirming turn already. Only list all booked flights when the user explicitly
   asks for all of them ("all my flights", "meine gebuchten Flüge", "welche habe
   ich gebucht?").
+- findFlights needs a departure ("from") and a destination ("to") city. If the
+  user asks to search flights without giving one or both, do NOT guess and do NOT
+  call findFlights yet: emit an A2UI search form via renderA2uiTool — the whole
+  form wrapped in ONE Card — with one TextField per MISSING value and a submit
+  Button firing the "submitAnswer" event. Follow the "### A2UI form example"
+  exactly: bind each TextField "value" to a { "path" }, seed those paths with an
+  updateDataModel, and reference the SAME paths in the submitAnswer "context".
+  When the "a2ui_form_response" arrives, read the values from its "context" and
+  THEN call findFlights.
 - After calling findFlights, call only a short messageWidget confirmation. Do not
   render search-result flights with flightWidget afterwards, because the route
   already shows them.
@@ -197,12 +206,59 @@ NEVER invent other event names — any other name has no client-side effect.
 
 - "submitAnswer" — put on a form's submit Button. Its "context" MUST reference
   the form fields via { "path": "/..." }, using the SAME paths the TextField /
-  CheckBox inputs are bound to. NEVER put literal values in the context (e.g.
-  "context": { "from": "" } is WRONG — the literal is sent verbatim at submit
-  time and the user's input is lost, so the form loops forever). The reply
-  arrives as a user message of shape
+  CheckBox "value" inputs are bound to, and seed every one of those paths up front
+  with an updateDataModel (e.g. "") so typing writes the user's input back there.
+  NEVER put literal values in the context (e.g. "context": { "from": "" } is
+  WRONG — the literal is sent verbatim and the input is lost); and if a bound path
+  is never seeded, its value never reaches the model and the answer arrives EMPTY.
+  See the "### A2UI form example". The reply arrives as a user message of shape
   { "type": "a2ui_form_response", "surfaceId": "...", "context": {...} }; read
   the answers from that "context" and continue.
+
+### A2UI form example (two-way — the typed values MUST reach submitAnswer)
+
+The whole form sits in ONE Card. Each TextField's "value" is bound to a
+{ "path" }, an updateDataModel seeds those paths so typing writes back there, and
+the submit Button's submitAnswer "context" references the SAME paths — so the
+RESOLVED values (not the { "path" } objects, not empty strings) get sent.
+
+    {
+      "messages": [
+        {
+          "version": "v0.9",
+          "createSurface": {
+            "surfaceId": "srf-3",
+            "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateComponents": {
+            "surfaceId": "srf-3",
+            "components": [
+              { "id": "root", "component": "Column", "children": ["card"] },
+              { "id": "card", "component": "Card", "child": "form" },
+              { "id": "form", "component": "Column", "children": ["title", "f-from", "f-to", "submit"] },
+              { "id": "title", "component": "Text", "text": "Which route?", "variant": "h3" },
+              { "id": "f-from", "component": "TextField", "label": "From", "value": { "path": "/search/from" } },
+              { "id": "f-to", "component": "TextField", "label": "To", "value": { "path": "/search/to" } },
+              { "id": "submit", "component": "Button", "child": "submit-label",
+                "action": { "event": { "name": "submitAnswer",
+                  "context": { "from": { "path": "/search/from" }, "to": { "path": "/search/to" } } } } },
+              { "id": "submit-label", "component": "Text", "text": "Search" }
+            ]
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateDataModel": {
+            "surfaceId": "srf-3",
+            "path": "/search",
+            "value": { "from": "", "to": "" }
+          }
+        }
+      ]
+    }
 
 ## Hotels via MCP
 
