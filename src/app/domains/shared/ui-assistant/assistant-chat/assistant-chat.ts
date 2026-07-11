@@ -1,4 +1,5 @@
 import {
+  afterRenderEffect,
   Component,
   ElementRef,
   inject,
@@ -11,7 +12,6 @@ import {
   AgentMode,
   AgentModeService,
 } from '../../util-common/agent-mode-service';
-import { injectAutoScroller } from '../../util-common/auto-scroll-controller';
 import { type CopilotAgentStore } from '../../util-copilotkit/agent-store';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
@@ -35,67 +35,64 @@ export class AssistantChat {
   private messagesContainer =
     viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
 
-  private autoScroller = injectAutoScroller({
-    getContainer: () => this.messagesContainer()?.nativeElement ?? null,
-    shouldScroll: () => this.panelVisible(),
-  });
-
   protected readonly panelVisible = signal(false);
   protected readonly message = signal('');
   protected readonly greeting = signal<string>(DEFAULT_GREETING);
   protected readonly showModeSelector = signal(true);
 
-  protected store: CopilotAgentStore | null = null;
-  protected agentId: string | null = null;
+  protected readonly store = signal<CopilotAgentStore | null>(null);
+  protected readonly agentId = signal<string | null>(null);
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
-      this.store = chatInfo.store;
-      this.agentId = chatInfo.agentId;
+      this.store.set(chatInfo.store);
+      this.agentId.set(chatInfo.agentId);
       this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
       this.showModeSelector.set(chatInfo.showModeSelector ?? true);
     });
 
-    this.chatRegistry.openRequested.subscribe(() => {
+    this.chatRegistry.openRequested.subscribe(() => this.open());
+
+    afterRenderEffect(() => {
+      this.store()?.messages();
+
       if (!this.panelVisible()) {
-        this.panelVisible.set(true);
-        this.handlePanelOpened();
+        return;
       }
+
+      this.scrollDown();
     });
   }
 
-  private handlePanelOpened(): void {
-    this.autoScroller.connect();
-
-    queueMicrotask(() => {
-      this.autoScroller.scrollToBottom();
-      this.composerInput()?.nativeElement.focus();
-    });
+  private scrollDown() {
+    const container = this.messagesContainer()?.nativeElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }
 
-  private handlePanelClosed(): void {
-    this.autoScroller.disconnect();
-  }
-
-  protected toggle() {
-    this.panelVisible.update((visible) => !visible);
-
+  protected toggle(): void {
     if (this.panelVisible()) {
-      this.handlePanelOpened();
+      this.panelVisible.set(false);
       return;
     }
 
-    this.handlePanelClosed();
+    this.open();
+  }
+
+  private open(): void {
+    this.panelVisible.set(true);
+    queueMicrotask(() => this.composerInput()?.nativeElement.focus());
   }
 
   protected submit() {
     const message = this.message();
     this.message.set('');
-    void this.store?.sendMessage(message);
+    void this.store()?.sendMessage(message);
   }
 
   protected stop(): void {
-    this.store?.stop();
+    this.store()?.stop();
   }
 
   protected setMode(mode: AgentMode): void {
