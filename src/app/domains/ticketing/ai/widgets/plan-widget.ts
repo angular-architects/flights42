@@ -5,11 +5,16 @@ import {
   inject,
   input,
 } from '@angular/core';
-import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
+import {
+  type AngularToolCall,
+  CopilotKit,
+  type ToolRenderer,
+} from '@copilotkit/angular';
 import { z } from 'zod';
 
 import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
 import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
+import { sendDeveloperMessage } from '../../../shared/util-copilotkit/agent-store-helper';
 import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
 import { PlanStep } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
@@ -72,6 +77,7 @@ interface PlanSnapshot {
 export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
+  private readonly copilotKit = inject(CopilotKit);
   private readonly store = inject(PlanStore);
 
   readonly toolCall = input.required<AngularToolCall<PlanWidgetArgs>>();
@@ -110,10 +116,15 @@ export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
     if (steps.length === 0) {
       return;
     }
+    const store = this.chatRegistry.store;
+    if (!store) {
+      return;
+    }
     this.agentMode.mode.set('execution');
-    void this.chatRegistry.store?.sendMessage(
+    void sendDeveloperMessage(
+      this.copilotKit,
+      store,
       this.buildExecutionMessage(steps),
-      { hidden: true },
     );
   }
 

@@ -1,12 +1,13 @@
 import { type Context } from '@ag-ui/core';
 import { inject } from '@angular/core';
+import { injectAgentStore } from '@copilotkit/angular';
 
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { catalogToContextEntry } from '../../shared/util-copilotkit/a2ui/catalog-context';
 import { A2UI_CUSTOM_CATALOG } from '../../shared/util-copilotkit/a2ui/provide-a2ui-catalog';
-import { agentStore } from '../../shared/util-copilotkit/agent-store';
+import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
 import { bookFlightActionCard } from './action-cards/book-flight-action-card';
@@ -27,7 +28,7 @@ import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool'
 import { updatePlanStepTool } from './tools/update-plan-step.tool';
 import { planWidget } from './widgets/plan-widget';
 
-export const TICKETING_AGENT_ID = 'ticketingAgent';
+const AGENT_ID = 'ticketingAgent';
 
 const planTools = [
   getPlanTool,
@@ -50,21 +51,24 @@ function buildCatalogContext(): Context[] {
   return entry ? [entry] : [];
 }
 
-export const TicketingAgentStore = agentStore({
-  agentId: TICKETING_AGENT_ID,
-  url: () => inject(ConfigService).agUiUrl,
-  model: () => inject(ConfigService).model,
-  useServerMemory: true,
-  forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
-  context: () => (catalogContext ??= buildCatalogContext()),
-  frontendTools: [
-    findFlightsTool,
-    getLoadedFlightsTool,
-    toggleFlightSelectionTool,
-    getCurrentBasketTool,
-    displayFlightDetailTool,
-    ...planTools,
-    ...widgets,
-  ],
-  renderToolCalls: [bookFlightActionCard, cancelFlightActionCard],
-});
+export function injectTicketingAgentStore() {
+  initAgentStore({
+    agentId: AGENT_ID,
+    url: inject(ConfigService).agUiUrl,
+    useServerMemory: true,
+    forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
+    context: () => (catalogContext ??= buildCatalogContext()),
+    frontendTools: [
+      findFlightsTool,
+      getLoadedFlightsTool,
+      toggleFlightSelectionTool,
+      getCurrentBasketTool,
+      displayFlightDetailTool,
+      ...planTools,
+      ...widgets,
+    ],
+    toolCallRenderer: [bookFlightActionCard, cancelFlightActionCard],
+  });
+
+  return injectAgentStore(AGENT_ID);
+}

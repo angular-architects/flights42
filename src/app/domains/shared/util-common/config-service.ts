@@ -7,7 +7,6 @@ export interface Config {
   readonly agUiUrl: string;
   readonly aiServerUrl: string;
   readonly mcpServerUrl: string;
-  readonly model: string;
 }
 
 @Injectable({
@@ -20,14 +19,9 @@ export class ConfigService {
   private _agUiUrl = 'http://localhost:3001/ag-ui/ticketingAgent';
   private _aiServerUrl = 'http://localhost:3001';
   private _mcpServerUrl = 'http://127.0.0.1:3002/mcp';
-  private _model = 'gpt-5.3';
 
   get baseUrl() {
     return this._baseUrl;
-  }
-
-  get model() {
-    return this._model;
   }
 
   get agUiUrl() {
@@ -51,7 +45,6 @@ export class ConfigService {
 
   async load(configPath = '/config.json'): Promise<void> {
     const config = await firstValueFrom(this.http.get<Config>(configPath));
-    this._model = config.model;
     this._baseUrl = config.baseUrl;
     this._agUiUrl = config.agUiUrl;
     if (config.aiServerUrl) {

@@ -7,7 +7,6 @@ export function provideTestConfig(): Provider {
     provide: ConfigService,
     useValue: {
       baseUrl: '',
-      model: '',
     },
   };
 }

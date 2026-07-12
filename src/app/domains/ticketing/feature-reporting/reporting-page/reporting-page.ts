@@ -9,13 +9,17 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { type Message } from '@copilotkit/angular';
+import { CopilotKit, type Message } from '@copilotkit/angular';
 import { Chart } from 'chart.js/auto';
 
+import {
+  reset,
+  sendMessage,
+} from '../../../shared/util-copilotkit/agent-store-helper';
 import { CHART_COLORS } from '../chart/chart-colors';
 import { DataItem } from '../chart/data-item';
 import { examplePrompts } from './example-prompts';
-import { ReportingAgentStore } from './reporting-agent-store';
+import { injectReportingAgentStore } from './reporting-agent-store';
 import { ReportingChartStore } from './reporting-chart-store';
 
 interface ReportingToolCall {
@@ -33,7 +37,8 @@ interface ReportingToolCall {
   styleUrl: './reporting-page.css',
 })
 export class ReportingPage {
-  protected readonly chat = inject(ReportingAgentStore);
+  protected readonly chat = injectReportingAgentStore();
+  private readonly copilotKit = inject(CopilotKit);
   private readonly chartStore = inject(ReportingChartStore);
 
   protected readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('chart');
@@ -43,15 +48,15 @@ export class ReportingPage {
   protected readonly message = signal('');
 
   protected readonly assistantMessage = computed<string>(() =>
-    getAssistantMessage(this.chat.messages()),
+    getAssistantMessage(this.chat().messages()),
   );
 
   protected readonly allToolCalls = computed<ReportingToolCall[]>(() =>
-    collectToolCalls(this.chat.messages()),
+    collectToolCalls(this.chat().messages()),
   );
 
   protected readonly currentStatus = computed<string>(() =>
-    getCurrentStatus(this.allToolCalls(), this.chat.isRunning()),
+    getCurrentStatus(this.allToolCalls(), this.chat().isRunning()),
   );
 
   protected readonly errorMessage = computed<string | null>(() => null);
@@ -88,8 +93,8 @@ export class ReportingPage {
     this.chartStore.clear();
     this.showToolDetails.set(false);
     this.showCodeDetails.set(false);
-    this.chat.reset();
-    void this.chat.sendMessage(content);
+    reset(this.chat);
+    void sendMessage(this.copilotKit, this.chat, content);
   }
 
   protected toggleToolDetails(): void {

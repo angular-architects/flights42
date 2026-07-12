@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
+import { CopilotKit } from '@copilotkit/angular';
 
-import { type CopilotAgentStore } from '../../shared/util-copilotkit/agent-store';
-import { CheckinAgentStore } from './checkin-agent-store';
+import { sendMessage } from '../../shared/util-copilotkit/agent-store-helper';
+import { injectCheckinAgentStore } from './checkin-agent-store';
 import { CheckinTicketStore } from './checkin-ticket-store';
 
 /**
@@ -18,11 +19,12 @@ const JPEG_QUALITY = 0.85;
 @Injectable({ providedIn: 'root' })
 export class CheckinChatService {
   private readonly ticketStore = inject(CheckinTicketStore);
+  private readonly copilotKit = inject(CopilotKit);
 
   // No memory: every uploaded ticket is a fresh extraction. Server memory is
   // disabled on the agent store so previous threads can't leak into this
   // stateless flow.
-  readonly chat: CopilotAgentStore = inject(CheckinAgentStore);
+  readonly chat = injectCheckinAgentStore();
 
   /**
    * Reads the file, optionally downscales it to keep the token cost
@@ -45,7 +47,7 @@ export class CheckinChatService {
       const { base64, mimeType } = await this.fileToBase64Image(file);
       this.ticketStore.setStatus('analyzing');
 
-      await this.chat.sendMessage([
+      await sendMessage(this.copilotKit, this.chat, [
         {
           type: 'text',
           text: 'Here is my ticket or ID document. Please extract the relevant fields.',

@@ -38,6 +38,11 @@ interface InterruptModel {
   options: InterruptOption[];
 }
 
+export interface ResumeInterruptEvent {
+  interruptId: string;
+  payload: Record<string, unknown>;
+}
+
 const DEFAULT_INTERRUPT_OPTIONS: InterruptOption[] = [
   { id: 'accept', label: 'Accept', payload: { approved: true } },
   { id: 'decline', label: 'Decline', payload: { approved: false } },
@@ -69,7 +74,7 @@ export class ChatMessages {
   readonly pending = input<boolean>(false);
   readonly greeting = input<string>('Hi! How can I help you?');
   readonly pendingInterrupts = input<Interrupt[]>([]);
-  readonly resumeInterrupt = output<Record<string, unknown>>();
+  readonly resumeInterrupt = output<ResumeInterruptEvent>();
 
   private readonly resolvedInterruptId = signal<string | null>(null);
 
@@ -84,7 +89,7 @@ export class ChatMessages {
     payload: Record<string, unknown>,
   ): void {
     this.resolvedInterruptId.set(interruptId);
-    this.resumeInterrupt.emit(payload);
+    this.resumeInterrupt.emit({ interruptId, payload });
   }
 }
 

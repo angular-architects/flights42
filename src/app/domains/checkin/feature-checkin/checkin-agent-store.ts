@@ -1,14 +1,18 @@
 import { inject } from '@angular/core';
+import { injectAgentStore } from '@copilotkit/angular';
 
 import { ConfigService } from '../../shared/util-common/config-service';
-import { agentStore } from '../../shared/util-copilotkit/agent-store';
+import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { fillCheckinFormClientTool } from './fill-checkin-form.tool';
 
-export const CHECKIN_AGENT_ID = 'checkinAgent';
+const AGENT_ID = 'checkinAgent';
 
-export const CheckinAgentStore = agentStore({
-  agentId: CHECKIN_AGENT_ID,
-  url: () => inject(ConfigService).agUiUrlFor(CHECKIN_AGENT_ID),
-  model: () => inject(ConfigService).model,
-  frontendTools: [fillCheckinFormClientTool],
-});
+export function injectCheckinAgentStore() {
+  initAgentStore({
+    agentId: AGENT_ID,
+    url: inject(ConfigService).agUiUrlFor(AGENT_ID),
+    frontendTools: [fillCheckinFormClientTool],
+  });
+
+  return injectAgentStore(AGENT_ID);
+}

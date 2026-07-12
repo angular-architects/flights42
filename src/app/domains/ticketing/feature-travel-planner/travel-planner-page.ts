@@ -7,18 +7,23 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { type Message } from '@copilotkit/angular';
+import { CopilotKit, type Message } from '@copilotkit/angular';
 import { addDays, format } from 'date-fns';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { featureFlags } from '../../shared/util-common/feature-flags';
+import {
+  reset,
+  sendMessage,
+  stop as stopRun,
+} from '../../shared/util-copilotkit/agent-store-helper';
 import { FlightInfo } from '../data/flight-info';
 import { FlightStore } from '../data/flight-store';
 import { HotelInfo } from '../data/hotel-info';
 import { FlightCard } from '../ui/flight-card/flight-card';
 import { HotelCard } from '../ui/hotel-card';
 import { TravelPlanStore } from './travel-plan-store';
-import { TravelPlannerAgentStore } from './travel-planner-agent-store';
+import { injectTravelPlannerAgentStore } from './travel-planner-agent-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { TravelRefinementChatService } from './travel-refinement-chat-service';
 import { TravelWorkflowProgress } from './travel-workflow-progress/travel-workflow-progress';
@@ -54,7 +59,9 @@ export class TravelPlannerPage {
 
   private readonly requestStore = inject(TravelPlannerRequestStore);
 
-  protected readonly chat = inject(TravelPlannerAgentStore);
+  protected readonly chat = injectTravelPlannerAgentStore();
+
+  private readonly copilotKit = inject(CopilotKit);
 
   protected readonly durations = DURATION_OPTIONS;
 
@@ -66,7 +73,7 @@ export class TravelPlannerPage {
   });
 
   private readonly shownComponents = computed<ShownComponent[]>(() =>
-    collectShownComponents(this.chat.messages()),
+    collectShownComponents(this.chat().messages()),
   );
 
   protected readonly flightWidgets = computed(() =>
@@ -109,7 +116,7 @@ export class TravelPlannerPage {
   }
 
   private syncGeneratedPlan(): void {
-    const loading = this.chat.isRunning();
+    const loading = this.chat().isRunning();
     if (loading || !this.awaitingPlan()) {
       return;
     }
@@ -138,11 +145,11 @@ export class TravelPlannerPage {
   }
 
   protected submit(): void {
-    if (this.form.invalid || this.chat.isRunning()) {
+    if (this.form.invalid || this.chat().isRunning()) {
       return;
     }
 
-    this.chat.reset();
+    reset(this.chat);
     this.planStore.clear();
     this.awaitingPlan.set(true);
 
@@ -179,11 +186,11 @@ export class TravelPlannerPage {
       `${nights} ${nights === 1 ? 'night' : 'nights'}).` +
       preferenceText;
 
-    void this.chat.sendMessage(content);
+    void sendMessage(this.copilotKit, this.chat, content);
   }
 
   protected stop(): void {
-    this.chat.stop();
+    stopRun(this.chat);
   }
 }
 

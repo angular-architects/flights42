@@ -113,7 +113,7 @@ export class CheckinPage {
 
   protected readonly extractionStatusLine = computed(() => {
     const status = this.ticketStore.status();
-    const isLoading = this.checkinChat.chat.isRunning();
+    const isLoading = this.checkinChat.chat().isRunning();
     if (status === 'uploading') {
       return 'Preparing image...';
     }
@@ -135,7 +135,7 @@ export class CheckinPage {
     const status = this.ticketStore.status();
     return (
       status === 'analyzing' ||
-      (status === 'idle' && this.checkinChat.chat.isRunning())
+      (status === 'idle' && this.checkinChat.chat().isRunning())
     );
   });
 

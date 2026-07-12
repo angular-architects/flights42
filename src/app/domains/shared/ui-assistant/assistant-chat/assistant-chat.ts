@@ -1,19 +1,32 @@
+import { type Interrupt } from '@ag-ui/core';
 import {
   afterRenderEffect,
   Component,
+  computed,
   ElementRef,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CopilotKit, type Message } from '@copilotkit/angular';
 
 import {
   AgentMode,
   AgentModeService,
 } from '../../util-common/agent-mode-service';
-import { type CopilotAgentStore } from '../../util-copilotkit/agent-store';
-import { ChatMessages } from '../chat-messages/chat-messages';
+import {
+  type CopilotAgentStore,
+  getAgentMessages,
+  getPendingInterrupts,
+  resumeInterrupt,
+  sendMessage,
+  stop,
+} from '../../util-copilotkit/agent-store-helper';
+import {
+  ChatMessages,
+  type ResumeInterruptEvent,
+} from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
 
 const DEFAULT_GREETING = 'Hi! How can I help you?';
@@ -27,6 +40,7 @@ const DEFAULT_GREETING = 'Hi! How can I help you?';
 export class AssistantChat {
   private chatRegistry = inject(ChatRegistry);
   private agentMode = inject(AgentModeService);
+  private copilotKit = inject(CopilotKit);
 
   protected mode = this.agentMode.mode;
 
@@ -43,6 +57,22 @@ export class AssistantChat {
   protected readonly store = signal<CopilotAgentStore | null>(null);
   protected readonly agentId = signal<string | null>(null);
 
+  protected readonly messages = computed<Message[]>(() => {
+    const store = this.store();
+    const agentId = this.agentId();
+    return store && agentId ? getAgentMessages(store, agentId) : [];
+  });
+
+  protected readonly interrupts = computed<Interrupt[]>(() => {
+    const store = this.store();
+    return store ? getPendingInterrupts(store) : [];
+  });
+
+  protected readonly isRunning = computed<boolean>(() => {
+    const store = this.store();
+    return store ? store().isRunning() : false;
+  });
+
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
       this.store.set(chatInfo.store);
@@ -54,7 +84,7 @@ export class AssistantChat {
     this.chatRegistry.openRequested.subscribe(() => this.open());
 
     afterRenderEffect(() => {
-      this.store()?.messages();
+      this.messages();
 
       if (!this.panelVisible()) {
         return;
@@ -88,11 +118,26 @@ export class AssistantChat {
   protected submit() {
     const message = this.message();
     this.message.set('');
-    void this.store()?.sendMessage(message);
+    const store = this.store();
+    if (store) {
+      void sendMessage(this.copilotKit, store, message);
+    }
   }
 
-  protected stop(): void {
-    this.store()?.stop();
+  protected stopRun(): void {
+    const store = this.store();
+    if (store) {
+      stop(store);
+    }
+  }
+
+  protected onResumeInterrupt(event: ResumeInterruptEvent): void {
+    const store = this.store();
+    if (store) {
+      void resumeInterrupt(this.copilotKit, store, {
+        [event.interruptId]: { status: 'resolved', payload: event.payload },
+      });
+    }
   }
 
   protected setMode(mode: AgentMode): void {

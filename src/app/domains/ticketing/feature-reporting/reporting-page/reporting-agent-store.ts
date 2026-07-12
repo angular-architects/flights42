@@ -1,14 +1,18 @@
 import { inject } from '@angular/core';
+import { injectAgentStore } from '@copilotkit/angular';
 
 import { ConfigService } from '../../../shared/util-common/config-service';
-import { agentStore } from '../../../shared/util-copilotkit/agent-store';
+import { initAgentStore } from '../../../shared/util-copilotkit/init-agent-store';
 import { renderChartTool } from './render-chart.tool';
 
-export const REPORTING_AGENT_ID = 'reportingAgent';
+const AGENT_ID = 'reportingAgent';
 
-export const ReportingAgentStore = agentStore({
-  agentId: REPORTING_AGENT_ID,
-  url: () => inject(ConfigService).agUiUrlFor(REPORTING_AGENT_ID),
-  model: () => inject(ConfigService).model,
-  frontendTools: [renderChartTool],
-});
+export function injectReportingAgentStore() {
+  initAgentStore({
+    agentId: AGENT_ID,
+    url: inject(ConfigService).agUiUrlFor(AGENT_ID),
+    frontendTools: [renderChartTool],
+  });
+
+  return injectAgentStore(AGENT_ID);
+}

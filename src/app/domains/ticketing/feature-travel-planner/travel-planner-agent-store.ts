@@ -1,16 +1,20 @@
 import { inject } from '@angular/core';
+import { injectAgentStore } from '@copilotkit/angular';
 
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
-import { agentStore } from '../../shared/util-copilotkit/agent-store';
+import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
 
-export const TRAVEL_PLANNER_AGENT_ID = 'travelPlannerAgent';
+const AGENT_ID = 'travelPlannerAgent';
 
-export const TravelPlannerAgentStore = agentStore({
-  agentId: TRAVEL_PLANNER_AGENT_ID,
-  url: () => inject(ConfigService).agUiUrlFor(TRAVEL_PLANNER_AGENT_ID),
-  model: () => inject(ConfigService).model,
-  frontendTools: [messageWidget, flightWidget, hotelWidget],
-});
+export function injectTravelPlannerAgentStore() {
+  initAgentStore({
+    agentId: AGENT_ID,
+    url: inject(ConfigService).agUiUrlFor(AGENT_ID),
+    frontendTools: [messageWidget, flightWidget, hotelWidget],
+  });
+
+  return injectAgentStore(AGENT_ID);
+}

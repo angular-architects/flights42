@@ -2,29 +2,43 @@ import { inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import {
-  TRAVEL_REFINEMENT_AGENT_ID,
-  TravelRefinementAgentStore,
-} from './travel-refinement-agent-store';
+  addDeveloperMessage,
+  reset,
+} from '../../shared/util-copilotkit/agent-store-helper';
+import { TravelPlannerRequestStore } from './travel-planner-request-store';
+import { injectTravelRefinementAgentStore } from './travel-refinement-agent-store';
 
 @Injectable({ providedIn: 'root' })
 export class TravelRefinementChatService {
   private readonly chatRegistry = inject(ChatRegistry);
-  private readonly store = inject(TravelRefinementAgentStore);
+  private readonly requestStore = inject(TravelPlannerRequestStore);
+  private readonly store = injectTravelRefinementAgentStore();
 
   public init(): void {
     this.chatRegistry.setChat(
       this.store,
-      TRAVEL_REFINEMENT_AGENT_ID,
       'Do you want to refine your travel plan?',
       false,
     );
   }
 
-  /**
-   * Clears the current refinement conversation so a newly created plan starts
-   * from a fresh session. Preferences are read live from the request store.
-   */
   public reset(): void {
-    this.store.reset();
+    reset(this.store);
+    const preamble = buildPreferencePreamble(this.requestStore.preferences());
+    if (preamble) {
+      addDeveloperMessage(this.store, preamble);
+    }
   }
+}
+
+function buildPreferencePreamble(preferences: string): string | undefined {
+  const trimmed = preferences.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  return (
+    `For context, the traveler's original preferences for this trip are: ` +
+    `"${trimmed}". Keep honoring them while refining the plan unless I ` +
+    `explicitly ask to change them.`
+  );
 }

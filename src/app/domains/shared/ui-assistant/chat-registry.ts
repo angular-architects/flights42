@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 
-import { type CopilotAgentStore } from '../util-copilotkit/agent-store';
+import { type CopilotAgentStore } from '../util-copilotkit/agent-store-helper';
 
 export interface ChatInfo {
   store: CopilotAgentStore | null;
@@ -29,12 +29,12 @@ export class ChatRegistry {
 
   public setChat(
     store: CopilotAgentStore,
-    agentId: string,
     greeting?: string,
     showModeSelector = true,
   ): void {
     if (store !== this._store) {
       this._store = store;
+      const agentId = store().agent.agentId ?? null;
       this._chatInfo.next({ store, agentId, greeting, showModeSelector });
     }
   }

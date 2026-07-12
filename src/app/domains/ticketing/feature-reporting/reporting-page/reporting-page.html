@@ -9,26 +9,26 @@
     placeholder="Describe your chart..."></textarea>
 
   <div class="prompt-actions">
-    <button type="submit" [disabled]="chat.isRunning()">Generate</button>
+    <button type="submit" [disabled]="chat().isRunning()">Generate</button>
     <button
       type="button"
-      [disabled]="chat.isRunning()"
+      [disabled]="chat().isRunning()"
       (click)="useExamplePrompt(0)">
       Example #1
     </button>
     <button
       type="button"
-      [disabled]="chat.isRunning()"
+      [disabled]="chat().isRunning()"
       (click)="useExamplePrompt(1)">
       Example #2
     </button>
   </div>
 </form>
 
-@if (chat.isRunning() || allToolCalls().length > 0) {
+@if (chat().isRunning() || allToolCalls().length > 0) {
   <div class="tool-status">
     <span class="tool-status-text">{{ currentStatus() }}</span>
-    @if (chat.isRunning()) {
+    @if (chat().isRunning()) {
       <div class="ai-wait-indicator tool-status-dots" aria-hidden="true">
         <span></span>
         <span></span>

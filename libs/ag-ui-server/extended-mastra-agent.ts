@@ -850,7 +850,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
       string,
       { toolName: string; args: unknown }
     >();
-    const mastraMessages = convertAGUIMessagesToMastra(input.messages as never);
+    const messagesForConversion = input.messages.map((message) =>
+      message.role === 'developer' ? { ...message, role: 'user' } : message,
+    );
+    const mastraMessages = convertAGUIMessagesToMastra(
+      messagesForConversion as never,
+    );
     const multimodalMessages = injectMultimodalUserParts(
       input.messages as readonly Message[],
       mastraMessages as CoreMessage[],

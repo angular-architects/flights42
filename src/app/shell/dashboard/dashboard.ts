@@ -7,16 +7,17 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { type Message } from '@copilotkit/angular';
+import { CopilotKit, type Message } from '@copilotkit/angular';
 
 import { registerHandlers } from '../../domains/shared/util-copilotkit/a2ui/a2ui-action-handlers';
 import { CopilotActivity } from '../../domains/shared/util-copilotkit/activity/copilot-activity';
+import {
+  reset as resetChat,
+  sendMessage,
+} from '../../domains/shared/util-copilotkit/agent-store-helper';
 import { checkInAction } from '../../domains/ticketing/ai/actions/check-in-action';
 import { dashboardFlightSearchAction } from './actions/dashboard-flight-search-action';
-import {
-  DASHBOARD_AGENT_ID,
-  DashboardAgentStore,
-} from './dashboard-agent-store';
+import { injectDashboardAgentStore } from './dashboard-agent-store';
 import { DashboardPrefs } from './dashboard-prefs';
 import { examplePrompts } from './example-prompts';
 
@@ -38,24 +39,25 @@ interface DashboardToolCall {
 })
 export class Dashboard {
   private readonly renderer = inject(A2uiRendererService);
+  private readonly copilotKit = inject(CopilotKit);
 
-  protected readonly agentId = DASHBOARD_AGENT_ID;
-  protected readonly chat = inject(DashboardAgentStore);
+  protected readonly chat = injectDashboardAgentStore();
+  protected readonly agentId = computed(() => this.chat().agent.agentId ?? '');
   protected readonly message = signal('');
   protected readonly preventCaching = inject(DashboardPrefs).preventCaching;
 
   protected readonly activities = computed<ActivityMessage[]>(() =>
-    this.chat.messages().filter(isActivityMessage),
+    this.chat().messages().filter(isActivityMessage),
   );
 
   protected readonly hasOutput = computed(() => this.activities().length > 0);
 
   protected readonly allToolCalls = computed<DashboardToolCall[]>(() =>
-    collectToolCalls(this.chat.messages()),
+    collectToolCalls(this.chat().messages()),
   );
 
   protected readonly currentStatus = computed<string>(() =>
-    deriveCurrentStatus(this.allToolCalls(), this.chat.isRunning()),
+    deriveCurrentStatus(this.allToolCalls(), this.chat().isRunning()),
   );
 
   protected readonly showToolDetails = signal(false);
@@ -73,9 +75,11 @@ export class Dashboard {
       return;
     }
     this.clearRenderedSurfaces();
-    this.chat.reset();
+    resetChat(this.chat);
     this.showToolDetails.set(false);
-    void this.chat.sendMessage(content);
+    void sendMessage(this.copilotKit, this.chat, content, {
+      preventCaching: this.preventCaching(),
+    });
   }
 
   protected useExamplePrompt(index: number): void {
@@ -89,7 +93,7 @@ export class Dashboard {
 
   protected reset(): void {
     this.clearRenderedSurfaces();
-    this.chat.reset();
+    resetChat(this.chat);
     this.showToolDetails.set(false);
     this.message.set('');
   }
