@@ -71,64 +71,57 @@ export function formatToolArgsValue(args: unknown): string | null {
   return text.length > 0 ? text : null;
 }
 
-/**
- * Derives the 3-node pipeline from the rendered widgets. CopilotKit's headless
- * store does not surface the server's STEP_STARTED/STEP_FINISHED events, so
- * progress is inferred from which widgets have appeared plus the run state.
- */
 export function buildPipeline(
-  flightsReady: boolean,
-  hotelsReady: boolean,
+  startedSteps: ReadonlySet<string>,
+  finishedSteps: ReadonlySet<string>,
   isLoading: boolean,
-  hasWidgets: boolean,
 ): PipelineStep[] {
   const context: PipelineStateContext = {
-    flightsReady,
-    hotelsReady,
+    startedSteps,
+    finishedSteps,
     isLoading,
-    hasWidgets,
   };
 
-  return PIPELINE_STEPS.map(({ id, label }) => ({
+  return PIPELINE_STEPS.map(({ id, label }, index) => ({
     id,
     label,
-    state: resolvePipelineStepState(id, context),
+    state: resolvePipelineStepState(index, context),
   }));
 }
 
 interface PipelineStateContext {
-  flightsReady: boolean;
-  hotelsReady: boolean;
+  startedSteps: ReadonlySet<string>;
+  finishedSteps: ReadonlySet<string>;
   isLoading: boolean;
-  hasWidgets: boolean;
 }
 
 function resolvePipelineStepState(
-  id: string,
+  index: number,
   context: PipelineStateContext,
 ): PipelineStepState {
-  const { flightsReady, hotelsReady, isLoading, hasWidgets } = context;
-  const finished = !isLoading && hasWidgets;
+  const { startedSteps, finishedSteps, isLoading } = context;
 
-  if (id === 'findFlights') {
-    if (flightsReady || finished) {
-      return 'done';
-    }
-    return isLoading ? 'active' : 'upcoming';
-  }
-
-  if (id === 'findHotels') {
-    if (hotelsReady || finished) {
-      return 'done';
-    }
-    return isLoading && flightsReady ? 'active' : 'upcoming';
-  }
-
-  // finalize
-  if (finished) {
+  if (!isLoading) {
     return 'done';
   }
-  return isLoading && flightsReady && hotelsReady ? 'active' : 'upcoming';
+
+  const isLast = index === PIPELINE_STEPS.length - 1;
+  const self = PIPELINE_STEPS[index].id;
+
+  if (!isLast) {
+    const next = PIPELINE_STEPS[index + 1].id;
+    if (finishedSteps.has(self) || startedSteps.has(next)) {
+      return 'done';
+    }
+  }
+
+  const reachedByPrev =
+    index === 0 || finishedSteps.has(PIPELINE_STEPS[index - 1].id);
+  if (reachedByPrev || startedSteps.has(self)) {
+    return 'active';
+  }
+
+  return 'upcoming';
 }
 
 function parseToolArguments(args: string): unknown {

@@ -54,8 +54,8 @@
 <app-travel-workflow-progress
   [messages]="chat().messages()"
   [loading]="chat().isRunning()"
-  [flightsReady]="flightsReady()"
-  [hotelsReady]="hotelsReady()"
+  [startedSteps]="stepTracker.startedSteps()"
+  [finishedSteps]="stepTracker.finishedSteps()"
   [hasWidgets]="widgetCount() > 0" />
 
 @if (errorMessage(); as error) {

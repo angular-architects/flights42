@@ -30,8 +30,8 @@ import {
 export class TravelWorkflowProgress {
   readonly messages = input.required<Message[]>();
   readonly loading = input.required<boolean>();
-  readonly flightsReady = input.required<boolean>();
-  readonly hotelsReady = input.required<boolean>();
+  readonly startedSteps = input.required<ReadonlySet<string>>();
+  readonly finishedSteps = input.required<ReadonlySet<string>>();
   readonly hasWidgets = input.required<boolean>();
 
   protected readonly toolCalls = computed<WorkflowToolCall[]>(() =>
@@ -39,12 +39,7 @@ export class TravelWorkflowProgress {
   );
 
   protected readonly stepPipeline = computed<PipelineStep[]>(() =>
-    buildPipeline(
-      this.flightsReady(),
-      this.hotelsReady(),
-      this.loading(),
-      this.hasWidgets(),
-    ),
+    buildPipeline(this.startedSteps(), this.finishedSteps(), this.loading()),
   );
 
   protected readonly showTracker = computed(

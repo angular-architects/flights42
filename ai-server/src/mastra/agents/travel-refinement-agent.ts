@@ -1,3 +1,4 @@
+import { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -12,7 +13,12 @@ export const travelRefinementAgent = new Agent({
   instructions: travelRefinementAgentPrompt,
   model: modelAdvancedTasks,
   tools: { searchFlightsTool, findHotelsTool },
-  // Server-side thread memory: the client (useServerMemory) only sends the delta
-  // each run, so the thread supplies the earlier context without duplication.
+  defaultOptions: {
+    providerOptions: {
+      openai: {
+        reasoningEffort: 'high',
+      } as OpenAILanguageModelResponsesOptions,
+    },
+  },
   memory: new Memory(),
 });

@@ -5,6 +5,6 @@ import type { MastraModelConfig } from '@mastra/core/llm';
  * Change this single value to switch the model everywhere.
  */
 export const model: MastraModelConfig = 'openai/gpt-5.4-mini';
-export const modelAdvancedTasks: MastraModelConfig = 'openai/gpt-5.5';
+export const modelAdvancedTasks: MastraModelConfig = 'openai/gpt-5.6-luna';
 
 // export const model: MastraModelConfig = 'google/gemini-flash-latest'; // Gemini Flash
