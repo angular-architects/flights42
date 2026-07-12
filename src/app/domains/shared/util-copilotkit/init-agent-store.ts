@@ -1,4 +1,4 @@
-import { HttpAgent, randomUUID } from '@ag-ui/client';
+import { randomUUID } from '@ag-ui/client';
 import { type Context } from '@ag-ui/core';
 import {
   EnvironmentInjector,
@@ -15,8 +15,8 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
+import { AppHttpAgent } from './app-http-agent';
 import { FallbackToolCard, fallbackToolCard } from './fallback-tool-card';
-import { ServerMemoryHttpAgent } from './server-memory-http-agent';
 
 export interface InitAgentStoreConfig {
   agentId: string;
@@ -52,9 +52,11 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
     url: config.url,
     threadId: randomUUID(),
   };
-  const httpAgent = config.useServerMemory
-    ? new ServerMemoryHttpAgent(agentConfig, forwardedPropsFor, contextFor)
-    : new HttpAgent(agentConfig);
+  const httpAgent = new AppHttpAgent(agentConfig, {
+    forwardedProps: forwardedPropsFor,
+    context: contextFor,
+    useServerMemory: config.useServerMemory,
+  });
 
   copilotKit.updateRuntime({
     selfManagedAgents: {

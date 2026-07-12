@@ -1,34 +1,41 @@
 import { HttpAgent, type HttpAgentConfig } from '@ag-ui/client';
 import { type Context, type RunAgentInput } from '@ag-ui/core';
 
-export class ServerMemoryHttpAgent extends HttpAgent {
+export interface AppHttpAgentOptions {
+  forwardedProps?: () => Record<string, unknown>;
+  context?: () => readonly Context[];
+  useServerMemory?: boolean;
+}
+
+export class AppHttpAgent extends HttpAgent {
   private readonly sentMessageIds = new Set<string>();
 
   constructor(
     config: HttpAgentConfig,
-    private readonly persistentForwardedProps: () => Record<
-      string,
-      unknown
-    > = () => ({}),
-    private readonly persistentContext: () => readonly Context[] = () => [],
+    private readonly options: AppHttpAgentOptions = {},
   ) {
     super(config);
-    this.subscribe({
-      onRunFinalized: () => this.markAllSent(),
-    });
+    if (options.useServerMemory) {
+      this.subscribe({
+        onRunFinalized: () => this.markAllSent(),
+      });
+    }
   }
 
   protected override requestInit(input: RunAgentInput): RequestInit {
-    const messages = input.messages.filter(
-      (message) => !this.sentMessageIds.has(message.id),
-    );
-    this.markAllSent(input.messages);
+    let messages = input.messages;
+    if (this.options.useServerMemory) {
+      messages = messages.filter(
+        (message) => !this.sentMessageIds.has(message.id),
+      );
+      this.markAllSent(input.messages);
+    }
     const forwardedProps = {
-      ...this.persistentForwardedProps(),
+      ...(this.options.forwardedProps?.() ?? {}),
       ...input.forwardedProps,
     };
     const context = mergePersistentContext(
-      this.persistentContext(),
+      this.options.context?.() ?? [],
       input.context,
     );
     return super.requestInit({ ...input, messages, forwardedProps, context });

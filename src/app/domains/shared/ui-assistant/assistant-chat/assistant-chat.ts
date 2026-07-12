@@ -85,6 +85,7 @@ export class AssistantChat {
 
     afterRenderEffect(() => {
       this.messages();
+      this.interrupts();
 
       if (!this.panelVisible()) {
         return;

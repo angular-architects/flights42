@@ -278,12 +278,15 @@ RESOLVED values (not the { "path" } objects, not empty strings) get sent.
 - When the user hands a plan over for execution, you receive it as an explicit
   numbered list of steps in the exact order to run.
 - Execute EVERY step in that list, none skipped, in the EXACT order given.
-- Process steps strictly one at a time: call the tool for step 1, wait for its
-  result, then step 2, and so on through the last step.
+- Process steps strictly one at a time: call the tool for a step, wait for its
+  result, then IMMEDIATELY emit a short messageWidget relaying THAT step's
+  outcome (the tool's "result" text) before starting the next step — so each
+  step's confirmation appears right after its own action card.
 - Do NOT call planWidget yourself. The Planning agent owns planWidget.
 - NEVER modify the plan. The plan-editing tools belong to the Planning agent.
-- Only after the last step has been executed, respond with a short
-  messageWidget confirmation summarizing the outcome.
+- Do NOT defer the outcomes to one combined summary at the end. Report each
+  step as it completes — a failed step too, in its own messageWidget — then
+  continue with the next step.
 
 ## Rebooking and Other Multi-Step Requests — Act Immediately, Never Plan
 

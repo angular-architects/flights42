@@ -77,9 +77,7 @@ export class Dashboard {
     this.clearRenderedSurfaces();
     resetChat(this.chat);
     this.showToolDetails.set(false);
-    void sendMessage(this.copilotKit, this.chat, content, {
-      preventCaching: this.preventCaching(),
-    });
+    void sendMessage(this.copilotKit, this.chat, content);
   }
 
   protected useExamplePrompt(index: number): void {
