@@ -13,13 +13,14 @@ import { addDays, format } from 'date-fns';
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { featureFlags } from '../../shared/util-common/feature-flags';
 import { FlightInfo } from '../data/flight-info';
-import { FlightWidget } from '../ui/flight-widget';
+import { FlightStore } from '../data/flight-store';
+import { FlightCard } from '../ui/flight-card/flight-card';
 import { type PlanHotel, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerAgentStore } from './travel-planner-agent-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { TravelRefinementChatService } from './travel-refinement-chat-service';
 import { TravelWorkflowProgress } from './travel-workflow-progress/travel-workflow-progress';
-import { HotelWidget } from './ui/hotel-widget';
+import { HotelCard } from './ui/hotel-card';
 
 const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },
@@ -35,12 +36,7 @@ interface ShownComponent {
 @Component({
   selector: 'app-travel-planner-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    FlightWidget,
-    HotelWidget,
-    TravelWorkflowProgress,
-  ],
+  imports: [ReactiveFormsModule, FlightCard, HotelCard, TravelWorkflowProgress],
   templateUrl: './travel-planner-page.html',
   styleUrl: './travel-planner-page.css',
 })
@@ -52,6 +48,8 @@ export class TravelPlannerPage {
   private readonly chatRegistry = inject(ChatRegistry);
 
   protected readonly planStore = inject(TravelPlanStore);
+
+  protected readonly flightStore = inject(FlightStore);
 
   private readonly requestStore = inject(TravelPlannerRequestStore);
 

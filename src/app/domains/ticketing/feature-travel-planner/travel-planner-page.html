@@ -75,7 +75,24 @@
         <div class="flights-stack">
           @for (flight of planStore.flights(); track flight.id) {
             <div class="flight-cell" data-widget="flightWidget">
-              <app-flight-widget [flight]="flight" status="other" />
+              <app-flight-card
+                [item]="flight"
+                [selected]="flightStore.basket()[flight.id]"
+                [readonly]="true">
+                @if (flightStore.basket()[flight.id]) {
+                  <button
+                    class="btn btn-default"
+                    (click)="flightStore.updateBasket(flight.id, false)">
+                    Remove
+                  </button>
+                } @else {
+                  <button
+                    class="btn btn-default"
+                    (click)="flightStore.updateBasket(flight.id, true)">
+                    Select
+                  </button>
+                }
+              </app-flight-card>
             </div>
           }
         </div>
@@ -85,7 +102,7 @@
         <div class="hotel-stack">
           @for (hotel of planStore.hotels(); track hotel.id) {
             <div class="planner-tile" data-widget="hotelWidget">
-              <app-hotel-widget [hotel]="hotel" />
+              <app-hotel-card [hotel]="hotel" />
             </div>
           }
         </div>

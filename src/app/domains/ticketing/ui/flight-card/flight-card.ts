@@ -6,7 +6,7 @@ import {
   output,
 } from '@angular/core';
 
-import { Flight } from '../../data/flight';
+import { FlightInfo } from '../../data/flight-info';
 
 @Component({
   selector: 'app-flight-card',
@@ -15,8 +15,9 @@ import { Flight } from '../../data/flight';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlightCard {
-  readonly item = input.required<Flight>();
+  readonly item = input.required<FlightInfo>();
   readonly selected = input(false);
+  readonly readonly = input(false);
   readonly selectedChange = output<boolean>();
 
   protected select() {

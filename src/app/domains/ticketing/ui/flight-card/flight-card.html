@@ -8,12 +8,14 @@
   <div class="card-body">
     <p>Flight-No.: #{{ itemValue.id }}</p>
     <p>Date: {{ itemValue.date | date: 'dd.MM.yyyy HH:mm' }}</p>
-    <p>Delayed: {{ itemValue.delayed }}</p>
+    <p>Delay: {{ itemValue.delay }} min</p>
     <p>
-      @if (!selected()) {
-        <button (click)="select()">Select</button>
-      } @else {
-        <button (click)="deselect()">Remove</button>
+      @if (!readonly()) {
+        @if (!selected()) {
+          <button (click)="select()">Select</button>
+        } @else {
+          <button (click)="deselect()">Remove</button>
+        }
       }
 
       <ng-content />
