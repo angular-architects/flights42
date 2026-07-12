@@ -36,6 +36,30 @@ export function toFlightMutationResult(
   return undefined;
 }
 
+export function getFlightMutationResult(
+  complete: boolean,
+  rawResult: string | undefined,
+): FlightMutationResult | undefined {
+  return complete
+    ? toFlightMutationResult(parseToolResult(rawResult))
+    : undefined;
+}
+
+export function getFlightDetails(
+  undoResult: FlightMutationResult | undefined,
+  result: FlightMutationResult | undefined,
+): FlightMutationFlight | undefined {
+  if (undoResult?.ok) {
+    return undoResult.flight;
+  }
+
+  if (result?.ok) {
+    return result.flight;
+  }
+
+  return undefined;
+}
+
 export function toLoadFailedResult(
   error: unknown,
   flightId: number,

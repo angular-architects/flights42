@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+
+.card {
+  margin: 0;
+  background-color: #f6f8fc;
+  border: 1px solid #dde5f2;
+  box-shadow: none;
+}
+
+.card-body {
+  padding: 0.625rem 0.75rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.action-title {
+  font-weight: 600;
+}
+
+.action-context {
+  color: #4e5b78;
+}
+
+.payment-line {
+  color: #4e5b78;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+p + p {
+  margin-top: 0.5rem;
+}
+
+.btn {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.status-line {
+  line-height: 1.4;
+}

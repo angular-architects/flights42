@@ -12,16 +12,15 @@ import { z } from 'zod';
 import { createRenderToolCall } from '../../../shared/util-copilotkit/tool-definition';
 import {
   BookingClient,
-  type FlightMutationFlight,
   type FlightMutationResult,
   type FlightPaymentMethod,
 } from '../../data/flight-mutation-client';
 import {
   getActionStatusLabel,
   getFlightContextText,
-  parseToolResult,
+  getFlightDetails,
+  getFlightMutationResult,
   shouldShowUndo,
-  toFlightMutationResult,
   toLoadFailedResult,
 } from './card-utils';
 
@@ -35,6 +34,25 @@ const bookFlightArgsSchema = z.object({
 });
 
 export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
+
+function getBookFlightTitle(flightId: number | undefined): string {
+  return flightId === undefined ? 'Book Flight' : `Book Flight #${flightId}`;
+}
+
+function getPaymentMethodLabel(
+  undoResult: FlightMutationResult | undefined,
+  result: FlightMutationResult | undefined,
+): string | null {
+  if (undoResult) {
+    return null;
+  }
+
+  if (!result?.ok || !result.paymentMethod) {
+    return null;
+  }
+
+  return PAYMENT_METHOD_LABELS[result.paymentMethod];
+}
 
 @Component({
   selector: 'app-book-flight-action-card',
@@ -64,53 +82,7 @@ export type BookFlightArgs = z.infer<typeof bookFlightArgsSchema>;
       </div>
     </div>
   `,
-  styles: `
-    :host {
-      display: block;
-    }
-
-    .card {
-      margin: 0;
-      background-color: #f6f8fc;
-      border: 1px solid #dde5f2;
-      box-shadow: none;
-    }
-
-    .card-body {
-      padding: 0.625rem 0.75rem 0.75rem;
-      font-size: 0.875rem;
-    }
-
-    .action-title {
-      font-weight: 600;
-    }
-
-    .action-context {
-      color: #4e5b78;
-    }
-
-    .payment-line {
-      color: #4e5b78;
-    }
-
-    p {
-      margin-top: 0;
-      margin-bottom: 0;
-    }
-
-    p + p {
-      margin-top: 0.5rem;
-    }
-
-    .btn {
-      padding: 0.25rem 0.625rem;
-      font-size: 0.8125rem;
-    }
-
-    .status-line {
-      line-height: 1.4;
-    }
-  `,
+  styleUrl: './action-card.css',
 })
 export class BookFlightActionCard implements ToolRenderer<BookFlightArgs> {
   private readonly bookingClient = inject(BookingClient);
@@ -126,19 +98,20 @@ export class BookFlightActionCard implements ToolRenderer<BookFlightArgs> {
     () => this.toolCall().status === 'complete',
   );
 
-  // The booking itself now runs server-side (bookFlightTool suspends for the
-  // payment choice and completes the mutation on resume) — this card is a
-  // pure result view. Its "tool" message content is the tool's own return
-  // value directly, no client-side wrapping involved.
-  private readonly result = computed<FlightMutationResult | undefined>(() => {
-    const call = this.toolCall();
-    return call.status === 'complete'
-      ? toFlightMutationResult(parseToolResult(call.result))
-      : undefined;
-  });
+  private readonly result = computed(() =>
+    getFlightMutationResult(this.complete(), this.toolCall().result),
+  );
 
-  protected readonly titleText = computed(
-    () => `Book Flight #${this.flightId()}`,
+  protected readonly flightId = computed<number | undefined>(
+    () => this.toolCall().args.flightId,
+  );
+
+  private readonly flightDetails = computed(() =>
+    getFlightDetails(this.undoResult(), this.result()),
+  );
+
+  protected readonly titleText = computed(() =>
+    getBookFlightTitle(this.flightId()),
   );
 
   protected readonly contextText = computed(() =>
@@ -163,48 +136,25 @@ export class BookFlightActionCard implements ToolRenderer<BookFlightArgs> {
     ),
   );
 
-  protected readonly paymentMethodLabel = computed(() => {
-    if (this.undoResult()) {
-      return null;
-    }
-
-    const result = this.result();
-    if (!result?.ok || !result.paymentMethod) {
-      return null;
-    }
-
-    return PAYMENT_METHOD_LABELS[result.paymentMethod];
-  });
+  protected readonly paymentMethodLabel = computed(() =>
+    getPaymentMethodLabel(this.undoResult(), this.result()),
+  );
 
   protected async undo(): Promise<void> {
+    const flightId = this.flightId();
+    if (flightId === undefined) {
+      return;
+    }
+
     this.undoPending.set(true);
 
     try {
-      this.undoResult.set(
-        await this.bookingClient.cancelFlight(this.flightId()),
-      );
+      this.undoResult.set(await this.bookingClient.cancelFlight(flightId));
     } catch (error) {
-      this.undoResult.set(toLoadFailedResult(error, this.flightId(), 'cancel'));
+      this.undoResult.set(toLoadFailedResult(error, flightId, 'cancel'));
     } finally {
       this.undoPending.set(false);
     }
-  }
-
-  protected flightId(): number {
-    const argId = this.toolCall().args.flightId;
-    const fallback = typeof argId === 'number' ? argId : 0;
-    const result = this.result();
-    return result?.ok ? (result.flight?.id ?? fallback) : fallback;
-  }
-
-  private flightDetails(): FlightMutationFlight | undefined {
-    const undoResult = this.undoResult();
-    if (undoResult?.ok) {
-      return undoResult.flight;
-    }
-
-    const result = this.result();
-    return result?.ok ? result.flight : undefined;
   }
 }
 

@@ -23,10 +23,6 @@ export type FlightMutationFailureCode =
 
 export type FlightPaymentMethod = 'creditCard' | 'miles';
 
-// Shape aligned with Mastra's tool-result convention (`result: string`) so
-// both our own tool returns and Mastra's built-in decline ("Tool call was not
-// approved by the user") map onto the same type. Extra fields (`flight`,
-// `code`, `paymentMethod`) are additive domain data.
 export type FlightMutationResult =
   | {
       ok: true;
@@ -69,12 +65,6 @@ export class BookingClient {
   }
 }
 
-// The bookings route answers declined mutations (already booked, not booked,
-// not found) with a structured FlightMutationResult body on a non-2xx status
-// (409/404/400). HttpClient throws on those regardless of the body, which
-// would otherwise discard the real reason in favor of a generic "could not
-// book/cancel" message — recover it here so the caller still sees `ok: false`
-// with the server's actual `result`/`code` instead of an exception.
 function recoverStructuredError(error: unknown) {
   if (
     error instanceof HttpErrorResponse &&

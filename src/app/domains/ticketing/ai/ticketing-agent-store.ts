@@ -9,6 +9,8 @@ import { A2UI_CUSTOM_CATALOG } from '../../shared/util-copilotkit/a2ui/provide-a
 import { agentStore } from '../../shared/util-copilotkit/agent-store';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
+import { bookFlightActionCard } from './action-cards/book-flight-action-card';
+import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
 import { addPlanStepTool } from './tools/add-plan-step.tool';
 import { clearPlanTool } from './tools/clear-plan.tool';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
@@ -23,8 +25,6 @@ import { setPlanTool } from './tools/set-plan.tool';
 import { swapPlanStepsTool } from './tools/swap-plan-steps.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 import { updatePlanStepTool } from './tools/update-plan-step.tool';
-import { bookFlightActionCard } from './widgets/book-flight-action-card';
-import { cancelFlightActionCard } from './widgets/cancel-flight-action-card';
 import { planWidget } from './widgets/plan-widget';
 
 export const TICKETING_AGENT_ID = 'ticketingAgent';
