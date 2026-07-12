@@ -10,6 +10,7 @@ import {
 
 import { checkinAgent } from './agents/checkin-agent.js';
 import { dashboardAgent } from './agents/dashboard-agent.js';
+import { generativeUiAgent } from './agents/generative-ui-agent.js';
 import { hotelAgent } from './agents/hotel-agent.js';
 import { packageAgent } from './agents/package-agent.js';
 import { planningAgent } from './agents/planning-agent.js';
@@ -25,6 +26,8 @@ import {
 } from './routes/bookings-route.js';
 import { getChartHandler } from './routes/charts-route.js';
 import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
+import { searchFlightsHandler } from './routes/flights-route.js';
+import { generativeUiAgUiRouteHandler } from './routes/generative-ui-ag-ui-route.js';
 import { getDashboardImageHandler } from './routes/images-route.js';
 import { packageTourWorkflow } from './workflows/package-tour-workflow.js';
 
@@ -39,6 +42,7 @@ export const mastra = new Mastra({
     reportingAgent,
     checkinAgent,
     dashboardAgent,
+    generativeUiAgent,
   },
   workflows: { packageTourWorkflow },
   storage: new LibSQLStore({
@@ -75,9 +79,17 @@ export const mastra = new Mastra({
         method: 'POST',
         handler: dashboardAgUiRouteHandler,
       }),
+      registerApiRoute('/ag-ui/generativeUiAgent', {
+        method: 'POST',
+        handler: generativeUiAgUiRouteHandler,
+      }),
       registerApiRoute('/ag-ui/:agentId', {
         method: 'POST',
         handler: agUiRouteHandler,
+      }),
+      registerApiRoute('/flights', {
+        method: 'GET',
+        handler: searchFlightsHandler,
       }),
       registerApiRoute('/bookings', {
         method: 'GET',

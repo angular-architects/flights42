@@ -19,6 +19,11 @@ export const routes: Routes = [
       import('./shell/dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
+    path: 'generative-ui',
+    loadComponent: () =>
+      import('./shell/generative-ui/generative-ui').then((m) => m.GenerativeUi),
+  },
+  {
     path: 'ticketing',
     loadChildren: () =>
       import('./domains/ticketing/ticketing.routes').then(
