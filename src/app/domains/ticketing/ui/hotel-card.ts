@@ -5,25 +5,25 @@ import {
   input,
 } from '@angular/core';
 
-import { type PlanHotel } from '../travel-plan-store';
+import { type HotelInfo } from '../data/hotel-info';
 
 @Component({
   selector: 'app-hotel-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @let h = hotel();
+    @let hotelValue = hotel();
     <div class="card">
       <div class="media">
-        <img [src]="h.imageUrl" [alt]="h.name" />
+        <img [src]="hotelValue.imageUrl" [alt]="hotelValue.name" />
       </div>
       <div class="card-body">
-        <h2 class="title">{{ h.name }}</h2>
-        <p class="city">{{ h.city }}</p>
-        <p class="stars" [attr.aria-label]="h.sterne + ' Sterne'">
-          @for (s of starsArray(); track $index) {
+        <h2 class="title">{{ hotelValue.name }}</h2>
+        <p class="city">{{ hotelValue.city }}</p>
+        <p class="stars" [attr.aria-label]="hotelValue.sterne + ' Sterne'">
+          @for (star of starsArray(); track $index) {
             <span class="star filled">★</span>
           }
-          @for (s of emptyStarsArray(); track $index) {
+          @for (star of emptyStarsArray(); track $index) {
             <span class="star empty">★</span>
           }
         </p>
@@ -89,7 +89,7 @@ import { type PlanHotel } from '../travel-plan-store';
   `,
 })
 export class HotelCard {
-  readonly hotel = input.required<PlanHotel>();
+  readonly hotel = input.required<HotelInfo>();
 
   protected readonly starsArray = computed(() =>
     Array.from({ length: this.hotel().sterne }),

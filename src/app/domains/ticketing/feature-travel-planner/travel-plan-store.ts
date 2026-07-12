@@ -2,19 +2,12 @@ import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 
 import { FlightInfo } from '../data/flight-info';
-
-export interface PlanHotel {
-  id: string;
-  name: string;
-  sterne: number;
-  imageUrl: string;
-  city: string;
-}
+import { HotelInfo } from '../data/hotel-info';
 
 export interface TravelPlan {
   summary: string;
   flights: FlightInfo[];
-  hotels: PlanHotel[];
+  hotels: HotelInfo[];
 }
 
 export const TravelPlanStore = signalStore(
@@ -60,7 +53,7 @@ export const TravelPlanStore = signalStore(
       });
     },
 
-    addHotel(hotel: PlanHotel): void {
+    addHotel(hotel: HotelInfo): void {
       // The plan holds at most one hotel per overnight city, so adding a hotel
       // for a city that already has one replaces it instead of duplicating.
       patchState(store, (state) => ({
@@ -108,9 +101,9 @@ function upsertById<T extends { id: number | string }>(
  * after the matched ones (the sort is stable).
  */
 function orderHotelsByRoute(
-  hotels: PlanHotel[],
+  hotels: HotelInfo[],
   flights: FlightInfo[],
-): PlanHotel[] {
+): HotelInfo[] {
   const arrivalOrder = new Map<string, number>();
   flights.forEach((flight, index) => {
     if (!arrivalOrder.has(flight.to)) {
@@ -118,7 +111,7 @@ function orderHotelsByRoute(
     }
   });
 
-  const rank = (hotel: PlanHotel): number =>
+  const rank = (hotel: HotelInfo): number =>
     arrivalOrder.get(hotel.city) ?? Number.MAX_SAFE_INTEGER;
 
   return [...hotels].sort((a, b) => rank(a) - rank(b));

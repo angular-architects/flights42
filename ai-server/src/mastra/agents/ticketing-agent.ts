@@ -10,7 +10,6 @@ import { model } from '../config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
-import { hotelAgent } from './hotel-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
 // const hotelsMcpTools = await initMcpServer({
@@ -32,6 +31,5 @@ export const ticketingAgent = new Agent({
     renderA2uiTool,
     // ...hotelsMcpTools,
   },
-  agents: { hotelAgent },
   memory: new Memory(),
 });

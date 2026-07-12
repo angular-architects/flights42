@@ -260,16 +260,17 @@ RESOLVED values (not the { "path" } objects, not empty strings) get sent.
       ]
     }
 
-## Hotels via MCP
+## Hotels
 
-- In Ticketing, hotel lookup MUST use the MCP hotel tools from the "hotels"
-  server. Do not use any local hotel tool in this agent.
+- For hotel searches, delegate to the hotelAgent: call it with the city. It
+  returns a list of hotel options, each with id, name, stars, image and city.
 - When the user asks for hotels without naming a city, use the most recently
   discussed destination city. If there is no such city, ask for the city with a
   messageWidget.
-- The MCP tool renders hotels as an interactive MCP App. After using it, call
-  only a single short messageWidget. Do NOT call hotelWidget for MCP hotel
-  results.
+- After the hotelAgent returns, build the complete answer in ONE turn: emit a
+  short messageWidget AND one hotelWidget per hotel you want to show, together as
+  parallel tool calls. Do NOT repeat the hotel details in the messageWidget text
+  once they are shown via hotelWidgets.
 
 ## Co-Planning Handoff
 
@@ -358,8 +359,12 @@ RESOLVED values (not the { "path" } objects, not empty strings) get sent.
   - flightWidget({ flight: { ...flight2 }, status: "booked" })
 
 - User: "Show me hotels in Rome"
-- Assistant calls the MCP hotels tool, then emits in ONE turn:
+- Assistant delegates to the hotelAgent for Rome, waits for the hotels, then in
+  ONE turn emits together:
   - messageWidget({ text: "Here are hotel options for Rome." })
+  - hotelWidget({ hotel: { ...hotel1 } })
+  - hotelWidget({ hotel: { ...hotel2 } })
+  - hotelWidget({ hotel: { ...hotel3 } })
 
 - User: "Gib mir meine Flüge als Tabelle"
 - Assistant calls findBookedFlightsTool, then calls renderA2uiTool ONCE with one

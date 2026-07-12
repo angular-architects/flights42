@@ -14,13 +14,14 @@ import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { featureFlags } from '../../shared/util-common/feature-flags';
 import { FlightInfo } from '../data/flight-info';
 import { FlightStore } from '../data/flight-store';
+import { HotelInfo } from '../data/hotel-info';
 import { FlightCard } from '../ui/flight-card/flight-card';
-import { type PlanHotel, TravelPlanStore } from './travel-plan-store';
+import { HotelCard } from '../ui/hotel-card';
+import { TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerAgentStore } from './travel-planner-agent-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { TravelRefinementChatService } from './travel-refinement-chat-service';
 import { TravelWorkflowProgress } from './travel-workflow-progress/travel-workflow-progress';
-import { HotelCard } from './ui/hotel-card';
 
 const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },
@@ -117,8 +118,8 @@ export class TravelPlannerPage {
       .map((widget) => widget.props['flight'] as FlightInfo | undefined)
       .filter((flight): flight is FlightInfo => !!flight);
     const hotels = this.hotelWidgets()
-      .map((widget) => widget.props['hotel'] as PlanHotel | undefined)
-      .filter((hotel): hotel is PlanHotel => !!hotel);
+      .map((widget) => widget.props['hotel'] as HotelInfo | undefined)
+      .filter((hotel): hotel is HotelInfo => !!hotel);
 
     if (flights.length === 0 && hotels.length === 0) {
       // Nothing was generated (e.g. an error) — stay ready for a retry.

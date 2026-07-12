@@ -8,6 +8,7 @@ import { catalogToContextEntry } from '../../shared/util-copilotkit/a2ui/catalog
 import { A2UI_CUSTOM_CATALOG } from '../../shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { agentStore } from '../../shared/util-copilotkit/agent-store';
 import { flightWidget } from '../ui/flight-widget';
+import { hotelWidget } from '../ui/hotel-widget';
 import { addPlanStepTool } from './tools/add-plan-step.tool';
 import { clearPlanTool } from './tools/clear-plan.tool';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
@@ -40,7 +41,7 @@ const planTools = [
   clearPlanTool,
 ];
 
-const widgets = [messageWidget, flightWidget, planWidget];
+const widgets = [messageWidget, flightWidget, hotelWidget, planWidget];
 
 let catalogContext: Context[] | undefined;
 

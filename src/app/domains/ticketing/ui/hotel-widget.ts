@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
+import { createFrontendTool } from '../../shared/util-copilotkit/tool-definition';
 import { HotelCard } from './hotel-card';
 
 const hotelSchema = z.object({
