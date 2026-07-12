@@ -2,6 +2,7 @@ import { type Context } from '@ag-ui/core';
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
 
+import { USE_ACTION_CARDS } from '../../../../../libs/feature-flags/feature-flags';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -67,7 +68,9 @@ export function injectTicketingAgentStore() {
       ...planTools,
       ...widgets,
     ],
-    toolCallRenderer: [bookFlightActionCard, cancelFlightActionCard],
+    toolCallRenderer: USE_ACTION_CARDS
+      ? [bookFlightActionCard, cancelFlightActionCard]
+      : [],
   });
 
   return injectAgentStore(AGENT_ID);

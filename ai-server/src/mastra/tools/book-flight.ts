@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
+import { USE_APPROVAL } from '../../../../libs/feature-flags/feature-flags.js';
 import {
   addBooking,
   fetchFlight,
@@ -91,11 +92,11 @@ export const bookFlightTool = createTool({
       };
     }
 
-    const selection = resumeData?.selection;
+    const requestedSelection = resumeData?.selection;
     const hasPaymentSelection =
-      selection === 'creditCard' || selection === 'miles';
+      requestedSelection === 'creditCard' || requestedSelection === 'miles';
 
-    if (!hasPaymentSelection) {
+    if (USE_APPROVAL && !hasPaymentSelection) {
       await suspend?.({
         action: 'book',
         flightId,
@@ -129,6 +130,7 @@ export const bookFlightTool = createTool({
       };
     }
 
+    const selection = hasPaymentSelection ? requestedSelection : 'creditCard';
     const paymentSuffix = ` (paid with ${selection === 'creditCard' ? 'credit card' : 'bonus miles'})`;
 
     addBooking(flightId);
