@@ -16,9 +16,6 @@ const flightSchema = z.object({
   delay: z.number(),
 });
 
-// Shape mirrors Mastra's tool-result convention (`result: string`) with
-// additive domain fields (`flight`, `code`), so our own returns and Mastra's
-// built-in decline string normalize into the same client type.
 const resultSchema = z.union([
   z.object({
     ok: z.literal(true),
