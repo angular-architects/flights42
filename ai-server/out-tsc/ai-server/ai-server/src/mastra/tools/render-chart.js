@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+
 import { AI_SERVER_PUBLIC_URL } from './public-url.js';
 const PALETTE = [
   '#3b82f6',

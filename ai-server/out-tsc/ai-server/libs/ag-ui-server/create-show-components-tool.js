@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+
 import { createExampleFromJsonSchema } from './schema-example.js';
 import { buildA2UIFromBuilt } from './widget-factory.js';
 export const SHOW_COMPONENTS_TOOL_NAME = 'showComponents';

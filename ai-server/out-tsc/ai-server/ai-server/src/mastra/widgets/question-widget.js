@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+
 import { defineServerWidget } from '@internal/ag-ui-server';
 import { z } from 'zod';
 const questionSchema = z.object({

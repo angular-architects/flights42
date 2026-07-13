@@ -126,33 +126,33 @@ function validateReferentialIntegrity(messages: A2uiMessage[]): void {
 
 export const renderA2uiTool = createTool({
   id: RENDER_A2UI_TOOL_NAME,
-  description: [
-    'Render the final answer to the user as an A2UI surface.',
-    '',
-    'Input is a wrapper object of the shape `{ messages: A2uiMessage[] }` containing a',
-    'complete, self-contained sequence of A2UI v0.9 messages for a single surface. The',
-    'sequence MUST contain:',
-    '  1) exactly one `createSurface` message with a fresh `surfaceId` (any unique string)',
-    '     and `catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json"`.',
-    '  2) exactly one `updateComponents` message for the same `surfaceId`. Its `components`',
-    '     array MUST define an entry with `id: "root"` of component type `Column` whose',
-    '     `children` list the top-level blocks of the answer.',
-    '  3) any number of `updateDataModel` messages for the same `surfaceId` to supply the',
-    '     values bound via `{ path: "/..." }` references inside the components.',
-    '',
-    'Rules:',
-    '- All messages MUST use `version: "v0.9"` and share the same `surfaceId`.',
-    '- Every id referenced via `child` / `children` MUST be defined in the same',
-    '  `updateComponents.components` array.',
-    '- Any component from the A2UI basic catalog may be used (Column, Row, Card, Text,',
-    '  Button, TextField, CheckBox, Image, ...).',
-    '- Container nesting: Row, Column and List take a `children` ARRAY of ids. Card,',
-    '  Button and Modal take a SINGLE `child` (one id), NOT `children` — to place',
-    '  several elements in a Card, wrap them in a Column/Row and pass that container',
-    '  id as the Card `child`. A Card with `children` renders EMPTY.',
-    '- Bind dynamic values via `{ path: "/..." }` and provide the data through',
-    '  `updateDataModel`.',
-  ].join('\n'),
+  description: `
+    Render the final answer to the user as an A2UI surface.
+
+    Input is a wrapper object of the shape \`{ messages: A2uiMessage[] }\` containing a
+    complete, self-contained sequence of A2UI v0.9 messages for a single surface. The
+    sequence MUST contain:
+      1) exactly one \`createSurface\` message with a fresh \`surfaceId\` (any unique string)
+         and \`catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json"\`.
+      2) exactly one \`updateComponents\` message for the same \`surfaceId\`. Its \`components\`
+         array MUST define an entry with \`id: "root"\` of component type \`Column\` whose
+         \`children\` list the top-level blocks of the answer.
+      3) any number of \`updateDataModel\` messages for the same \`surfaceId\` to supply the
+         values bound via \`{ path: "/..." }\` references inside the components.
+
+    Rules:
+    - All messages MUST use \`version: "v0.9"\` and share the same \`surfaceId\`.
+    - Every id referenced via \`child\` / \`children\` MUST be defined in the same
+      \`updateComponents.components\` array.
+    - Any component from the A2UI basic catalog may be used (Column, Row, Card, Text,
+      Button, TextField, CheckBox, Image, ...).
+    - Container nesting: Row, Column and List take a \`children\` ARRAY of ids. Card,
+      Button and Modal take a SINGLE \`child\` (one id), NOT \`children\` — to place
+      several elements in a Card, wrap them in a Column/Row and pass that container
+      id as the Card \`child\`. A Card with \`children\` renders EMPTY.
+    - Bind dynamic values via \`{ path: "/..." }\` and provide the data through
+      \`updateDataModel\`.
+  `,
   // A loose shape is exposed to the model/tool runtime here; the strict A2UI
   // schema is then applied inside `execute` via `A2uiMessageListWrapperSchema.parse(...)`.
   // This keeps defensive validation without triggering deep generic

@@ -96,23 +96,23 @@ const datasetSchema = z.object({
 
 export const renderChartTool = createTool({
   id: 'renderChart',
-  description: [
-    'Render a small bar or pie chart as an SVG image.',
-    'Returns `{ url }` where `url` is a short HTTP URL pointing at the',
-    'rendered SVG (e.g. `http://localhost:3001/charts/<id>.svg`). Embed',
-    'that URL verbatim in an A2UI `Image` component (its `url` field),',
-    'either directly or via `{ path: "/..." }` after seeding it through',
-    '`updateDataModel`.',
-    '',
-    'Bar charts: pass `labels` (one entry per group on the x-axis) and one or',
-    'more `datasets` whose `data` arrays have the same length as `labels`.',
-    'Pie charts: pass `labels` and a single dataset whose `data` array has',
-    'the same length as `labels` (each entry is one slice).',
-    '',
-    'The SVG is generated locally and cached on the server; the returned',
-    'URL is short on purpose so it can be copied verbatim into A2UI',
-    'messages without truncation. Do NOT build inline `data:` URLs by hand.',
-  ].join('\n'),
+  description: `
+    Render a small bar or pie chart as an SVG image.
+    Returns \`{ url }\` where \`url\` is a short HTTP URL pointing at the
+    rendered SVG (e.g. \`http://localhost:3001/charts/<id>.svg\`). Embed
+    that URL verbatim in an A2UI \`Image\` component (its \`url\` field),
+    either directly or via \`{ path: "/..." }\` after seeding it through
+    \`updateDataModel\`.
+
+    Bar charts: pass \`labels\` (one entry per group on the x-axis) and one or
+    more \`datasets\` whose \`data\` arrays have the same length as \`labels\`.
+    Pie charts: pass \`labels\` and a single dataset whose \`data\` array has
+    the same length as \`labels\` (each entry is one slice).
+
+    The SVG is generated locally and cached on the server; the returned
+    URL is short on purpose so it can be copied verbatim into A2UI
+    messages without truncation. Do NOT build inline \`data:\` URLs by hand.
+  `,
   inputSchema: z.object({
     type: z.enum(['bar', 'pie']),
     title: z.string().optional(),

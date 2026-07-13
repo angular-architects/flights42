@@ -15,6 +15,7 @@ import {
   type FlightMutationResult,
 } from '../../data/flight-mutation-client';
 import {
+  getActionErrorMessage,
   getActionStatusLabel,
   getFlightContextText,
   getFlightDetails,
@@ -48,6 +49,10 @@ function getCancelFlightTitle(flightId: number | undefined): string {
         }
 
         <p class="status-line">Status: {{ statusLabel() }}</p>
+
+        @if (errorMessage(); as error) {
+          <p class="error-line">{{ error }}</p>
+        }
 
         @if (showUndo()) {
           <p>
@@ -101,6 +106,15 @@ export class CancelFlightActionCard implements ToolRenderer<CancelFlightArgs> {
 
   protected readonly statusLabel = computed(() =>
     getActionStatusLabel(
+      this.undoPending(),
+      this.undoResult(),
+      this.complete(),
+      this.result(),
+    ),
+  );
+
+  protected readonly errorMessage = computed(() =>
+    getActionErrorMessage(
       this.undoPending(),
       this.undoResult(),
       this.complete(),

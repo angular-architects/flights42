@@ -89,4 +89,4 @@ one response), in this order:
 - Call the workflow exactly once. Do not call searchFlights or findHotels
   directly.
 - Only render flights and hotels that the workflow returned.
-`.trim();
+`;

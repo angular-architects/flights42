@@ -7,6 +7,7 @@ import {
   Observability,
   SensitiveDataFilter,
 } from '@mastra/observability';
+
 import { checkinAgent } from './agents/checkin-agent.js';
 import { dashboardAgent } from './agents/dashboard-agent.js';
 import { reportingAgent } from './agents/reporting-agent.js';

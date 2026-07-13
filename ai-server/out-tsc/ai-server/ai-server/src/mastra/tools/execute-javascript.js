@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+
 import { runSandbox } from '../utils/sandbox.js';
 import { fetchFlights } from './search-flights.js';
 const dataItemSchema = z.object({

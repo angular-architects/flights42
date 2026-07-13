@@ -88,4 +88,4 @@ Flight time (choose one flight from the candidate lists):
 - Do not output anything other than the JSON object above.
 - Do not wrap the JSON in code fences.
 - Do not render UI components (no widget tools).
-`.trim();
+`;

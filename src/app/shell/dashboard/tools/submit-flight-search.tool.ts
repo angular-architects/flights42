@@ -7,11 +7,11 @@ import { FlightStore } from '../../../domains/ticketing/data/flight-store';
 
 export const submitFlightSearchTool = createFrontendTool({
   name: 'submitFlightSearch',
-  description: [
-    'Triggers a flight search from the dashboard flight-search tile.',
-    'Updates the global flight filter and navigates the user to the booking flight-search page.',
-    'Use city names with the first letter in upper case (no airport codes).',
-  ].join('\n'),
+  description: `
+    Triggers a flight search from the dashboard flight-search tile.
+    Updates the global flight filter and navigates the user to the booking flight-search page.
+    Use city names with the first letter in upper case (no airport codes).
+  `,
   parameters: z.object({
     from: z.string().describe('Departure city, e.g. "Graz".'),
     to: z.string().describe('Destination city, e.g. "Hamburg".'),

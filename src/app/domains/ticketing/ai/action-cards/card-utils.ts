@@ -114,6 +114,33 @@ export function getActionStatusLabel(
   return 'Failed';
 }
 
+export function getActionErrorMessage(
+  undoPending: boolean,
+  undoResult: FlightMutationResult | undefined,
+  complete: boolean,
+  result: FlightMutationResult | undefined,
+): string | null {
+  if (undoPending) {
+    return null;
+  }
+
+  if (undoResult) {
+    return undoResult.ok ? null : undoResult.result;
+  }
+
+  if (!complete || !result || result.ok) {
+    return null;
+  }
+
+  // A user-declined action is already conveyed by the "Cancelled" status;
+  // surface only genuine failures (not found, already booked, load failed, …).
+  if (result.code === 'USER_CANCELLED') {
+    return null;
+  }
+
+  return result.result;
+}
+
 export function shouldShowUndo(
   undoPending: boolean,
   undoResult: FlightMutationResult | undefined,

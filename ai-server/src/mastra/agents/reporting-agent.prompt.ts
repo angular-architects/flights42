@@ -1,8 +1,4 @@
-import { Agent } from '@mastra/core/agent';
-
-import { modelAdvancedTasks } from '../config.js';
-import { executeJavaScriptTool } from '../tools/execute-javascript.js';
-const reportingAgentPrompt = `
+export const reportingAgentPrompt = `
 # Flight42 Reporting Assistant
 
 You help passengers turn natural-language questions about flights into a
@@ -111,13 +107,4 @@ Your tool calls:
    \` })\`
 2. \`renderChart({ title: "Average delay: Graz → Hamburg vs Graz → Vienna", data: <data from step 1> })\`
 3. Reply: "Hier ist dein Diagramm."
-`.trim();
-export const reportingAgent = new Agent({
-  id: 'reportingAgent',
-  name: 'Flight42 Reporting Assistant',
-  instructions: reportingAgentPrompt,
-  model: modelAdvancedTasks,
-  tools: {
-    executeJavaScript: executeJavaScriptTool,
-  },
-});
+`;

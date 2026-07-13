@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+
 import { getBookedFlights } from '../data/booked-flights-store.js';
 const flightSchema = z.object({
   id: z.number(),

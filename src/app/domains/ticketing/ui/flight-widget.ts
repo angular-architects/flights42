@@ -81,12 +81,12 @@ export class FlightWidget implements ToolRenderer<FlightWidgetArgs> {
 
 export const flightWidget = createFrontendTool({
   name: 'flightWidget',
-  description: [
-    'Interactive card displaying one concrete flight.',
-    'Call this whenever users should see flights: booked flight lists, specific booked-flight confirmations (e.g. "Did I book Paris?"), or current search/working-set flights.',
-    'For booked flights use status: "booked"; for search/current flights use status: "other".',
-    'Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.',
-  ].join('\n'),
+  description: `
+    Interactive card displaying one concrete flight.
+    Call this whenever users should see flights: booked flight lists, specific booked-flight confirmations (e.g. "Did I book Paris?"), or current search/working-set flights.
+    For booked flights use status: "booked"; for search/current flights use status: "other".
+    Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.
+  `,
   parameters: flightWidgetSchema,
   component: FlightWidget,
   followUp: false,

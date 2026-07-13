@@ -159,13 +159,13 @@ export function searchHotels(city: string): HotelSearchResult {
 
 export const searchHotelsTool = createTool({
   id: 'searchHotels',
-  description: [
-    'Returns a deterministic mocked list of three hotels for a city.',
-    'Use it to populate the "Hotels" tile of the dashboard.',
-    'Output: { city, hotels: { id, name, stars, pricePerNight, currency, imageUrl }[] }.',
-    'The list is stable per city, so re-rendering the same dashboard does not change it.',
-    'Date inputs are accepted but ignored — pricing is independent of stay length in this mock.',
-  ].join('\n'),
+  description: `
+    Returns a deterministic mocked list of three hotels for a city.
+    Use it to populate the "Hotels" tile of the dashboard.
+    Output: { city, hotels: { id, name, stars, pricePerNight, currency, imageUrl }[] }.
+    The list is stable per city, so re-rendering the same dashboard does not change it.
+    Date inputs are accepted but ignored — pricing is independent of stay length in this mock.
+  `,
   inputSchema: z.object({
     city: z.string().describe('City name, e.g. "Hamburg".'),
     checkIn: z

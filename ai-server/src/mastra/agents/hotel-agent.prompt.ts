@@ -11,4 +11,4 @@ You are a hotel search assistant.
 
 - When asked for hotels, call findHotels with the given city and report the three returned hotels.
 - Keep natural-language text minimal and in the user's language (default: English).
-`.trim();
+`;

@@ -43,11 +43,11 @@ export class HotelWidget implements ToolRenderer<HotelWidgetArgs> {
 
 export const hotelWidget = createFrontendTool({
   name: 'hotelWidget',
-  description: [
-    'Display card for a single hotel proposal (name, stars, image, city).',
-    'Use this whenever the package planner proposes a hotel.',
-    'This widget is read-only: no buttons, no selection, purely informative.',
-  ].join('\n'),
+  description: `
+    Display card for a single hotel proposal (name, stars, image, city).
+    Use this whenever the package planner proposes a hotel.
+    This widget is read-only: no buttons, no selection, purely informative.
+  `,
   parameters: hotelWidgetSchema,
   component: HotelWidget,
   followUp: false,

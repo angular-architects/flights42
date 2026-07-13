@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+
 import { AI_SERVER_PUBLIC_URL } from './public-url.js';
 // Image URLs point at the ai-server's local optimized webp assets
 // (800×450, q=80). See `ai-server/public/images/hotels/` and the

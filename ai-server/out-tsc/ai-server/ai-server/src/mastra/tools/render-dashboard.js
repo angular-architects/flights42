@@ -1,4 +1,5 @@
 import { createTool } from '@mastra/core/tools';
+
 import { dashboardSpecSchema } from '../dashboard-dsl/dashboard-spec.js';
 export const RENDER_DASHBOARD_TOOL_NAME = 'renderDashboard';
 // Pure schema-only tool. The LLM emits exactly one `renderDashboard`

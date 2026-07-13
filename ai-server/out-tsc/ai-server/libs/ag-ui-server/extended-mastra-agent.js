@@ -2,6 +2,7 @@ import { AbstractAgent, EventType, randomUUID } from '@ag-ui/client';
 import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
 import { RequestContext } from '@mastra/core/request-context';
 import { Observable } from 'rxjs';
+
 import { SHOW_COMPONENTS_TOOL_NAME } from './create-show-components-tool.js';
 import { defaultStore } from './memory-store.js';
 import { RENDER_A2UI_TOOL_NAME } from './render-a2ui-tool.js';

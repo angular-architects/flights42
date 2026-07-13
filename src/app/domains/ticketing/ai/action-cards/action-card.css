@@ -43,3 +43,8 @@ p + p {
 .status-line {
   line-height: 1.4;
 }
+
+.error-line {
+  color: #b3261e;
+  line-height: 1.4;
+}

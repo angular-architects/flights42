@@ -52,6 +52,7 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
     url: config.url,
     threadId: randomUUID(),
   };
+
   const httpAgent = new AppHttpAgent(agentConfig, {
     forwardedProps: forwardedPropsFor,
     context: contextFor,

@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+
 import { buildAndCacheChartUrl } from './render-chart.js';
 import { fetchFlights } from './search-flights.js';
 function filterByDate(flights, date) {

@@ -1,7 +1,4 @@
-import { Agent } from '@mastra/core/agent';
-
-import { model } from '../config.js';
-const checkinAgentInstructions = `
+export const checkinAgentPrompt = `
 You are a check-in assistant for the Flights42 airline. The user uploads a
 ticket image (boarding pass, e-ticket, or printed itinerary) or an identity
 document image (passport/ID card) along with a short message. Your job is to
@@ -48,14 +45,4 @@ Field hints:
 Do **not** read or fabricate any payment information, frequent flyer
 numbers, or anything not asked for in the schema. Do not call any
 other tools — \`fillCheckinForm\` is the only tool you should use.
-`.trim();
-export const checkinAgent = new Agent({
-  id: 'checkinAgent',
-  name: 'Flights42 Check-in Assistant',
-  instructions: checkinAgentInstructions,
-  // Must be a vision-capable model. The user's ticket image arrives as an
-  // AI-SDK `ImagePart` on a multipart user message (see fallback in
-  // extended-mastra-agent.ts).
-  model,
-  defaultOptions: { maxSteps: 3 },
-});
+`;

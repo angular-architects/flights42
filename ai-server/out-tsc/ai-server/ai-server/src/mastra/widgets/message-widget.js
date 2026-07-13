@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+
 import { defineServerWidget } from '@internal/ag-ui-server';
 import { z } from 'zod';
 export const messageWidget = defineServerWidget({

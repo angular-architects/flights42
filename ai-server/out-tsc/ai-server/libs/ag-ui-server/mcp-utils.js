@@ -1,4 +1,5 @@
 import { MCPClient } from '@mastra/mcp';
+
 import { initMcpAppsRegistry } from './mcp-apps-registry.js';
 export async function initMcpServer(config) {
   await initMcpAppsRegistry(config);

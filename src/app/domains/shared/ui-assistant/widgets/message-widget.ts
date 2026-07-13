@@ -35,11 +35,11 @@ export class MessageWidget implements ToolRenderer<MessageWidgetArgs> {
 
 export const messageWidget = createFrontendTool({
   name: 'messageWidget',
-  description: [
-    'Renders a textual message to the user as Markdown.',
-    'Call this to give your natural-language answer; it can be combined with',
-    'other widget tools in the same turn (call it first).',
-  ].join('\n'),
+  description: `
+    Renders a textual message to the user as Markdown.
+    Call this to give your natural-language answer; it can be combined with
+    other widget tools in the same turn (call it first).
+  `,
   parameters: messageWidgetSchema,
   component: MessageWidget,
   followUp: false,

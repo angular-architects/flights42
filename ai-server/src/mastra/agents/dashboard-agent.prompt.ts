@@ -38,4 +38,4 @@ check-in button or the per-flight weather forecast on
 
 If the user asks for "the same tiles for the reverse direction", emit
 those tile types again with \`from\` and \`to\` swapped.
-`.trim();
+`;

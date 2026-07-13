@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+
 import { model } from '../config.js';
 import {
   RENDER_DASHBOARD_TOOL_NAME,

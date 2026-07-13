@@ -57,28 +57,28 @@ function aggregateDelaysPerDay(flights: FlightRecord[]): DelaysPerDayStats {
 
 export const renderFlightChartTool = createTool({
   id: 'renderFlightChart',
-  description: [
-    'One-shot helper for the standard delay-related chart tiles on the',
-    'flight dashboard. Combines `searchFlightsTool` + aggregation +',
-    '`renderChartTool` in a single call so the agent does not need three',
-    'separate LLM round-trips per chart.',
-    '',
-    'Modes:',
-    '- `delayShare`: counts on-time vs. delayed flights between the two cities',
-    '  (optionally restricted to a single ISO date prefix). Best with',
-    '  `chartType: "pie"` or `"bar"` — `labels` are `["On time", "Delayed"]`.',
-    '- `delaysPerDay`: groups flights by date and counts on-time vs. delayed per',
-    '  day. Best with `chartType: "bar"` (grouped bars per day).',
-    '',
-    'Returns `{ url, stats }`. Embed `url` verbatim in an A2UI `Image`',
-    'component (typically via an `updateDataModel` path). `stats` mirrors',
-    'the aggregation so the agent can also surface numbers next to the',
-    'chart without another aggregation tool call.',
-    '',
-    'Use this tool for the typical "on-time vs. delayed" / "delays per day"',
-    'tiles. For custom aggregations (other groupings, ratios, percentages),',
-    'fall back to `aggregateDataTool` + `renderChartTool`.',
-  ].join('\n'),
+  description: `
+    One-shot helper for the standard delay-related chart tiles on the
+    flight dashboard. Combines \`searchFlightsTool\` + aggregation +
+    \`renderChartTool\` in a single call so the agent does not need three
+    separate LLM round-trips per chart.
+
+    Modes:
+    - \`delayShare\`: counts on-time vs. delayed flights between the two cities
+      (optionally restricted to a single ISO date prefix). Best with
+      \`chartType: "pie"\` or \`"bar"\` — \`labels\` are \`["On time", "Delayed"]\`.
+    - \`delaysPerDay\`: groups flights by date and counts on-time vs. delayed per
+      day. Best with \`chartType: "bar"\` (grouped bars per day).
+
+    Returns \`{ url, stats }\`. Embed \`url\` verbatim in an A2UI \`Image\`
+    component (typically via an \`updateDataModel\` path). \`stats\` mirrors
+    the aggregation so the agent can also surface numbers next to the
+    chart without another aggregation tool call.
+
+    Use this tool for the typical "on-time vs. delayed" / "delays per day"
+    tiles. For custom aggregations (other groupings, ratios, percentages),
+    fall back to \`aggregateDataTool\` + \`renderChartTool\`.
+  `,
   inputSchema: z.object({
     from: z.string().describe('Departure city, e.g. "Graz".'),
     to: z.string().describe('Destination city, e.g. "Hamburg".'),

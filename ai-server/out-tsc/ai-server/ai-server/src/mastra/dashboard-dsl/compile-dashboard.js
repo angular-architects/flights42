@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+
 import { getBookedFlights } from '../data/booked-flights-store.js';
 import { buildAndCacheChartUrl } from '../tools/render-chart.js';
 import { fetchFlights } from '../tools/search-flights.js';

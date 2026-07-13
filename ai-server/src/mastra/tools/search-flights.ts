@@ -99,11 +99,11 @@ export async function searchFlights(
 
 export const searchFlightsTool = createTool({
   id: 'searchFlights',
-  description: [
-    'Searches public flight data between two cities and returns the matching flights.',
-    'For the search parameters, use city names with the first letter in upper case (e.g. "Graz", "Hamburg"). NEVER use airport codes.',
-    'When the user mentions a specific day, filter the result locally by ISO date prefix (YYYY-MM-DD) on the returned flights.',
-  ].join('\n'),
+  description: `
+    Searches public flight data between two cities and returns the matching flights.
+    For the search parameters, use city names with the first letter in upper case (e.g. "Graz", "Hamburg"). NEVER use airport codes.
+    When the user mentions a specific day, filter the result locally by ISO date prefix (YYYY-MM-DD) on the returned flights.
+  `,
   inputSchema: z.object({
     from: z.string().describe('Departure city name, e.g. "Graz"'),
     to: z.string().describe('Destination city name, e.g. "Hamburg"'),

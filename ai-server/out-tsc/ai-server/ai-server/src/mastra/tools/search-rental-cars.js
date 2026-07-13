@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+
 import { AI_SERVER_PUBLIC_URL } from './public-url.js';
 // Three categories, three models per category. The actual model and price are
 // picked deterministically per city so the same dashboard request yields the

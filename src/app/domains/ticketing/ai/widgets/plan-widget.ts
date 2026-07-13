@@ -147,8 +147,10 @@ export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
       })
       .join('\n');
 
-    return `Execute the following plan now. Perform EVERY step, in EXACTLY this order,
-            one at a time — do not reorder, skip, merge, or add steps:
+    return `Execute the following plan now. Perform ALL ${steps.length} steps, in
+            EXACTLY this order, one after another — do not reorder, skip, merge,
+            add, or stop early. After each step's confirmation, immediately
+            continue with the next step until every step is done:
 
               ${lines}`;
   }

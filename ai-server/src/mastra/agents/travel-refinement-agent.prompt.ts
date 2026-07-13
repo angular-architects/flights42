@@ -114,4 +114,4 @@ Because of this:
 - After a plan change: a short messageWidget only — no flight or hotel widget.
 - Never mention a time using the messageWidget as this time would not be adjusted to
   the user's timezone.
-`.trim();
+`;

@@ -97,12 +97,12 @@ export function searchRentalCars(city: string): RentalCarSearchResult {
 
 export const searchRentalCarsTool = createTool({
   id: 'searchRentalCars',
-  description: [
-    'Returns a deterministic mocked list of three rental cars available in a city.',
-    'Use it to populate the "Rent a car" tile of the dashboard.',
-    'Output: { city, cars: { id, category, model, pricePerDay, currency, imageUrl }[] }.',
-    'The list is stable per city, so re-rendering the same dashboard does not change it.',
-  ].join('\n'),
+  description: `
+    Returns a deterministic mocked list of three rental cars available in a city.
+    Use it to populate the "Rent a car" tile of the dashboard.
+    Output: { city, cars: { id, category, model, pricePerDay, currency, imageUrl }[] }.
+    The list is stable per city, so re-rendering the same dashboard does not change it.
+  `,
   inputSchema: z.object({
     city: z.string().describe('City name, e.g. "Hamburg".'),
   }),

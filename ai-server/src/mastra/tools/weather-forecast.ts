@@ -55,11 +55,11 @@ export function weatherIconFor(condition: string): string {
 
 export const weatherForecastTool = createTool({
   id: 'weatherForecast',
-  description: [
-    'Returns a deterministic mocked weather forecast for a city on a specific date.',
-    'Use it to enrich the booked-flights tile with a small forecast next to each booked flight.',
-    'Date should be an ISO date string. Output: { city, date, condition, temperatureC }.',
-  ].join('\n'),
+  description: `
+    Returns a deterministic mocked weather forecast for a city on a specific date.
+    Use it to enrich the booked-flights tile with a small forecast next to each booked flight.
+    Date should be an ISO date string. Output: { city, date, condition, temperatureC }.
+  `,
   inputSchema: z.object({
     city: z.string().describe('City name, e.g. "Hamburg".'),
     date: z

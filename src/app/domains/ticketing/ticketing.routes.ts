@@ -1,4 +1,4 @@
-import { inject, provideEnvironmentInitializer } from '@angular/core';
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { authGuard } from '../shared/util-auth/auth.guard';
@@ -21,8 +21,11 @@ export const bookingRoutes: Routes = [
   {
     path: 'booking',
     component: BookingNavigation,
-    providers: [
-      provideEnvironmentInitializer(() => inject(TicketingChatService).init()),
+    canActivate: [
+      () => {
+        inject(TicketingChatService).init();
+        return true;
+      },
     ],
     children: [
       {

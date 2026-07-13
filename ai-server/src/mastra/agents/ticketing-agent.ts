@@ -24,6 +24,13 @@ export const ticketingAgent = new Agent({
     systemInstructions: ticketingAgentPrompt,
   }),
   model,
+  // defaultOptions: {
+  //   providerOptions: {
+  //     openai: {
+  //       reasoningEffort: 'high',
+  //     } as OpenAILanguageModelResponsesOptions,
+  //   },
+  // },
   tools: {
     findBookedFlightsTool,
     bookFlightTool,

@@ -16,6 +16,7 @@ import {
   type FlightPaymentMethod,
 } from '../../data/flight-mutation-client';
 import {
+  getActionErrorMessage,
   getActionStatusLabel,
   getFlightContextText,
   getFlightDetails,
@@ -67,6 +68,10 @@ function getPaymentMethodLabel(
         }
 
         <p class="status-line">Status: {{ statusLabel() }}</p>
+
+        @if (errorMessage(); as error) {
+          <p class="error-line">{{ error }}</p>
+        }
 
         @if (paymentMethodLabel(); as paymentLabel) {
           <p class="payment-line">Payment: {{ paymentLabel }}</p>
@@ -120,6 +125,15 @@ export class BookFlightActionCard implements ToolRenderer<BookFlightArgs> {
 
   protected readonly statusLabel = computed(() =>
     getActionStatusLabel(
+      this.undoPending(),
+      this.undoResult(),
+      this.complete(),
+      this.result(),
+    ),
+  );
+
+  protected readonly errorMessage = computed(() =>
+    getActionErrorMessage(
       this.undoPending(),
       this.undoResult(),
       this.complete(),
