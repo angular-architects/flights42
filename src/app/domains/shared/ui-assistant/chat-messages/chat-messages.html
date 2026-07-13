@@ -17,21 +17,20 @@
     <div class="avatar">{{ message.icon }}</div>
     <div>
       <div class="bubble">
-        @if (message.contentString) {
-          <app-message [data]="message.contentString"></app-message>
-        }
-        @for (widget of message.widgets; track widget.id) {
-          <app-widget-container [widget]="widget" />
-        }
+        <!--
+        TODO: If we have message.contentString, display it 
+        with the app-message component 
+        -->
 
-        @for (toolCall of message.toolCalls; track toolCall.id) {
-          <div class="tool-call" [title]="toolCall.args | json">
-            Tool Call: {{ toolCall.name }}
-            <app-tool-status
-              class="ml-5"
-              [pending]="toolCall.status === 'pending'" />
-          </div>
-        }
+        <!--
+        TODO: Display each widget in message.widgets using
+        the app-widget-container component
+        -->
+
+        <!--
+        TODO: Display the name of each tool call in 
+        message.toolCalls in a div
+        -->
       </div>
       <div class="meta"></div>
     </div>

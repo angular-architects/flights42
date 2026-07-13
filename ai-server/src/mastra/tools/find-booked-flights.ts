@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
@@ -16,12 +17,13 @@ export const findBookedFlightsTool = createTool({
   description:
     'Returns the flights that are already booked by the current passenger.',
   inputSchema: z.object({}),
-  outputSchema: z.object({
-    flights: z.array(flightSchema),
-  }),
+  // TODO: declare the output as an array of flights
+  //       (see flightSchema above)
+  outputSchema: z.any(),
   execute: async () => {
+    // TODO: Call await getBookedFlights() to get flights
     return {
-      flights: await getBookedFlights(),
+      flights: [],
     };
   },
 });
