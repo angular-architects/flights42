@@ -16,6 +16,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: A2UI_RENDERER_CONFIG,
       useValue: {
+        // TODO: Register custom catalog i/o BasicCatalog
         catalogs: [new BasicCatalog()],
       },
     },
