@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
+import { ClickWithWarning } from '../../domains/shared/ui-common/click-with-warning';
+import { Tooltip } from '../../domains/shared/ui-common/tooltip';
 import { Flight } from '../../domains/ticketing/data/flight';
 
 @Component({
   selector: 'app-about',
+  imports: [ClickWithWarning, Tooltip],
   templateUrl: './about.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,4 +43,8 @@ export class About {
       prices: [],
     },
   ]);
+
+  protected deleteAll(): void {
+    console.log('Delete all flights');
+  }
 }

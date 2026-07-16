@@ -1,3 +1,27 @@
 <h1>About</h1>
 
 <p>by AngularArchitects.io</p>
+<div>
+  <input
+    [appTooltip]="tmpl"
+    placeholder="Passenger Name"
+    style="max-width: 200px" />
+</div>
+
+<ng-template #tmpl>
+  <div class="tooltip">
+    <h4>2 Tips for Success</h4>
+    <ol>
+      <li>Don't tell everything!</li>
+    </ol>
+  </div>
+</ng-template>
+<br />
+<button (appClickWithWarning)="deleteAll()" #cww="clickWithWarning">
+  Delete All!
+</button>
+<p>&nbsp;</p>
+
+<button (click)="cww.handleClick(true)">
+  Delete without asking questions!
+</button>
