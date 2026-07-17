@@ -7,27 +7,22 @@ For executing the example, you need an OpenAI API Key for GPT or a GOOGLE API Ke
 ```bash
 # Bash (MacOS, Linux, ...)
 export OPENAI_API_KEY=...
-export GOOGLE_GENERATIVE_AI_API_KEY=...
 ```
 
 ```bash
 # CMD (Windows)
 set OPENAI_API_KEY=...
-set GOOGLE_GENERATIVE_AI_API_KEY=...
-```
-
-Also, in `ticketing-agent.ts` (`ai-server/src/mastra/agents/ticketing-agent.ts`), uncomment the line configuring GPT or Gemini:
-
-```ts
-// Uncomment one of them:
-
-// model: 'openai/gpt-5.4',
-// model: 'google/gemini-flash-latest',
 ```
 
 ### Starting and Running the Example
 
-After `npm install`, you can start the server:
+After `npm install`, you can start the MCP Server
+
+```bash
+npm run mcp-server
+```
+
+Start the Backend:
 
 ```bash
 npm run ai-server
@@ -48,4 +43,5 @@ ng serve -o
 Ideas for questions:
 
 - Did I already book for Paris?
-- Show me flights from Graz to Madrid
+- Show me hotel there
+- Show me hotels in London
