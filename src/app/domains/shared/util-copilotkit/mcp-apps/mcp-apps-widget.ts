@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import {
   AppBridge,
+  type McpUiHostCapabilities,
   PostMessageTransport,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -19,14 +20,25 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import {
   MCP_APPS_CONFIG,
   MCP_APPS_SERVER_URL,
-  type McpAppsSnapshotContent,
+  type McpServerUrls,
 } from './mcp-apps.provider';
+import { type McpAppsSnapshotContent } from './mcp-apps-content';
 
-/**
- * Hosts an interactive MCP App inside a sandboxed iframe. Loads the resource
- * HTML over an MCP client, wires an `AppBridge`, and forwards tool input and
- * result. Custom flights host code with no CopilotKit-native equivalent.
- */
+const defaultHostCapabilities: McpUiHostCapabilities = {
+  openLinks: {},
+  serverTools: {},
+  logging: {},
+};
+
+function resolveServerUrls(serverUrls: McpServerUrls): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(serverUrls).map(([serverId, url]) => [
+      serverId,
+      typeof url === 'function' ? url() : url,
+    ]),
+  );
+}
+
 @Component({
   selector: 'app-mcp-apps-widget',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,7 +68,9 @@ import {
 export class McpAppsWidgetComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mcpAppsConfig = inject(MCP_APPS_CONFIG);
-  private readonly mcpAppsServerUrl = inject(MCP_APPS_SERVER_URL);
+  private readonly mcpAppsServerUrls = resolveServerUrls(
+    inject(MCP_APPS_SERVER_URL),
+  );
 
   readonly data = input.required<McpAppsSnapshotContent>();
 
@@ -86,7 +100,7 @@ export class McpAppsWidgetComponent {
     this.error.set('');
 
     try {
-      const client = await this.getClient();
+      const client = await this.getClient(data.serverId);
       const resource = await client.readResource({ uri: data.resourceUri });
       const content = resource.contents[0] as { text: string };
       const html = content.text;
@@ -96,7 +110,7 @@ export class McpAppsWidgetComponent {
       const bridge = new AppBridge(
         client,
         this.mcpAppsConfig.hostInfo,
-        this.mcpAppsConfig.hostCapabilities,
+        this.mcpAppsConfig.hostCapabilities ?? defaultHostCapabilities,
         {
           hostContext: {
             ...this.mcpAppsConfig.hostContext,
@@ -150,22 +164,26 @@ export class McpAppsWidgetComponent {
     }
   }
 
-  private async getClient(): Promise<Client> {
+  private async getClient(serverId: string): Promise<Client> {
     if (!this.client) {
-      this.client = await this.createClient();
+      this.client = await this.createClient(serverId);
     }
 
     return this.client;
   }
 
-  private async createClient(): Promise<Client> {
+  private async createClient(serverId: string): Promise<Client> {
+    const serverUrl = this.mcpAppsServerUrls[serverId];
+
+    if (!serverUrl) {
+      throw new Error(`No MCP server URL configured for server "${serverId}".`);
+    }
+
     const client = new Client({
       name: 'MCP Host',
       version: '1.0.0',
     });
-    const transport = new StreamableHTTPClientTransport(
-      new URL(this.mcpAppsServerUrl),
-    );
+    const transport = new StreamableHTTPClientTransport(new URL(serverUrl));
 
     await client.connect(transport);
     return client;

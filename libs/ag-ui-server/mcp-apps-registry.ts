@@ -1,11 +1,28 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { Tool as McpTool } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 
 export interface McpAppToolMetadata {
   serverId: string;
   resourceUri: string;
 }
+
+/**
+ * Content of an `mcp-apps` activity snapshot sent to the client. Kept in sync
+ * with the identical schema in the Angular app by hand.
+ */
+export const mcpAppsSnapshotContentSchema = z.looseObject({
+  serverId: z.string(),
+  resourceUri: z.string(),
+  result: CallToolResultSchema,
+  toolInput: z.record(z.string(), z.unknown()),
+});
+
+export type McpAppsSnapshotContent = z.infer<
+  typeof mcpAppsSnapshotContentSchema
+>;
 
 export interface McpAppsConfig {
   serverId: string;

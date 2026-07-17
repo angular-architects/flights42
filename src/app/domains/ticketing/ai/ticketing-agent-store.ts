@@ -2,7 +2,10 @@ import { type Context } from '@ag-ui/core';
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
 
-import { USE_ACTION_CARDS } from '../../../../../libs/feature-flags/feature-flags';
+import {
+  USE_ACTION_CARDS,
+  USE_MCP,
+} from '../../../../../libs/feature-flags/feature-flags';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -43,7 +46,9 @@ const planTools = [
   clearPlanTool,
 ];
 
-const widgets = [messageWidget, flightWidget, hotelWidget, planWidget];
+const widgets = USE_MCP
+  ? [messageWidget, flightWidget, planWidget]
+  : [messageWidget, flightWidget, hotelWidget, planWidget];
 
 let catalogContext: Context[] | undefined;
 

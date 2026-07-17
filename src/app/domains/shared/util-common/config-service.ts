@@ -5,8 +5,8 @@ import { firstValueFrom } from 'rxjs';
 export interface Config {
   readonly baseUrl: string;
   readonly agUiUrl: string;
-  readonly aiServerUrl: string;
-  readonly mcpServerUrl: string;
+  readonly aiServerUrl?: string;
+  readonly mcpServerUrl?: string;
 }
 
 @Injectable({
@@ -50,6 +50,8 @@ export class ConfigService {
     if (config.aiServerUrl) {
       this._aiServerUrl = config.aiServerUrl;
     }
-    this._mcpServerUrl = config.mcpServerUrl;
+    if (config.mcpServerUrl) {
+      this._mcpServerUrl = config.mcpServerUrl;
+    }
   }
 }

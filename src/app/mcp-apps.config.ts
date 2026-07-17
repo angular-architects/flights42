@@ -8,15 +8,9 @@ export const mcpAppsConfig: McpAppsConfig = {
     name: 'Flights42 MCP Host',
     version: '1.0.0',
   },
-  hostCapabilities: {
-    openLinks: {},
-    serverTools: {},
-    logging: {},
-  },
   hostContext: {
-    platform: 'web',
     displayMode: 'inline',
-    availableDisplayModes: ['inline'],
+    theme: 'light',
     styles: {
       variables: {
         '--color-ring-primary': '#3f51b5',

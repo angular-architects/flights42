@@ -5,10 +5,12 @@ import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
 import { Agent } from '@mastra/core/agent';
 import { CoreMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Observable } from 'rxjs';
 
 import {
   getMcpAppToolMetadata,
+  type McpAppsSnapshotContent,
   type McpAppToolMetadata,
 } from './mcp-apps-registry.js';
 import { Store } from './memory-store.js';
@@ -87,23 +89,22 @@ function buildMcpAppsActivityContent(
   metadata: McpAppToolMetadata,
   toolInput: unknown,
   result: unknown,
-): Record<string, unknown> {
+): McpAppsSnapshotContent {
   const input = asRecord(toolInput) ?? {};
   const resultRecord = asRecord(result);
   const hasContentArray =
     resultRecord !== undefined && Array.isArray(resultRecord['content']);
 
-  const shapedResult: Record<string, unknown> = hasContentArray
-    ? (resultRecord as Record<string, unknown>)
-    : {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result ?? null),
-          },
-        ],
-        structuredContent: resultRecord ?? result,
-      };
+  let shapedResult: CallToolResult;
+  if (hasContentArray) {
+    shapedResult = resultRecord as CallToolResult;
+  } else if (resultRecord) {
+    shapedResult = { content: [], structuredContent: resultRecord };
+  } else {
+    shapedResult = {
+      content: [{ type: 'text', text: JSON.stringify(result ?? null) }],
+    };
+  }
 
   return {
     serverId: metadata.serverId,
