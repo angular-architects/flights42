@@ -8,11 +8,6 @@ import { RequestContext } from '@mastra/core/request-context';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Observable } from 'rxjs';
 
-import {
-  getMcpAppToolMetadata,
-  type McpAppsSnapshotContent,
-  type McpAppToolMetadata,
-} from './mcp-apps-registry.js';
 import { Store } from './memory-store.js';
 import { defaultStore } from './memory-store.js';
 import {
@@ -85,11 +80,34 @@ function createToolCallCacheKey(
   return `${agentId}:${threadId}:${toolCallId}`;
 }
 
+interface McpAppUiMeta {
+  serverId: string;
+  resourceUri: string;
+}
+
+/**
+ * Reads the MCP Apps UI metadata that `@mastra/mcp`'s `MCPClient.listTools()`
+ * stamps onto each tool as `tool.mcp._meta.ui` (`{ resourceUri, serverId }`).
+ */
+function readToolUiMeta(tool: unknown): McpAppUiMeta | undefined {
+  const ui = (
+    tool as {
+      mcp?: { _meta?: { ui?: { serverId?: string; resourceUri?: string } } };
+    }
+  )?.mcp?._meta?.ui;
+
+  if (!ui?.serverId || !ui?.resourceUri) {
+    return undefined;
+  }
+
+  return { serverId: ui.serverId, resourceUri: ui.resourceUri };
+}
+
 function buildMcpAppsActivityContent(
-  metadata: McpAppToolMetadata,
+  metadata: McpAppUiMeta,
   toolInput: unknown,
   result: unknown,
-): McpAppsSnapshotContent {
+): Record<string, unknown> {
   const input = asRecord(toolInput) ?? {};
   const resultRecord = asRecord(result);
   const hasContentArray =
@@ -99,7 +117,14 @@ function buildMcpAppsActivityContent(
   if (hasContentArray) {
     shapedResult = resultRecord as CallToolResult;
   } else if (resultRecord) {
-    shapedResult = { content: [], structuredContent: resultRecord };
+    // Mastra hands native MCP tool results back as the bare structured
+    // payload (no `content` envelope). Rebuild the text `content` from it so
+    // the snapshot carries a faithful CallToolResult, matching what the MCP
+    // server originally returned (`JSON.stringify(result)`).
+    shapedResult = {
+      content: [{ type: 'text', text: JSON.stringify(resultRecord) }],
+      structuredContent: resultRecord,
+    };
   } else {
     shapedResult = {
       content: [{ type: 'text', text: JSON.stringify(result ?? null) }],
@@ -595,6 +620,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly store: Store;
 
   private abortSignal?: AbortSignal;
+  private mcpAppsUiMeta?: Map<string, McpAppUiMeta>;
 
   constructor(options: ExtendedLocalAgentOptions) {
     super({ agentId: options.agentId });
@@ -611,6 +637,25 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
   getAbortSignal(): AbortSignal | undefined {
     return this.abortSignal;
+  }
+
+  private async getMcpAppsUiMeta(): Promise<Map<string, McpAppUiMeta>> {
+    if (this.mcpAppsUiMeta) {
+      return this.mcpAppsUiMeta;
+    }
+
+    const map = new Map<string, McpAppUiMeta>();
+    const tools = await this.agent.listTools();
+
+    for (const [toolName, tool] of Object.entries(tools)) {
+      const uiMeta = readToolUiMeta(tool);
+      if (uiMeta) {
+        map.set(toolName, uiMeta);
+      }
+    }
+
+    this.mcpAppsUiMeta = map;
+    return map;
   }
 
   override clone(): ExtendedMastraAgent {
@@ -875,6 +920,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     );
     const clientTools = toClientTools(input.tools);
     const clientToolNames = new Set(Object.keys(clientTools));
+    const mcpAppsUiMeta = await this.getMcpAppsUiMeta();
 
     this.requestContext.set('ag-ui', { context: input.context });
 
@@ -989,14 +1035,18 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
             const pending = pendingToolCalls.get(payload.payload.toolCallId);
             if (pending) {
-              const metadata = getMcpAppToolMetadata(pending.toolName);
+              const uiMeta = mcpAppsUiMeta.get(pending.toolName);
               const a2uiSurface = getA2uiSurface(payload.payload.result);
-              if (metadata) {
+              if (uiMeta) {
+                // Own messageId (the tool-call id), NOT the assistant message
+                // id: an ACTIVITY_SNAPSHOT replaces the message whose id
+                // matches, so reusing the assistant id would overwrite the
+                // assistant message (its text and sibling widget tool calls).
                 handlers.onActivitySnapshot({
-                  messageId: assistantMessageId,
+                  messageId: payload.payload.toolCallId,
                   activityType: 'mcp-apps',
                   content: buildMcpAppsActivityContent(
-                    metadata,
+                    uiMeta,
                     pending.args,
                     payload.payload.result,
                   ),
