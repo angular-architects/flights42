@@ -43,8 +43,8 @@ function createServer(): McpServer {
       title: 'Find Hotels',
       description:
         'Find three demo hotels for a city. Use this when the user asks for hotels in a specific city.',
-      inputSchema: findHotelsInputSchema.shape,
-      outputSchema: findHotelsResultSchema.shape,
+      inputSchema: findHotelsInputSchema,
+      outputSchema: findHotelsResultSchema,
       _meta: {
         ui: {
           resourceUri: HOTELS_RESOURCE_URI,
@@ -53,14 +53,9 @@ function createServer(): McpServer {
     },
     async (input) => {
       const result = findHotels(findHotelsInputSchema.parse(input));
-
+      const hotels = result.hotels;
       return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result),
-          },
-        ],
+        content: [{ type: 'text', text: `${hotels.length} hotels found` }],
         structuredContent: result,
       };
     },
