@@ -1,7 +1,10 @@
 import {
   AppBridge,
+  McpUiHostContext,
   PostMessageTransport,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
+
+type StyleVariables = NonNullable<McpUiHostContext['styles']>['variables'];
 
 const frameHost = document.getElementById('iframe-host');
 
@@ -16,6 +19,10 @@ iframe.sandbox.add('allow-same-origin');
 iframe.src = new URL('./app.html', window.location.href).toString();
 frameHost.append(iframe);
 
+if (!iframe.contentWindow) {
+  throw new Error('contentWindow expected!');
+}
+
 const bridge = new AppBridge(
   null,
   { name: 'MCP Apps Demo Host', version: '1.0.0' },
@@ -27,7 +34,7 @@ bridge.onsizechange = (event) => {
 };
 
 await bridge.connect(
-  new PostMessageTransport(iframe.contentWindow!, iframe.contentWindow!),
+  new PostMessageTransport(iframe.contentWindow, iframe.contentWindow),
 );
 
 await waitForInitialization(bridge);
@@ -55,6 +62,11 @@ bridge.sendHostContextChange({
   availableDisplayModes: ['fullscreen'],
   displayMode: 'fullscreen',
   theme: 'light',
+  styles: {
+    variables: {
+      '--color-background-primary': '#3f51b5',
+    } as StyleVariables,
+  },
 });
 
 function waitForInitialization(bridge: AppBridge): Promise<void> {
