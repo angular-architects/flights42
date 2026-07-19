@@ -185,6 +185,83 @@
           }
         }
       }
+    },
+    "simple-client": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "none",
+          "skipTests": true,
+          "changeDetection": "OnPush"
+        },
+        "@schematics/angular:directive": {
+          "skipTests": true
+        },
+        "@schematics/angular:pipe": {
+          "skipTests": true
+        },
+        "@schematics/angular:service": {
+          "skipTests": true
+        }
+      },
+      "root": "projects/simple-client",
+      "sourceRoot": "projects/simple-client/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/simple-client/src/main.ts",
+            "tsConfig": "projects/simple-client/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/simple-client/public"
+              }
+            ],
+            "styles": [
+              "node_modules/@copilotkit/angular/dist/styles.css",
+              "projects/simple-client/src/styles.css"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4300
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "simple-client:build:production"
+            },
+            "development": {
+              "buildTarget": "simple-client:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/simple-client/**/*.ts",
+              "projects/simple-client/**/*.html"
+            ],
+            "eslintConfig": "projects/simple-client/eslint.config.js"
+          }
+        }
+      }
     }
   }
 }

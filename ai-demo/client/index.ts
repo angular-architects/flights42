@@ -1,53 +1,51 @@
-import { stdout } from 'node:process';
+import process, { stdout } from 'node:process';
+
+import { type AgentSubscriber, HttpAgent, randomUUID } from '@ag-ui/client';
+import type { AGUIEvent, BaseEvent } from '@ag-ui/core';
 
 import { closeInput, readLine } from './input.js';
-import { detailFor, extractText } from './utils.js';
+import { detailFor } from './utils.js';
 
-const SHOW_DETAILS = true;
+const SHOW_DETAILS = process.argv.includes('--details');
 
-const url = process.env.AI_DEMO_URL ?? 'http://localhost:4555';
+const baseUrl = 'http://localhost:4555';
+
+const threadId = randomUUID();
+
+const agent = new HttpAgent({
+  url: `${baseUrl}/chat`,
+  threadId,
+});
 
 async function ask(prompt: string): Promise<void> {
-  const response = await fetch(`${url}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
+  agent.addMessage({
+    id: randomUUID(),
+    role: 'user',
+    content: prompt,
   });
 
-  if (!response.body) {
-    throw new Error('Response has no body to stream.');
+  const subscriber: AgentSubscriber = {};
+
+  if (SHOW_DETAILS) {
+    subscriber.onEvent = ({ event }) => {
+      logEvent(event);
+    };
+  } else {
+    subscriber.onTextMessageContentEvent = ({ event }) => {
+      stdout.write(event.delta);
+    };
   }
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
+  await agent.runAgent({ runId: randomUUID() }, subscriber);
+}
 
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) {
-      break;
-    }
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
-
-    for (const line of lines) {
-      const message = JSON.parse(line) as Record<string, unknown>;
-
-      if (SHOW_DETAILS) {
-        const type = String(message['type'] ?? 'unknown');
-        console.log(`[${type.padEnd(35)}] ${detailFor(message)}`);
-      } else {
-        const text = extractText(message);
-        stdout.write(text ?? '');
-      }
-    }
-  }
+function logEvent(event: BaseEvent): void {
+  const type = String(event.type ?? 'unknown');
+  console.log(`[${type.padEnd(35)}] ${detailFor(event as AGUIEvent)}`);
 }
 
 async function main(): Promise<void> {
-  console.log(`AI-Demo client → ${url}  (SHOW_RAW=${SHOW_DETAILS})`);
+  console.log(`AI-Demo client → ${baseUrl}/chat  (SHOW_RAW=${SHOW_DETAILS})`);
   console.log('Ask about the weather in a city. Type "exit" to quit.');
 
   for (;;) {

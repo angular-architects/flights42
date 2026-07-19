@@ -9,12 +9,12 @@ import {
   type McpAppsSnapshotContent,
   mcpAppsSnapshotContentSchema,
 } from './mcp-apps-content';
-import { McpAppsWidgetComponent } from './mcp-apps-widget';
+import { McpAppsWidget } from './mcp-apps-widget';
 
 @Component({
   selector: 'app-mcp-apps-activity-renderer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [McpAppsWidgetComponent],
+  imports: [McpAppsWidget],
   template: `<app-mcp-apps-widget [data]="content()" />`,
 })
 export class McpAppsActivityRenderer implements ActivityRenderer<McpAppsSnapshotContent> {

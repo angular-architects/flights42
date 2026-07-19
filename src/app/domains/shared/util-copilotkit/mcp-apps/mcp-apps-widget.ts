@@ -65,7 +65,7 @@ function resolveServerUrls(serverUrls: McpServerUrls): Record<string, string> {
     }
   `,
 })
-export class McpAppsWidgetComponent {
+export class McpAppsWidget {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mcpAppsConfig = inject(MCP_APPS_CONFIG);
   private readonly mcpAppsServerUrls = resolveServerUrls(

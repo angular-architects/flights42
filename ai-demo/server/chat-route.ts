@@ -1,31 +1,65 @@
+import type { RunAgentInput } from '@ag-ui/core';
+import { MastraAgent } from '@ag-ui/mastra';
 import type { ContextWithMastra } from '@mastra/core/server';
 
-import { streamAgUi, streamNative } from './stream.js';
+const SSE_HEADERS = {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  Connection: 'keep-alive',
+} as const;
 
-type Mode = 'native' | 'ag-ui';
-// Switch to 'ag-ui' to stream the AG-UI protocol instead of the native format.
-const mode = 'native' as Mode;
+const encoder = new TextEncoder();
 
-const NDJSON_HEADERS = {
-  'Content-Type': 'application/x-ndjson; charset=utf-8',
-  'Cache-Control': 'no-cache, no-transform',
-};
+function sseFrame(event: unknown): Uint8Array {
+  return encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
+}
 
 export async function chatRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
-  let prompt = '';
-  try {
-    const body = (await c.req.json()) as { prompt?: unknown };
-    prompt = String(body?.prompt ?? '').trim();
-  } catch {
-    prompt = '';
-  }
+  const input = (await c.req.json()) as RunAgentInput;
 
   const agent = c.get('mastra').getAgent('weatherAgent');
+  const aguiAgent = new MastraAgent({ agent, resourceId: input.threadId });
 
-  const stream =
-    mode === 'ag-ui' ? streamAgUi(agent, prompt) : streamNative(agent, prompt);
+  let subscription: { unsubscribe(): void } | undefined;
 
-  return new Response(stream, { headers: NDJSON_HEADERS });
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const send = (event: unknown): void => {
+        try {
+          controller.enqueue(sseFrame(event));
+        } catch {
+          subscription?.unsubscribe();
+        }
+      };
+      const close = (): void => {
+        try {
+          controller.close();
+        } catch {
+          subscription?.unsubscribe();
+        }
+      };
+
+      controller.enqueue(encoder.encode(':\n\n'));
+
+      subscription = aguiAgent.run(input).subscribe({
+        next: send,
+        error: (err) => {
+          send({
+            type: 'RUN_ERROR',
+            message: err instanceof Error ? err.message : String(err),
+            code: 'run_error',
+          });
+          close();
+        },
+        complete: close,
+      });
+    },
+    cancel() {
+      subscription?.unsubscribe();
+    },
+  });
+
+  return new Response(stream, { headers: { ...SSE_HEADERS } });
 }
