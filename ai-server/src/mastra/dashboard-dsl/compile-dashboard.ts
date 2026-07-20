@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
+import { A2UI_DEFAULT_CATALOG_ID } from '@internal/ag-ui-server';
 
 import {
   type BookedFlight,
@@ -14,8 +15,6 @@ import { weatherForecast, weatherIconFor } from '../tools/weather-forecast.js';
 import type { DashboardSpec, DashboardTile } from './dashboard-spec.js';
 
 const A2UI_VERSION = 'v0.9' as const;
-const BASIC_CATALOG_ID =
-  'https://a2ui.org/specification/v0_9/basic_catalog.json';
 // Default cap on rows we render per flight table tile when the spec
 // doesn't override it. Protects us from runaway DOM trees if the
 // upstream data grows. Tile types that previously had no cap stay
@@ -67,13 +66,18 @@ interface TileBuildResult {
  * influence on the structure is the row count of dynamic lists/tables
  * so the grid does not contain trailing empty rows.
  */
+export interface CompileDashboardOptions {
+  surfaceId?: string;
+  catalogId?: string;
+}
+
 export async function compileDashboard(
   spec: DashboardSpec,
-  options: { surfaceId?: string } = {},
+  options: CompileDashboardOptions = {},
 ): Promise<CompiledDashboard> {
   const dataSteps: DataStep[] = [];
   const data = await fetchAllDashboardData(spec, dataSteps);
-  return assembleDashboard(spec, data, options.surfaceId, dataSteps);
+  return assembleDashboard(spec, data, options, dataSteps);
 }
 
 async function fetchAllDashboardData(
@@ -144,10 +148,11 @@ async function fetchAllDashboardData(
 function assembleDashboard(
   spec: DashboardSpec,
   data: DashboardData,
-  givenSurfaceId: string | undefined,
+  options: CompileDashboardOptions,
   dataSteps: DataStep[],
 ): CompiledDashboard {
-  const surfaceId = givenSurfaceId ?? `dash-${randomUUID()}`;
+  const surfaceId = options.surfaceId ?? `dash-${randomUUID()}`;
+  const catalogId = options.catalogId ?? A2UI_DEFAULT_CATALOG_ID;
 
   const allComponents: Component[] = [];
   const allDataOps: A2uiMessage[] = [];
@@ -170,7 +175,7 @@ function assembleDashboard(
   const structural: A2uiMessage[] = [
     {
       version: A2UI_VERSION,
-      createSurface: { surfaceId, catalogId: BASIC_CATALOG_ID },
+      createSurface: { surfaceId, catalogId },
     } as unknown as A2uiMessage,
     {
       version: A2UI_VERSION,

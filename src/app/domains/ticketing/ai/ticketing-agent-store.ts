@@ -51,8 +51,7 @@ const widgets = USE_MCP
   : [messageWidget, flightWidget, hotelWidget, planWidget];
 
 function buildCatalogContext(): Context[] {
-  const entry = catalogToContextEntry(inject(A2UI_CUSTOM_CATALOG));
-  return entry ? [entry] : [];
+  return [catalogToContextEntry(inject(A2UI_CUSTOM_CATALOG))];
 }
 
 export function injectTicketingAgentStore() {

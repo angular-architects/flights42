@@ -1,4 +1,8 @@
-import { catalogToPromptSection } from './catalog-to-prompt.js';
+import {
+  A2UI_DEFAULT_CATALOG_ID,
+  catalogToPromptSection,
+  extractCatalogId,
+} from './catalog-to-prompt.js';
 import { logSystemPrompt } from './log-prompt.js';
 
 interface AgUiRuntimeContext {
@@ -10,8 +14,8 @@ interface InstructionsParams {
 }
 
 export interface AddCustomCatalogInstructionsOptions {
-  /** Static system prompt the catalog section is appended to. */
-  systemInstructions: string;
+  /** Builds the system prompt for the catalog id the client registered. */
+  systemInstructions: (catalogId: string) => string;
   /** When `true` the resulting prompt is logged. Defaults to `false`. */
   log?: boolean;
 }
@@ -28,11 +32,14 @@ export function addCustomCatalogInstructions(
 
   return ({ requestContext }) => {
     const agUi = requestContext.get('ag-ui') as AgUiRuntimeContext | undefined;
+    const catalogId =
+      extractCatalogId(agUi?.context) ?? A2UI_DEFAULT_CATALOG_ID;
     const catalogSection = catalogToPromptSection(agUi?.context);
+    const baseInstructions = systemInstructions(catalogId);
 
     const fullPrompt = catalogSection
-      ? `${systemInstructions}\n\n${catalogSection}`
-      : systemInstructions;
+      ? `${baseInstructions}\n\n${catalogSection}`
+      : baseInstructions;
 
     if (log) {
       logSystemPrompt(fullPrompt);

@@ -2,6 +2,9 @@ import { type JsonSchema, renderComponentEntry } from './schema-example.js';
 
 const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
 
+export const A2UI_DEFAULT_CATALOG_ID =
+  'https://a2ui.org/specification/v0_9/basic_catalog.json';
+
 interface ContextEntry {
   description?: string;
   value?: string;
@@ -46,11 +49,11 @@ function parseCatalogPayload(value: string): CatalogPayload | null {
   }
 }
 
-export function catalogToPromptSection(
+function findCatalogPayload(
   contextEntries: readonly ContextEntry[] | undefined,
-): string {
+): CatalogPayload | null {
   if (!contextEntries || contextEntries.length === 0) {
-    return '';
+    return null;
   }
 
   const entry = contextEntries.find(
@@ -58,10 +61,23 @@ export function catalogToPromptSection(
   );
 
   if (!entry || typeof entry.value !== 'string') {
-    return '';
+    return null;
   }
 
-  const payload = parseCatalogPayload(entry.value);
+  return parseCatalogPayload(entry.value);
+}
+
+export function extractCatalogId(
+  contextEntries: readonly ContextEntry[] | undefined,
+): string | null {
+  const payload = findCatalogPayload(contextEntries);
+  return payload ? payload.catalogId : null;
+}
+
+export function catalogToPromptSection(
+  contextEntries: readonly ContextEntry[] | undefined,
+): string {
+  const payload = findCatalogPayload(contextEntries);
   if (!payload) {
     return '';
   }

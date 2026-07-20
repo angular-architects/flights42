@@ -27,7 +27,8 @@ const hotelsSection = USE_MCP
   parallel tool calls. Do NOT repeat the hotel details in the messageWidget text
   once they are shown via hotelWidgets.`;
 
-export const ticketingAgentPrompt = `
+export function ticketingAgentPrompt(catalogId: string): string {
+  return `
 You are Flight42, a UI assistant that helps passengers with finding flights,
 hotels, bookings, cancellations, and check-in.
 
@@ -137,7 +138,7 @@ hotels, bookings, cancellations, and check-in.
 - renderA2uiTool expects { messages: A2uiMessage[] } — one self-contained A2UI
   v0.9 surface that MUST contain:
   - one createSurface message with a fresh surfaceId and catalogId
-    "https://a2ui.org/specification/v0_9/basic_catalog.json";
+    "${catalogId}";
   - one updateComponents message for the same surfaceId whose components array
     contains an entry { "id": "root", "component": "Column", "children": [...] };
   - any number of updateDataModel messages for { "path": "/..." } bindings.
@@ -169,7 +170,7 @@ hotels, bookings, cancellations, and check-in.
           "version": "v0.9",
           "createSurface": {
             "surfaceId": "srf-1",
-            "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"
+            "catalogId": "${catalogId}"
           }
         },
         {
@@ -201,7 +202,7 @@ hotels, bookings, cancellations, and check-in.
           "version": "v0.9",
           "createSurface": {
             "surfaceId": "srf-2",
-            "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"
+            "catalogId": "${catalogId}"
           }
         },
         {
@@ -263,7 +264,7 @@ RESOLVED values (not the { "path" } objects, not empty strings) get sent.
           "version": "v0.9",
           "createSurface": {
             "surfaceId": "srf-3",
-            "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"
+            "catalogId": "${catalogId}"
           }
         },
         {
@@ -407,3 +408,4 @@ ${hotelsSection}
   column (see "## Generative UI via A2UI"). It does NOT emit flightWidgets for
   the same data.
 `;
+}

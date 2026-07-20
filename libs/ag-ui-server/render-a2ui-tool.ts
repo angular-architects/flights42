@@ -133,7 +133,7 @@ export const renderA2uiTool = createTool({
     complete, self-contained sequence of A2UI v0.9 messages for a single surface. The
     sequence MUST contain:
       1) exactly one \`createSurface\` message with a fresh \`surfaceId\` (any unique string)
-         and \`catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json"\`.
+         and the \`catalogId\` given in the system instructions.
       2) exactly one \`updateComponents\` message for the same \`surfaceId\`. Its \`components\`
          array MUST define an entry with \`id: "root"\` of component type \`Column\` whose
          \`children\` list the top-level blocks of the answer.

@@ -4,7 +4,10 @@ import {
   randomUUID,
   type RunAgentInput,
 } from '@ag-ui/client';
-import { getExtendedLocalAgent } from '@internal/ag-ui-server';
+import {
+  extractCatalogId,
+  getExtendedLocalAgent,
+} from '@internal/ag-ui-server';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
@@ -118,7 +121,10 @@ export async function dashboardAgUiRouteHandler(
             e.type === EventType.TOOL_CALL_END &&
             e.toolCallId === renderToolCallId
           ) {
-            const { events, spec } = await handleRenderToolCallEnd(argsBuffer);
+            const { events, spec } = await handleRenderToolCallEnd(
+              argsBuffer,
+              extractCatalogId(input.context) ?? undefined,
+            );
             if (spec) {
               capturedSpec = spec;
             }
@@ -175,7 +181,9 @@ async function streamCachedDashboard(
 
   let compiled: CompiledDashboard;
   try {
-    compiled = await compileDashboard(spec);
+    compiled = await compileDashboard(spec, {
+      catalogId: extractCatalogId(input.context) ?? undefined,
+    });
   } catch (err) {
     await emitFrame(
       sse,
@@ -346,6 +354,7 @@ interface RenderToolCallEndResult {
 
 async function handleRenderToolCallEnd(
   argsBuffer: string,
+  catalogId: string | undefined,
 ): Promise<RenderToolCallEndResult> {
   const spec = parseAccumulatedSpec(argsBuffer);
   if (!spec) {
@@ -360,7 +369,7 @@ async function handleRenderToolCallEnd(
     };
   }
   try {
-    const compiled = await compileDashboard(spec);
+    const compiled = await compileDashboard(spec, { catalogId });
     return { events: emitCompiledDashboardEvents(compiled), spec };
   } catch (err) {
     return {
