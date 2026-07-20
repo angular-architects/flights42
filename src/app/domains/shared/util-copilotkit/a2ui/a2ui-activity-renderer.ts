@@ -5,27 +5,21 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
-  type OnInit,
 } from '@angular/core';
 import {
   type ActivityRenderer,
-  type AngularActivityContentSchema,
   type RenderActivityMessageConfig,
 } from '@copilotkit/angular';
+import { z } from 'zod';
 
-export interface A2uiSurfaceContent {
-  operations: A2uiMessage[];
-}
+export const a2uiSurfaceContentSchema = z.object({
+  operations: z.array(z.custom<A2uiMessage>()),
+});
 
-export const a2uiSurfaceContentSchema: AngularActivityContentSchema<A2uiSurfaceContent> =
-  {
-    safeParse: (content) =>
-      isA2uiSurfaceContent(content)
-        ? { success: true, data: content }
-        : { success: false },
-  };
+export type A2uiSurfaceContent = z.infer<typeof a2uiSurfaceContentSchema>;
 
 /**
  * CopilotKit activity renderer for `activityType: "a2ui-surface"` snapshots.
@@ -44,9 +38,7 @@ export const a2uiSurfaceContentSchema: AngularActivityContentSchema<A2uiSurfaceC
     }
   `,
 })
-export class A2uiActivityRenderer
-  implements ActivityRenderer<A2uiSurfaceContent>, OnInit
-{
+export class A2uiActivityRenderer implements ActivityRenderer<A2uiSurfaceContent> {
   readonly activityType = input.required<string>();
   readonly content = input.required<A2uiSurfaceContent>();
   readonly message = input.required<ActivityMessage>();
@@ -54,21 +46,15 @@ export class A2uiActivityRenderer
 
   private readonly renderer = inject(A2uiRendererService);
 
-  ngOnInit(): void {
-    // Feed the surface into the shared renderer HERE, not inside the `surfaceId`
-    // computed. `processMessages` writes the renderer's version signal, and a
-    // side effect / signal write inside a `computed` is invalid in Angular.
-    // `ngOnInit` runs before this view is first rendered, so the surface is in
-    // the model by the time `surfaceId` is read below.
-    this.renderer.processMessages(this.content().operations);
+  constructor() {
+    effect(() => {
+      this.renderer.processMessages(this.content().operations);
+    });
   }
 
-  protected readonly surfaceId = computed(() => {
-    const surfaceId = getRenderedSurfaceId(this.content().operations);
-    return surfaceId && this.renderer.surfaceGroup.getSurface(surfaceId)
-      ? surfaceId
-      : null;
-  });
+  protected readonly surfaceId = computed(() =>
+    getRenderedSurfaceId(this.content().operations),
+  );
 }
 
 export const a2uiActivityRendererConfig: RenderActivityMessageConfig<A2uiSurfaceContent> =
@@ -77,14 +63,6 @@ export const a2uiActivityRendererConfig: RenderActivityMessageConfig<A2uiSurface
     content: a2uiSurfaceContentSchema,
     component: A2uiActivityRenderer,
   };
-
-function isA2uiSurfaceContent(content: unknown): content is A2uiSurfaceContent {
-  return (
-    !!content &&
-    typeof content === 'object' &&
-    Array.isArray((content as { operations?: unknown }).operations)
-  );
-}
 
 function getRenderedSurfaceId(operations: A2uiMessage[]): string | null {
   for (const operation of operations) {
@@ -103,6 +81,5 @@ function getRenderedSurfaceId(operations: A2uiMessage[]): string | null {
       return operation.updateDataModel.surfaceId;
     }
   }
-
   return null;
 }

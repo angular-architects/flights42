@@ -50,20 +50,20 @@ const widgets = USE_MCP
   ? [messageWidget, flightWidget, planWidget]
   : [messageWidget, flightWidget, hotelWidget, planWidget];
 
-let catalogContext: Context[] | undefined;
-
 function buildCatalogContext(): Context[] {
   const entry = catalogToContextEntry(inject(A2UI_CUSTOM_CATALOG));
   return entry ? [entry] : [];
 }
 
 export function injectTicketingAgentStore() {
+  const catalogContext = buildCatalogContext();
+
   initAgentStore({
     agentId: AGENT_ID,
     url: inject(ConfigService).agUiUrl,
     useServerMemory: true,
     forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
-    context: () => (catalogContext ??= buildCatalogContext()),
+    context: () => catalogContext,
     frontendTools: [
       findFlightsTool,
       getLoadedFlightsTool,
