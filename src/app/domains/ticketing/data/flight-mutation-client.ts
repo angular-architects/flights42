@@ -19,6 +19,7 @@ export type FlightMutationFailureCode =
   | 'NOT_BOOKED'
   | 'NOT_FOUND'
   | 'LOAD_FAILED'
+  | 'INVALID_RESULT'
   | 'USER_CANCELLED';
 
 export type FlightPaymentMethod = 'creditCard' | 'miles';

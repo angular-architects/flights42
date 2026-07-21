@@ -820,8 +820,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
             // Same schema requirement as the success case: `outcome` is a
             // discriminated union. Interrupts live under `outcome.interrupts`
             // as an array; the client copies it verbatim into
-            // `agent.pendingInterrupts`. Extra tool context goes in `metadata`,
-            // which is where the client reads it from.
+            // `agent.pendingInterrupts`. The JSON Schema of the expected answer
+            // goes into the protocol's own `responseSchema` field, so even a
+            // generic AG-UI client can build an input from it. Everything that
+            // is specific to this bridge stays in `metadata`.
             outcome: {
               type: 'interrupt',
               interrupts: [
@@ -832,11 +834,13 @@ export class ExtendedMastraAgent extends AbstractAgent {
                       ? 'human_approval'
                       : 'tool_suspended',
                   toolCallId: interrupt.toolCallId,
+                  responseSchema: asRecord(
+                    safeParseJson(interrupt.resumeSchema ?? ''),
+                  ),
                   metadata: {
                     kind: interrupt.kind,
                     toolName: interrupt.toolName,
                     args: interrupt.args,
-                    resumeSchema: safeParseJson(interrupt.resumeSchema ?? ''),
                     suspendPayload: interrupt.suspendPayload,
                   },
                 },

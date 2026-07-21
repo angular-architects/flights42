@@ -21,46 +21,39 @@ export interface WorkflowToolCall {
   status: 'pending' | 'complete';
 }
 
-/** Widget render tools are UI-only and not interesting for the detail list. */
-const WIDGET_TOOL_NAMES = new Set([
-  'messageWidget',
-  'flightWidget',
-  'hotelWidget',
-  'planWidget',
-]);
-
 /**
  * Tool calls the agent made, excluding the widget render tools (which are
- * UI-only and not interesting for the workflow detail list).
+ * UI-only and not interesting for the workflow detail list). The caller passes
+ * the widget names in, derived from CopilotKit's registry via
+ * `injectWidgetToolNames`.
  */
 export function selectVisibleToolCalls(
   messages: readonly Message[],
+  widgetToolNames: ReadonlySet<string>,
 ): WorkflowToolCall[] {
-  const resolved = new Set<string>();
-  for (const message of messages) {
-    if (message.role === 'tool') {
-      resolved.add(message.toolCallId);
-    }
-  }
+  const resolved = collectResolvedToolCallIds(messages);
 
-  const calls: WorkflowToolCall[] = [];
-  for (const message of messages) {
-    if (message.role !== 'assistant' || !message.toolCalls) {
-      continue;
-    }
-    for (const toolCall of message.toolCalls) {
-      if (WIDGET_TOOL_NAMES.has(toolCall.function.name)) {
-        continue;
-      }
-      calls.push({
-        id: toolCall.id,
-        name: toolCall.function.name,
-        args: parseToolArguments(toolCall.function.arguments),
-        status: resolved.has(toolCall.id) ? 'complete' : 'pending',
-      });
-    }
-  }
-  return calls;
+  return messages
+    .filter((message) => message.role === 'assistant')
+    .flatMap((message) => message.toolCalls ?? [])
+    .filter((toolCall) => !widgetToolNames.has(toolCall.function.name))
+    .map((toolCall) => ({
+      id: toolCall.id,
+      name: toolCall.function.name,
+      args: parseToolArguments(toolCall.function.arguments),
+      status: resolved.has(toolCall.id) ? 'complete' : 'pending',
+    }));
+}
+
+/** Ids of the tool calls whose result has already arrived. */
+function collectResolvedToolCallIds(
+  messages: readonly Message[],
+): ReadonlySet<string> {
+  return new Set(
+    messages
+      .filter((message) => message.role === 'tool')
+      .map((message) => message.toolCallId),
+  );
 }
 
 export function formatToolArgsValue(args: unknown): string | null {

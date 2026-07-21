@@ -4,45 +4,46 @@ import {
   type FlightMutationResult,
 } from '../../data/flight-mutation-client';
 
-export function parseToolResult(result: string | undefined): unknown {
-  if (result === undefined) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(result);
-  } catch {
-    return result;
-  }
-}
-
-export function toFlightMutationResult(
-  value: unknown,
-): FlightMutationResult | undefined {
-  // Defensive fallback: an unparseable tool result surfaces as a plain
-  // string (see `parseToolResult`'s catch branch). Normalize it to our shape
-  // so the card can still show something instead of silently rendering blank.
-  if (typeof value === 'string') {
-    return {
-      ok: false,
-      result: value,
-      code: 'USER_CANCELLED',
-    };
-  }
-
-  if (isStructuredResult(value)) {
-    return value;
-  }
-
-  return undefined;
-}
-
+/**
+ * Turns the tool's raw result into a typed `FlightMutationResult`. On the wire
+ * that result is just a string, so nothing here may be taken on trust.
+ */
 export function getFlightMutationResult(
   complete: boolean,
   rawResult: string | undefined,
 ): FlightMutationResult | undefined {
-  return complete
-    ? toFlightMutationResult(parseToolResult(rawResult))
-    : undefined;
+  if (!complete || rawResult === undefined) {
+    return undefined;
+  }
+
+  const parsed = safeParse(rawResult);
+
+  // Not even valid JSON: surface the raw text as a failure instead of
+  // rendering blank. This is not a declined action — that one arrives as a
+  // structured result carrying `USER_CANCELLED` from the tool itself.
+  if (typeof parsed === 'string') {
+    return { ok: false, result: parsed, code: 'INVALID_RESULT' };
+  }
+
+  // Valid JSON, but any shape at all — accept it only once the fields the
+  // card relies on are actually there.
+  const candidate = parsed as { ok?: unknown; result?: unknown } | null;
+  if (
+    typeof candidate?.ok !== 'boolean' ||
+    typeof candidate.result !== 'string'
+  ) {
+    return undefined;
+  }
+
+  return candidate as FlightMutationResult;
+}
+
+function safeParse(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
 }
 
 export function getFlightDetails(
@@ -152,13 +153,4 @@ export function shouldShowUndo(
   }
 
   return complete && !!result?.ok;
-}
-
-function isStructuredResult(value: unknown): value is FlightMutationResult {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const record = value as { ok?: unknown; result?: unknown };
-  return typeof record.ok === 'boolean' && typeof record.result === 'string';
 }

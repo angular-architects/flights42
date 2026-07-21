@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { type Message } from '@copilotkit/angular';
 
+import { injectWidgetToolNames } from '../../../shared/util-copilotkit/widget-tool-names';
 import {
   buildPipeline,
   formatToolArgsValue,
@@ -34,8 +35,10 @@ export class TravelWorkflowProgress {
   readonly finishedSteps = input.required<ReadonlySet<string>>();
   readonly hasWidgets = input.required<boolean>();
 
+  private readonly widgetToolNames = injectWidgetToolNames();
+
   protected readonly toolCalls = computed<WorkflowToolCall[]>(() =>
-    selectVisibleToolCalls(this.messages()),
+    selectVisibleToolCalls(this.messages(), this.widgetToolNames()),
   );
 
   protected readonly stepPipeline = computed<PipelineStep[]>(() =>

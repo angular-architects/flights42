@@ -1,10 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, type Signal } from '@angular/core';
+import { type AgentStore } from '@copilotkit/angular';
 import { BehaviorSubject, Subject } from 'rxjs';
 
-import { type CopilotAgentStore } from '../util-copilotkit/agent-store-helper';
-
 export interface ChatInfo {
-  store: CopilotAgentStore | null;
+  store: Signal<AgentStore> | null;
   /** Agent id backing the store; needed to render tool calls and activities. */
   agentId: string | null;
   /** Greeting shown as the first assistant message. Undefined = component default. */
@@ -14,7 +13,7 @@ export interface ChatInfo {
 
 @Injectable({ providedIn: 'root' })
 export class ChatRegistry {
-  private _store: CopilotAgentStore | null = null;
+  private _store: Signal<AgentStore> | null = null;
   private readonly _chatInfo = new BehaviorSubject<ChatInfo>({
     store: null,
     agentId: null,
@@ -23,12 +22,12 @@ export class ChatRegistry {
   private readonly _openRequested = new Subject<void>();
   public readonly openRequested = this._openRequested.asObservable();
 
-  public get store(): CopilotAgentStore | null {
+  public get store(): Signal<AgentStore> | null {
     return this._store;
   }
 
   public setChat(
-    store: CopilotAgentStore,
+    store: Signal<AgentStore>,
     greeting?: string,
     showModeSelector = true,
   ): void {

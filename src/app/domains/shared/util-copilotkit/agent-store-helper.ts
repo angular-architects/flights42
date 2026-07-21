@@ -5,12 +5,10 @@ import { type AgentStore, CopilotKit, type Message } from '@copilotkit/angular';
 
 import { AppHttpAgent } from './app-http-agent';
 
-export type CopilotAgentStore = Signal<AgentStore>;
-
 export type SendMessageInput = string | UserMessage['content'];
 
 export function getAgentMessages(
-  store: CopilotAgentStore,
+  store: Signal<AgentStore>,
   agentId: string,
 ): Message[] {
   return store()
@@ -21,7 +19,7 @@ export function getAgentMessages(
     .map((message) => ({ ...message, agentId }) as unknown as Message);
 }
 
-export function getPendingInterrupts(store: CopilotAgentStore): Interrupt[] {
+export function getPendingInterrupts(store: Signal<AgentStore>): Interrupt[] {
   store().isRunning();
   store().messages();
   return store().agent.pendingInterrupts ?? [];
@@ -29,7 +27,7 @@ export function getPendingInterrupts(store: CopilotAgentStore): Interrupt[] {
 
 export async function sendMessage(
   copilotKit: CopilotKit,
-  store: CopilotAgentStore,
+  store: Signal<AgentStore>,
   input: SendMessageInput,
   forwardProps?: Record<string, unknown>,
 ): Promise<void> {
@@ -40,7 +38,7 @@ export async function sendMessage(
 
 export async function sendDeveloperMessage(
   copilotKit: CopilotKit,
-  store: CopilotAgentStore,
+  store: Signal<AgentStore>,
   content: string,
   forwardProps?: Record<string, unknown>,
 ): Promise<void> {
@@ -50,7 +48,7 @@ export async function sendDeveloperMessage(
 }
 
 export function addDeveloperMessage(
-  store: CopilotAgentStore,
+  store: Signal<AgentStore>,
   content: string,
 ): void {
   store().agent.addMessage({ id: randomUUID(), role: 'developer', content });
@@ -60,7 +58,7 @@ export type InterruptResponses = Parameters<typeof buildResumeArray>[1];
 
 export async function resumeInterrupt(
   copilotKit: CopilotKit,
-  store: CopilotAgentStore,
+  store: Signal<AgentStore>,
   responses: InterruptResponses,
   forwardProps?: Record<string, unknown>,
 ): Promise<void> {
@@ -74,11 +72,11 @@ export async function resumeInterrupt(
   });
 }
 
-export function stop(store: CopilotAgentStore): void {
+export function stop(store: Signal<AgentStore>): void {
   store().agent.abortRun();
 }
 
-export function reset(store: CopilotAgentStore): void {
+export function reset(store: Signal<AgentStore>): void {
   const agent = store().agent;
   agent.abortRun();
   agent.messages = [];

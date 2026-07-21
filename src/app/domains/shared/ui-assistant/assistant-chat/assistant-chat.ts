@@ -5,18 +5,18 @@ import {
   computed,
   ElementRef,
   inject,
+  type Signal,
   signal,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CopilotKit, type Message } from '@copilotkit/angular';
+import { type AgentStore, CopilotKit, type Message } from '@copilotkit/angular';
 
 import {
   AgentMode,
   AgentModeService,
 } from '../../util-common/agent-mode-service';
 import {
-  type CopilotAgentStore,
   getAgentMessages,
   getPendingInterrupts,
   resumeInterrupt,
@@ -54,7 +54,7 @@ export class AssistantChat {
   protected readonly greeting = signal<string>(DEFAULT_GREETING);
   protected readonly showModeSelector = signal(true);
 
-  protected readonly store = signal<CopilotAgentStore | null>(null);
+  protected readonly store = signal<Signal<AgentStore> | null>(null);
   protected readonly agentId = signal<string | null>(null);
 
   protected readonly messages = computed<Message[]>(() => {

@@ -5,8 +5,7 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-
-import { type CopilotAgentStore } from './agent-store-helper';
+import { type AgentStore } from '@copilotkit/angular';
 
 export interface AgentStepTracker {
   readonly startedSteps: Signal<ReadonlySet<string>>;
@@ -15,7 +14,7 @@ export interface AgentStepTracker {
 }
 
 export function injectAgentStepTracker(
-  store: CopilotAgentStore,
+  store: Signal<AgentStore>,
 ): AgentStepTracker {
   const started = signal<ReadonlySet<string>>(new Set());
   const finished = signal<ReadonlySet<string>>(new Set());
