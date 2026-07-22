@@ -15,7 +15,8 @@ export const renderChartTool = createFrontendTool({
     'Renders the supplied data as a bar chart in the user interface.',
   parameters: renderChartSchema,
   handler: async ({ title, data }) => {
-    inject(ReportingChartStore).setChart(title, data);
+    const store = inject(ReportingChartStore);
+    store.setChart(title, data);
     return { ok: true };
   },
 });

@@ -24,6 +24,7 @@
     "simple-client": "ng serve simple-client",
     "mcp-apps-demo": "vite --config mcp-apps-demo/vite.config.ts --open /host.html",
     "mcp-apps-demo:build": "vite build --config mcp-apps-demo/vite.config.ts",
+    "voice-demo": "vite voice-demo",
     "prepare": "husky"
   },
   "lint-staged": {

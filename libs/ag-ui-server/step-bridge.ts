@@ -69,7 +69,7 @@ export function attachBridge(
   ctx.set?.(AG_UI_BRIDGE_KEY, bridge);
 }
 
-export function readBridge(
+export function getBridge(
   requestContext: RequestContext | undefined,
 ): AgUiBridge | undefined {
   if (!requestContext) {
@@ -91,5 +91,5 @@ export function readBridge(
 /** @deprecated Use {@link attachBridge}. */
 export const attachStepBridge = attachBridge;
 
-/** @deprecated Use {@link readBridge}. */
-export const readStepBridge = readBridge;
+/** @deprecated Use {@link getBridge}. */
+export const readStepBridge = getBridge;

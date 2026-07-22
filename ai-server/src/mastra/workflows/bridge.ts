@@ -5,11 +5,11 @@
  * no AG-UI bridge / writer is attached (e.g. a direct test run), the reports are
  * silently skipped. See libs/ag-ui-server/step-bridge.ts for the why.
  */
-import { readBridge } from '@internal/ag-ui-server';
+import { getBridge } from '@internal/ag-ui-server';
 
 export interface StepProgressContext {
   writer?: { write: (chunk: unknown) => Promise<void> };
-  requestContext?: Parameters<typeof readBridge>[0];
+  requestContext?: Parameters<typeof getBridge>[0];
   stepName?: string;
 }
 
@@ -19,7 +19,7 @@ export async function reportStepStatus(
   status: 'started' | 'finished',
   extras?: Record<string, unknown>,
 ): Promise<void> {
-  const bridge = readBridge(ctx.requestContext);
+  const bridge = getBridge(ctx.requestContext);
   bridge?.emit({ stepName, kind: status, details: extras });
 
   await ctx.writer?.write({
@@ -36,7 +36,7 @@ export function reportToolCall(
   args: unknown,
   result: unknown,
 ): void {
-  const bridge = readBridge(ctx.requestContext);
+  const bridge = getBridge(ctx.requestContext);
   bridge?.emitToolCall({
     toolName,
     args,

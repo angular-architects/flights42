@@ -31,6 +31,7 @@ export async function agUiRouteHandler(
     agentId: effectiveAgentId,
     resourceId: parsed.input.threadId,
     requestContext,
+    tripwireMessage: 'Sorry, I cannot help with this topic.',
   });
 
   // `c` is typed against @mastra/core's bundled hono, which is structurally
