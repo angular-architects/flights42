@@ -1,13 +1,23 @@
 import type { BoundProperty } from '@a2ui/angular/v0_9';
 import { signal } from '@angular/core';
+import { z } from 'zod/v3';
 
-export interface TicketWidgetContext {
-  ticketId: BoundProperty<string | number>;
-  from: BoundProperty<string>;
-  to: BoundProperty<string>;
-  date: BoundProperty<string>;
-  delay: BoundProperty<number>;
-}
+import {
+  binding,
+  type ContextFromSchema,
+} from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
+
+export const ticketWidgetSchema = z
+  .object({
+    ticketId: binding(z.union([z.string(), z.number()])),
+    from: binding(z.string()),
+    to: binding(z.string()),
+    date: binding(z.string()),
+    delay: binding(z.number()).optional(),
+  })
+  .strict();
+
+export type TicketWidgetContext = ContextFromSchema<typeof ticketWidgetSchema>;
 
 function initialProperty<T>(value: T): BoundProperty<T> {
   return {
