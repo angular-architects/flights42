@@ -13,7 +13,11 @@ import {
   calcProgressPercent,
   calcRemainingMiles,
 } from './miles-calc';
-import { initialContext, MilesProgressContext } from './miles-progress-context';
+import {
+  initialContext,
+  MilesProgressContext,
+  passengerSchema,
+} from './miles-progress-context';
 import { binding } from './utils';
 
 @Component({
@@ -53,17 +57,9 @@ export class MilesProgress {
   );
 }
 
-const passengerSchema = z.object({
-  id: z.number(),
-  firstName: z.string(),
-  lastName: z.string(),
-  bonusMiles: z.number(),
-});
-
 const milesProgressSchema = z
   .object({
     passenger: binding(passengerSchema).optional(),
-    weight: z.number().optional(),
   })
   .strict();
 
@@ -71,4 +67,4 @@ export const milesProgressEntry = {
   name: 'MilesProgress',
   component: MilesProgress,
   schema: milesProgressSchema as unknown,
-} as AngularComponentImplementation;
+} as unknown as AngularComponentImplementation;

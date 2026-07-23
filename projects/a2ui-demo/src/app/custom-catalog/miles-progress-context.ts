@@ -1,13 +1,16 @@
 import type { BoundProperty } from '@a2ui/angular/v0_9';
+import { z } from 'zod/v3';
 
 import { initialProperty } from './utils';
 
-export interface Passenger {
-  id: number;
-  firstName: string;
-  lastName: string;
-  bonusMiles: number;
-}
+export const passengerSchema = z.object({
+  id: z.number(),
+  firstName: z.string(),
+  lastName: z.string(),
+  bonusMiles: z.number(),
+});
+
+export type Passenger = z.infer<typeof passengerSchema>;
 
 export interface MilesProgressContext {
   passenger: BoundProperty<Passenger>;
