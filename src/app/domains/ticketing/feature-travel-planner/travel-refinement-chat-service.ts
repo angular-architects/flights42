@@ -18,8 +18,8 @@ export class TravelRefinementChatService {
 
   private readonly syncSharedState = effect(() => {
     const state = this.store().state();
-    if (isTravelPlan(state)) {
-      this.planStore.setPlan(state);
+    if (state) {
+      this.planStore.setPlan(state as TravelPlan);
     }
   });
 
@@ -38,15 +38,6 @@ export class TravelRefinementChatService {
       addDeveloperMessage(this.store, preamble);
     }
   }
-}
-
-function isTravelPlan(value: unknown): value is TravelPlan {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    Array.isArray((value as TravelPlan).flights) &&
-    Array.isArray((value as TravelPlan).hotels)
-  );
 }
 
 function buildPreferencePreamble(preferences: string): string | undefined {

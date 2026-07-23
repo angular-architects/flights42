@@ -30,12 +30,6 @@ interface ExtendedLocalAgentOptions {
    */
   tripwireMessage?: string | ((reason: string) => string);
   /**
-   * Turns the incoming `RunAgentInput.state` into a text preamble that is
-   * prepended to the last user message, so the model sees the current shared
-   * state as data without it living in the visible chat history.
-   */
-  statePreamble?: (state: unknown) => string | undefined;
-  /**
    * Registration-key names of tools whose AG-UI tool-call events
    * (START/ARGS/END/RESULT) are suppressed on the wire. Used for internal
    * plumbing tools (e.g. plan mutations) whose outcome is already conveyed via
@@ -632,27 +626,6 @@ function safeParseJson(value: string): unknown {
   }
 }
 
-function prependTextToLastUserMessage(
-  messages: CoreMessage[],
-  text: string,
-): CoreMessage[] {
-  for (let index = messages.length - 1; index >= 0; index--) {
-    const target = messages[index];
-    if (target.role !== 'user') {
-      continue;
-    }
-    const content = target.content;
-    const nextContent =
-      typeof content === 'string'
-        ? `${text}\n\n${content}`
-        : [{ type: 'text', text }, ...(content as unknown[])];
-    const next = [...messages];
-    next[index] = { ...target, content: nextContent } as CoreMessage;
-    return next;
-  }
-  return messages;
-}
-
 export class ExtendedMastraAgent extends AbstractAgent {
   override readonly agentId: string;
   readonly agent: Agent;
@@ -660,7 +633,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly requestContext: RequestContext;
   readonly store: Store;
   readonly tripwireMessage?: string | ((reason: string) => string);
-  private readonly statePreamble?: (state: unknown) => string | undefined;
   private readonly hiddenToolNames: ReadonlySet<string>;
 
   private abortSignal?: AbortSignal;
@@ -674,22 +646,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.requestContext = options.requestContext ?? new RequestContext();
     this.store = options.store ?? defaultStore;
     this.tripwireMessage = options.tripwireMessage;
-    this.statePreamble = options.statePreamble;
     this.hiddenToolNames = new Set(options.hiddenToolNames ?? []);
-  }
-
-  private withStatePreamble(
-    messages: CoreMessage[],
-    state: unknown,
-  ): CoreMessage[] {
-    if (state === undefined || state === null || !this.statePreamble) {
-      return messages;
-    }
-    const preamble = this.statePreamble(state)?.trim();
-    if (!preamble) {
-      return messages;
-    }
-    return prependTextToLastUserMessage(messages, preamble);
   }
 
   private resolveTripwireMessage(reason: string): string {
@@ -734,7 +691,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
       requestContext: this.requestContext,
       store: this.store,
       tripwireMessage: this.tripwireMessage,
-      statePreamble: this.statePreamble,
       hiddenToolNames: [...this.hiddenToolNames],
     });
   }
@@ -1026,18 +982,13 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
     this.requestContext.set('ag-ui', { context: input.context });
 
-    const messagesForRun = this.withStatePreamble(
-      rehydratedMastraMessages,
-      input.state,
-    );
-
     let activeToolCallId: string | undefined;
     let activeToolName: string | undefined;
 
     try {
       const stream = await this.createMastraStream(
         input,
-        messagesForRun,
+        rehydratedMastraMessages,
         clientTools,
       );
 
@@ -1325,7 +1276,6 @@ export function getExtendedLocalAgent(options: {
   requestContext?: RequestContext;
   store?: Store;
   tripwireMessage?: string | ((reason: string) => string);
-  statePreamble?: (state: unknown) => string | undefined;
   hiddenToolNames?: readonly string[];
 }): ExtendedMastraAgent {
   const agent = options.mastra.getAgent(options.agentId);
@@ -1340,7 +1290,6 @@ export function getExtendedLocalAgent(options: {
     requestContext: options.requestContext,
     store: options.store,
     tripwireMessage: options.tripwireMessage,
-    statePreamble: options.statePreamble,
     hiddenToolNames: options.hiddenToolNames,
   });
 }

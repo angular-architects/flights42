@@ -6,7 +6,6 @@ export * from './remove-flight-from-plan.tool.js';
 export * from './remove-hotel-from-plan.tool.js';
 export * from './replace-flight-in-plan.tool.js';
 export * from './set-travel-plan.tool.js';
-export * from './state-preamble.js';
 
 // Registration-key names (as they appear on the AG-UI wire as toolCallName) of
 // the internal plan tools. Their tool-call events are hidden from the client:

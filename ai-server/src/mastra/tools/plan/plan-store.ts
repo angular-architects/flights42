@@ -1,3 +1,6 @@
+// The run's shared travel-plan state lives on the request-bound AG-UI bridge:
+// readPlan/getState, commitPlan/setState, and emitStateSnapshot streams it back
+// to the client. Bridge design and state wiring are documented in docs/bridge.md.
 import { readBridge } from '@internal/ag-ui-server';
 import type { RequestContext } from '@mastra/core/request-context';
 
