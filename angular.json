@@ -76,7 +76,9 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "browsers": ["Chromium"]
+            "browsers": ["Chromium"],
+            "setupFiles": ["src/testing/vitest-setup.ts"],
+            "runnerConfig": "vitest.config.ts"
           },
           "configurations": {
             "ci": {
