@@ -16,12 +16,14 @@ export class TravelRefinementChatService {
   private readonly planStore = inject(TravelPlanStore);
   private readonly store = injectTravelRefinementAgentStore();
 
-  private readonly syncSharedState = effect(() => {
-    const state = this.store().state();
-    if (state) {
-      this.planStore.setPlan(state as TravelPlan);
-    }
-  });
+  constructor() {
+    effect(() => {
+      const state = this.store().state();
+      if (state) {
+        this.planStore.setPlan(state as TravelPlan);
+      }
+    });
+  }
 
   public init(): void {
     this.chatRegistry.setChat(
