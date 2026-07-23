@@ -29,6 +29,20 @@ interface ExtendedLocalAgentOptions {
    * receives the technical reason. Defaults to surfacing the raw reason.
    */
   tripwireMessage?: string | ((reason: string) => string);
+  /**
+   * Turns the incoming `RunAgentInput.state` into a text preamble that is
+   * prepended to the last user message, so the model sees the current shared
+   * state as data without it living in the visible chat history.
+   */
+  statePreamble?: (state: unknown) => string | undefined;
+  /**
+   * Registration-key names of tools whose AG-UI tool-call events
+   * (START/ARGS/END/RESULT) are suppressed on the wire. Used for internal
+   * plumbing tools (e.g. plan mutations) whose outcome is already conveyed via
+   * STATE_SNAPSHOT — the model still calls them and keeps its own history; only
+   * the client-facing projection is hidden.
+   */
+  hiddenToolNames?: readonly string[];
 }
 
 interface ClientToolDefinition {
@@ -618,6 +632,27 @@ function safeParseJson(value: string): unknown {
   }
 }
 
+function prependTextToLastUserMessage(
+  messages: CoreMessage[],
+  text: string,
+): CoreMessage[] {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const target = messages[index];
+    if (target.role !== 'user') {
+      continue;
+    }
+    const content = target.content;
+    const nextContent =
+      typeof content === 'string'
+        ? `${text}\n\n${content}`
+        : [{ type: 'text', text }, ...(content as unknown[])];
+    const next = [...messages];
+    next[index] = { ...target, content: nextContent } as CoreMessage;
+    return next;
+  }
+  return messages;
+}
+
 export class ExtendedMastraAgent extends AbstractAgent {
   override readonly agentId: string;
   readonly agent: Agent;
@@ -625,6 +660,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly requestContext: RequestContext;
   readonly store: Store;
   readonly tripwireMessage?: string | ((reason: string) => string);
+  private readonly statePreamble?: (state: unknown) => string | undefined;
+  private readonly hiddenToolNames: ReadonlySet<string>;
 
   private abortSignal?: AbortSignal;
   private mcpAppsUiMeta?: Map<string, McpAppUiMeta>;
@@ -637,6 +674,22 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.requestContext = options.requestContext ?? new RequestContext();
     this.store = options.store ?? defaultStore;
     this.tripwireMessage = options.tripwireMessage;
+    this.statePreamble = options.statePreamble;
+    this.hiddenToolNames = new Set(options.hiddenToolNames ?? []);
+  }
+
+  private withStatePreamble(
+    messages: CoreMessage[],
+    state: unknown,
+  ): CoreMessage[] {
+    if (state === undefined || state === null || !this.statePreamble) {
+      return messages;
+    }
+    const preamble = this.statePreamble(state)?.trim();
+    if (!preamble) {
+      return messages;
+    }
+    return prependTextToLastUserMessage(messages, preamble);
   }
 
   private resolveTripwireMessage(reason: string): string {
@@ -681,6 +734,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
       requestContext: this.requestContext,
       store: this.store,
       tripwireMessage: this.tripwireMessage,
+      statePreamble: this.statePreamble,
+      hiddenToolNames: [...this.hiddenToolNames],
     });
   }
 
@@ -758,12 +813,28 @@ export class ExtendedMastraAgent extends AbstractAgent {
         }
       };
 
+      // Per-run shared working state. Starts from the client-provided
+      // RunAgentInput.state and is mutated in place by state-aware tools
+      // (via the bridge) during the run. The client is the source of truth;
+      // we ship a fresh STATE_SNAPSHOT back on every commit.
+      let runState: unknown = input.state;
+
       // Per-request bridge: workflow steps push progress AND tool calls
       // here; this bypasses Mastra's tool-stream pipe entirely and is
       // isolated per RequestContext.
       const bridge: AgUiBridge = {
         emit: emitStep,
         emitToolCall: emitBridgeToolCall,
+        emitStateSnapshot: (state) => {
+          observer.next({
+            type: EventType.STATE_SNAPSHOT,
+            snapshot: state,
+          } as BaseEvent);
+        },
+        getState: () => runState,
+        setState: (state) => {
+          runState = state;
+        },
       };
       attachBridge(this.requestContext, bridge);
 
@@ -773,6 +844,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
         runId: input.runId,
       };
       observer.next(startedEvent);
+
+      // Tool-call ids of hidden tools, so their (later) TOOL_CALL_RESULT is
+      // suppressed too — onToolResultPart only carries the id, not the name.
+      const hiddenToolCallIds = new Set<string>();
 
       void this.streamMastraAgent(input, initialMessageId, {
         onTextPart: (delta, messageId) => {
@@ -788,6 +863,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
           emitStep({ stepName, kind });
         },
         onToolCallPart: ({ toolCallId, toolName, args }) => {
+          if (this.hiddenToolNames.has(toolName)) {
+            hiddenToolCallIds.add(toolCallId);
+            return;
+          }
           const startEvent: BaseEvent = {
             type: EventType.TOOL_CALL_START,
             parentMessageId: initialMessageId,
@@ -810,6 +889,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
           observer.next(endEvent);
         },
         onToolResultPart: ({ toolCallId, result }) => {
+          if (hiddenToolCallIds.has(toolCallId)) {
+            return;
+          }
           const resultEvent: BaseEvent = {
             type: EventType.TOOL_CALL_RESULT,
             toolCallId,
@@ -944,13 +1026,18 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
     this.requestContext.set('ag-ui', { context: input.context });
 
+    const messagesForRun = this.withStatePreamble(
+      rehydratedMastraMessages,
+      input.state,
+    );
+
     let activeToolCallId: string | undefined;
     let activeToolName: string | undefined;
 
     try {
       const stream = await this.createMastraStream(
         input,
-        rehydratedMastraMessages,
+        messagesForRun,
         clientTools,
       );
 
@@ -1238,6 +1325,8 @@ export function getExtendedLocalAgent(options: {
   requestContext?: RequestContext;
   store?: Store;
   tripwireMessage?: string | ((reason: string) => string);
+  statePreamble?: (state: unknown) => string | undefined;
+  hiddenToolNames?: readonly string[];
 }): ExtendedMastraAgent {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
@@ -1251,5 +1340,7 @@ export function getExtendedLocalAgent(options: {
     requestContext: options.requestContext,
     store: options.store,
     tripwireMessage: options.tripwireMessage,
+    statePreamble: options.statePreamble,
+    hiddenToolNames: options.hiddenToolNames,
   });
 }

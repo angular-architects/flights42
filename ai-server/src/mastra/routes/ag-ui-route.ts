@@ -2,7 +2,22 @@ import { getExtendedLocalAgent } from '@internal/ag-ui-server';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
+import {
+  INTERNAL_PLAN_TOOL_NAMES,
+  travelPlanStatePreamble,
+} from '../tools/plan/index.js';
 import { parseRunAgentInput, streamAgentEvents } from './ag-ui-stream.js';
+
+const STATE_PREAMBLES: Record<string, (state: unknown) => string | undefined> =
+  {
+    travelRefinementAgent: travelPlanStatePreamble,
+  };
+
+const HIDDEN_TOOLS: Record<string, readonly string[]> = {
+  travelRefinementAgent: INTERNAL_PLAN_TOOL_NAMES,
+};
+
+const showInternalTools = process.env['SHOW_INTERNAL_TOOLS'] === 'true';
 
 export async function agUiRouteHandler(
   c: ContextWithMastra,
@@ -32,6 +47,10 @@ export async function agUiRouteHandler(
     resourceId: parsed.input.threadId,
     requestContext,
     tripwireMessage: 'Sorry, I cannot help with this topic.',
+    statePreamble: STATE_PREAMBLES[effectiveAgentId],
+    hiddenToolNames: showInternalTools
+      ? undefined
+      : HIDDEN_TOOLS[effectiveAgentId],
   });
 
   // `c` is typed against @mastra/core's bundled hono, which is structurally

@@ -26,7 +26,14 @@ Keep these satisfied, unless the user explicitly asks to deviate ("no hotel in R
   spelling variants themselves (e.g. Wien/Vienna), so one call per route/city is enough.
 - Do not change the plan unless the user explicitly asks for it. Searching or answering a
   question changes nothing.
-- The plan lives on the client: read it with getTravelPlan, change it with the plan tools.
+- The current plan is given to you as data above the conversation; read it from there.
+  Change it with the plan tools, and use getTravelPlan only to verify the plan after a
+  change. Every plan tool commits its change and streams the updated plan back to the UI.
+- Apply plan mutations one at a time — never call two plan-changing tools (addFlightToPlan,
+  removeFlightFromPlan, replaceFlightInPlan, addHotelToPlan, removeHotelFromPlan,
+  setTravelPlan) together in the same step; each rewrites the whole plan, so parallel calls
+  overwrite each other. Run them in separate steps, or fold a multi-part change into one
+  setTravelPlan call. (Widgets are the only tools you emit in parallel — see "## One turn".)
 - When the user asks for flights of a route without a date, take that leg's date from the
   current plan.
 

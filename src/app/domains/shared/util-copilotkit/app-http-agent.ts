@@ -4,6 +4,7 @@ import { type Context, type RunAgentInput } from '@ag-ui/core';
 export interface AppHttpAgentOptions {
   forwardedProps?: () => Record<string, unknown>;
   context?: () => readonly Context[];
+  state?: () => unknown;
   useServerMemory?: boolean;
 }
 
@@ -38,7 +39,14 @@ export class AppHttpAgent extends HttpAgent {
       this.options.context?.() ?? [],
       input.context,
     );
-    return super.requestInit({ ...input, messages, forwardedProps, context });
+    const state = this.options.state ? this.options.state() : input.state;
+    return super.requestInit({
+      ...input,
+      messages,
+      forwardedProps,
+      context,
+      state,
+    });
   }
 
   private markAllSent(

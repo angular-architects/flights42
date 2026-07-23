@@ -51,6 +51,12 @@ export interface AgUiToolCallEvent {
 export interface AgUiBridge {
   emit(event: AgUiStepEvent): void;
   emitToolCall(event: AgUiToolCallEvent): void;
+  emitStateSnapshot(state: unknown): void;
+  // Shared per-run working state. Lives on the bridge (a single object shared
+  // across tool calls) because Mastra hands each tool a COPY of the
+  // RequestContext, so RequestContext writes do not propagate between tools.
+  getState(): unknown;
+  setState(state: unknown): void;
 }
 
 /** @deprecated Use {@link AgUiBridge} instead. Kept for source compatibility. */
@@ -81,12 +87,19 @@ export function getBridge(
     candidate &&
     typeof candidate === 'object' &&
     typeof (candidate as { emit?: unknown }).emit === 'function' &&
-    typeof (candidate as { emitToolCall?: unknown }).emitToolCall === 'function'
+    typeof (candidate as { emitToolCall?: unknown }).emitToolCall ===
+      'function' &&
+    typeof (candidate as { emitStateSnapshot?: unknown }).emitStateSnapshot ===
+      'function' &&
+    typeof (candidate as { setState?: unknown }).setState === 'function'
   ) {
     return candidate as AgUiBridge;
   }
   return undefined;
 }
+
+/** Alias of {@link getBridge}. */
+export const readBridge = getBridge;
 
 /** @deprecated Use {@link attachBridge}. */
 export const attachStepBridge = attachBridge;

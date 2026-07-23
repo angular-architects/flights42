@@ -29,6 +29,7 @@ export interface InitAgentStoreConfig {
   humanInTheLoop?: readonly HumanInTheLoopConfig<any>[];
   forwardedProps?: () => Record<string, unknown>;
   context?: () => readonly Context[];
+  state?: () => unknown;
   useServerMemory?: boolean;
 }
 
@@ -47,6 +48,11 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
       ? runInInjectionContext(envInjector, () => config.context!())
       : [];
 
+  const stateFor = (): unknown =>
+    config.state
+      ? runInInjectionContext(envInjector, () => config.state!())
+      : undefined;
+
   const agentConfig = {
     agentId: config.agentId,
     url: config.url,
@@ -56,6 +62,7 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   const httpAgent = new AppHttpAgent(agentConfig, {
     forwardedProps: forwardedPropsFor,
     context: contextFor,
+    state: config.state ? stateFor : undefined,
     useServerMemory: config.useServerMemory,
   });
 

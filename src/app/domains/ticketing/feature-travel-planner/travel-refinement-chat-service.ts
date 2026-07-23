@@ -1,10 +1,11 @@
-import { inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import {
   addDeveloperMessage,
   reset,
 } from '../../shared/util-copilotkit/agent-store-helper';
+import { TravelPlan, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { injectTravelRefinementAgentStore } from './travel-refinement-agent-store';
 
@@ -12,7 +13,15 @@ import { injectTravelRefinementAgentStore } from './travel-refinement-agent-stor
 export class TravelRefinementChatService {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly requestStore = inject(TravelPlannerRequestStore);
+  private readonly planStore = inject(TravelPlanStore);
   private readonly store = injectTravelRefinementAgentStore();
+
+  private readonly syncSharedState = effect(() => {
+    const state = this.store().state();
+    if (isTravelPlan(state)) {
+      this.planStore.setPlan(state);
+    }
+  });
 
   public init(): void {
     this.chatRegistry.setChat(
@@ -29,6 +38,15 @@ export class TravelRefinementChatService {
       addDeveloperMessage(this.store, preamble);
     }
   }
+}
+
+function isTravelPlan(value: unknown): value is TravelPlan {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    Array.isArray((value as TravelPlan).flights) &&
+    Array.isArray((value as TravelPlan).hotels)
+  );
 }
 
 function buildPreferencePreamble(preferences: string): string | undefined {
