@@ -1,9 +1,8 @@
 import { HttpAgent, type HttpAgentConfig } from '@ag-ui/client';
-import { type Context, type Message, type RunAgentInput } from '@ag-ui/core';
+import { type Message, type RunAgentInput } from '@ag-ui/core';
 
 export interface AppHttpAgentOptions {
   forwardedProps?: () => Record<string, unknown>;
-  context?: () => readonly Context[];
   state?: () => unknown;
   useServerMemory?: boolean;
 }
@@ -47,16 +46,11 @@ export class AppHttpAgent extends HttpAgent {
       ...(this.options.forwardedProps?.() ?? {}),
       ...input.forwardedProps,
     };
-    const context = mergePersistentContext(
-      this.options.context?.() ?? [],
-      input.context,
-    );
     const state = this.options.state ? this.options.state() : input.state;
     return super.requestInit({
       ...input,
       messages,
       forwardedProps,
-      context,
       state,
     });
   }
@@ -72,15 +66,4 @@ export class AppHttpAgent extends HttpAgent {
   clearSentHistory(): void {
     this.sentMessageIds.clear();
   }
-}
-
-function mergePersistentContext(
-  persistent: readonly Context[],
-  incoming: readonly Context[] = [],
-): Context[] {
-  const present = new Set(incoming.map((entry) => entry.description));
-  return [
-    ...persistent.filter((entry) => !present.has(entry.description)),
-    ...incoming,
-  ];
 }

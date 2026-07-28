@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { injectAgentStore } from '@copilotkit/angular';
+import { connectAgentContext, injectAgentStore } from '@copilotkit/angular';
 
 import { ConfigService } from '../../domains/shared/util-common/config-service';
 import { catalogIdToContextEntry } from '../../domains/shared/util-copilotkit/a2ui/catalog-context';
@@ -10,12 +10,12 @@ import { submitFlightSearchTool } from './tools/submit-flight-search.tool';
 
 const AGENT_ID = 'dashboardAgent';
 
-function buildCatalogIdContext() {
-  return [catalogIdToContextEntry(inject(A2UI_CUSTOM_CATALOG).id)];
-}
-
 export function injectDashboardAgentStore() {
-  const catalogContext = buildCatalogIdContext();
+  const catalogContext = {
+    ...catalogIdToContextEntry(inject(A2UI_CUSTOM_CATALOG).id),
+    agentIds: [AGENT_ID],
+  };
+  connectAgentContext(() => catalogContext);
 
   initAgentStore({
     agentId: AGENT_ID,
@@ -23,7 +23,6 @@ export function injectDashboardAgentStore() {
     forwardedProps: () => ({
       preventCaching: inject(DashboardPrefs).preventCaching(),
     }),
-    context: () => catalogContext,
     frontendTools: [submitFlightSearchTool],
   });
 

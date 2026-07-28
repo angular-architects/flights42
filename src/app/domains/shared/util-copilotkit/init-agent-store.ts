@@ -1,5 +1,4 @@
 import { randomUUID } from '@ag-ui/client';
-import { type Context } from '@ag-ui/core';
 import {
   EnvironmentInjector,
   inject,
@@ -27,7 +26,6 @@ export interface InitAgentStoreConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   humanInTheLoop?: readonly HumanInTheLoopConfig<any>[];
   forwardedProps?: () => Record<string, unknown>;
-  context?: () => readonly Context[];
   state?: () => unknown;
   useServerMemory?: boolean;
 }
@@ -42,11 +40,6 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
       ? runInInjectionContext(envInjector, () => config.forwardedProps!())
       : {};
 
-  const contextFor = (): readonly Context[] =>
-    config.context
-      ? runInInjectionContext(envInjector, () => config.context!())
-      : [];
-
   const stateFor = (): unknown =>
     config.state
       ? runInInjectionContext(envInjector, () => config.state!())
@@ -60,7 +53,6 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
 
   const httpAgent = new AppHttpAgent(agentConfig, {
     forwardedProps: forwardedPropsFor,
-    context: contextFor,
     state: config.state ? stateFor : undefined,
     useServerMemory: config.useServerMemory,
   });
