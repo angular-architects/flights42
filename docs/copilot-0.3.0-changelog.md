@@ -6,9 +6,10 @@ Perspektive: _Welche Stellen im Buch und in den Workshop-Slides, die auf diesem
 Repo basieren, müssen angepasst werden?_ Ausführliche Begründungen und
 Verifikationsdetails stehen im dortigen `## Migration log`.
 
-Stand: 2026-07-28, Branch `copilotkit-v0.3.0`. Paketstand:
-`@copilotkit/angular` **0.3.0** (Core 1.63.2), neu `@ag-ui/mcp-apps-middleware`
-**0.0.3**, entfernt `@copilotkit/runtime`.
+Stand: 2026-07-29 (MCP-Apps-Hybrid-Revision in §5), Branch
+`copilotkit-v0.3.0`. Paketstand: `@copilotkit/angular` **0.3.0**
+(Core 1.63.2), neu `@ag-ui/mcp-apps-middleware` **0.0.3** (nur als Proxy),
+entfernt `@copilotkit/runtime`.
 
 ---
 
