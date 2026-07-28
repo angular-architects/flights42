@@ -1,3 +1,8 @@
+import {
+  getServerHash,
+  MCPAppsMiddleware,
+  type MCPClientConfig,
+} from '@ag-ui/mcp-apps-middleware';
 import { getExtendedLocalAgent } from '@internal/ag-ui-server';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
@@ -10,6 +15,27 @@ const HIDDEN_TOOLS: Record<string, readonly string[]> = {
 };
 
 const showInternalTools = process.env['SHOW_INTERNAL_TOOLS'] === 'true';
+
+const HOTELS_MCP_SERVER: MCPClientConfig = {
+  type: 'http',
+  url: 'http://127.0.0.1:3002/mcp',
+  serverId: 'hotels',
+};
+
+const MCP_APPS_SERVER_HASHES: Readonly<Record<string, string>> = {
+  hotels: getServerHash(HOTELS_MCP_SERVER),
+};
+
+const mcpAppsProxy = new MCPAppsMiddleware({
+  mcpServers: [HOTELS_MCP_SERVER],
+});
+
+function isProxiedMcpRequest(forwardedProps: unknown): boolean {
+  return Boolean(
+    (forwardedProps as { __proxiedMCPRequest?: unknown } | undefined)
+      ?.__proxiedMCPRequest,
+  );
+}
 
 export async function agUiRouteHandler(
   c: ContextWithMastra,
@@ -42,14 +68,19 @@ export async function agUiRouteHandler(
     hiddenToolNames: showInternalTools
       ? undefined
       : HIDDEN_TOOLS[effectiveAgentId],
+    mcpAppsServerHashes: MCP_APPS_SERVER_HASHES,
   });
+
+  const middleware = isProxiedMcpRequest(parsed.input.forwardedProps)
+    ? mcpAppsProxy
+    : undefined;
 
   // `c` is typed against @mastra/core's bundled hono, which is structurally
   // incompatible with the project's hono `Context` that `streamSSE` expects.
   return streamSSE(
     c as unknown as Parameters<typeof streamSSE>[0],
     async (sse) => {
-      await streamAgentEvents(sse, agent, parsed.input);
+      await streamAgentEvents(sse, agent, parsed.input, { middleware });
     },
   );
 }

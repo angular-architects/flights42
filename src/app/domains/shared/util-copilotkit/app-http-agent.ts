@@ -19,7 +19,11 @@ export class AppHttpAgent extends HttpAgent {
     super(config);
     if (options.useServerMemory) {
       this.subscribe({
-        onRunFinalized: () => this.markAllSent(),
+        onRunFinalized: ({ input }) => {
+          if (!isProxiedMcpRequest(input)) {
+            this.markAllSent();
+          }
+        },
       });
     }
   }
@@ -44,7 +48,7 @@ export class AppHttpAgent extends HttpAgent {
 
   protected override requestInit(input: RunAgentInput): RequestInit {
     let messages = input.messages;
-    if (this.options.useServerMemory) {
+    if (this.options.useServerMemory && !isProxiedMcpRequest(input)) {
       messages = messages.filter(
         (message) => !this.sentMessageIds.has(message.id),
       );
@@ -74,4 +78,11 @@ export class AppHttpAgent extends HttpAgent {
   clearSentHistory(): void {
     this.sentMessageIds.clear();
   }
+}
+
+function isProxiedMcpRequest(input: RunAgentInput): boolean {
+  return Boolean(
+    (input.forwardedProps as { __proxiedMCPRequest?: unknown } | undefined)
+      ?.__proxiedMCPRequest,
+  );
 }

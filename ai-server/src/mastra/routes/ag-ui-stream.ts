@@ -1,4 +1,9 @@
-import type { AbstractAgent, BaseEvent, RunAgentInput } from '@ag-ui/client';
+import type {
+  AbstractAgent,
+  BaseEvent,
+  Middleware,
+  RunAgentInput,
+} from '@ag-ui/client';
 import { transformChunks } from '@ag-ui/client';
 import type { ContextWithMastra } from '@mastra/core/server';
 
@@ -24,6 +29,7 @@ export interface CreateAgUiEventStreamOptions {
   onEvent?: (
     event: BaseEvent,
   ) => Promise<readonly BaseEvent[] | void> | readonly BaseEvent[] | void;
+  middleware?: Middleware;
 }
 
 export type ParseRunAgentInputResult =
@@ -77,7 +83,10 @@ export async function streamAgentEvents(
     // events are guaranteed to appear right after it.
     let writeQueue: Promise<void> = Promise.resolve();
 
-    const events$ = agent.run(input).pipe(transformChunks(false));
+    const source$ = options.middleware
+      ? options.middleware.run(input, agent)
+      : agent.run(input);
+    const events$ = source$.pipe(transformChunks(false));
     events$.subscribe({
       next(event: BaseEvent) {
         writeQueue = writeQueue

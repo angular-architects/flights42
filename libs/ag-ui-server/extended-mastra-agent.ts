@@ -37,6 +37,7 @@ interface ExtendedLocalAgentOptions {
    * the client-facing projection is hidden.
    */
   hiddenToolNames?: readonly string[];
+  mcpAppsServerHashes?: Readonly<Record<string, string>>;
 }
 
 interface ClientToolDefinition {
@@ -119,6 +120,7 @@ function readToolUiMeta(tool: unknown): McpAppUiMeta | undefined {
 
 function buildMcpAppsActivityContent(
   metadata: McpAppUiMeta,
+  serverHash: string,
   toolInput: unknown,
   result: unknown,
 ): Record<string, unknown> {
@@ -146,6 +148,7 @@ function buildMcpAppsActivityContent(
   }
 
   return {
+    serverHash,
     serverId: metadata.serverId,
     resourceUri: metadata.resourceUri,
     toolInput: input,
@@ -634,6 +637,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly store: Store;
   readonly tripwireMessage?: string | ((reason: string) => string);
   private readonly hiddenToolNames: ReadonlySet<string>;
+  private readonly mcpAppsServerHashes: Readonly<Record<string, string>>;
 
   private abortSignal?: AbortSignal;
   private mcpAppsUiMeta?: Map<string, McpAppUiMeta>;
@@ -647,6 +651,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.store = options.store ?? defaultStore;
     this.tripwireMessage = options.tripwireMessage;
     this.hiddenToolNames = new Set(options.hiddenToolNames ?? []);
+    this.mcpAppsServerHashes = options.mcpAppsServerHashes ?? {};
   }
 
   private resolveTripwireMessage(reason: string): string {
@@ -692,6 +697,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       store: this.store,
       tripwireMessage: this.tripwireMessage,
       hiddenToolNames: [...this.hiddenToolNames],
+      mcpAppsServerHashes: this.mcpAppsServerHashes,
     });
   }
 
@@ -1105,6 +1111,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
                   activityType: 'mcp-apps',
                   content: buildMcpAppsActivityContent(
                     uiMeta,
+                    this.mcpAppsServerHashes[uiMeta.serverId] ?? '',
                     pending.args,
                     payload.payload.result,
                   ),
@@ -1277,6 +1284,7 @@ export function getExtendedLocalAgent(options: {
   store?: Store;
   tripwireMessage?: string | ((reason: string) => string);
   hiddenToolNames?: readonly string[];
+  mcpAppsServerHashes?: Readonly<Record<string, string>>;
 }): ExtendedMastraAgent {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
@@ -1291,5 +1299,6 @@ export function getExtendedLocalAgent(options: {
     store: options.store,
     tripwireMessage: options.tripwireMessage,
     hiddenToolNames: options.hiddenToolNames,
+    mcpAppsServerHashes: options.mcpAppsServerHashes,
   });
 }
