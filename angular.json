@@ -78,13 +78,20 @@
           "options": {
             "browsers": ["Chromium"],
             "setupFiles": ["src/testing/vitest-setup.ts"],
-            "runnerConfig": "vitest.config.ts"
+            "runnerConfig": "vitest.config.ts",
+            "exclude": ["**/*.aimock.spec.ts"]
           },
           "configurations": {
             "ci": {
               "watch": false,
               "browsers": ["ChromiumHeadless"]
             }
+          }
+        },
+        "test-node": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "include": ["**/*.aimock.spec.ts"]
           }
         },
         "lint": {
