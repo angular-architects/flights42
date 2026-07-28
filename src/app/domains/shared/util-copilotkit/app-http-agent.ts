@@ -36,7 +36,7 @@ export class AppHttpAgent extends HttpAgent {
    * authoritative TOOL_CALL_RESULT against the original toolCallId on the
    * resume run. The synthetic message would shadow that real result in
    * `RenderToolCalls` (first match wins), so it is dropped for the interrupt
-   * reasons our server emits. Upstream issue: CopilotKit/CopilotKit#TODO —
+   * reasons our server emits. Upstream issue: CopilotKit/CopilotKit#6201 —
    * remove this override once the synthesis is gated there.
    */
   override addMessage(message: Message): void {

@@ -113,7 +113,8 @@ override addMessage(message: Message): void {
 (Reason `"tool_call"`) unangetastet — relevant, falls die Demo später beide
 HITL-Muster nebeneinander zeigt. Wire-Format des Resume ist unverändert
 (`[{ interruptId, status: 'resolved', payload }]`) — Serverseite unberührt.
-Ein Upstream-Issue schlägt vor, die Synthese in CopilotKit selbst zu gaten;
+Upstream-Issue [#6201](https://github.com/CopilotKit/CopilotKit/issues/6201)
+schlägt vor, die Synthese in CopilotKit selbst zu gaten;
 sobald das landet, fliegt der Override ersatzlos raus.
 
 **Abhängigkeit:** Der Controller sendet beim Resume nur `{ resume }` —

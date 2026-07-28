@@ -925,7 +925,8 @@ below); the LLM-driven happy paths should be re-checked manually once.
   `ToolCallResult` against the original `toolCallId` on the resume run.
   The override is therefore gated on the reasons our server emits
   (`human_approval`, `tool_suspended`) so a future CopilotKit-style
-  interrupt-tool demo would keep its synthesis; an upstream issue proposes
+  interrupt-tool demo would keep its synthesis; upstream issue
+  [#6201](https://github.com/CopilotKit/CopilotKit/issues/6201) proposes
   gating the synthesis in CopilotKit itself.
 - D5.2 resolved: `#startResume` indeed sends only `{ resume }`;
   forwarded props (agent mode) survive because `AppHttpAgent.requestInit`
