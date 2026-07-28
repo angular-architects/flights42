@@ -1,5 +1,4 @@
 import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
-
 const hotelsSection = USE_MCP
   ? `## Hotels
 
@@ -26,8 +25,7 @@ const hotelsSection = USE_MCP
   short messageWidget AND one hotelWidget per hotel you want to show, together as
   parallel tool calls. Do NOT repeat the hotel details in the messageWidget text
   once they are shown via hotelWidgets.`;
-
-export function ticketingAgentPrompt(catalogId: string): string {
+export function ticketingAgentPrompt(catalogId) {
   return `
 You are Flight42, a UI assistant that helps passengers with finding flights,
 hotels, bookings, cancellations, and check-in.

@@ -1,0 +1,197 @@
+import { A2uiMessageListWrapperSchema } from '@a2ui/web_core/v0_9';
+import { createTool } from '@mastra/core/tools';
+import { z } from 'zod';
+export const RENDER_A2UI_TOOL_NAME = 'renderA2uiTool';
+function getMessageSurfaceId(message) {
+  if ('createSurface' in message) {
+    return message.createSurface.surfaceId;
+  }
+  if ('updateComponents' in message) {
+    return message.updateComponents.surfaceId;
+  }
+  if ('updateDataModel' in message) {
+    return message.updateDataModel.surfaceId;
+  }
+  if ('deleteSurface' in message) {
+    return message.deleteSurface.surfaceId;
+  }
+  throw new Error(
+    'renderA2uiTool: encountered message without recognizable type',
+  );
+}
+function collectReferencedChildIds(components) {
+  const ids = [];
+  for (const component of components) {
+    const child = component['child'];
+    if (typeof child === 'string') {
+      ids.push(child);
+    }
+    const children = component['children'];
+    if (Array.isArray(children)) {
+      for (const entry of children) {
+        if (typeof entry === 'string') {
+          ids.push(entry);
+        }
+      }
+    }
+  }
+  return ids;
+}
+// The wire schema (`AnyComponentSchema`) is a passthrough, so a Card carrying a
+// `children` array parses fine yet renders empty — the v0.9 renderer reads only
+// `child`. These sets let us reject that mismatch so the model self-corrects.
+const SINGLE_CHILD_COMPONENTS = new Set(['Card', 'Button', 'Modal']);
+const MULTI_CHILD_COMPONENTS = new Set(['Row', 'Column', 'List']);
+function validateChildShape(messages) {
+  const updateComponentsMessages = messages.filter(
+    (m) => 'updateComponents' in m,
+  );
+  for (const message of updateComponentsMessages) {
+    const components = message.updateComponents.components;
+    for (const component of components) {
+      const name = component['component'];
+      if (typeof name !== 'string') {
+        continue;
+      }
+      const id =
+        typeof component['id'] === 'string' ? component['id'] : '<unknown>';
+      if (
+        SINGLE_CHILD_COMPONENTS.has(name) &&
+        Array.isArray(component['children'])
+      ) {
+        throw new Error(
+          `renderA2uiTool: component "${id}" (${name}) uses "children", but ${name} takes a SINGLE "child" (one component id). To show multiple elements, wrap them in a Column or Row and set that container's id as "child".`,
+        );
+      }
+      if (
+        MULTI_CHILD_COMPONENTS.has(name) &&
+        typeof component['child'] === 'string'
+      ) {
+        throw new Error(
+          `renderA2uiTool: component "${id}" (${name}) uses "child", but ${name} takes a "children" array of component ids.`,
+        );
+      }
+    }
+  }
+}
+function validateReferentialIntegrity(messages) {
+  const updateComponentsMessages = messages.filter(
+    (m) => 'updateComponents' in m,
+  );
+  for (const message of updateComponentsMessages) {
+    const components = message.updateComponents.components;
+    const definedIds = new Set();
+    for (const component of components) {
+      const id = component['id'];
+      if (typeof id === 'string') {
+        definedIds.add(id);
+      }
+    }
+    const referenced = collectReferencedChildIds(components);
+    for (const referencedId of referenced) {
+      if (!definedIds.has(referencedId)) {
+        throw new Error(
+          `renderA2uiTool: component id "${referencedId}" is referenced via child/children but is not defined in updateComponents.components`,
+        );
+      }
+    }
+  }
+}
+export const renderA2uiTool = createTool({
+  id: RENDER_A2UI_TOOL_NAME,
+  description: `
+    Render the final answer to the user as an A2UI surface.
+
+    Input is a wrapper object of the shape \`{ messages: A2uiMessage[] }\` containing a
+    complete, self-contained sequence of A2UI v0.9 messages for a single surface. The
+    sequence MUST contain:
+      1) exactly one \`createSurface\` message with a fresh \`surfaceId\` (any unique string)
+         and the \`catalogId\` given in the system instructions.
+      2) exactly one \`updateComponents\` message for the same \`surfaceId\`. Its \`components\`
+         array MUST define an entry with \`id: "root"\` of component type \`Column\` whose
+         \`children\` list the top-level blocks of the answer.
+      3) any number of \`updateDataModel\` messages for the same \`surfaceId\` to supply the
+         values bound via \`{ path: "/..." }\` references inside the components.
+
+    Rules:
+    - All messages MUST use \`version: "v0.9"\` and share the same \`surfaceId\`.
+    - Every id referenced via \`child\` / \`children\` MUST be defined in the same
+      \`updateComponents.components\` array.
+    - Any component from the A2UI basic catalog may be used (Column, Row, Card, Text,
+      Button, TextField, CheckBox, Image, ...).
+    - Container nesting: Row, Column and List take a \`children\` ARRAY of ids. Card,
+      Button and Modal take a SINGLE \`child\` (one id), NOT \`children\` — to place
+      several elements in a Card, wrap them in a Column/Row and pass that container
+      id as the Card \`child\`. A Card with \`children\` renders EMPTY.
+    - Bind dynamic values via \`{ path: "/..." }\` and provide the data through
+      \`updateDataModel\`.
+  `,
+  // A loose shape is exposed to the model/tool runtime here; the strict A2UI
+  // schema is then applied inside `execute` via `A2uiMessageListWrapperSchema.parse(...)`.
+  // This keeps defensive validation without triggering deep generic
+  // instantiation of the full (recursive) A2UI wrapper schema inside
+  // `createTool`'s generics.
+  inputSchema: z.object({
+    messages: z
+      .array(z.record(z.string(), z.unknown()))
+      .describe(
+        'Ordered list of A2UI v0.9 messages for a single surface (createSurface, updateComponents, updateDataModel).',
+      ),
+  }),
+  execute: async (inputData) => {
+    let parsed;
+    try {
+      parsed = A2uiMessageListWrapperSchema.parse(inputData);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const issues = err.issues
+          .slice(0, 5)
+          .map((issue) => {
+            const path = issue.path.join('.') || '<root>';
+            return `${path}: ${issue.message}`;
+          })
+          .join('; ');
+        throw new Error(`renderA2uiTool: schema validation failed — ${issues}`);
+      }
+      throw err;
+    }
+    const messages = parsed.messages;
+    if (messages.length === 0) {
+      throw new Error('renderA2uiTool: messages array must not be empty');
+    }
+    const createSurfaceMessages = messages.filter((m) => 'createSurface' in m);
+    if (createSurfaceMessages.length !== 1) {
+      throw new Error(
+        `renderA2uiTool: expected exactly one createSurface message, got ${createSurfaceMessages.length}`,
+      );
+    }
+    const updateComponentsMessages = messages.filter(
+      (m) => 'updateComponents' in m,
+    );
+    if (updateComponentsMessages.length !== 1) {
+      throw new Error(
+        `renderA2uiTool: expected exactly one updateComponents message, got ${updateComponentsMessages.length}`,
+      );
+    }
+    const surfaceId = createSurfaceMessages[0].createSurface.surfaceId;
+    for (const message of messages) {
+      if (getMessageSurfaceId(message) !== surfaceId) {
+        throw new Error(
+          `renderA2uiTool: all messages must share the same surfaceId (expected "${surfaceId}")`,
+        );
+      }
+    }
+    const rootDefined =
+      updateComponentsMessages[0].updateComponents.components.some(
+        (component) => component['id'] === 'root',
+      );
+    if (!rootDefined) {
+      throw new Error(
+        'renderA2uiTool: updateComponents.components must define a component with id "root"',
+      );
+    }
+    validateChildShape(messages);
+    validateReferentialIntegrity(messages);
+    return { surfaceId, messages };
+  },
+});

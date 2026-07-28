@@ -36,7 +36,9 @@ export class AppHttpAgent extends HttpAgent {
 
   protected override requestInit(input: RunAgentInput): RequestInit {
     let messages = input.messages;
-    if (this.options.useServerMemory) {
+    const proxiedMcpRequest =
+      input.forwardedProps?.['__proxiedMCPRequest'] !== undefined;
+    if (this.options.useServerMemory && !proxiedMcpRequest) {
       messages = messages.filter(
         (message) => !this.sentMessageIds.has(message.id),
       );

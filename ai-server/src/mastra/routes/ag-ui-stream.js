@@ -1,47 +1,8 @@
-import type {
-  AbstractAgent,
-  BaseEvent,
-  Middleware,
-  RunAgentInput,
-} from '@ag-ui/client';
 import { transformChunks } from '@ag-ui/client';
-import type { ContextWithMastra } from '@mastra/core/server';
-
-export interface SseWriter {
-  writeSSE(message: { data: string }): Promise<void>;
-}
-
-export interface CreateAgUiEventStreamOptions {
-  /**
-   * Fired for every event observed from the agent's run after it has
-   * been enqueued for the SSE writer. May return additional events to
-   * be appended to the stream in the order returned. The hook is
-   * `await`-ed in the same sequential write queue as the originating
-   * event, so any follow-up events are guaranteed to appear after the
-   * triggering one and before subsequent agent events.
-   *
-   * Used by the dashboard route to react to the `renderDashboard`
-   * tool-call lifecycle: it accumulates the DSL spec from
-   * `TOOL_CALL_ARGS` deltas and, on `TOOL_CALL_END`, compiles the spec
-   * and injects synthetic data-step + A2UI surface events without
-   * round-tripping the A2UI through the LLM.
-   */
-  onEvent?: (
-    event: BaseEvent,
-  ) => Promise<readonly BaseEvent[] | void> | readonly BaseEvent[] | void;
-  middleware?: Middleware;
-}
-
-export type ParseRunAgentInputResult =
-  | { ok: true; input: RunAgentInput }
-  | { ok: false; response: Response };
-
-export async function parseRunAgentInput(
-  c: ContextWithMastra,
-): Promise<ParseRunAgentInputResult> {
-  let input: RunAgentInput;
+export async function parseRunAgentInput(c) {
+  let input;
   try {
-    input = (await c.req.json()) as RunAgentInput;
+    input = await c.req.json();
   } catch {
     return {
       ok: false,
@@ -51,7 +12,6 @@ export async function parseRunAgentInput(
       ),
     };
   }
-
   if (!input?.threadId || !input?.runId || !Array.isArray(input.messages)) {
     return {
       ok: false,
@@ -64,38 +24,30 @@ export async function parseRunAgentInput(
       ),
     };
   }
-
   return { ok: true, input };
 }
-
-export async function streamAgentEvents(
-  sse: SseWriter,
-  agent: AbstractAgent,
-  input: RunAgentInput,
-  options: CreateAgUiEventStreamOptions = {},
-): Promise<void> {
-  await new Promise<void>((resolve) => {
+export async function streamAgentEvents(sse, agent, input, options = {}) {
+  await new Promise((resolve) => {
     // The RxJS subscriber runs synchronously per event. We funnel each
     // write through `writeQueue` so SSE frames are emitted in order
     // (writeSSE is async; multiple unawaited calls could otherwise
     // interleave at their internal await points). The `onEvent` hook
     // is queued behind the originating event's write so any follow-up
     // events are guaranteed to appear right after it.
-    let writeQueue: Promise<void> = Promise.resolve();
-
+    let writeQueue = Promise.resolve();
     const source$ = options.middleware
       ? options.middleware.run(input, agent)
       : agent.run(input);
     const events$ = source$.pipe(transformChunks(false));
     events$.subscribe({
-      next(event: BaseEvent) {
+      next(event) {
         writeQueue = writeQueue
           .then(() => sse.writeSSE({ data: JSON.stringify(event) }))
           .catch(() => undefined);
         if (options.onEvent) {
           writeQueue = writeQueue
             .then(async () => {
-              const extras = await options.onEvent!(event);
+              const extras = await options.onEvent(event);
               if (!extras) {
                 return;
               }
@@ -106,7 +58,7 @@ export async function streamAgentEvents(
             .catch(() => undefined);
         }
       },
-      error(err: unknown) {
+      error(err) {
         writeQueue = writeQueue
           .then(() =>
             sse.writeSSE({

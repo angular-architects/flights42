@@ -1,99 +1,26 @@
-import { BaseEvent, RunAgentInput } from '@ag-ui/client';
 import { AbstractAgent, EventType, randomUUID } from '@ag-ui/client';
-import type { Message } from '@ag-ui/core';
 import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
-import { Agent } from '@mastra/core/agent';
-import { CoreMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
 import { Observable } from 'rxjs';
-
-import { Store } from './memory-store.js';
 import { defaultStore } from './memory-store.js';
-import {
-  type AgUiBridge,
-  type AgUiStepEvent,
-  type AgUiToolCallEvent,
-  attachBridge,
-} from './step-bridge.js';
-
-interface ExtendedLocalAgentOptions {
-  agentId: string;
-  agent: Agent;
-  resourceId: string;
-  requestContext?: RequestContext;
-  store?: Store;
-  /**
-   * Message shown to the user when a guardrail (input/output processor)
-   * aborts the run via tripwire. Either a fixed string or a formatter that
-   * receives the technical reason. Defaults to surfacing the raw reason.
-   */
-  tripwireMessage?: string | ((reason: string) => string);
-  /**
-   * Registration-key names of tools whose AG-UI tool-call events
-   * (START/ARGS/END/RESULT) are suppressed on the wire. Used for internal
-   * plumbing tools (e.g. plan mutations) whose outcome is already conveyed via
-   * STATE_SNAPSHOT — the model still calls them and keeps its own history; only
-   * the client-facing projection is hidden.
-   */
-  hiddenToolNames?: readonly string[];
-}
-
-interface ClientToolDefinition {
-  id: string;
-  description?: string;
-  inputSchema?: Record<string, unknown>;
-}
-
-type InterruptKind = 'approval' | 'suspend';
-
-interface InterruptDescriptor {
-  kind: InterruptKind;
-  runId: string;
-  toolCallId?: string;
-}
-
-interface PendingInterrupt extends InterruptDescriptor {
-  toolCallId: string;
-  toolName: string;
-  args: unknown;
-  resumeSchema?: string;
-  suspendPayload?: unknown;
-}
-
-type UnknownRecord = Record<string, unknown>;
-
-function asRecord(value: unknown): UnknownRecord | undefined {
+import { attachBridge } from './step-bridge.js';
+function asRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return undefined;
   }
-
-  return value as UnknownRecord;
+  return value;
 }
-
-function getNestedRecord(
-  record: UnknownRecord | undefined,
-  key: string,
-): UnknownRecord | undefined {
+function getNestedRecord(record, key) {
   return asRecord(record?.[key]);
 }
-
-function getNestedString(
-  record: UnknownRecord | undefined,
-  key: string,
-): string | undefined {
+function getNestedString(record, key) {
   const value = record?.[key];
   return typeof value === 'string' ? value : undefined;
 }
-
-function createToolCallCacheKey(
-  agentId: string,
-  threadId: string,
-  toolCallId: string,
-): string {
+function createToolCallCacheKey(agentId, threadId, toolCallId) {
   return `${agentId}:${threadId}:${toolCallId}`;
 }
-
-function readThoughtSignature(value: unknown): string | undefined {
+function readThoughtSignature(value) {
   const record = asRecord(value);
   const googleMetadata = getNestedRecord(
     getNestedRecord(record, 'providerMetadata'),
@@ -103,27 +30,22 @@ function readThoughtSignature(value: unknown): string | undefined {
     getNestedRecord(record, 'providerOptions'),
     'google',
   );
-
   return (
     getNestedString(googleMetadata, 'thoughtSignature') ??
     getNestedString(googleOptions, 'thoughtSignature')
   );
 }
-
-function readToolName(value: unknown): string | undefined {
+function readToolName(value) {
   const record = asRecord(value);
   return getNestedString(record, 'toolName');
 }
-
 /**
  * Detects a tool result that carries an A2UI surface (`{ surfaceId, messages }`,
  * e.g. from the server-built `showTable` tool) and returns the surface id plus
  * its operation list so the caller can forward it as an `a2ui-surface`
  * ACTIVITY_SNAPSHOT. Shape-based, so any tool that returns a surface works.
  */
-function getA2uiSurface(
-  result: unknown,
-): { surfaceId: string; operations: unknown[] } | null {
+function getA2uiSurface(result) {
   const record = asRecord(result);
   const surfaceId = record?.['surfaceId'];
   const operations = record?.['messages'];
@@ -133,16 +55,13 @@ function getA2uiSurface(
     ? { surfaceId, operations }
     : null;
 }
-
 function finalizeActiveToolCall(
-  activeToolCallId: string | undefined,
-  activeToolName: string | undefined,
-  clientToolNames: Set<string>,
-  handlers: {
-    onToolResultPart: (value: { toolCallId: string; result: unknown }) => void;
-  },
+  activeToolCallId,
+  activeToolName,
+  clientToolNames,
+  handlers,
   errorMessage = 'Tool execution finished without a streamed result.',
-): void {
+) {
   if (
     !activeToolCallId ||
     !activeToolName ||
@@ -150,20 +69,14 @@ function finalizeActiveToolCall(
   ) {
     return;
   }
-
   handlers.onToolResultPart({
     toolCallId: activeToolCallId,
     result: { error: errorMessage },
   });
 }
-
-function setThoughtSignature(
-  value: UnknownRecord,
-  thoughtSignature: string,
-): UnknownRecord {
+function setThoughtSignature(value, thoughtSignature) {
   const providerOptions = getNestedRecord(value, 'providerOptions') ?? {};
   const googleOptions = getNestedRecord(providerOptions, 'google') ?? {};
-
   return {
     ...value,
     providerOptions: {
@@ -175,166 +88,115 @@ function setThoughtSignature(
     },
   };
 }
-
-function cacheThoughtSignature(
-  store: Store,
-  agentId: string,
-  threadId: string,
-  value: unknown,
-): void {
+function cacheThoughtSignature(store, agentId, threadId, value) {
   const record = asRecord(value);
   const toolCallId = getNestedString(record, 'toolCallId');
   const thoughtSignature = readThoughtSignature(record);
   const toolName = readToolName(record);
-
   if (!toolCallId) {
     return;
   }
-
   const cacheKey = createToolCallCacheKey(agentId, threadId, toolCallId);
-
   if (thoughtSignature) {
     store.set(cacheKey, { thoughtSignature });
   }
-
   if (toolName) {
     store.set(cacheKey, { toolName });
   }
 }
-
-function rehydrateThoughtSignatures(
-  store: Store,
-  messages: CoreMessage[],
-  agentId: string,
-  threadId: string,
-): CoreMessage[] {
+function rehydrateThoughtSignatures(store, messages, agentId, threadId) {
   const nextMessages = messages.map((message) => {
     const messageRecord = asRecord(message);
     if (!messageRecord || messageRecord['role'] !== 'assistant') {
       return message;
     }
-
     const content = messageRecord['content'];
     if (!Array.isArray(content)) {
       return message;
     }
-
     let changed = false;
     const nextContent = content.map((part) => {
       const partRecord = asRecord(part);
       if (!partRecord || partRecord['type'] !== 'tool-call') {
         return part;
       }
-
       if (readThoughtSignature(partRecord)) {
         return part;
       }
-
       const toolCallId = getNestedString(partRecord, 'toolCallId');
       if (!toolCallId) {
         return part;
       }
-
       const cachedThoughtSignature = store.get(
         createToolCallCacheKey(agentId, threadId, toolCallId),
       )?.thoughtSignature;
-
       if (!cachedThoughtSignature) {
         return part;
       }
-
       changed = true;
-
       return setThoughtSignature(partRecord, cachedThoughtSignature);
     });
-
     if (!changed) {
       return message;
     }
-
     return {
-      ...(message as UnknownRecord),
+      ...message,
       content: nextContent,
-    } as CoreMessage;
+    };
   });
-
   return nextMessages;
 }
-
-function setToolResultName(
-  value: UnknownRecord,
-  toolName: string,
-): UnknownRecord {
+function setToolResultName(value, toolName) {
   return {
     ...value,
     toolName,
   };
 }
-
-function rehydrateToolResultNames(
-  store: Store,
-  messages: CoreMessage[],
-  agentId: string,
-  threadId: string,
-): CoreMessage[] {
+function rehydrateToolResultNames(store, messages, agentId, threadId) {
   const nextMessages = messages.map((message) => {
     const messageRecord = asRecord(message);
     if (!messageRecord || messageRecord['role'] !== 'tool') {
       return message;
     }
-
     const content = messageRecord['content'];
     if (!Array.isArray(content)) {
       return message;
     }
-
     let changed = false;
     const nextContent = content.map((part) => {
       const partRecord = asRecord(part);
       if (!partRecord || partRecord['type'] !== 'tool-result') {
         return part;
       }
-
       const toolName = readToolName(partRecord);
       if (toolName && toolName !== 'unknown') {
         return part;
       }
-
       const toolCallId = getNestedString(partRecord, 'toolCallId');
       if (!toolCallId) {
         return part;
       }
-
       const cachedToolName = store.get(
         createToolCallCacheKey(agentId, threadId, toolCallId),
       )?.toolName;
-
       if (!cachedToolName) {
         return part;
       }
-
       changed = true;
-
       return setToolResultName(partRecord, cachedToolName);
     });
-
     if (!changed) {
       return message;
     }
-
     return {
-      ...(message as UnknownRecord),
+      ...message,
       content: nextContent,
-    } as CoreMessage;
+    };
   });
-
   return nextMessages;
 }
-
-function toClientTools(
-  tools: RunAgentInput['tools'],
-): Record<string, ClientToolDefinition> {
-  return tools.reduce<Record<string, ClientToolDefinition>>((result, tool) => {
+function toClientTools(tools) {
+  return tools.reduce((result, tool) => {
     result[tool.name] = {
       id: tool.name,
       description: tool.description,
@@ -343,60 +205,37 @@ function toClientTools(
     return result;
   }, {});
 }
-
-/**
- * Multimodal user content support for `@ag-ui/mastra@1.0.0`'s
- * `convertAGUIMessagesToMastra` which strips non-text content parts.
- * We re-walk the original AG-UI messages and rewrite each user message
- * whose content was an array (containing image/audio/video/document/
- * binary parts) into a Mastra/AI-SDK-style multipart user message.
- */
-type CoreUserContentPart =
-  | { type: 'text'; text: string }
-  | { type: 'image'; image: string | URL; mimeType?: string }
-  | {
-      type: 'file';
-      data: string | URL;
-      mimeType: string;
-    };
-
-function isAgUiUserMessage(
-  message: Message,
-): message is Extract<Message, { role: 'user' }> {
+function isAgUiUserMessage(message) {
   return message.role === 'user';
 }
-
-function agUiPartToCorePart(part: unknown): CoreUserContentPart | null {
+function agUiPartToCorePart(part) {
   if (!part || typeof part !== 'object') {
     return null;
   }
-  const record = part as Record<string, unknown>;
+  const record = part;
   if (record['type'] === 'text') {
     const text = record['text'];
     return typeof text === 'string' && text.length > 0
       ? { type: 'text', text }
       : null;
   }
-
   const source = record['source'];
   if (!source || typeof source !== 'object') {
     return null;
   }
-  const sourceRecord = source as Record<string, unknown>;
+  const sourceRecord = source;
   const sourceType = sourceRecord['type'];
   const value = sourceRecord['value'];
   const mimeType = sourceRecord['mimeType'];
   if (typeof value !== 'string' || !value) {
     return null;
   }
-
-  let resolvedImage: string | URL;
+  let resolvedImage;
   try {
     resolvedImage = sourceType === 'url' ? new URL(value) : value;
   } catch {
     resolvedImage = value;
   }
-
   if (record['type'] === 'image') {
     return {
       type: 'image',
@@ -404,7 +243,6 @@ function agUiPartToCorePart(part: unknown): CoreUserContentPart | null {
       mimeType: typeof mimeType === 'string' ? mimeType : undefined,
     };
   }
-
   if (typeof mimeType !== 'string' || !mimeType) {
     return null;
   }
@@ -414,15 +252,10 @@ function agUiPartToCorePart(part: unknown): CoreUserContentPart | null {
     mimeType,
   };
 }
-
-function injectMultimodalUserParts(
-  agUiMessages: readonly Message[],
-  mastraMessages: CoreMessage[],
-): CoreMessage[] {
+function injectMultimodalUserParts(agUiMessages, mastraMessages) {
   if (agUiMessages.length !== mastraMessages.length) {
     return mastraMessages;
   }
-
   return mastraMessages.map((mastraMessage, index) => {
     const original = agUiMessages[index];
     if (
@@ -433,27 +266,23 @@ function injectMultimodalUserParts(
     ) {
       return mastraMessage;
     }
-
-    const parts: CoreUserContentPart[] = [];
+    const parts = [];
     for (const part of original.content) {
       const corePart = agUiPartToCorePart(part);
       if (corePart) {
         parts.push(corePart);
       }
     }
-
     if (parts.length === 0) {
       return mastraMessage;
     }
-
     return {
       role: 'user',
       content: parts,
-    } as unknown as CoreMessage;
+    };
   });
 }
-
-function getStringField(value: unknown, ...keys: string[]): string | undefined {
+function getStringField(value, ...keys) {
   const record = asRecord(value);
   if (!record) {
     return undefined;
@@ -466,13 +295,6 @@ function getStringField(value: unknown, ...keys: string[]): string | undefined {
   }
   return undefined;
 }
-
-interface ParsedStepEvent {
-  kind: 'started' | 'finished';
-  stepName: string;
-  stepCallId: string;
-}
-
 /**
  * Tries to interpret a Mastra stream chunk as a workflow step boundary event.
  *
@@ -484,31 +306,26 @@ interface ParsedStepEvent {
  *
  * Returns null if the chunk is not a step event we can map to AG-UI.
  */
-function parseWorkflowStepChunk(chunk: unknown): ParsedStepEvent | null {
+function parseWorkflowStepChunk(chunk) {
   const record = asRecord(chunk);
   const type =
-    typeof record?.['type'] === 'string'
-      ? (record['type'] as string)
-      : undefined;
+    typeof record?.['type'] === 'string' ? record['type'] : undefined;
   if (!type) {
     return null;
   }
   const payload = asRecord(record?.['payload']);
-
   if (type === 'workflow-step-start') {
     const stepName =
       getStringField(payload, 'id', 'stepName') ?? 'workflow-step';
     const stepCallId = getStringField(payload, 'stepCallId', 'id') ?? stepName;
     return { kind: 'started', stepName, stepCallId };
   }
-
   if (type === 'workflow-step-result') {
     const stepName =
       getStringField(payload, 'id', 'stepName') ?? 'workflow-step';
     const stepCallId = getStringField(payload, 'stepCallId', 'id') ?? stepName;
     return { kind: 'finished', stepName, stepCallId };
   }
-
   if (type === 'data-step-status') {
     // Custom progress chunk emitted from inside a workflow step via
     // `writer.write({ type: 'data-step-status', stepName, status })`.
@@ -519,23 +336,17 @@ function parseWorkflowStepChunk(chunk: unknown): ParsedStepEvent | null {
     }
     return { kind: status, stepName, stepCallId: stepName };
   }
-
   return null;
 }
-
-function createInterruptId(descriptor: InterruptDescriptor): string {
+function createInterruptId(descriptor) {
   return [descriptor.kind, descriptor.runId, descriptor.toolCallId ?? ''].join(
     ':',
   );
 }
-
-function parseInterruptId(
-  value: string | undefined,
-): InterruptDescriptor | null {
+function parseInterruptId(value) {
   if (!value) {
     return null;
   }
-
   const [kind, runId, toolCallId] = value.split(':');
   if (
     (kind !== 'approval' && kind !== 'suspend') ||
@@ -544,40 +355,34 @@ function parseInterruptId(
   ) {
     return null;
   }
-
   return {
     kind,
     runId,
     toolCallId: toolCallId || undefined,
   };
 }
-
-function readApproved(value: unknown): boolean | undefined {
+function readApproved(value) {
   const record = asRecord(value);
   const approved = record?.['approved'];
   return typeof approved === 'boolean' ? approved : undefined;
 }
-
-function safeParseJson(value: string): unknown {
+function safeParseJson(value) {
   try {
     return JSON.parse(value);
   } catch {
     return value;
   }
 }
-
 export class ExtendedMastraAgent extends AbstractAgent {
-  override readonly agentId: string;
-  readonly agent: Agent;
-  readonly resourceId: string;
-  readonly requestContext: RequestContext;
-  readonly store: Store;
-  readonly tripwireMessage?: string | ((reason: string) => string);
-  private readonly hiddenToolNames: ReadonlySet<string>;
-
-  private abortSignal?: AbortSignal;
-
-  constructor(options: ExtendedLocalAgentOptions) {
+  agentId;
+  agent;
+  resourceId;
+  requestContext;
+  store;
+  tripwireMessage;
+  hiddenToolNames;
+  abortSignal;
+  constructor(options) {
     super({ agentId: options.agentId });
     this.agentId = options.agentId;
     this.agent = options.agent;
@@ -587,23 +392,19 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.tripwireMessage = options.tripwireMessage;
     this.hiddenToolNames = new Set(options.hiddenToolNames ?? []);
   }
-
-  private resolveTripwireMessage(reason: string): string {
+  resolveTripwireMessage(reason) {
     if (typeof this.tripwireMessage === 'function') {
       return this.tripwireMessage(reason);
     }
     return this.tripwireMessage ?? reason;
   }
-
-  setAbortSignal(signal: AbortSignal | undefined): void {
+  setAbortSignal(signal) {
     this.abortSignal = signal;
   }
-
-  getAbortSignal(): AbortSignal | undefined {
+  getAbortSignal() {
     return this.abortSignal;
   }
-
-  override clone(): ExtendedMastraAgent {
+  clone() {
     return new ExtendedMastraAgent({
       agentId: this.agentId,
       agent: this.agent,
@@ -614,19 +415,17 @@ export class ExtendedMastraAgent extends AbstractAgent {
       hiddenToolNames: [...this.hiddenToolNames],
     });
   }
-
-  override run(input: RunAgentInput): ReturnType<AbstractAgent['run']> {
-    return new Observable<BaseEvent>((observer) => {
+  run(input) {
+    return new Observable((observer) => {
       const initialMessageId = randomUUID();
       // Dedup keyed by stepName: events can arrive via three independent
       // paths (Mastra `workflow-step-*` chunks, our custom `data-step-status`
       // chunks, and the per-request RequestContext bridge below). We collapse
       // all of them onto stepName so each step produces exactly one
       // STEP_STARTED + STEP_FINISHED on the wire.
-      const startedSteps = new Set<string>();
-      const finishedSteps = new Set<string>();
-
-      const emitStep = (event: AgUiStepEvent): void => {
+      const startedSteps = new Set();
+      const finishedSteps = new Set();
+      const emitStep = (event) => {
         if (event.kind === 'started') {
           if (startedSteps.has(event.stepName)) {
             return;
@@ -635,10 +434,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
           observer.next({
             type: EventType.STEP_STARTED,
             stepName: event.stepName,
-          } as BaseEvent);
+          });
           return;
         }
-
         if (finishedSteps.has(event.stepName)) {
           return;
         }
@@ -646,16 +444,14 @@ export class ExtendedMastraAgent extends AbstractAgent {
         observer.next({
           type: EventType.STEP_FINISHED,
           stepName: event.stepName,
-        } as BaseEvent);
+        });
       };
-
       // Bridge-driven tool calls coming from inside workflow steps. Each
       // call expands into the full AG-UI TOOL_CALL_START / ARGS / END /
       // (optional) RESULT sequence, with the same `parentMessageId` as the
       // surrounding assistant message so the UI groups them naturally.
-      const emitBridgeToolCall = (event: AgUiToolCallEvent): void => {
+      const emitBridgeToolCall = (event) => {
         const toolCallId = event.toolCallId ?? randomUUID();
-
         // `stepName` is a custom field on the wire; AG-UI passes unknown
         // fields through unchanged, and the client picks them up to group
         // tool calls under their parent workflow step.
@@ -665,19 +461,16 @@ export class ExtendedMastraAgent extends AbstractAgent {
           toolCallId,
           toolCallName: event.toolName,
           ...(event.stepName ? { stepName: event.stepName } : {}),
-        } as BaseEvent);
-
+        });
         observer.next({
           type: EventType.TOOL_CALL_ARGS,
           toolCallId,
           delta: JSON.stringify(event.args ?? {}),
-        } as BaseEvent);
-
+        });
         observer.next({
           type: EventType.TOOL_CALL_END,
           toolCallId,
-        } as BaseEvent);
-
+        });
         if (event.result !== undefined) {
           observer.next({
             type: EventType.TOOL_CALL_RESULT,
@@ -685,27 +478,25 @@ export class ExtendedMastraAgent extends AbstractAgent {
             content: JSON.stringify(event.result),
             messageId: randomUUID(),
             role: 'tool',
-          } as BaseEvent);
+          });
         }
       };
-
       // Per-run shared working state. Starts from the client-provided
       // RunAgentInput.state and is mutated in place by state-aware tools
       // (via the bridge) during the run. The client is the source of truth;
       // we ship a fresh STATE_SNAPSHOT back on every commit.
-      let runState: unknown = input.state;
-
+      let runState = input.state;
       // Per-request bridge: workflow steps push progress AND tool calls
       // here; this bypasses Mastra's tool-stream pipe entirely and is
       // isolated per RequestContext.
-      const bridge: AgUiBridge = {
+      const bridge = {
         emit: emitStep,
         emitToolCall: emitBridgeToolCall,
         emitStateSnapshot: (state) => {
           observer.next({
             type: EventType.STATE_SNAPSHOT,
             snapshot: state,
-          } as BaseEvent);
+          });
         },
         getState: () => runState,
         setState: (state) => {
@@ -713,21 +504,18 @@ export class ExtendedMastraAgent extends AbstractAgent {
         },
       };
       attachBridge(this.requestContext, bridge);
-
-      const startedEvent: BaseEvent = {
+      const startedEvent = {
         type: EventType.RUN_STARTED,
         threadId: input.threadId,
         runId: input.runId,
       };
       observer.next(startedEvent);
-
       // Tool-call ids of hidden tools, so their (later) TOOL_CALL_RESULT is
       // suppressed too — onToolResultPart only carries the id, not the name.
-      const hiddenToolCallIds = new Set<string>();
-
+      const hiddenToolCallIds = new Set();
       void this.streamMastraAgent(input, initialMessageId, {
         onTextPart: (delta, messageId) => {
-          const textEvent: BaseEvent = {
+          const textEvent = {
             type: EventType.TEXT_MESSAGE_CHUNK,
             role: 'assistant',
             messageId,
@@ -743,22 +531,20 @@ export class ExtendedMastraAgent extends AbstractAgent {
             hiddenToolCallIds.add(toolCallId);
             return;
           }
-          const startEvent: BaseEvent = {
+          const startEvent = {
             type: EventType.TOOL_CALL_START,
             parentMessageId: initialMessageId,
             toolCallId,
             toolCallName: toolName,
           };
           observer.next(startEvent);
-
-          const argsEvent: BaseEvent = {
+          const argsEvent = {
             type: EventType.TOOL_CALL_ARGS,
             toolCallId,
             delta: JSON.stringify(args),
           };
           observer.next(argsEvent);
-
-          const endEvent: BaseEvent = {
+          const endEvent = {
             type: EventType.TOOL_CALL_END,
             toolCallId,
           };
@@ -768,7 +554,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
           if (hiddenToolCallIds.has(toolCallId)) {
             return;
           }
-          const resultEvent: BaseEvent = {
+          const resultEvent = {
             type: EventType.TOOL_CALL_RESULT,
             toolCallId,
             content: JSON.stringify(result),
@@ -778,12 +564,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
           observer.next(resultEvent);
         },
         onActivitySnapshot: ({ messageId, activityType, content }) => {
-          const activityEvent: BaseEvent = {
+          const activityEvent = {
             type: EventType.ACTIVITY_SNAPSHOT,
             messageId,
             activityType,
             content,
-          } as BaseEvent;
+          };
           observer.next(activityEvent);
         },
         onRunInterrupted: (interrupt) => {
@@ -820,11 +606,11 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 },
               ],
             },
-          } as BaseEvent);
+          });
           observer.complete();
         },
         onRunFinished: () => {
-          const finishedEvent: BaseEvent = {
+          const finishedEvent = {
             type: EventType.RUN_FINISHED,
             threadId: input.threadId,
             runId: input.runId,
@@ -834,7 +620,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             // the whole run — so preceding tool-call events never commit and
             // frontend tools never execute.
             outcome: { type: 'success' },
-          } as BaseEvent;
+          };
           observer.next(finishedEvent);
           observer.complete();
         },
@@ -842,47 +628,17 @@ export class ExtendedMastraAgent extends AbstractAgent {
           observer.error(error);
         },
       });
-    }) as unknown as ReturnType<AbstractAgent['run']>;
+    });
   }
-
-  private async streamMastraAgent(
-    input: RunAgentInput,
-    assistantMessageId: string,
-    handlers: {
-      onTextPart: (delta: string, messageId: string) => void;
-      onWorkflowStep: (event: ParsedStepEvent) => void;
-      onToolCallPart: (value: {
-        toolCallId: string;
-        toolName: string;
-        args: unknown;
-      }) => void;
-      onToolResultPart: (value: {
-        toolCallId: string;
-        result: unknown;
-      }) => void;
-      onActivitySnapshot: (value: {
-        messageId: string;
-        activityType: string;
-        content: Record<string, unknown>;
-      }) => void;
-      onRunInterrupted: (interrupt: PendingInterrupt) => void;
-      onRunFinished: () => void;
-      onError: (error: unknown) => void;
-    },
-  ): Promise<void> {
-    const pendingToolCalls = new Map<
-      string,
-      { toolName: string; args: unknown }
-    >();
+  async streamMastraAgent(input, assistantMessageId, handlers) {
+    const pendingToolCalls = new Map();
     const messagesForConversion = input.messages.map((message) =>
       message.role === 'developer' ? { ...message, role: 'user' } : message,
     );
-    const mastraMessages = convertAGUIMessagesToMastra(
-      messagesForConversion as never,
-    );
+    const mastraMessages = convertAGUIMessagesToMastra(messagesForConversion);
     const multimodalMessages = injectMultimodalUserParts(
-      input.messages as readonly Message[],
-      mastraMessages as CoreMessage[],
+      input.messages,
+      mastraMessages,
     );
     const rehydratedToolResultNames = rehydrateToolResultNames(
       this.store,
@@ -898,31 +654,27 @@ export class ExtendedMastraAgent extends AbstractAgent {
     );
     const clientTools = toClientTools(input.tools);
     const clientToolNames = new Set(Object.keys(clientTools));
-
     this.requestContext.set('ag-ui', { context: input.context });
-
-    let activeToolCallId: string | undefined;
-    let activeToolName: string | undefined;
-
+    let activeToolCallId;
+    let activeToolName;
     try {
       const stream = await this.createMastraStream(
         input,
         rehydratedMastraMessages,
         clientTools,
       );
-
       for await (const chunk of stream.fullStream) {
         const stepEvent = parseWorkflowStepChunk(chunk);
         if (stepEvent) {
           handlers.onWorkflowStep(stepEvent);
           continue;
         }
-        switch ((chunk as { type?: string }).type) {
+        switch (chunk.type) {
           case 'text-delta':
           case 'reasoning-delta': {
             // Some providers (e.g. OpenAI reasoning) stream the visible answer as
             // reasoning-delta; only handling text-delta drops the AG-UI assistant text.
-            const payload = chunk as { payload?: { text?: string } };
+            const payload = chunk;
             const text = payload.payload?.text;
             if (typeof text === 'string' && text.length > 0) {
               // One stable id per run so TEXT_MESSAGE_CHUNK coalesces into a single assistant
@@ -932,14 +684,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             break;
           }
           case 'tool-call': {
-            const payload = chunk as {
-              payload: {
-                toolCallId: string;
-                toolName: string;
-                args: unknown;
-                providerMetadata?: UnknownRecord;
-              };
-            };
+            const payload = chunk;
             activeToolCallId = payload.payload.toolCallId;
             activeToolName = payload.payload.toolName;
             cacheThoughtSignature(
@@ -956,14 +701,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             break;
           }
           case 'tool-call-approval': {
-            const payload = chunk as {
-              payload: {
-                toolCallId: string;
-                toolName: string;
-                args: unknown;
-                resumeSchema?: string;
-              };
-            };
+            const payload = chunk;
             activeToolCallId = undefined;
             activeToolName = undefined;
             handlers.onRunInterrupted({
@@ -977,15 +715,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             return;
           }
           case 'tool-call-suspended': {
-            const payload = chunk as {
-              payload: {
-                toolCallId: string;
-                toolName: string;
-                args: unknown;
-                resumeSchema?: string;
-                suspendPayload?: unknown;
-              };
-            };
+            const payload = chunk;
             activeToolCallId = undefined;
             activeToolName = undefined;
             handlers.onRunInterrupted({
@@ -1000,16 +730,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
             return;
           }
           case 'tool-result': {
-            const payload = chunk as {
-              payload: {
-                toolCallId: string;
-                result: unknown;
-              };
-            };
+            const payload = chunk;
             activeToolCallId = undefined;
             activeToolName = undefined;
             handlers.onToolResultPart(payload.payload);
-
             const pending = pendingToolCalls.get(payload.payload.toolCallId);
             if (pending) {
               const a2uiSurface = getA2uiSurface(payload.payload.result);
@@ -1034,9 +758,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             // emits a `tripwire` chunk and then closes the stream, so unless
             // we surface it the UI just sees an empty "success". We show a
             // configurable, user-facing message instead of the raw reason.
-            const payload = chunk as {
-              payload?: { reason?: string };
-            };
+            const payload = chunk;
             const blockReason =
               payload.payload?.reason ??
               'The request was blocked by a guardrail.';
@@ -1048,7 +770,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
             return;
           }
           case 'error': {
-            const payload = chunk as { payload: { error: string } };
+            const payload = chunk;
             if (activeToolCallId) {
               finalizeActiveToolCall(
                 activeToolCallId,
@@ -1060,7 +782,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
               handlers.onRunFinished();
               return;
             }
-
             handlers.onError(new Error(payload.payload.error));
             return;
           }
@@ -1076,7 +797,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
           }
         }
       }
-
       finalizeActiveToolCall(
         activeToolCallId,
         activeToolName,
@@ -1096,16 +816,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
         handlers.onRunFinished();
         return;
       }
-
       handlers.onError(error);
     }
   }
-
-  private async createMastraStream(
-    input: RunAgentInput,
-    messages: CoreMessage[],
-    clientTools: Record<string, ClientToolDefinition>,
-  ) {
+  async createMastraStream(input, messages, clientTools) {
     // `resume` is an array of ResumeEntry (one per resolved interrupt) per
     // the AG-UI wire schema; `resumeInterrupt()` on the client always
     // resolves every currently pending interrupt with the same payload, so
@@ -1113,7 +827,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
     // that matters.
     const resumeEntry = input.resume?.[0];
     const interrupt = parseInterruptId(resumeEntry?.interruptId);
-
     if (interrupt) {
       if (interrupt.kind === 'approval') {
         const approved = readApproved(resumeEntry?.payload);
@@ -1122,7 +835,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
             'Approval resume payload must include an approved boolean.',
           );
         }
-
         if (approved) {
           return this.agent.approveToolCall({
             runId: interrupt.runId,
@@ -1133,7 +845,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
             abortSignal: this.abortSignal,
           });
         }
-
         return this.agent.declineToolCall({
           runId: interrupt.runId,
           toolCallId: interrupt.toolCallId,
@@ -1143,7 +854,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
           abortSignal: this.abortSignal,
         });
       }
-
       return this.agent.resumeStream(resumeEntry?.payload, {
         runId: interrupt.runId,
         toolCallId: interrupt.toolCallId,
@@ -1153,14 +863,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
         abortSignal: this.abortSignal,
       });
     }
-
     // Mastra warns ("No memory is configured but resourceId and threadId were
     // passed in args") when we hand it memory coordinates for an agent without
     // a Memory instance — only set them when the agent actually uses memory.
     const memory = this.agent.hasOwnMemory()
       ? { thread: input.threadId, resource: this.resourceId }
       : undefined;
-
     return this.agent.stream(messages, {
       memory,
       runId: input.runId,
@@ -1170,23 +878,11 @@ export class ExtendedMastraAgent extends AbstractAgent {
     });
   }
 }
-
-export function getExtendedLocalAgent(options: {
-  mastra: {
-    getAgent: (agentId: string) => Agent | undefined;
-  };
-  agentId: string;
-  resourceId: string;
-  requestContext?: RequestContext;
-  store?: Store;
-  tripwireMessage?: string | ((reason: string) => string);
-  hiddenToolNames?: readonly string[];
-}): ExtendedMastraAgent {
+export function getExtendedLocalAgent(options) {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
     throw new Error(`Agent ${options.agentId} not found`);
   }
-
   return new ExtendedMastraAgent({
     agentId: options.agentId,
     agent,
