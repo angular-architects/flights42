@@ -1041,4 +1041,7 @@ legacy A2UI stack stay. From §4 only the styling-class idea was adopted
   it. Recreate with
   `mkdir -p node_modules/@internal && ln -sfn ../../libs/ag-ui-server node_modules/@internal/ag-ui-server`,
   or wire it properly (e.g. a `file:` dependency with a package.json in
-  `libs/ag-ui-server`).
+  `libs/ag-ui-server`). The symlink serves the in-place compiled
+  `libs/ag-ui-server/*.js` (regenerate after edits with
+  `npx tsc --build ai-server/tsconfig.json`); those emitted `.js` files and
+  the root `tsconfig.tsbuildinfo` stay untracked.
