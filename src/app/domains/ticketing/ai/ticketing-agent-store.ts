@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { connectAgentContext, injectAgentStore } from '@copilotkit/angular';
+import { injectAgentStore } from '@copilotkit/angular';
 
 import {
   USE_ACTION_CARDS,
@@ -8,8 +8,6 @@ import {
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
-import { catalogToContextEntry } from '../../shared/util-copilotkit/a2ui/catalog-context';
-import { A2UI_CUSTOM_CATALOG } from '../../shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
@@ -50,12 +48,6 @@ const widgets = USE_MCP
   : [messageWidget, flightWidget, hotelWidget, planWidget];
 
 export function injectTicketingAgentStore() {
-  const catalogContext = {
-    ...catalogToContextEntry(inject(A2UI_CUSTOM_CATALOG)),
-    agentIds: [AGENT_ID],
-  };
-  connectAgentContext(() => catalogContext);
-
   initAgentStore({
     agentId: AGENT_ID,
     url: inject(ConfigService).agUiUrl,

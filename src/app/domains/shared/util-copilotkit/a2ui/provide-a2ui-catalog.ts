@@ -15,18 +15,29 @@ import {
   makeEnvironmentProviders,
 } from '@angular/core';
 
-import { type A2uiCustomCatalogFunction } from './a2ui-schema';
 import {
   type A2uiCustomCatalog,
   type A2uiCustomCatalogComponent,
+  type A2uiCustomCatalogFunction,
 } from './types';
 
 /**
- * Holds the descriptor of the registered A2UI custom catalog so consumers
- * (e.g. `agUiResource`) can include it in the LLM context.
+ * The registered custom catalog. `initAgentStore` injects it optionally, so an
+ * app without a custom catalog needs no provider and its agents get no catalog
+ * context entry.
  */
 export const A2UI_CUSTOM_CATALOG = new InjectionToken<A2uiCustomCatalog>(
   'A2UI_CUSTOM_CATALOG',
+);
+
+/**
+ * Whether agent stores may forward the full catalog descriptor to their agent.
+ * `initAgentStore` reads this token and falls back to an id-only context entry
+ * when it is `false`.
+ */
+export const A2UI_SEND_CATALOG_DESCRIPTION = new InjectionToken<boolean>(
+  'A2UI_SEND_CATALOG_DESCRIPTION',
+  { providedIn: 'root', factory: () => true },
 );
 
 export interface ProvideA2uiCatalogOptions {
@@ -66,23 +77,23 @@ function toFunctionImplementation(
 }
 
 /**
- * Registers an A2UI catalog for both the renderer and the AG-UI agent runtime
- * in a single call.
+ * Sets up the A2UI renderer for the application.
  *
- * Without arguments only the standard `BasicCatalog` (BASIC_COMPONENTS +
- * BASIC_FUNCTIONS) is wired into the renderer; no catalog descriptor is
- * forwarded to the agent.
+ * Without a catalog only the standard `BasicCatalog` (BASIC_COMPONENTS +
+ * BASIC_FUNCTIONS) is wired into the renderer.
  *
- * With a descriptor a `BasicCatalogBase` (auto-merging `BASIC_FUNCTIONS`) is
- * built, registered at `A2UI_RENDERER_CONFIG`, and the descriptor is stored
- * at `A2UI_CUSTOM_CATALOG` so `agUiResource` can forward catalog metadata to
- * the agent. Set `options.sendCatalogDescription: false` to forward only the
+ * With a catalog a `BasicCatalogBase` (auto-merging `BASIC_FUNCTIONS`) is built
+ * and registered at `A2UI_RENDERER_CONFIG`, and the catalog is stored at
+ * `A2UI_CUSTOM_CATALOG` so `initAgentStore` can forward it to every agent it
+ * registers. Set `options.sendCatalogDescription: false` to forward only the
  * catalog id (recommended for production with a trusted server-side registry).
  */
 export function provideA2uiCatalog(
   catalog?: A2uiCustomCatalog,
   options?: ProvideA2uiCatalogOptions,
 ): EnvironmentProviders {
+  const { sendCatalogDescription = true } = options ?? {};
+
   if (!catalog) {
     return makeEnvironmentProviders([
       {
@@ -94,8 +105,6 @@ export function provideA2uiCatalog(
       A2uiRendererService,
     ]);
   }
-
-  const { sendCatalogDescription = true } = options ?? {};
 
   const rendererCatalog = new BasicCatalogBase({
     id: catalog.id,
@@ -110,15 +119,12 @@ export function provideA2uiCatalog(
     catalogs: [rendererCatalog],
   };
 
-  // When the description must not leave the client, we strip components and
-  // functions from the descriptor stored at the token. The renderer keeps the
-  // full catalog above, so local rendering is unaffected.
-  const storedCatalog: A2uiCustomCatalog = sendCatalogDescription
-    ? catalog
-    : { id: catalog.id, components: [] };
-
   return makeEnvironmentProviders([
-    { provide: A2UI_CUSTOM_CATALOG, useValue: storedCatalog },
+    { provide: A2UI_CUSTOM_CATALOG, useValue: catalog },
+    {
+      provide: A2UI_SEND_CATALOG_DESCRIPTION,
+      useValue: sendCatalogDescription,
+    },
     { provide: A2UI_RENDERER_CONFIG, useValue: rendererConfig },
     A2uiRendererService,
   ]);

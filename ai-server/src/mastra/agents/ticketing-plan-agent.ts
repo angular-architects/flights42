@@ -3,12 +3,12 @@ import { Memory } from '@mastra/memory';
 
 import { modelAdvancedTasks } from '../config.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
-import { planningAgentPrompt } from './planning-agent.prompt.js';
+import { ticketingPlanAgentPrompt } from './ticketing-plan-agent.prompt.js';
 
-export const planningAgent = new Agent({
-  id: 'planningAgent',
+export const ticketingPlanAgent = new Agent({
+  id: 'ticketingPlanAgent',
   name: 'Flight42 Co-Planner',
-  instructions: planningAgentPrompt,
+  instructions: ticketingPlanAgentPrompt,
   model: modelAdvancedTasks,
   defaultOptions: {
     providerOptions: {

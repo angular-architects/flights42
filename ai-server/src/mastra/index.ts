@@ -12,12 +12,13 @@ import { checkinAgent } from './agents/checkin-agent.js';
 import { dashboardAgent } from './agents/dashboard-agent.js';
 import { hotelAgent } from './agents/hotel-agent.js';
 import { packageAgent } from './agents/package-agent.js';
-import { planningAgent } from './agents/planning-agent.js';
 import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
+import { ticketingPlanAgent } from './agents/ticketing-plan-agent.js';
 import { travelPlannerAgent } from './agents/travel-planner-agent.js';
 import { travelRefinementAgent } from './agents/travel-refinement-agent.js';
-import { agUiRouteHandler } from './routes/ag-ui-route.js';
+import { MCP_APPS_SERVERS } from './config.js';
+import { createAgUiRouteHandler } from './routes/ag-ui-route.js';
 import {
   bookFlightHandler,
   cancelFlightHandler,
@@ -31,7 +32,7 @@ import { packageTourWorkflow } from './workflows/package-tour-workflow.js';
 export const mastra = new Mastra({
   agents: {
     ticketingAgent,
-    planningAgent,
+    ticketingPlanAgent,
     packageAgent,
     hotelAgent,
     travelPlannerAgent,
@@ -77,7 +78,7 @@ export const mastra = new Mastra({
       }),
       registerApiRoute('/ag-ui/:agentId', {
         method: 'POST',
-        handler: agUiRouteHandler,
+        handler: createAgUiRouteHandler({ mcpAppsServers: MCP_APPS_SERVERS }),
       }),
       registerApiRoute('/bookings', {
         method: 'GET',

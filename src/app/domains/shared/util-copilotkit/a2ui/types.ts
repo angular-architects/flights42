@@ -1,18 +1,56 @@
-import { Type } from '@angular/core';
-import type { z as z3 } from 'zod/v3';
+import { Signal, Type } from '@angular/core';
+import type { z } from 'zod/v3';
 
-import { type A2uiCustomCatalogFunction } from './a2ui-schema';
+import { type ContextFromSchema } from './a2ui-schema';
 
-/**
- * Legacy A2UI catalog types. The AG-UI runtime client that used to live here has
- * been replaced by `@copilotkit/angular`; only the A2UI custom-catalog metadata
- * that the still-supported `provideA2uiCatalog(...)` path needs remains.
- */
-export interface A2uiCustomCatalogComponent {
-  name: string;
+export interface A2uiCustomCatalogComponent<
+  TName extends string = string,
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>,
+> {
+  name: TName;
   description: string;
-  component: Type<unknown>;
-  schema: z3.ZodTypeAny;
+  schema: TSchema;
+  component: Type<{
+    props: Signal<ContextFromSchema<TSchema>>;
+  }>;
+}
+
+export function createCustomComponent<
+  const TName extends string,
+  const TSchema extends z.ZodObject<z.ZodRawShape>,
+>(
+  component: A2uiCustomCatalogComponent<TName, TSchema>,
+): A2uiCustomCatalogComponent<TName, TSchema> {
+  return component;
+}
+
+export type A2uiCustomCatalogReturnType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'array'
+  | 'object'
+  | 'any'
+  | 'void';
+
+export interface A2uiCustomCatalogFunction<
+  TName extends string = string,
+  TSchema extends z.ZodTypeAny = z.ZodTypeAny,
+> {
+  name: TName;
+  description: string;
+  returnType: A2uiCustomCatalogReturnType;
+  schema: TSchema;
+  execute: (args: z.infer<TSchema>) => unknown;
+}
+
+export function createCustomFunction<
+  const TName extends string,
+  const TSchema extends z.ZodTypeAny,
+>(
+  fn: A2uiCustomCatalogFunction<TName, TSchema>,
+): A2uiCustomCatalogFunction<TName, TSchema> {
+  return fn;
 }
 
 export interface A2uiCustomCatalog {

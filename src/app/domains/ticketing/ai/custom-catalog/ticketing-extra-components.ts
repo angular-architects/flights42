@@ -1,5 +1,4 @@
-import { createCustomComponent } from '../../../shared/util-copilotkit/a2ui/a2ui-schema';
-import { A2uiCustomCatalogComponent } from '../../../shared/util-copilotkit/a2ui/types';
+import { createCustomComponent } from '../../../shared/util-copilotkit/a2ui/types';
 import { TicketWidget } from './ticket/ticket-widget';
 import { ticketWidgetSchema } from './ticket/ticket-widget-context';
 
@@ -11,6 +10,4 @@ export const ticketWidgetEntry = createCustomComponent({
   schema: ticketWidgetSchema,
 });
 
-export const ticketingExtraComponents: A2uiCustomCatalogComponent[] = [
-  ticketWidgetEntry,
-];
+export const ticketingExtraComponents = [ticketWidgetEntry];

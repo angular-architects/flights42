@@ -16,6 +16,7 @@ import { ConfigService } from './domains/shared/util-common/config-service';
 import { a2uiActivityRendererConfig } from './domains/shared/util-copilotkit/a2ui/a2ui-activity-renderer';
 import { provideA2uiCatalog } from './domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
+import { mcpAppsConfig } from './mcp-apps-config';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,23 +28,9 @@ export const appConfig: ApplicationConfig = {
       defaultToolRendering: true,
       renderActivityMessages: [a2uiActivityRendererConfig],
     }),
-    provideMCPApps({
-      hostInfo: {
-        name: 'Flights42 MCP Host',
-        version: '1.0.0',
-      },
-      hostContext: {
-        displayMode: 'inline',
-        theme: 'light',
-        styles: {
-          variables: {
-            '--color-ring-primary': '#3f51b5',
-          },
-        },
-      },
-    }),
+    provideMCPApps(mcpAppsConfig),
 
-    provideA2uiCatalog(customCatalog),
+    provideA2uiCatalog(customCatalog, { sendCatalogDescription: false }),
     provideMarkdownRenderer(async (markdown) =>
       marked.parse(String(markdown ?? '')),
     ),

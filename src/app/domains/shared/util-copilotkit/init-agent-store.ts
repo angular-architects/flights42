@@ -5,6 +5,7 @@ import {
   runInInjectionContext,
 } from '@angular/core';
 import {
+  connectAgentContext,
   CopilotKit,
   type FrontendToolConfig,
   type HumanInTheLoopConfig,
@@ -14,6 +15,14 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
+import {
+  catalogIdToContextEntry,
+  catalogToContextEntry,
+} from './a2ui/catalog-context';
+import {
+  A2UI_CUSTOM_CATALOG,
+  A2UI_SEND_CATALOG_DESCRIPTION,
+} from './a2ui/provide-a2ui-catalog';
 import { AppHttpAgent } from './app-http-agent';
 
 export interface InitAgentStoreConfig {
@@ -77,5 +86,15 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
 
   for (const tool of config.humanInTheLoop ?? []) {
     registerHumanInTheLoop({ ...tool, agentId: config.agentId });
+  }
+
+  const catalog = inject(A2UI_CUSTOM_CATALOG, { optional: true });
+
+  if (catalog) {
+    const entry = inject(A2UI_SEND_CATALOG_DESCRIPTION)
+      ? catalogToContextEntry(catalog)
+      : catalogIdToContextEntry(catalog.id);
+
+    connectAgentContext(() => ({ ...entry, agentIds: [config.agentId] }));
   }
 }
