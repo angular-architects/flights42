@@ -1,4 +1,4 @@
-# CopilotKit Angular: migration opportunities (docs.copilotkit.ai/angular, `@copilotkit/angular@0.3.0`)
+provideA2uiCatalog# CopilotKit Angular: migration opportunities (docs.copilotkit.ai/angular, `@copilotkit/angular@0.3.0`)
 
 CopilotKit has published a rewritten Angular documentation set at
 <https://docs.copilotkit.ai/angular> and released `@copilotkit/angular@0.3.0`
@@ -293,7 +293,9 @@ To verify: whether `connectAgentContext` can be scoped per agent (ticketing
 sends the full catalog, dashboard only the catalog id) — the documented API
 shows no `agentId` parameter, so scoping may need the directive placed in
 feature components, which incidentally is the more Angular-idiomatic shape
-anyway.
+anyway. (Answered in step 3 of the migration log: `ScopedContext.agentIds`
+does the scoping, and the call lives in `initAgentStore`, not at the call
+sites.)
 
 The docs' state-vs-context principle — _"shared state for data the agent may
 change, context for application-owned facts"_ — matches what we already do; no
@@ -943,13 +945,21 @@ below); the LLM-driven happy paths should be re-checked manually once.
 
 ### Step 3 — context to `connectAgentContext`, state factory decision
 
-- Catalog context entries moved out of `initAgentStore`/`AppHttpAgent` into
-  `connectAgentContext(() => entry)` at the two call sites. Per-agent scoping
-  works via `ScopedContext.agentIds` (core 1.63.2, PR #5369): ticketing
-  sends the full catalog, dashboard only the catalog id — verified that
-  `core.runAgent` builds `input.context` through
-  `ContextStore.getContextForAgent(agentId)`, so the server-side extraction
-  by description is unchanged.
+- Catalog context entries moved out of `AppHttpAgent`'s merge into a single
+  `connectAgentContext(() => ({ ...entry, agentIds: [config.agentId] }))`
+  inside `initAgentStore` — the facade injects both the catalog
+  (`inject(A2UI_CUSTOM_CATALOG, { optional: true })`) and the policy
+  (`A2UI_SEND_CATALOG_DESCRIPTION`), so the stores no longer mention the
+  catalog at all. Per-agent scoping works via `ScopedContext.agentIds`
+  (core 1.63.2, PR #5369) — verified that `core.runAgent` builds
+  `input.context` through `ContextStore.getContextForAgent(agentId)`, so the
+  server-side extraction by description is unchanged.
+- Consequence: full descriptor vs. catalog id is now an app-wide switch
+  (`provideA2uiCatalog(catalog, { sendCatalogDescription })`), not a per-agent
+  one. The `014b743` split (ticketing full catalog, dashboard id only) is gone;
+  the app runs on `sendCatalogDescription: false`, so both agents send
+  `{ catalogId, components: {} }` — see §3 of
+  [copilot-0.3.0-changelog.md](copilot-0.3.0-changelog.md).
 - Deleted: the `context` option in `InitAgentStoreConfig`, the context
   factory plumbing, and `mergePersistentContext` in `AppHttpAgent`.
 - D8.2 decided: **keep the pull-model `state` factory.** The push variant
