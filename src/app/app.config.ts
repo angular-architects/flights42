@@ -29,6 +29,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
 
     provideCopilotKit({
+      defaultToolRendering: true,
       renderActivityMessages: [
         mcpAppsActivityRendererConfig,
         a2uiActivityRendererConfig,

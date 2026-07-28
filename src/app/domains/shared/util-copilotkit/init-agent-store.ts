@@ -16,7 +16,6 @@ import {
 } from '@copilotkit/angular';
 
 import { AppHttpAgent } from './app-http-agent';
-import { FallbackToolCard, fallbackToolCard } from './fallback-tool-card';
 
 export interface InitAgentStoreConfig {
   agentId: string;
@@ -76,16 +75,8 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   for (const tool of config.frontendTools ?? []) {
     registerFrontendTool({
       ...tool,
-      component: tool.component || FallbackToolCard,
       agentId: config.agentId,
     });
-  }
-
-  const registeredFallback = copilotKit
-    .toolCallRenderConfigs()
-    .find((renderer) => renderer.name === '*');
-  if (!registeredFallback) {
-    registerRenderToolCall(fallbackToolCard);
   }
 
   for (const toolCall of config.toolCallRenderer ?? []) {
