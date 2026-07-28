@@ -31,6 +31,7 @@ export type A2uiSurfaceContent = z.infer<typeof a2uiSurfaceContentSchema>;
   selector: 'app-a2ui-activity-renderer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SurfaceComponent],
+  host: { class: 'a2ui-surface' },
   template: `
     @let surface = surfaceId();
     @if (surface) {
