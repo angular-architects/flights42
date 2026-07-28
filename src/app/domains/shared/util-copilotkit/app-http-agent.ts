@@ -1,5 +1,5 @@
 import { HttpAgent, type HttpAgentConfig } from '@ag-ui/client';
-import { type Context, type RunAgentInput } from '@ag-ui/core';
+import { type Context, type Message, type RunAgentInput } from '@ag-ui/core';
 
 export interface AppHttpAgentOptions {
   forwardedProps?: () => Record<string, unknown>;
@@ -21,6 +21,18 @@ export class AppHttpAgent extends HttpAgent {
         onRunFinalized: () => this.markAllSent(),
       });
     }
+  }
+
+  override addMessage(message: Message): void {
+    if (
+      message.role === 'tool' &&
+      (this.pendingInterrupts ?? []).some(
+        (interrupt) => interrupt.toolCallId === message.toolCallId,
+      )
+    ) {
+      return;
+    }
+    super.addMessage(message);
   }
 
   protected override requestInit(input: RunAgentInput): RequestInit {
