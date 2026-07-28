@@ -1009,6 +1009,29 @@ below); the LLM-driven happy paths should be re-checked manually once.
   should still be eyeballed once (D1 point 2: the tool now executes after
   the turn instead of mid-run).
 
+**Revision 2026-07-29 — hybrid instead of full middleware.** The full
+adoption conflicted with an earlier, deliberate decision this migration had
+overridden: MCP tools hook in at _agent level_ (native `MCPClient.listTools()`
+execution, mid-run, "Mastra Bordmittel first"). Reworked to a hybrid that
+keeps both that decision and the official 0.3.0 frontend:
+
+- `ticketing-agent.ts` registers the hotels MCP tools natively again
+  (`hotels_findHotels`, prompt reverted); the module-level `listTools()`
+  await — and with it the :3002 startup dependency — is back.
+- `ExtendedMastraAgent` re-gained the `_meta.ui` sniffing and emits the
+  `mcp-apps` snapshot itself, now including the `serverHash` the 0.3.0
+  renderer requires. The hash comes from the route via the new
+  `mcpAppsServerHashes` option (`getServerHash` over the same server config
+  the proxy uses, so hash-based lookups resolve too).
+- `MCPAppsMiddleware` no longer wraps normal runs; the route uses it solely
+  to answer `__proxiedMCPRequest` runs (no agent, no LLM). Client side
+  (`provideMCPApps`) unchanged.
+- Verified: ai-server boots against the live MCP server (native
+  registration), proxied `tools/call` (by serverId) and `resources/read`
+  (by real serverHash) return live results through the route, and the
+  snapshot shape passes the shipped `mcpAppsSnapshotContentSchema`
+  (temporary spec, removed again). Build/lint/tests at baseline.
+
 ### Step 5 — descoped (unchanged)
 
 Per D2: CopilotKit catalogs are Lit-only; `@a2ui/angular/v0_9` and the whole

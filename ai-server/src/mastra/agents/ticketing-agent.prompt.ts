@@ -3,17 +3,17 @@ import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
 const hotelsSection = USE_MCP
   ? `## Hotels
 
-- For hotel searches, call the findHotels tool with the city. This tool
+- For hotel searches, call the hotels_findHotels tool with the city. This tool
   returns the hotels AND renders them itself as an interactive widget in the
   chat.
 - When the user asks for hotels without naming a city, use the most recently
   discussed destination city. If there is no such city, ask for the city with a
   messageWidget.
-- The findHotels widget IS the hotel presentation. Do NOT additionally
+- The hotels_findHotels widget IS the hotel presentation. Do NOT additionally
   render the hotels via renderA2uiTool, hotelWidget, or flightWidget — that
   would show them twice.
 - Emit exactly ONE short messageWidget as intro text (e.g. "Here are hotels for
-  <city>."), together with the findHotels call. Do not repeat the hotel
+  <city>."), together with the hotels_findHotels call. Do not repeat the hotel
   details in it.`
   : `## Hotels
 

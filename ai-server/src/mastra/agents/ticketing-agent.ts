@@ -3,10 +3,11 @@ import {
   renderA2uiTool,
 } from '@internal/ag-ui-server';
 import { Agent } from '@mastra/core/agent';
+import { MCPClient } from '@mastra/mcp';
 import { Memory } from '@mastra/memory';
 
 import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
-import { model } from '../config.js';
+import { HOTELS_MCP_SERVER_URL, model } from '../config.js';
 import { blockedWordsGuard } from '../processors/blocked-words-guard.js';
 import { offTopicGuard } from '../processors/off-topic-guard.js';
 import { promptInjectionGuard } from '../processors/prompt-injection-guard.js';
@@ -15,6 +16,13 @@ import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
 import { hotelAgent } from './hotel-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
+
+const hotelsMcpTools = USE_MCP
+  ? await new MCPClient({
+      id: 'hotels-mcp-client',
+      servers: { hotels: { url: new URL(HOTELS_MCP_SERVER_URL) } },
+    }).listTools()
+  : {};
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
@@ -35,6 +43,7 @@ export const ticketingAgent = new Agent({
     bookFlightTool,
     cancelFlightTool,
     renderA2uiTool,
+    ...hotelsMcpTools,
   },
   agents: USE_MCP ? {} : { hotelAgent },
   inputProcessors: [blockedWordsGuard, offTopicGuard, promptInjectionGuard],

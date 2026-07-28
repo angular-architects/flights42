@@ -1,4 +1,4 @@
-import { MCPAppsMiddleware } from '@ag-ui/mcp-apps-middleware';
+import { getServerHash, MCPAppsMiddleware } from '@ag-ui/mcp-apps-middleware';
 import { getExtendedLocalAgent } from '@internal/ag-ui-server';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
@@ -14,27 +14,31 @@ const HIDDEN_TOOLS: Record<string, readonly string[]> = {
 
 const showInternalTools = process.env['SHOW_INTERNAL_TOOLS'] === 'true';
 
-const hotelsMcpApps = USE_MCP
-  ? new MCPAppsMiddleware({
-      mcpServers: [
-        { type: 'http', url: HOTELS_MCP_SERVER_URL, serverId: 'hotels' },
-      ],
-    })
+const HOTELS_MCP_SERVER_CONFIG = {
+  type: 'http',
+  url: HOTELS_MCP_SERVER_URL,
+  serverId: 'hotels',
+} as const;
+
+// The middleware is used ONLY to answer `__proxiedMCPRequest` runs from the
+// MCP Apps widget (resources/read, tools/call) without invoking any agent.
+// The hotels tools themselves stay native Mastra agent tools; the snapshot
+// is emitted by ExtendedMastraAgent (see mcpAppsServerHashes below).
+const hotelsMcpProxy = USE_MCP
+  ? new MCPAppsMiddleware({ mcpServers: [HOTELS_MCP_SERVER_CONFIG] })
   : undefined;
 
-function mcpAppsMiddlewareFor(
-  effectiveAgentId: string,
+const mcpAppsServerHashes = USE_MCP
+  ? { hotels: getServerHash(HOTELS_MCP_SERVER_CONFIG) }
+  : undefined;
+
+function mcpAppsProxyFor(
   forwardedProps: unknown,
 ): MCPAppsMiddleware | undefined {
-  if (!hotelsMcpApps) {
-    return undefined;
-  }
   const isProxiedRequest =
     (forwardedProps as { __proxiedMCPRequest?: unknown } | undefined)
       ?.__proxiedMCPRequest !== undefined;
-  return effectiveAgentId === 'ticketingAgent' || isProxiedRequest
-    ? hotelsMcpApps
-    : undefined;
+  return isProxiedRequest ? hotelsMcpProxy : undefined;
 }
 
 export async function agUiRouteHandler(
@@ -68,12 +72,10 @@ export async function agUiRouteHandler(
     hiddenToolNames: showInternalTools
       ? undefined
       : HIDDEN_TOOLS[effectiveAgentId],
+    mcpAppsServerHashes,
   });
 
-  const middleware = mcpAppsMiddlewareFor(
-    effectiveAgentId,
-    parsed.input.forwardedProps,
-  );
+  const middleware = mcpAppsProxyFor(parsed.input.forwardedProps);
 
   // `c` is typed against @mastra/core's bundled hono, which is structurally
   // incompatible with the project's hono `Context` that `streamSSE` expects.

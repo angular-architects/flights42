@@ -5,6 +5,7 @@ import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
 import { Agent } from '@mastra/core/agent';
 import { CoreMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Observable } from 'rxjs';
 
 import { Store } from './memory-store.js';
@@ -36,6 +37,15 @@ interface ExtendedLocalAgentOptions {
    * the client-facing projection is hidden.
    */
   hiddenToolNames?: readonly string[];
+  /**
+   * serverId → serverHash of the MCP servers whose UI-enabled tools this
+   * agent executes natively. CopilotKit's MCP Apps renderer requires the
+   * hash in the `mcp-apps` ACTIVITY_SNAPSHOT; compute it with
+   * `getServerHash` from `@ag-ui/mcp-apps-middleware` so proxied requests
+   * resolve against the same server config. Falls back to the serverId
+   * (the renderer resolves by id first).
+   */
+  mcpAppsServerHashes?: Readonly<Record<string, string>>;
 }
 
 interface ClientToolDefinition {
@@ -91,6 +101,67 @@ function createToolCallCacheKey(
   toolCallId: string,
 ): string {
   return `${agentId}:${threadId}:${toolCallId}`;
+}
+
+interface McpAppUiMeta {
+  serverId: string;
+  resourceUri: string;
+}
+
+/**
+ * Reads the MCP Apps UI metadata that `@mastra/mcp`'s `MCPClient.listTools()`
+ * stamps onto each tool as `tool.mcp._meta.ui` (`{ resourceUri, serverId }`).
+ */
+function readToolUiMeta(tool: unknown): McpAppUiMeta | undefined {
+  const ui = (
+    tool as {
+      mcp?: { _meta?: { ui?: { serverId?: string; resourceUri?: string } } };
+    }
+  )?.mcp?._meta?.ui;
+
+  if (!ui?.serverId || !ui?.resourceUri) {
+    return undefined;
+  }
+
+  return { serverId: ui.serverId, resourceUri: ui.resourceUri };
+}
+
+function buildMcpAppsActivityContent(
+  metadata: McpAppUiMeta,
+  serverHash: string,
+  toolInput: unknown,
+  result: unknown,
+): Record<string, unknown> {
+  const input = asRecord(toolInput) ?? {};
+  const resultRecord = asRecord(result);
+  const hasContentArray =
+    resultRecord !== undefined && Array.isArray(resultRecord['content']);
+
+  let shapedResult: CallToolResult;
+  if (hasContentArray) {
+    shapedResult = resultRecord as CallToolResult;
+  } else if (resultRecord) {
+    // Mastra hands native MCP tool results back as the bare structured
+    // payload (no `content` envelope). Rebuild the text `content` from it so
+    // the snapshot carries a faithful CallToolResult, matching what the MCP
+    // server originally returned (`JSON.stringify(result)`).
+    shapedResult = {
+      content: [{ type: 'text', text: JSON.stringify(resultRecord) }],
+      structuredContent: resultRecord,
+    };
+  } else {
+    shapedResult = {
+      content: [{ type: 'text', text: JSON.stringify(result ?? null) }],
+    };
+  }
+
+  return {
+    serverId: metadata.serverId,
+    serverHash,
+    resourceUri: metadata.resourceUri,
+    toolInput: input,
+    result: shapedResult,
+  };
 }
 
 function readThoughtSignature(value: unknown): string | undefined {
@@ -574,8 +645,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
   readonly store: Store;
   readonly tripwireMessage?: string | ((reason: string) => string);
   private readonly hiddenToolNames: ReadonlySet<string>;
+  private readonly mcpAppsServerHashes: Readonly<Record<string, string>>;
 
   private abortSignal?: AbortSignal;
+  private mcpAppsUiMeta?: Map<string, McpAppUiMeta>;
 
   constructor(options: ExtendedLocalAgentOptions) {
     super({ agentId: options.agentId });
@@ -586,6 +659,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     this.store = options.store ?? defaultStore;
     this.tripwireMessage = options.tripwireMessage;
     this.hiddenToolNames = new Set(options.hiddenToolNames ?? []);
+    this.mcpAppsServerHashes = options.mcpAppsServerHashes ?? {};
   }
 
   private resolveTripwireMessage(reason: string): string {
@@ -603,6 +677,25 @@ export class ExtendedMastraAgent extends AbstractAgent {
     return this.abortSignal;
   }
 
+  private async getMcpAppsUiMeta(): Promise<Map<string, McpAppUiMeta>> {
+    if (this.mcpAppsUiMeta) {
+      return this.mcpAppsUiMeta;
+    }
+
+    const map = new Map<string, McpAppUiMeta>();
+    const tools = await this.agent.listTools();
+
+    for (const [toolName, tool] of Object.entries(tools)) {
+      const uiMeta = readToolUiMeta(tool);
+      if (uiMeta) {
+        map.set(toolName, uiMeta);
+      }
+    }
+
+    this.mcpAppsUiMeta = map;
+    return map;
+  }
+
   override clone(): ExtendedMastraAgent {
     return new ExtendedMastraAgent({
       agentId: this.agentId,
@@ -612,6 +705,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
       store: this.store,
       tripwireMessage: this.tripwireMessage,
       hiddenToolNames: [...this.hiddenToolNames],
+      mcpAppsServerHashes: this.mcpAppsServerHashes,
     });
   }
 
@@ -898,6 +992,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     );
     const clientTools = toClientTools(input.tools);
     const clientToolNames = new Set(Object.keys(clientTools));
+    const mcpAppsUiMeta = await this.getMcpAppsUiMeta();
 
     this.requestContext.set('ag-ui', { context: input.context });
 
@@ -1012,8 +1107,25 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
             const pending = pendingToolCalls.get(payload.payload.toolCallId);
             if (pending) {
+              const uiMeta = mcpAppsUiMeta.get(pending.toolName);
               const a2uiSurface = getA2uiSurface(payload.payload.result);
-              if (a2uiSurface) {
+              if (uiMeta) {
+                // Own messageId (the tool-call id), NOT the assistant message
+                // id: an ACTIVITY_SNAPSHOT replaces the message whose id
+                // matches, so reusing the assistant id would overwrite the
+                // assistant message (its text and sibling widget tool calls).
+                handlers.onActivitySnapshot({
+                  messageId: payload.payload.toolCallId,
+                  activityType: 'mcp-apps',
+                  content: buildMcpAppsActivityContent(
+                    uiMeta,
+                    this.mcpAppsServerHashes[uiMeta.serverId] ??
+                      uiMeta.serverId,
+                    pending.args,
+                    payload.payload.result,
+                  ),
+                });
+              } else if (a2uiSurface) {
                 // Key the activity by the surface id (unique per surface, like
                 // the dashboard route) rather than the assistant message id.
                 // A2UI_SNAPSHOT replaces any existing message whose id matches,
@@ -1181,6 +1293,7 @@ export function getExtendedLocalAgent(options: {
   store?: Store;
   tripwireMessage?: string | ((reason: string) => string);
   hiddenToolNames?: readonly string[];
+  mcpAppsServerHashes?: Readonly<Record<string, string>>;
 }): ExtendedMastraAgent {
   const agent = options.mastra.getAgent(options.agentId);
   if (!agent) {
@@ -1195,5 +1308,6 @@ export function getExtendedLocalAgent(options: {
     store: options.store,
     tripwireMessage: options.tripwireMessage,
     hiddenToolNames: options.hiddenToolNames,
+    mcpAppsServerHashes: options.mcpAppsServerHashes,
   });
 }
