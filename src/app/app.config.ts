@@ -29,6 +29,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
 
     provideCopilotKit({
+      defaultToolRendering: true,
       renderActivityMessages: [
         mcpAppsActivityRendererConfig,
         a2uiActivityRendererConfig,
@@ -39,7 +40,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideMcpApps(mcpAppsConfig),
 
-    provideA2uiCatalog(customCatalog),
+    provideA2uiCatalog(customCatalog, { sendCatalogDescription: false }),
     provideMarkdownRenderer(async (markdown) =>
       marked.parse(String(markdown ?? '')),
     ),

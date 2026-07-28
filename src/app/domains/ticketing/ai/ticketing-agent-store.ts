@@ -1,4 +1,3 @@
-import { type Context } from '@ag-ui/core';
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
 
@@ -9,8 +8,6 @@ import {
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
-import { catalogToContextEntry } from '../../shared/util-copilotkit/a2ui/catalog-context';
-import { A2UI_CUSTOM_CATALOG } from '../../shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
@@ -50,19 +47,12 @@ const widgets = USE_MCP
   ? [messageWidget, flightWidget, planWidget]
   : [messageWidget, flightWidget, hotelWidget, planWidget];
 
-function buildCatalogContext(): Context[] {
-  return [catalogToContextEntry(inject(A2UI_CUSTOM_CATALOG))];
-}
-
 export function injectTicketingAgentStore() {
-  const catalogContext = buildCatalogContext();
-
   initAgentStore({
     agentId: AGENT_ID,
     url: inject(ConfigService).agUiUrl,
     useServerMemory: true,
     forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
-    context: () => catalogContext,
     frontendTools: [
       findFlightsTool,
       getLoadedFlightsTool,

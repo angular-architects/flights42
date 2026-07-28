@@ -10,7 +10,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { type AgentStore, CopilotKit, type Message } from '@copilotkit/angular';
+import {
+  type AgentStore,
+  CopilotKit,
+  injectInterrupt,
+  type Message,
+} from '@copilotkit/angular';
 
 import {
   AgentMode,
@@ -18,8 +23,6 @@ import {
 } from '../../util-common/agent-mode-service';
 import {
   getAgentMessages,
-  getPendingInterrupts,
-  resumeInterrupt,
   sendMessage,
   stop,
 } from '../../util-copilotkit/agent-store-helper';
@@ -57,21 +60,24 @@ export class AssistantChat {
   protected readonly store = signal<Signal<AgentStore> | null>(null);
   protected readonly agentId = signal<string | null>(null);
 
+  private readonly interruptController = injectInterrupt({
+    agentId: computed(() => this.agentId() ?? undefined),
+  });
+
   protected readonly messages = computed<Message[]>(() => {
     const store = this.store();
     const agentId = this.agentId();
     return store && agentId ? getAgentMessages(store, agentId) : [];
   });
 
-  protected readonly interrupts = computed<Interrupt[]>(() => {
-    const store = this.store();
-    return store ? getPendingInterrupts(store) : [];
-  });
-
   protected readonly isRunning = computed<boolean>(() => {
     const store = this.store();
     return store ? store().isRunning() : false;
   });
+
+  protected readonly interrupts = computed<Interrupt[]>(() =>
+    this.isRunning() ? [] : [...this.interruptController.interrupts()],
+  );
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
@@ -133,12 +139,7 @@ export class AssistantChat {
   }
 
   protected onResumeInterrupt(event: ResumeInterruptEvent): void {
-    const store = this.store();
-    if (store) {
-      void resumeInterrupt(this.copilotKit, store, {
-        [event.interruptId]: { status: 'resolved', payload: event.payload },
-      });
-    }
+    void this.interruptController.resolve(event.payload, event.interruptId);
   }
 
   protected setMode(mode: AgentMode): void {

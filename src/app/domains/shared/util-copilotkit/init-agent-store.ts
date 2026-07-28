@@ -6,6 +6,7 @@ import {
   runInInjectionContext,
 } from '@angular/core';
 import {
+  connectAgentContext,
   CopilotKit,
   type FrontendToolConfig,
   type HumanInTheLoopConfig,
@@ -15,8 +16,15 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
+import {
+  catalogIdToContextEntry,
+  catalogToContextEntry,
+} from './a2ui/catalog-context';
+import {
+  A2UI_CUSTOM_CATALOG,
+  A2UI_SEND_CATALOG_DESCRIPTION,
+} from './a2ui/provide-a2ui-catalog';
 import { AppHttpAgent } from './app-http-agent';
-import { FallbackToolCard, fallbackToolCard } from './fallback-tool-card';
 
 export interface InitAgentStoreConfig {
   agentId: string;
@@ -28,7 +36,6 @@ export interface InitAgentStoreConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   humanInTheLoop?: readonly HumanInTheLoopConfig<any>[];
   forwardedProps?: () => Record<string, unknown>;
-  context?: () => readonly Context[];
   state?: () => unknown;
   useServerMemory?: boolean;
 }
@@ -43,11 +50,6 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
       ? runInInjectionContext(envInjector, () => config.forwardedProps!())
       : {};
 
-  const contextFor = (): readonly Context[] =>
-    config.context
-      ? runInInjectionContext(envInjector, () => config.context!())
-      : [];
-
   const stateFor = (): unknown =>
     config.state
       ? runInInjectionContext(envInjector, () => config.state!())
@@ -61,10 +63,11 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
 
   const httpAgent = new AppHttpAgent(agentConfig, {
     forwardedProps: forwardedPropsFor,
-    context: contextFor,
     state: config.state ? stateFor : undefined,
     useServerMemory: config.useServerMemory,
   });
+
+  connectCatalogContext(config.agentId);
 
   copilotKit.updateRuntime({
     selfManagedAgents: {
@@ -76,16 +79,8 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   for (const tool of config.frontendTools ?? []) {
     registerFrontendTool({
       ...tool,
-      component: tool.component || FallbackToolCard,
       agentId: config.agentId,
     });
-  }
-
-  const registeredFallback = copilotKit
-    .toolCallRenderConfigs()
-    .find((renderer) => renderer.name === '*');
-  if (!registeredFallback) {
-    registerRenderToolCall(fallbackToolCard);
   }
 
   for (const toolCall of config.toolCallRenderer ?? []) {
@@ -95,4 +90,20 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   for (const tool of config.humanInTheLoop ?? []) {
     registerHumanInTheLoop({ ...tool, agentId: config.agentId });
   }
+}
+
+function connectCatalogContext(agentId: string): void {
+  const catalog = inject(A2UI_CUSTOM_CATALOG, { optional: true });
+  if (!catalog) {
+    return;
+  }
+
+  const sendCatalogDescription =
+    inject(A2UI_SEND_CATALOG_DESCRIPTION, { optional: true }) ?? true;
+
+  const entry = sendCatalogDescription
+    ? catalogToContextEntry(catalog)
+    : catalogIdToContextEntry(catalog.id);
+
+  connectAgentContext(() => ({ ...entry, agentIds: [agentId] }) as Context);
 }

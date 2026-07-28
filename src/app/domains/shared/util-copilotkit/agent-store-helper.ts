@@ -1,5 +1,5 @@
-import { buildResumeArray, randomUUID } from '@ag-ui/client';
-import { type Interrupt, type UserMessage } from '@ag-ui/core';
+import { randomUUID } from '@ag-ui/client';
+import { type UserMessage } from '@ag-ui/core';
 import { type Signal } from '@angular/core';
 import { type AgentStore, CopilotKit, type Message } from '@copilotkit/angular';
 
@@ -17,12 +17,6 @@ export function getAgentMessages(
       (message) => message.role !== 'developer' && message.role !== 'system',
     )
     .map((message) => ({ ...message, agentId }) as unknown as Message);
-}
-
-export function getPendingInterrupts(store: Signal<AgentStore>): Interrupt[] {
-  store().isRunning();
-  store().messages();
-  return store().agent.pendingInterrupts ?? [];
 }
 
 export async function sendMessage(
@@ -52,24 +46,6 @@ export function addDeveloperMessage(
   content: string,
 ): void {
   store().agent.addMessage({ id: randomUUID(), role: 'developer', content });
-}
-
-export type InterruptResponses = Parameters<typeof buildResumeArray>[1];
-
-export async function resumeInterrupt(
-  copilotKit: CopilotKit,
-  store: Signal<AgentStore>,
-  responses: InterruptResponses,
-  forwardProps?: Record<string, unknown>,
-): Promise<void> {
-  const agent = store().agent;
-  const interrupts = agent.pendingInterrupts ?? [];
-
-  await copilotKit.core.runAgent({
-    agent,
-    resume: buildResumeArray(interrupts, responses),
-    forwardedProps: forwardProps,
-  });
 }
 
 export function stop(store: Signal<AgentStore>): void {

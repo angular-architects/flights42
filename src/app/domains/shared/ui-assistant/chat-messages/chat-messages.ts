@@ -1,5 +1,5 @@
 import { type Interrupt } from '@ag-ui/core';
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { type Message, RenderToolCalls } from '@copilotkit/angular';
 
 import { CopilotActivity } from '../../util-copilotkit/activity/copilot-activity';
@@ -76,19 +76,16 @@ export class ChatMessages {
   readonly pendingInterrupts = input<Interrupt[]>([]);
   readonly resumeInterrupt = output<ResumeInterruptEvent>();
 
-  private readonly resolvedInterruptId = signal<string | null>(null);
-
   protected readonly views = computed(() => toMessageViews(this.messages()));
 
   protected readonly interrupts = computed(() =>
-    toInterruptModels(this.pendingInterrupts(), this.resolvedInterruptId()),
+    toInterruptModels(this.pendingInterrupts()),
   );
 
   protected resolveInterrupt(
     interruptId: string,
     payload: Record<string, unknown>,
   ): void {
-    this.resolvedInterruptId.set(interruptId);
     this.resumeInterrupt.emit({ interruptId, payload });
   }
 }
@@ -132,12 +129,9 @@ function toMessageText(message: Message): string {
     .trim();
 }
 
-function toInterruptModels(
-  pending: Interrupt[],
-  resolvedId: string | null,
-): InterruptModel[] {
+function toInterruptModels(pending: Interrupt[]): InterruptModel[] {
   const interrupt = pending[0];
-  if (!interrupt || interrupt.id === resolvedId) {
+  if (!interrupt) {
     return [];
   }
   return [toInterruptModel(interrupt)];

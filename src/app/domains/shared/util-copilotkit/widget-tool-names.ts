@@ -1,12 +1,11 @@
 import { computed, inject, type Signal } from '@angular/core';
 import { CopilotKit } from '@copilotkit/angular';
 
-import { FallbackToolCard } from './fallback-tool-card';
-
 /**
  * Names of the registered frontend tools that bring their own renderer, i.e.
- * the widgets. `initAgentStore` registers every tool without a component under
- * the `FallbackToolCard`, so a different component identifies a widget.
+ * the widgets. Tools without a component fall through to CopilotKit's built-in
+ * default tool card (`defaultToolRendering`), so a set component identifies a
+ * widget.
  */
 export function injectWidgetToolNames(): Signal<ReadonlySet<string>> {
   const copilotKit = inject(CopilotKit);
@@ -16,9 +15,7 @@ export function injectWidgetToolNames(): Signal<ReadonlySet<string>> {
       new Set(
         copilotKit
           .clientToolCallRenderConfigs()
-          .filter(
-            (tool) => tool.component && tool.component !== FallbackToolCard,
-          )
+          .filter((tool) => tool.component !== undefined)
           .map((tool) => tool.name),
       ),
   );
