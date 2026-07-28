@@ -7,6 +7,11 @@ export interface AppHttpAgentOptions {
   useServerMemory?: boolean;
 }
 
+const SERVER_RESUMED_INTERRUPT_REASONS = new Set([
+  'human_approval',
+  'tool_suspended',
+]);
+
 export class AppHttpAgent extends HttpAgent {
   private readonly sentMessageIds = new Set<string>();
 
@@ -22,11 +27,25 @@ export class AppHttpAgent extends HttpAgent {
     }
   }
 
+  /**
+   * CopilotKit's `injectInterrupt` synthesizes a client-side tool result for
+   * every interrupt that carries a `toolCallId`. That fits its own
+   * executor-less "interrupt tools" (BuiltInAgent: `interrupt.id ===
+   * toolCallId`, reason `"tool_call"`, the human response IS the result) but
+   * not this bridge: per the AG-UI spec, Mastra's resumeStream emits the
+   * authoritative TOOL_CALL_RESULT against the original toolCallId on the
+   * resume run. The synthetic message would shadow that real result in
+   * `RenderToolCalls` (first match wins), so it is dropped for the interrupt
+   * reasons our server emits. Upstream issue: CopilotKit/CopilotKit#TODO —
+   * remove this override once the synthesis is gated there.
+   */
   override addMessage(message: Message): void {
     if (
       message.role === 'tool' &&
       (this.pendingInterrupts ?? []).some(
-        (interrupt) => interrupt.toolCallId === message.toolCallId,
+        (interrupt) =>
+          interrupt.toolCallId === message.toolCallId &&
+          SERVER_RESUMED_INTERRUPT_REASONS.has(interrupt.reason),
       )
     ) {
       return;

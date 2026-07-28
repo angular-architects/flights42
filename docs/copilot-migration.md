@@ -917,6 +917,16 @@ below); the LLM-driven happy paths should be re-checked manually once.
   `toolCallId` matches a pending interrupt — Mastra's
   `approveToolCall`/`resumeStream` remains the single source of the tool
   result, which reproduces the pre-migration wire behavior exactly.
+  Post-migration analysis sharpened this: the synthesis is the client half
+  of CopilotKit's own executor-less "interrupt tools" (BuiltInAgent:
+  `interrupt.id === toolCallId`, reason `"tool_call"`, human response =
+  tool result, server dedups via its `alreadyAnswered` set), while the
+  AG-UI spec prescribes for our case that the _agent_ emits
+  `ToolCallResult` against the original `toolCallId` on the resume run.
+  The override is therefore gated on the reasons our server emits
+  (`human_approval`, `tool_suspended`) so a future CopilotKit-style
+  interrupt-tool demo would keep its synthesis; an upstream issue proposes
+  gating the synthesis in CopilotKit itself.
 - D5.2 resolved: `#startResume` indeed sends only `{ resume }`;
   forwarded props (agent mode) survive because `AppHttpAgent.requestInit`
   injects them into every request. The interrupt migration therefore depends

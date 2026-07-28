@@ -78,17 +78,29 @@ die Bubble._
 
 **Neuer, erklärungswürdiger Kniff (Buch!):** `injectInterrupt.resolve()` hängt
 clientseitig eine synthetische `role:'tool'`-Message für den unterbrochenen
-Tool-Call an. Bei uns produziert aber Mastras `approveToolCall`/`resumeStream`
-das autoritative Tool-Ergebnis; die synthetische Message würde in
-`RenderToolCalls` (first-match) das echte Buchungsergebnis verschatten →
-Action-Card zeigte "Failed". Darum:
+Tool-Call an. Das ist das Client-Gegenstück zu CopilotKits eigenen
+Executor-losen „interrupt tools" (BuiltInAgent, `interrupt.id === toolCallId`,
+Reason `"tool_call"`: die Human-Response IST das Tool-Ergebnis). Bei uns
+produziert aber Mastras `approveToolCall`/`resumeStream` das autoritative
+Tool-Ergebnis — genau so, wie es die AG-UI-Spec vorsieht („it emits
+ToolCallResult against the original toolCallId"); die synthetische Message
+würde in `RenderToolCalls` (first-match) das echte Buchungsergebnis
+verschatten → Action-Card zeigte "Failed". Darum, gescoped auf die Reasons
+unseres Servers:
 
 ```ts
+const SERVER_RESUMED_INTERRUPT_REASONS = new Set([
+  'human_approval',
+  'tool_suspended',
+]);
+
 override addMessage(message: Message): void {
   if (
     message.role === 'tool' &&
     (this.pendingInterrupts ?? []).some(
-      (interrupt) => interrupt.toolCallId === message.toolCallId,
+      (interrupt) =>
+        interrupt.toolCallId === message.toolCallId &&
+        SERVER_RESUMED_INTERRUPT_REASONS.has(interrupt.reason),
     )
   ) {
     return;
@@ -97,8 +109,12 @@ override addMessage(message: Message): void {
 }
 ```
 
-(`AppHttpAgent`). Wire-Format des Resume ist unverändert
+(`AppHttpAgent`). Das Reason-Gate lässt CopilotKit-artige Interrupt-Tools
+(Reason `"tool_call"`) unangetastet — relevant, falls die Demo später beide
+HITL-Muster nebeneinander zeigt. Wire-Format des Resume ist unverändert
 (`[{ interruptId, status: 'resolved', payload }]`) — Serverseite unberührt.
+Ein Upstream-Issue schlägt vor, die Synthese in CopilotKit selbst zu gaten;
+sobald das landet, fliegt der Override ersatzlos raus.
 
 **Abhängigkeit:** Der Controller sendet beim Resume nur `{ resume }` —
 Agent-Mode via forwardedProps überlebt nur, weil `AppHttpAgent` sie in jeden
