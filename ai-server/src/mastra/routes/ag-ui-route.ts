@@ -50,12 +50,14 @@ export async function agUiRouteHandler(
   const mode = (
     parsed.input.forwardedProps as { agentMode?: unknown } | undefined
   )?.agentMode;
-  const effectiveAgentId =
-    mode === 'plan'
-      ? 'planningAgent'
-      : mode === 'execution'
-        ? 'ticketingAgent'
-        : (agentId ?? '');
+  let effectiveAgentId: string;
+  if (mode === 'plan') {
+    effectiveAgentId = 'planningAgent';
+  } else if (mode === 'execution') {
+    effectiveAgentId = 'ticketingAgent';
+  } else {
+    effectiveAgentId = agentId ?? '';
+  }
 
   const agent = getExtendedLocalAgent({
     mastra: mastraInstance,
