@@ -29,15 +29,6 @@ export const A2UI_CUSTOM_CATALOG = new InjectionToken<A2uiCustomCatalog>(
   'A2UI_CUSTOM_CATALOG',
 );
 
-/**
- * Whether the full catalog descriptor (component metadata + schemas) may be
- * sent to the agent, or only the catalog id. See
- * `ProvideA2uiCatalogOptions.sendCatalogDescription`.
- */
-export const A2UI_SEND_CATALOG_DESCRIPTION = new InjectionToken<boolean>(
-  'A2UI_SEND_CATALOG_DESCRIPTION',
-);
-
 export interface ProvideA2uiCatalogOptions {
   /**
    * If `true` (default) the agent receives the full catalog descriptor
@@ -86,8 +77,9 @@ function toFunctionImplementation(
  * built, registered at `A2UI_RENDERER_CONFIG`, and the descriptor is stored
  * at `A2UI_CUSTOM_CATALOG` so `initAgentStore` can forward catalog metadata
  * to each registered agent via `connectAgentContext`. Set
- * `options.sendCatalogDescription: false` to forward only the catalog id
- * (recommended for production with a trusted server-side registry).
+ * `options.sendCatalogDescription: false` to store (and thus forward) only
+ * the catalog id (recommended for production with a trusted server-side
+ * registry).
  */
 export function provideA2uiCatalog(
   catalog?: A2uiCustomCatalog,
@@ -120,12 +112,15 @@ export function provideA2uiCatalog(
     catalogs: [rendererCatalog],
   };
 
+  // When the description must not leave the client, we strip components and
+  // functions from the descriptor stored at the token. The renderer keeps the
+  // full catalog above, so local rendering is unaffected.
+  const storedCatalog: A2uiCustomCatalog = sendCatalogDescription
+    ? catalog
+    : { id: catalog.id, components: [] };
+
   return makeEnvironmentProviders([
-    { provide: A2UI_CUSTOM_CATALOG, useValue: catalog },
-    {
-      provide: A2UI_SEND_CATALOG_DESCRIPTION,
-      useValue: sendCatalogDescription,
-    },
+    { provide: A2UI_CUSTOM_CATALOG, useValue: storedCatalog },
     { provide: A2UI_RENDERER_CONFIG, useValue: rendererConfig },
     A2uiRendererService,
   ]);

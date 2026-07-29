@@ -16,14 +16,8 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
-import {
-  catalogIdToContextEntry,
-  catalogToContextEntry,
-} from './a2ui/catalog-context';
-import {
-  A2UI_CUSTOM_CATALOG,
-  A2UI_SEND_CATALOG_DESCRIPTION,
-} from './a2ui/provide-a2ui-catalog';
+import { catalogToContextEntry } from './a2ui/catalog-context';
+import { A2UI_CUSTOM_CATALOG } from './a2ui/provide-a2ui-catalog';
 import { AppHttpAgent } from './app-http-agent';
 
 export interface InitAgentStoreConfig {
@@ -98,12 +92,7 @@ function connectCatalogContext(agentId: string): void {
     return;
   }
 
-  const sendCatalogDescription =
-    inject(A2UI_SEND_CATALOG_DESCRIPTION, { optional: true }) ?? true;
-
-  const entry = sendCatalogDescription
-    ? catalogToContextEntry(catalog)
-    : catalogIdToContextEntry(catalog.id);
+  const entry = catalogToContextEntry(catalog);
 
   connectAgentContext(() => ({ ...entry, agentIds: [agentId] }) as Context);
 }

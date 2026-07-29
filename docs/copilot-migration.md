@@ -964,7 +964,10 @@ result and the roundtrip spec fails). The changelog lives at
   inside `initAgentStore` — the facade injects both the catalog
   (`inject(A2UI_CUSTOM_CATALOG, { optional: true })`) and the policy
   (`A2UI_SEND_CATALOG_DESCRIPTION`), so the stores no longer mention the
-  catalog at all. Per-agent scoping works via `ScopedContext.agentIds`
+  catalog at all. **Revision 2026-07-29:** the separate policy token was
+  dropped again — `provideA2uiCatalog` stores the (possibly id-only-stripped)
+  descriptor at `A2UI_CUSTOM_CATALOG` exactly as before the migration, and
+  the facade just serializes whatever the token holds. Per-agent scoping works via `ScopedContext.agentIds`
   (core 1.63.2, PR #5369) — verified that `core.runAgent` builds
   `input.context` through `ContextStore.getContextForAgent(agentId)`, so the
   server-side extraction by description is unchanged.

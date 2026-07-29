@@ -105,8 +105,8 @@ Client-side only; the server-side interrupt protocol
   `connectAgentContext(() => ({ ...entry, agentIds: [agentId] }))` inside
   [init-agent-store.ts](../src/app/domains/shared/util-copilotkit/init-agent-store.ts).
   The facade injects the catalog (`inject(A2UI_CUSTOM_CATALOG, { optional:
-true })`) and the new policy token `A2UI_SEND_CATALOG_DESCRIPTION`, so the
-  agent stores no longer mention the catalog at all.
+true })`) and serializes it, so the agent stores no longer mention the
+  catalog at all.
 - Per-agent scoping works via `ScopedContext.agentIds` (core 1.63.2,
   PR #5369): `core.runAgent` builds `input.context` through
   `ContextStore.getContextForAgent(agentId)`. The server-side extraction by
@@ -127,11 +127,12 @@ true })`) and the new policy token `A2UI_SEND_CATALOG_DESCRIPTION`, so the
   production posture where the server would own a trusted catalog registry.
   Set the flag to `true` to restore the demo where the client announces the
   full catalog.
-- `provideA2uiCatalog` now always stores the full descriptor at
-  `A2UI_CUSTOM_CATALOG` and expresses the policy via
-  `A2UI_SEND_CATALOG_DESCRIPTION` (both in
-  [provide-a2ui-catalog.ts](../src/app/domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog.ts));
-  the renderer keeps the full catalog in every case.
+- The `sendCatalogDescription` mechanics in
+  [provide-a2ui-catalog.ts](../src/app/domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog.ts)
+  are unchanged from before the migration: with `false`, the descriptor
+  stored at `A2UI_CUSTOM_CATALOG` is stripped to `{ id, components: [] }`
+  (serializing to `{ catalogId, components: {} }`); the renderer keeps the
+  full catalog in every case.
 - **D8.2 decided — the pull-model `state` factory stays.** The documented
   `agent.setState()` push variant is a feedback loop with the existing mirror
   effect (`setState` → `onStateChanged` → store mirror → new refs → push
