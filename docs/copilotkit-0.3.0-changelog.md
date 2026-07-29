@@ -153,12 +153,14 @@ Client:
 - **Deleted** the entire custom host:
   `src/app/domains/shared/util-copilotkit/mcp-apps/` (`mcp-apps-widget.ts`,
   `mcp-apps-activity-renderer.ts`, `mcp-apps-content.ts`,
-  `mcp-apps.provider.ts` with `provideMcp`/`provideMcpApps`) and
-  `src/app/mcp-apps.config.ts`.
-- [app.config.ts](../src/app/app.config.ts) instead calls `provideMCPApps()`
-  from `@copilotkit/angular/mcp-apps`; `hostInfo`/`hostContext` moved into
-  its config. The shipped renderer registers via the built-in multi-token and
-  is picked up by `CopilotActivity` (§1).
+  `mcp-apps.provider.ts` with `provideMcp`/`provideMcpApps`).
+- [app.config.ts](../src/app/app.config.ts) instead calls
+  `provideMCPApps(mcpAppsConfig)` from `@copilotkit/angular/mcp-apps`.
+  [mcp-apps.config.ts](../src/app/mcp-apps.config.ts) keeps its path but its
+  `mcpAppsConfig` is now typed with the official `MCPAppsConfig`
+  (`hostInfo`/`hostContext`) instead of our deleted `McpAppsConfig`. The
+  shipped renderer registers via the built-in multi-token and is picked up by
+  `CopilotActivity` (§1).
 - The shipped widget proxies every `resources/read` / `tools/call` through
   the AG-UI agent as
   `runAgent({ forwardedProps: { __proxiedMCPRequest: { serverHash, serverId?,
