@@ -10,6 +10,11 @@ import { streamSSE } from 'hono/streaming';
 import { INTERNAL_PLAN_TOOL_NAMES } from '../tools/plan/index.js';
 import { parseRunAgentInput, streamAgentEvents } from './ag-ui-stream.js';
 
+interface AgUiForwardedProps {
+  agentMode?: unknown;
+  __proxiedMCPRequest?: unknown;
+}
+
 const HIDDEN_TOOLS: Record<string, readonly string[]> = {
   travelRefinementAgent: INTERNAL_PLAN_TOOL_NAMES,
 };
@@ -29,10 +34,8 @@ const mcpAppsProxy = new MCPAppsMiddleware({
 });
 
 function isProxiedMcpRequest(forwardedProps: unknown): boolean {
-  return Boolean(
-    (forwardedProps as { __proxiedMCPRequest?: unknown } | undefined)
-      ?.__proxiedMCPRequest,
-  );
+  const props = forwardedProps as AgUiForwardedProps | undefined;
+  return Boolean(props?.__proxiedMCPRequest);
 }
 
 export async function agUiRouteHandler(
@@ -47,9 +50,10 @@ export async function agUiRouteHandler(
     return parsed.response;
   }
 
-  const mode = (
-    parsed.input.forwardedProps as { agentMode?: unknown } | undefined
-  )?.agentMode;
+  const forwardedProps = parsed.input.forwardedProps as
+    | AgUiForwardedProps
+    | undefined;
+  const mode = forwardedProps?.agentMode;
   let effectiveAgentId: string;
   if (mode === 'plan') {
     effectiveAgentId = 'planningAgent';
