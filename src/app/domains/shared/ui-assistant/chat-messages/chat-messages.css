@@ -18,6 +18,20 @@
   margin: 0;
 }
 
+copilot-render-tool-calls ::ng-deep copilot-default-tool-renderer {
+  margin: 0;
+  padding: 0;
+}
+
+copilot-render-tool-calls ::ng-deep .tool-card {
+  border: 0;
+  background: inherit;
+}
+
+copilot-render-tool-calls ::ng-deep .tool-summary {
+  padding: 0;
+}
+
 .tool-call {
   display: flex;
   align-items: center;

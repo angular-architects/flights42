@@ -5,7 +5,7 @@ import {
   addDeveloperMessage,
   reset,
 } from '../../shared/util-copilotkit/agent-store-helper';
-import { TravelPlan, TravelPlanStore } from './travel-plan-store';
+import { isTravelPlan, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { injectTravelRefinementAgentStore } from './travel-refinement-agent-store';
 
@@ -19,8 +19,8 @@ export class TravelRefinementChatService {
   constructor() {
     effect(() => {
       const state = this.store().state();
-      if (state) {
-        this.planStore.setPlan(state as TravelPlan);
+      if (isTravelPlan(state)) {
+        this.planStore.setPlan(state);
       }
     });
   }
