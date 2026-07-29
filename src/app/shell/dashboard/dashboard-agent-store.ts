@@ -15,6 +15,7 @@ export function injectDashboardAgentStore() {
     forwardedProps: () => ({
       preventCaching: inject(DashboardPrefs).preventCaching(),
     }),
+    catalogIdOnly: true,
     frontendTools: [submitFlightSearchTool],
   });
 

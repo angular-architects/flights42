@@ -971,12 +971,13 @@ result and the roundtrip spec fails). The changelog lives at
   (core 1.63.2, PR #5369) — verified that `core.runAgent` builds
   `input.context` through `ContextStore.getContextForAgent(agentId)`, so the
   server-side extraction by description is unchanged.
-- Consequence: full descriptor vs. catalog id is now an app-wide switch
-  (`provideA2uiCatalog(catalog, { sendCatalogDescription })`), not a per-agent
-  one. The `014b743` split (ticketing full catalog, dashboard id only) is gone;
-  the app runs on `sendCatalogDescription: false`, so both agents send
-  `{ catalogId, components: {} }` — see §3 of
-  [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md).
+- The `014b743` split (ticketing full catalog, dashboard id only) is
+  preserved: `initAgentStore` takes a `catalogIdOnly` flag that the dashboard
+  store sets. **Revision 2026-07-29:** a first cut made this an app-wide
+  `sendCatalogDescription: false` and thereby disabled the custom-catalog
+  demo entirely (no component section in the prompt → the model can never
+  reference `TicketWidget`); reverted to the pre-migration wire behavior. See
+  §3 of [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md).
 - Deleted: the `context` option in `InitAgentStoreConfig`, the context
   factory plumbing, and `mergePersistentContext` in `AppHttpAgent`.
 - D8.2 decided: **keep the pull-model `state` factory.** The push variant

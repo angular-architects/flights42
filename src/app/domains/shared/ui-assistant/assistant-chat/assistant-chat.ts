@@ -57,11 +57,11 @@ export class AssistantChat {
   protected readonly greeting = signal<string>(DEFAULT_GREETING);
   protected readonly showModeSelector = signal(true);
 
-  protected readonly store = signal<Signal<AgentStore> | null>(null);
-  protected readonly agentId = signal<string | null>(null);
+  protected readonly store = signal<Signal<AgentStore> | undefined>(undefined);
+  protected readonly agentId = signal<string | undefined>(undefined);
 
   private readonly interruptController = injectInterrupt({
-    agentId: computed(() => this.agentId() ?? undefined),
+    agentId: this.agentId,
   });
 
   protected readonly messages = computed<Message[]>(() => {

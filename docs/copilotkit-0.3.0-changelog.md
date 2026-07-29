@@ -13,16 +13,16 @@ Dependency baseline: `@copilotkit/angular` 0.2.0 → **0.3.0** (core
 
 ## Quick reference for book/slides
 
-| If the material shows…                                               | It changes to…                                                                 |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `FallbackToolCard` / `'*'` wildcard renderer                         | gone — `provideCopilotKit({ defaultToolRendering: true })`                     |
-| `getPendingInterrupts(store)` + signal-priming trick                 | `injectInterrupt({ agentId })` controller, `controller.interrupts()`           |
-| `resumeInterrupt(copilotKit, store, responses)` / `buildResumeArray` | `controller.resolve(payload, interruptId)`                                     |
-| `context: () => [...]` option on `initAgentStore`                    | gone — `connectAgentContext` with `agentIds` scoping inside `initAgentStore`   |
-| `catalogToContextEntry(...)` in agent stores                         | stores no longer mention the catalog; app-wide `sendCatalogDescription` switch |
-| custom MCP Apps host (`mcp-apps/` folder, `provideMcpApps`)          | `provideMCPApps()` from `@copilotkit/angular/mcp-apps`                         |
-| browser connects to MCP server (`ConfigService.mcpServerUrl`)        | widget traffic is proxied through the AG-UI agent (`__proxiedMCPRequest`)      |
-| `@copilotkit/runtime` in `package.json`                              | removed; `@ag-ui/mcp-apps-middleware` added (server-side proxy only)           |
+| If the material shows…                                               | It changes to…                                                               |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `FallbackToolCard` / `'*'` wildcard renderer                         | gone — `provideCopilotKit({ defaultToolRendering: true })`                   |
+| `getPendingInterrupts(store)` + signal-priming trick                 | `injectInterrupt({ agentId })` controller, `controller.interrupts()`         |
+| `resumeInterrupt(copilotKit, store, responses)` / `buildResumeArray` | `controller.resolve(payload, interruptId)`                                   |
+| `context: () => [...]` option on `initAgentStore`                    | gone — `connectAgentContext` with `agentIds` scoping inside `initAgentStore` |
+| `catalogToContextEntry(...)` in agent stores                         | stores no longer mention the catalog; dashboard sets `catalogIdOnly: true`   |
+| custom MCP Apps host (`mcp-apps/` folder, `provideMcpApps`)          | `provideMCPApps()` from `@copilotkit/angular/mcp-apps`                       |
+| browser connects to MCP server (`ConfigService.mcpServerUrl`)        | widget traffic is proxied through the AG-UI agent (`__proxiedMCPRequest`)    |
+| `@copilotkit/runtime` in `package.json`                              | removed; `@ag-ui/mcp-apps-middleware` added (server-side proxy only)         |
 
 ## 1. Upgrade and default tool rendering
 
@@ -118,15 +118,21 @@ true })`) and serializes it, so the agent stores no longer mention the
   [ticketing-agent-store.ts](../src/app/domains/ticketing/ai/ticketing-agent-store.ts)
   and `buildCatalogIdContext()` in
   [dashboard-agent-store.ts](../src/app/shell/dashboard/dashboard-agent-store.ts).
-- **Behavioral change:** full descriptor vs. catalog id is now an app-wide
-  switch (`provideA2uiCatalog(catalog, { sendCatalogDescription })`), not a
-  per-agent one. The earlier split (ticketing full catalog, dashboard id
-  only) is gone; the app runs on `sendCatalogDescription: false`, so **both
-  agents send `{ catalogId, components: {} }`** and the custom-component
-  prompt section is no longer expanded from client-supplied metadata — the
-  production posture where the server would own a trusted catalog registry.
-  Set the flag to `true` to restore the demo where the client announces the
-  full catalog.
+- **No behavioral change on the wire.** The per-agent split is preserved:
+  the ticketing agent sends the full descriptor, the dashboard agent only the
+  catalog id — expressed as `catalogIdOnly: true` on the dashboard's
+  `initAgentStore` call instead of a hand-built context entry in the store.
+  `provideA2uiCatalog(customCatalog)` keeps its default
+  (`sendCatalogDescription: true`), so the custom-component prompt section is
+  expanded exactly as before.
+
+  A first cut of this step switched the app to
+  `sendCatalogDescription: false` and dropped the per-agent split, which
+  silently disabled the whole custom-catalog demo (with `components: {}` the
+  server emits no component section, so the model can never reference
+  `TicketWidget`). Reverted — if the book or slides quote that state, ignore
+  it.
+
 - The `sendCatalogDescription` mechanics in
   [provide-a2ui-catalog.ts](../src/app/domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog.ts)
   are unchanged from before the migration: with `false`, the descriptor
@@ -255,16 +261,33 @@ Found while live-testing the hotels flow; both bugs predate the migration.
   chunk type, so a failing tool surfaced only as the generic "Tool execution
   finished without a streamed result." It now emits the actual error message
   as the `TOOL_CALL_RESULT`.
-- **Mixed tool batches lose server-side calls.** When the model emits a
-  server-side tool call (e.g. `hotels_findHotels`) and a client widget call
-  (e.g. `messageWidget`) in the _same_ assistant batch, Mastra ends the turn
-  without executing the server-side tool at all — no result, no error, no
-  MCP Apps widget (reproduced against Mastra 1.14 with a mock model; a
-  server-tools-only batch executes fine). Two mitigations: the
-  `TERMINAL_TOOL_HINT` in
-  [tool-definition.ts](../src/app/domains/shared/util-copilotkit/tool-definition.ts)
-  now explicitly forbids mixing widgets with non-widget tools in one batch,
-  and `ExtendedMastraAgent` finalizes **all** pending server-side tool calls
-  at run end (previously only the last active one) with an explanatory error
-  result, so a dropped call shows up in the chat instead of vanishing.
-  Candidate for an upstream Mastra issue.
+- **The hotels MCP Apps widget did not render — root cause was our own
+  prompt.** The `USE_MCP` branch of
+  [ticketing-agent.prompt.ts](../ai-server/src/mastra/agents/ticketing-agent.prompt.ts)
+  said to emit the intro `messageWidget` _"together with the
+  hotels_findHotels call"_ — contradicting the prompt's own general rule
+  ("FIRST call any DATA tools you need and wait for their results"). The
+  model followed it and put both calls in one batch. Mastra hands control
+  back to the client as soon as a batch contains a client tool, so
+  `hotels_findHotels` was never executed: no result, no
+  `mcp-apps` snapshot, no widget — and the model wrote "Hier sind Hotels in
+  Graz" without ever having the data. Fix: the hotels section now states that
+  `hotels_findHotels` is a data tool, must be called alone, and that the
+  `messageWidget` follows only after its result. Measured against the live
+  server with the app's realistic 17-tool payload: **0/6 runs rendered the
+  widget before the fix, 8/8 after.**
+
+  Two notes for the book/slides: the prompt file is untouched by the 0.3.0
+  migration, so this bug predates it; and the underlying Mastra behavior
+  (server-side calls in a mixed batch are dropped silently) is worth a
+  mention as an agent-design pitfall — data tools first, terminal widgets
+  last, never in one batch. An attempt to compensate for it in
+  `ExtendedMastraAgent` by re-executing dropped calls was reverted as a hack.
+
+- **Unfinished server tool calls were only half-reported.**
+  `ExtendedMastraAgent` tracked a single `activeToolCallId`, so when several
+  tool calls were open at run end only the last one produced the fallback
+  error result — and if that last one was a client widget call, nothing was
+  reported at all, which is why the failure above was invisible on the wire.
+  Pending server-side calls are now tracked as a set and all of them get the
+  fallback result. Same message as before, no new behavior.

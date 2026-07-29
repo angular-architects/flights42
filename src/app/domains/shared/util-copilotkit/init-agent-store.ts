@@ -16,7 +16,10 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
-import { catalogToContextEntry } from './a2ui/catalog-context';
+import {
+  catalogIdToContextEntry,
+  catalogToContextEntry,
+} from './a2ui/catalog-context';
 import { A2UI_CUSTOM_CATALOG } from './a2ui/provide-a2ui-catalog';
 import { AppHttpAgent } from './app-http-agent';
 
@@ -32,6 +35,12 @@ export interface InitAgentStoreConfig {
   forwardedProps?: () => Record<string, unknown>;
   state?: () => unknown;
   useServerMemory?: boolean;
+  /**
+   * Forward only the catalog id instead of the full descriptor. For agents
+   * that never render custom components themselves but must still know which
+   * catalog the surfaces belong to.
+   */
+  catalogIdOnly?: boolean;
 }
 
 export function initAgentStore(config: InitAgentStoreConfig): void {
@@ -61,7 +70,7 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
     useServerMemory: config.useServerMemory,
   });
 
-  connectCatalogContext(config.agentId);
+  connectCatalogContext(config.agentId, config.catalogIdOnly ?? false);
 
   copilotKit.updateRuntime({
     selfManagedAgents: {
@@ -86,13 +95,15 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   }
 }
 
-function connectCatalogContext(agentId: string): void {
+function connectCatalogContext(agentId: string, idOnly: boolean): void {
   const catalog = inject(A2UI_CUSTOM_CATALOG, { optional: true });
   if (!catalog) {
     return;
   }
 
-  const entry = catalogToContextEntry(catalog);
+  const entry = idOnly
+    ? catalogIdToContextEntry(catalog.id)
+    : catalogToContextEntry(catalog);
 
   connectAgentContext(() => ({ ...entry, agentIds: [agentId] }) as Context);
 }

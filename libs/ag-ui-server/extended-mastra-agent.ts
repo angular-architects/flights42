@@ -216,25 +216,13 @@ function finalizePendingToolCalls(
   },
   errorMessage?: string,
 ): void {
-  const entries = [...pendingToolCalls.entries()];
-  const serverCalls = entries.filter(
-    ([, call]) => !clientToolNames.has(call.toolName),
-  );
-  if (serverCalls.length === 0) {
-    return;
-  }
-
-  const mixedWithClientCalls = entries.length > serverCalls.length;
   const message =
-    errorMessage ??
-    (mixedWithClientCalls
-      ? 'Not executed: this server-side tool call was emitted in the same ' +
-        'tool-call batch as client-side widget calls, so Mastra ended the ' +
-        'turn without running it. Call server-side tools in an earlier step ' +
-        'and wait for their results before emitting widgets.'
-      : 'Tool execution finished without a streamed result.');
+    errorMessage ?? 'Tool execution finished without a streamed result.';
 
-  for (const [toolCallId] of serverCalls) {
+  for (const [toolCallId, call] of pendingToolCalls) {
+    if (clientToolNames.has(call.toolName)) {
+      continue;
+    }
     handlers.onToolResultPart({ toolCallId, result: { error: message } });
     pendingToolCalls.delete(toolCallId);
   }
