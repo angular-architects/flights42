@@ -629,6 +629,16 @@ function safeParseJson(value: string): unknown {
   }
 }
 
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return JSON.stringify(error ?? 'Tool execution failed.');
+}
+
 export class ExtendedMastraAgent extends AbstractAgent {
   override readonly agentId: string;
   readonly agent: Agent;
@@ -1130,6 +1140,23 @@ export class ExtendedMastraAgent extends AbstractAgent {
               }
               pendingToolCalls.delete(payload.payload.toolCallId);
             }
+            break;
+          }
+          case 'tool-error': {
+            const payload = chunk as {
+              payload: {
+                toolCallId: string;
+                toolName: string;
+                error: unknown;
+              };
+            };
+            activeToolCallId = undefined;
+            activeToolName = undefined;
+            handlers.onToolResultPart({
+              toolCallId: payload.payload.toolCallId,
+              result: { error: toErrorMessage(payload.payload.error) },
+            });
+            pendingToolCalls.delete(payload.payload.toolCallId);
             break;
           }
           case 'tripwire': {
