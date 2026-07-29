@@ -61,8 +61,11 @@ Dependency baseline: `@copilotkit/angular` 0.2.0 → **0.3.0** (core
   input to renderers) was already on this branch before the migration. That
   computed also merges the `ɵCOPILOTKIT_BUILT_IN_ACTIVITY_RENDERERS`
   multi-token, which is what makes §4's `provideMCPApps()` renderer reachable
-  from the custom chat shell. `CopilotActivity` itself stays until upstream
-  PR #6033 lands.
+  from the custom chat shell. Renderer selection mirrors the precedence of
+  CopilotKit's `CopilotChatMessageView`: among configs with the matching
+  `activityType`, an `agentId`-specific one wins over an agent-agnostic one,
+  with the `activityType: '*'` wildcard as last resort. `CopilotActivity`
+  itself stays until upstream PR #6033 lands.
 
 ## 2. Interrupts: `injectInterrupt` replaces the hand-written protocol
 
@@ -218,15 +221,19 @@ Server:
 
 - [extended-mastra-agent.ts](../libs/ag-ui-server/extended-mastra-agent.ts)
   keeps the `_meta.ui` sniffing over natively registered `@mastra/mcp` tools
-  and keeps emitting the `mcp-apps` `ACTIVITY_SNAPSHOT` itself — now
-  including the `serverHash` the 0.3.0 renderer requires. The hash arrives
-  via the new `mcpAppsServerHashes` option (serverId → hash).
+  and keeps emitting the `mcp-apps` `ACTIVITY_SNAPSHOT` itself. Addressing
+  runs entirely over the `serverId`; the `serverHash` field the 0.3.0
+  renderer's schema requires is emitted as `''` — the middleware's
+  proxied-request lookup prefers `serverId` and only consults the hash when
+  no id resolves. The optional `mcpAppsServerHashes` option (serverId → hash)
+  stays in the lib for setups without a `serverId` but is not used by the
+  app.
 - [ag-ui-route.ts](../ai-server/src/mastra/routes/ag-ui-route.ts) declares
   the hotels MCP server config once (`type: 'http'`, url, explicit
-  `serverId: 'hotels'` per D6), derives the hash with `getServerHash` over
-  that same config (so hash-based lookups resolve), passes the hash map to
-  the agent, and routes `__proxiedMCPRequest` runs through a module-level
-  `MCPAppsMiddleware` instead of the agent.
+  `serverId: 'hotels'` per D6 — it must match the server key under which the
+  agent's `MCPClient` registers the MCP server) and routes
+  `__proxiedMCPRequest` runs through a module-level `MCPAppsMiddleware`
+  instead of the agent. No hash map, no `getServerHash`.
 - [ag-ui-stream.ts](../ai-server/src/mastra/routes/ag-ui-stream.ts):
   `streamAgentEvents` gained an optional `middleware` and subscribes to
   `middleware.run(input, agent)` when set.
@@ -238,11 +245,12 @@ Server:
   `ConfigService.mcpServerUrl` is no longer used by the app.
 
 Gate evidence (no LLM key needed): ai-server boots against the live MCP
-server; proxied `tools/call` (by serverId) and `resources/read` (by real
-serverHash) returned live results through the `mastra dev` route (hotel list
+server; proxied `tools/call` (by serverId) and `resources/read` (by
+serverHash, before the hash map was dropped in favor of serverId-only
+addressing) returned live results through the `mastra dev` route (hotel list
 resp. the ~345 kB app HTML); a scripted `ExtendedMastraAgent` run (fake agent
 emitting a `hotels_findHotels` call) produced the `mcp-apps`
-`ACTIVITY_SNAPSHOT` with real `serverHash`, `serverId`, `resourceUri`,
+`ACTIVITY_SNAPSHOT` with `serverId`, `resourceUri`,
 `toolInput`, and a faithful `CallToolResult`; a temporary browser spec
 validated that snapshot against the _shipped_ `mcpAppsSnapshotContentSchema`
 (removed again after the gate). The LLM-driven hotels chat should be
@@ -357,7 +365,7 @@ Found while live-testing the hotels flow; both bugs predate the migration.
   a re-cloned message, a later snapshot for an already-built surface, and a
   switch to a different surface.
 - **Refactor, no behavior change:** the body of `CopilotActivity.rendered`
-  moved into the pure `toRenderActivity(message, configs, agent)` at the end
-  of
+  moved into the pure `toRenderActivity(message, configs, agentId, agent)` at
+  the end of
   [copilot-activity.ts](../src/app/domains/shared/util-copilotkit/activity/copilot-activity.ts);
-  the computed only reads the three signals and delegates.
+  the computed only reads its signals and delegates.

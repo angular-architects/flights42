@@ -1,5 +1,4 @@
 import {
-  getServerHash,
   MCPAppsMiddleware,
   type MCPClientConfig,
 } from '@ag-ui/mcp-apps-middleware';
@@ -23,10 +22,6 @@ const HOTELS_MCP_SERVER: MCPClientConfig = {
   type: 'http',
   url: 'http://127.0.0.1:3002/mcp',
   serverId: 'hotels',
-};
-
-const MCP_APPS_SERVER_HASHES: Readonly<Record<string, string>> = {
-  hotels: getServerHash(HOTELS_MCP_SERVER),
 };
 
 const mcpAppsProxy = new MCPAppsMiddleware({
@@ -70,7 +65,6 @@ export async function agUiRouteHandler(
     requestContext,
     tripwireMessage: 'Sorry, I cannot help with this topic.',
     hiddenToolNames: HIDDEN_TOOLS[effectiveAgentId],
-    mcpAppsServerHashes: MCP_APPS_SERVER_HASHES,
   });
 
   const middleware = isProxiedMcpRequest(parsed.input.forwardedProps)

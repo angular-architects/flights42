@@ -35,6 +35,7 @@ export class CopilotActivity {
     toRenderActivity(
       this.message(),
       this.copilotKit.activityMessageRenderConfigs(),
+      this.agentId(),
       this.copilotKit.getAgent(this.agentId()),
     ),
   );
@@ -53,11 +54,20 @@ export interface RenderedActivity {
 export function toRenderActivity(
   message: ActivityMessage,
   configs: readonly RenderActivityMessageConfig[],
+  agentId: string,
   agent: AbstractAgent | undefined,
 ): RenderedActivity | null {
-  const config = configs.find(
+  // Same precedence as CopilotKit's CopilotChatMessageView: a renderer
+  // registered for this agent wins over an agent-agnostic one; the '*'
+  // wildcard is the last resort.
+  const matches = configs.filter(
     (candidate) => candidate.activityType === message.activityType,
   );
+
+  const config =
+    matches.find((candidate) => candidate.agentId === agentId) ??
+    matches.find((candidate) => candidate.agentId === undefined) ??
+    configs.find((candidate) => candidate.activityType === '*');
 
   if (!config) {
     return null;
