@@ -14,8 +14,6 @@ const HIDDEN_TOOLS: Record<string, readonly string[]> = {
   travelRefinementAgent: INTERNAL_PLAN_TOOL_NAMES,
 };
 
-const showInternalTools = process.env['SHOW_INTERNAL_TOOLS'] === 'true';
-
 const HOTELS_MCP_SERVER: MCPClientConfig = {
   type: 'http',
   url: 'http://127.0.0.1:3002/mcp',
@@ -65,9 +63,7 @@ export async function agUiRouteHandler(
     resourceId: parsed.input.threadId,
     requestContext,
     tripwireMessage: 'Sorry, I cannot help with this topic.',
-    hiddenToolNames: showInternalTools
-      ? undefined
-      : HIDDEN_TOOLS[effectiveAgentId],
+    hiddenToolNames: HIDDEN_TOOLS[effectiveAgentId],
     mcpAppsServerHashes: MCP_APPS_SERVER_HASHES,
   });
 
