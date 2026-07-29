@@ -208,19 +208,36 @@ function hasPendingServerToolCalls(
   );
 }
 
-function takePendingServerToolCalls(
+function finalizePendingToolCalls(
   pendingToolCalls: PendingToolCalls,
   clientToolNames: Set<string>,
-): [string, { toolName: string; args: unknown }][] {
-  const serverCalls = [...pendingToolCalls.entries()].filter(
+  handlers: {
+    onToolResultPart: (value: { toolCallId: string; result: unknown }) => void;
+  },
+  errorMessage?: string,
+): void {
+  const entries = [...pendingToolCalls.entries()];
+  const serverCalls = entries.filter(
     ([, call]) => !clientToolNames.has(call.toolName),
   );
-
-  for (const [toolCallId] of serverCalls) {
-    pendingToolCalls.delete(toolCallId);
+  if (serverCalls.length === 0) {
+    return;
   }
 
-  return serverCalls;
+  const mixedWithClientCalls = entries.length > serverCalls.length;
+  const message =
+    errorMessage ??
+    (mixedWithClientCalls
+      ? 'Not executed: this server-side tool call was emitted in the same ' +
+        'tool-call batch as client-side widget calls, so Mastra ended the ' +
+        'turn without running it. Call server-side tools in an earlier step ' +
+        'and wait for their results before emitting widgets.'
+      : 'Tool execution finished without a streamed result.');
+
+  for (const [toolCallId] of serverCalls) {
+    handlers.onToolResultPart({ toolCallId, result: { error: message } });
+    pendingToolCalls.delete(toolCallId);
+  }
 }
 
 function setThoughtSignature(
@@ -1101,13 +1118,35 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
             const pending = pendingToolCalls.get(payload.payload.toolCallId);
             if (pending) {
-              this.emitToolResultActivity(
-                payload.payload.toolCallId,
-                pending,
-                payload.payload.result,
-                mcpAppsUiMeta,
-                handlers,
-              );
+              const uiMeta = mcpAppsUiMeta.get(pending.toolName);
+              const a2uiSurface = getA2uiSurface(payload.payload.result);
+              if (uiMeta) {
+                // Own messageId (the tool-call id), NOT the assistant message
+                // id: an ACTIVITY_SNAPSHOT replaces the message whose id
+                // matches, so reusing the assistant id would overwrite the
+                // assistant message (its text and sibling widget tool calls).
+                handlers.onActivitySnapshot({
+                  messageId: payload.payload.toolCallId,
+                  activityType: 'mcp-apps',
+                  content: buildMcpAppsActivityContent(
+                    uiMeta,
+                    this.mcpAppsServerHashes[uiMeta.serverId] ?? '',
+                    pending.args,
+                    payload.payload.result,
+                  ),
+                });
+              } else if (a2uiSurface) {
+                // Key the activity by the surface id (unique per surface, like
+                // the dashboard route) rather than the assistant message id.
+                // A2UI_SNAPSHOT replaces any existing message whose id matches,
+                // so reusing the assistant message id would overwrite the
+                // tool-call message and breaks on the second surface in a thread.
+                handlers.onActivitySnapshot({
+                  messageId: a2uiSurface.surfaceId,
+                  activityType: 'a2ui-surface',
+                  content: { operations: a2uiSurface.operations },
+                });
+              }
               pendingToolCalls.delete(payload.payload.toolCallId);
             }
             break;
@@ -1148,7 +1187,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
           case 'error': {
             const payload = chunk as { payload: { error: string } };
             if (hasPendingServerToolCalls(pendingToolCalls, clientToolNames)) {
-              this.failPendingToolCalls(
+              finalizePendingToolCalls(
                 pendingToolCalls,
                 clientToolNames,
                 handlers,
@@ -1162,10 +1201,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
             return;
           }
           case 'finish': {
-            await this.runDroppedToolCalls(
+            finalizePendingToolCalls(
               pendingToolCalls,
               clientToolNames,
-              mcpAppsUiMeta,
               handlers,
             );
             handlers.onRunFinished();
@@ -1174,16 +1212,11 @@ export class ExtendedMastraAgent extends AbstractAgent {
         }
       }
 
-      await this.runDroppedToolCalls(
-        pendingToolCalls,
-        clientToolNames,
-        mcpAppsUiMeta,
-        handlers,
-      );
+      finalizePendingToolCalls(pendingToolCalls, clientToolNames, handlers);
       handlers.onRunFinished();
     } catch (error) {
       if (hasPendingServerToolCalls(pendingToolCalls, clientToolNames)) {
-        this.failPendingToolCalls(
+        finalizePendingToolCalls(
           pendingToolCalls,
           clientToolNames,
           handlers,
@@ -1194,150 +1227,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
       }
 
       handlers.onError(error);
-    }
-  }
-
-  private emitToolResultActivity(
-    toolCallId: string,
-    pending: { toolName: string; args: unknown },
-    result: unknown,
-    mcpAppsUiMeta: Map<string, McpAppUiMeta>,
-    handlers: {
-      onActivitySnapshot: (value: {
-        messageId: string;
-        activityType: string;
-        content: Record<string, unknown>;
-      }) => void;
-    },
-  ): void {
-    const uiMeta = mcpAppsUiMeta.get(pending.toolName);
-    if (uiMeta) {
-      // Own messageId (the tool-call id), NOT the assistant message id: an
-      // ACTIVITY_SNAPSHOT replaces the message whose id matches, so reusing
-      // the assistant id would overwrite the assistant message (its text and
-      // sibling widget tool calls).
-      handlers.onActivitySnapshot({
-        messageId: toolCallId,
-        activityType: 'mcp-apps',
-        content: buildMcpAppsActivityContent(
-          uiMeta,
-          this.mcpAppsServerHashes[uiMeta.serverId] ?? '',
-          pending.args,
-          result,
-        ),
-      });
-      return;
-    }
-
-    const a2uiSurface = getA2uiSurface(result);
-    if (a2uiSurface) {
-      // Key the activity by the surface id (unique per surface, like the
-      // dashboard route) rather than the assistant message id. A2UI_SNAPSHOT
-      // replaces any existing message whose id matches, so reusing the
-      // assistant message id would overwrite the tool-call message and breaks
-      // on the second surface in a thread.
-      handlers.onActivitySnapshot({
-        messageId: a2uiSurface.surfaceId,
-        activityType: 'a2ui-surface',
-        content: { operations: a2uiSurface.operations },
-      });
-    }
-  }
-
-  /**
-   * Runs server-side tool calls that Mastra announced but never executed.
-   * Mastra hands control back to the client as soon as a tool-call batch
-   * contains a client tool, silently dropping every server-side call in that
-   * same batch (verified against Mastra 1.14). Executing them here keeps the
-   * model's intent effective — the tool result and any MCP Apps / A2UI
-   * surface still reach the client. The result does not enter Mastra's own
-   * memory, so the model itself only learns about it on a later turn if the
-   * client replays the message.
-   */
-  private async runDroppedToolCalls(
-    pendingToolCalls: PendingToolCalls,
-    clientToolNames: Set<string>,
-    mcpAppsUiMeta: Map<string, McpAppUiMeta>,
-    handlers: {
-      onToolResultPart: (value: {
-        toolCallId: string;
-        result: unknown;
-      }) => void;
-      onActivitySnapshot: (value: {
-        messageId: string;
-        activityType: string;
-        content: Record<string, unknown>;
-      }) => void;
-    },
-  ): Promise<void> {
-    const droppedCalls = takePendingServerToolCalls(
-      pendingToolCalls,
-      clientToolNames,
-    );
-    if (droppedCalls.length === 0) {
-      return;
-    }
-
-    const tools = await this.agent.listTools();
-
-    for (const [toolCallId, call] of droppedCalls) {
-      const execute = (
-        tools as Record<
-          string,
-          | { execute?: (args: unknown, options: unknown) => Promise<unknown> }
-          | undefined
-        >
-      )[call.toolName]?.execute;
-
-      if (!execute) {
-        handlers.onToolResultPart({
-          toolCallId,
-          result: { error: 'Tool execution finished without a result.' },
-        });
-        continue;
-      }
-
-      try {
-        const result = await execute(call.args, {
-          requestContext: this.requestContext,
-          abortSignal: this.abortSignal,
-        });
-        handlers.onToolResultPart({ toolCallId, result });
-        this.emitToolResultActivity(
-          toolCallId,
-          call,
-          result,
-          mcpAppsUiMeta,
-          handlers,
-        );
-      } catch (error) {
-        handlers.onToolResultPart({
-          toolCallId,
-          result: { error: toErrorMessage(error) },
-        });
-      }
-    }
-  }
-
-  private failPendingToolCalls(
-    pendingToolCalls: PendingToolCalls,
-    clientToolNames: Set<string>,
-    handlers: {
-      onToolResultPart: (value: {
-        toolCallId: string;
-        result: unknown;
-      }) => void;
-    },
-    errorMessage: string,
-  ): void {
-    for (const [toolCallId] of takePendingServerToolCalls(
-      pendingToolCalls,
-      clientToolNames,
-    )) {
-      handlers.onToolResultPart({
-        toolCallId,
-        result: { error: errorMessage },
-      });
     }
   }
 

@@ -257,28 +257,14 @@ Found while live-testing the hotels flow; both bugs predate the migration.
   as the `TOOL_CALL_RESULT`.
 - **Mixed tool batches lose server-side calls.** When the model emits a
   server-side tool call (e.g. `hotels_findHotels`) and a client widget call
-  (e.g. `messageWidget`) in the _same_ assistant batch, Mastra hands control
-  back to the client and never executes the server-side tool — no result, no
-  error, and therefore no MCP Apps widget. Reproduced against Mastra 1.14
-  with a mock model; a server-tools-only batch executes fine, and whether the
-  model batches at all is non-deterministic, which is why the hotels demo
-  failed only intermittently. Candidate for an upstream Mastra issue.
-
-  Three mitigations, in order of effect:
-
-  1. `ExtendedMastraAgent.runDroppedToolCalls` **executes the dropped
-     server-side calls itself** at run end (via `agent.listTools()`) and emits
-     the real `TOOL_CALL_RESULT` plus the `mcp-apps` / `a2ui-surface` snapshot
-     through the same path as a normal result. Verified with a mock model
-     against the live MCP server: the dropped `hotels_findHotels` call returns
-     real hotels and the snapshot carries the correct `serverHash`. Caveat:
-     the compensating result does not enter Mastra's memory, so the model
-     itself does not see it within that turn.
-  2. Pending server-side calls are now tracked as a set. The previous
-     `activeToolCallId` single-slot bookkeeping was overwritten by the
-     widget's call, which is why a dropped call vanished silently instead of
-     at least producing an error result.
-  3. The `TERMINAL_TOOL_HINT` in
-     [tool-definition.ts](../src/app/domains/shared/util-copilotkit/tool-definition.ts)
-     tells the model not to mix widgets with non-widget tools in one batch,
-     since it would not see their results before writing its message.
+  (e.g. `messageWidget`) in the _same_ assistant batch, Mastra ends the turn
+  without executing the server-side tool at all — no result, no error, no
+  MCP Apps widget (reproduced against Mastra 1.14 with a mock model; a
+  server-tools-only batch executes fine). Two mitigations: the
+  `TERMINAL_TOOL_HINT` in
+  [tool-definition.ts](../src/app/domains/shared/util-copilotkit/tool-definition.ts)
+  now explicitly forbids mixing widgets with non-widget tools in one batch,
+  and `ExtendedMastraAgent` finalizes **all** pending server-side tool calls
+  at run end (previously only the last active one) with an explanatory error
+  result, so a dropped call shows up in the chat instead of vanishing.
+  Candidate for an upstream Mastra issue.
