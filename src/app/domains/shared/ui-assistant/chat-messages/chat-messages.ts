@@ -104,15 +104,20 @@ function toMessageViews(messages: Message[]): ChatMessageView[] {
         message.role === 'activity'
           ? { message, isSurface: message.activityType === 'a2ui-surface' }
           : null,
-      toolCalls:
-        message.role === 'assistant'
-          ? (message.toolCalls ?? []).map((toolCall) => ({
-              id: toolCall.id,
-              message: { ...message, toolCalls: [toolCall] },
-            }))
-          : [],
+      toolCalls: toToolCallViews(message),
     }),
   );
+}
+
+function toToolCallViews(message: Message): ChatToolCallView[] {
+  if (message.role !== 'assistant') {
+    return [];
+  }
+
+  return (message.toolCalls ?? []).map((toolCall) => ({
+    id: toolCall.id,
+    message: { ...message, toolCalls: [toolCall] },
+  }));
 }
 
 function toMessageText(message: Message): string {

@@ -13,16 +13,17 @@ Dependency baseline: `@copilotkit/angular` 0.2.0 → **0.3.0** (core
 
 ## Quick reference for book/slides
 
-| If the material shows…                                               | It changes to…                                                               |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `FallbackToolCard` / `'*'` wildcard renderer                         | gone — `provideCopilotKit({ defaultToolRendering: true })`                   |
-| `getPendingInterrupts(store)` + signal-priming trick                 | `injectInterrupt({ agentId })` controller, `controller.interrupts()`         |
-| `resumeInterrupt(copilotKit, store, responses)` / `buildResumeArray` | `controller.resolve(payload, interruptId)`                                   |
-| `context: () => [...]` option on `initAgentStore`                    | gone — `connectAgentContext` with `agentIds` scoping inside `initAgentStore` |
-| `catalogToContextEntry(...)` in agent stores                         | stores no longer mention the catalog; dashboard sets `catalogIdOnly: true`   |
-| custom MCP Apps host (`mcp-apps/` folder, `provideMcpApps`)          | `provideMCPApps()` from `@copilotkit/angular/mcp-apps`                       |
-| browser connects to MCP server (`ConfigService.mcpServerUrl`)        | widget traffic is proxied through the AG-UI agent (`__proxiedMCPRequest`)    |
-| `@copilotkit/runtime` in `package.json`                              | removed; `@ag-ui/mcp-apps-middleware` added (server-side proxy only)         |
+| If the material shows…                                               | It changes to…                                                                |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `FallbackToolCard` / `'*'` wildcard renderer                         | gone — `provideCopilotKit({ defaultToolRendering: true })`                    |
+| `getPendingInterrupts(store)` + signal-priming trick                 | `injectInterrupt({ agentId })` in the chat service, `controller.interrupts()` |
+| `chatRegistry.setChat(store, greeting, showModeSelector)`            | `chatRegistry.setChat({ store, interrupts, greeting, showModeSelector })`     |
+| `resumeInterrupt(copilotKit, store, responses)` / `buildResumeArray` | `controller.resolve(payload, interruptId)`                                    |
+| `context: () => [...]` option on `initAgentStore`                    | gone — `connectAgentContext` with `agentIds` scoping inside `initAgentStore`  |
+| `catalogToContextEntry(...)` in agent stores                         | stores no longer mention the catalog; dashboard sets `catalogIdOnly: true`    |
+| custom MCP Apps host (`mcp-apps/` folder, `provideMcpApps`)          | `provideMCPApps()` from `@copilotkit/angular/mcp-apps`                        |
+| browser connects to MCP server (`ConfigService.mcpServerUrl`)        | widget traffic is proxied through the AG-UI agent (`__proxiedMCPRequest`)     |
+| `@copilotkit/runtime` in `package.json`                              | removed; `@ag-ui/mcp-apps-middleware` added (server-side proxy only)          |
 
 ## 1. Upgrade and default tool rendering
 
@@ -40,6 +41,20 @@ Dependency baseline: `@copilotkit/angular` 0.2.0 → **0.3.0** (core
 - [widget-tool-names.ts](../src/app/domains/shared/util-copilotkit/widget-tool-names.ts):
   the widget discriminator changed from
   `component !== FallbackToolCard` to `component !== undefined`.
+- **Styling follow-up (2026-07-29).** `CopilotDefaultToolRenderer` ships its
+  own card chrome (`:host { margin-block: .5rem }`, bordered/filled
+  `.tool-card`, padded `.tool-summary`) — inside our chat bubble that reads as
+  a box in a box, unlike the old `FallbackToolCard`, whose styling we owned.
+  [chat-messages.css](../src/app/domains/shared/ui-assistant/chat-messages/chat-messages.css)
+  now neutralizes it via three `copilot-render-tool-calls ::ng-deep` rules
+  (margin/padding, `border: 0` + `background: inherit`, summary padding). Host
+  scoping makes them win on specificity, so no `!important`. Point for the
+  book/slides: adopting the built-in renderer trades a component you style
+  directly for one you can only reach through `::ng-deep`.
+- The per-tool-call view mapping in
+  [chat-messages.ts](../src/app/domains/shared/ui-assistant/chat-messages/chat-messages.ts)
+  (one `RenderToolCalls` host per tool call) moved out of `toMessageViews`
+  into its own `toToolCallViews` helper — cosmetic, no behavior change.
 - The D1.4 rewiring of
   [copilot-activity.ts](../src/app/domains/shared/util-copilotkit/activity/copilot-activity.ts)
   (consume `copilotKit.activityMessageRenderConfigs()`, pass the new `agent`
@@ -55,12 +70,33 @@ Client-side only; the server-side interrupt protocol
 (`RUN_FINISHED { outcome: { type: 'interrupt', ... } }`, resume array,
 `approveToolCall`/`declineToolCall`/`resumeStream`) is unchanged.
 
-- [assistant-chat.ts](../src/app/domains/shared/ui-assistant/assistant-chat/assistant-chat.ts)
-  owns an `injectInterrupt` controller with a reactive `agentId`
-  (follows the `ChatRegistry` chat switch). `interrupts` renders from
-  `controller.interrupts()`, gated on `!isRunning()` so the buttons vanish
-  the moment the resume run starts. `onResumeInterrupt` calls
-  `controller.resolve(payload, interruptId)`.
+- The controller belongs to the chat service that owns the agent:
+  [ticketing-chat-service.ts](../src/app/domains/ticketing/ai/ticketing-chat-service.ts)
+  and
+  [travel-refinement-chat-service.ts](../src/app/domains/ticketing/feature-travel-planner/travel-refinement-chat-service.ts)
+  each call `injectInterrupt({ agentId })` right below their
+  `inject…AgentStore()` — field order matters, because that store call is what
+  registers the agent the controller resolves. The stores export their ids
+  (`TICKETING_AGENT_ID`, `TRAVEL_REFINEMENT_AGENT_ID`) for it.
+  `ChatRegistry.setChat` takes a `ChatConfig` object (`store`, `interrupts`,
+  `greeting?`, `showModeSelector?`) instead of three positional arguments and
+  carries the controller to
+  [assistant-chat.ts](../src/app/domains/shared/ui-assistant/assistant-chat/assistant-chat.ts),
+  which only renders it: `interrupts` from `controller.interrupts()`, gated on
+  `!isRunning()` so the buttons vanish the moment the resume run starts;
+  `onResumeInterrupt` calls `controller.resolve(payload, interruptId)`.
+- **Why not in the chat component (fixed 2026-07-29).** The first cut had
+  `AssistantChat` itself call `injectInterrupt({ agentId: this.agentId })`,
+  with `agentId` a signal that stays `undefined` until `ChatRegistry`
+  announces a chat. `injectInterrupt` resolves `agentId() || DEFAULT_AGENT_ID`
+  eagerly and its connect effect hits `injectAgentStore('default')` — at app
+  start no agent is registered, so the effect throws _"Agent 'default' not
+  found after runtime sync (no runtimeUrl)"_ on every load. The signature
+  invites it: `agentId?: string | Signal<string | undefined>` accepts
+  `undefined`, but the runtime has no "not connected yet" state. Creating the
+  controller lazily on the first real agent id works but needs
+  `runInInjectionContext`, since the chat switch arrives asynchronously —
+  owning it where the agent id is statically known removes both problems.
 - **Deleted from**
   [agent-store-helper.ts](../src/app/domains/shared/util-copilotkit/agent-store-helper.ts):
   `getPendingInterrupts` (the signal-priming hack that read `isRunning()` and

@@ -1,14 +1,18 @@
 import { Injectable, type Signal } from '@angular/core';
-import { type AgentStore } from '@copilotkit/angular';
+import { type AgentStore, type InterruptController } from '@copilotkit/angular';
 import { BehaviorSubject, Subject } from 'rxjs';
 
-export interface ChatInfo {
-  store: Signal<AgentStore> | undefined;
-  /** Agent id backing the store; needed to render tool calls and activities. */
-  agentId: string | undefined;
+export interface ChatConfig {
+  store: Signal<AgentStore>;
+  interrupts: InterruptController;
   /** Greeting shown as the first assistant message. Undefined = component default. */
   greeting?: string;
   showModeSelector?: boolean;
+}
+
+export interface ChatInfo extends Partial<ChatConfig> {
+  /** Agent id backing the store; needed to render tool calls and activities. */
+  agentId: string | undefined;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -26,16 +30,16 @@ export class ChatRegistry {
     return this._store;
   }
 
-  public setChat(
-    store: Signal<AgentStore>,
-    greeting?: string,
-    showModeSelector = true,
-  ): void {
-    if (store !== this._store) {
-      this._store = store;
-      const agentId = store().agent.agentId;
-      this._chatInfo.next({ store, agentId, greeting, showModeSelector });
+  public setChat(config: ChatConfig): void {
+    if (config.store === this._store) {
+      return;
     }
+
+    this._store = config.store;
+    this._chatInfo.next({
+      ...config,
+      agentId: config.store().agent.agentId,
+    });
   }
 
   public clearChat(): void {

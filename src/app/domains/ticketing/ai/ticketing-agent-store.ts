@@ -29,7 +29,7 @@ import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool'
 import { updatePlanStepTool } from './tools/update-plan-step.tool';
 import { planWidget } from './widgets/plan-widget';
 
-const AGENT_ID = 'ticketingAgent';
+export const TICKETING_AGENT_ID = 'ticketingAgent';
 
 const planTools = [
   getPlanTool,
@@ -49,7 +49,7 @@ const widgets = USE_MCP
 
 export function injectTicketingAgentStore() {
   initAgentStore({
-    agentId: AGENT_ID,
+    agentId: TICKETING_AGENT_ID,
     url: inject(ConfigService).agUiUrl,
     useServerMemory: true,
     forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
@@ -67,5 +67,5 @@ export function injectTicketingAgentStore() {
       : [],
   });
 
-  return injectAgentStore(AGENT_ID);
+  return injectAgentStore(TICKETING_AGENT_ID);
 }

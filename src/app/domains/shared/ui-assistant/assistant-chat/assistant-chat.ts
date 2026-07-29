@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import {
   type AgentStore,
   CopilotKit,
-  injectInterrupt,
+  type InterruptController,
   type Message,
 } from '@copilotkit/angular';
 
@@ -60,9 +60,9 @@ export class AssistantChat {
   protected readonly store = signal<Signal<AgentStore> | undefined>(undefined);
   protected readonly agentId = signal<string | undefined>(undefined);
 
-  private readonly interruptController = injectInterrupt({
-    agentId: this.agentId,
-  });
+  private readonly interruptController = signal<
+    InterruptController | undefined
+  >(undefined);
 
   protected readonly messages = computed<Message[]>(() => {
     const store = this.store();
@@ -75,9 +75,13 @@ export class AssistantChat {
     return store ? store().isRunning() : false;
   });
 
-  protected readonly interrupts = computed<Interrupt[]>(() =>
-    this.isRunning() ? [] : [...this.interruptController.interrupts()],
-  );
+  protected readonly interrupts = computed<Interrupt[]>(() => {
+    const controller = this.interruptController();
+    if (!controller || this.isRunning()) {
+      return [];
+    }
+    return [...controller.interrupts()];
+  });
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
@@ -85,6 +89,7 @@ export class AssistantChat {
       this.agentId.set(chatInfo.agentId);
       this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
       this.showModeSelector.set(chatInfo.showModeSelector ?? true);
+      this.interruptController.set(chatInfo.interrupts);
     });
 
     this.chatRegistry.openRequested.subscribe(() => this.open());
@@ -139,7 +144,7 @@ export class AssistantChat {
   }
 
   protected onResumeInterrupt(event: ResumeInterruptEvent): void {
-    void this.interruptController.resolve(event.payload, event.interruptId);
+    void this.interruptController()?.resolve(event.payload, event.interruptId);
   }
 
   protected setMode(mode: AgentMode): void {

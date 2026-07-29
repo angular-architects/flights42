@@ -8,7 +8,7 @@ import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
 import { TravelPlanStore } from './travel-plan-store';
 
-const AGENT_ID = 'travelRefinementAgent';
+export const TRAVEL_REFINEMENT_AGENT_ID = 'travelRefinementAgent';
 
 const widgets = [messageWidget, flightWidget, hotelWidget];
 
@@ -16,12 +16,12 @@ export function injectTravelRefinementAgentStore() {
   const planStore = inject(TravelPlanStore);
 
   initAgentStore({
-    agentId: AGENT_ID,
-    url: inject(ConfigService).agUiUrlFor(AGENT_ID),
+    agentId: TRAVEL_REFINEMENT_AGENT_ID,
+    url: inject(ConfigService).agUiUrlFor(TRAVEL_REFINEMENT_AGENT_ID),
     useServerMemory: true,
     state: () => planStore.plan(),
     frontendTools: [...widgets],
   });
 
-  return injectAgentStore(AGENT_ID);
+  return injectAgentStore(TRAVEL_REFINEMENT_AGENT_ID);
 }
