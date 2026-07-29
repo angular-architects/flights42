@@ -53,5 +53,12 @@ ai-server/src/mastra/public/*
 ai-server/src/mastra/db
 ai-server/cache
 
+# In-place output of `tsc --build ai-server/tsconfig.json`
+# (libs/ag-ui-server/*.js is served at runtime via the @internal symlink)
+ai-server/src/**/*.js
+ai-server/tsconfig.tsbuildinfo
+libs/ag-ui-server/*.js
+libs/feature-flags/*.js
+
 agent/src/mastra/public
 
