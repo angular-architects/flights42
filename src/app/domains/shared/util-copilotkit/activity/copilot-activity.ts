@@ -1,4 +1,4 @@
-import type { AbstractAgent } from '@ag-ui/client';
+import type { AbstractAgent, ActivityMessage } from '@ag-ui/client';
 import { NgComponentOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -14,23 +14,6 @@ import {
   type RenderActivityMessageConfig,
 } from '@copilotkit/angular';
 
-interface ActivityMessageLike {
-  id: string;
-  role: 'activity';
-  activityType: string;
-  content: Record<string, unknown>;
-}
-
-interface ActivityRender {
-  component: Type<ActivityRenderer<unknown>>;
-  inputs: {
-    activityType: string;
-    content: unknown;
-    message: ActivityMessageLike;
-    agent: AbstractAgent | undefined;
-  };
-}
-
 @Component({
   selector: 'app-copilot-activity',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,26 +28,36 @@ interface ActivityRender {
 export class CopilotActivity {
   private readonly copilotKit = inject(CopilotKit);
 
-  readonly message = input.required<ActivityMessageLike>();
+  readonly message = input.required<ActivityMessage>();
   readonly agentId = input.required<string>();
 
   protected readonly rendered = computed(() =>
-    resolveActivityRender(
-      this.copilotKit.activityMessageRenderConfigs(),
+    toRenderActivity(
       this.message(),
-      this.agentId(),
+      this.copilotKit.activityMessageRenderConfigs(),
       this.copilotKit.getAgent(this.agentId()),
     ),
   );
 }
 
-export function resolveActivityRender(
-  configs: RenderActivityMessageConfig[],
-  message: ActivityMessageLike,
-  agentId: string,
+export interface RenderedActivity {
+  component: Type<ActivityRenderer<unknown>>;
+  inputs: {
+    activityType: string;
+    content: unknown;
+    message: ActivityMessage;
+    agent: AbstractAgent | undefined;
+  };
+}
+
+export function toRenderActivity(
+  message: ActivityMessage,
+  configs: readonly RenderActivityMessageConfig[],
   agent: AbstractAgent | undefined,
-): ActivityRender | null {
-  const config = pickActivityConfig(configs, message.activityType, agentId);
+): RenderedActivity | null {
+  const config = configs.find(
+    (candidate) => candidate.activityType === message.activityType,
+  );
 
   if (!config) {
     return null;
@@ -73,7 +66,7 @@ export function resolveActivityRender(
   const parsed = config.content.safeParse(message.content);
   if (!parsed.success) {
     console.warn(
-      `Failed to parse content for activity message '${message.activityType}':`,
+      `Failed to parse content for activity '${message.activityType}':`,
       parsed.error,
     );
     return null;
@@ -88,20 +81,4 @@ export function resolveActivityRender(
       agent,
     },
   };
-}
-
-export function pickActivityConfig(
-  configs: RenderActivityMessageConfig[],
-  activityType: string,
-  agentId: string,
-): RenderActivityMessageConfig | undefined {
-  const matches = configs.filter(
-    (candidate) => candidate.activityType === activityType,
-  );
-
-  return (
-    matches.find((candidate) => candidate.agentId === agentId) ??
-    matches.find((candidate) => candidate.agentId === undefined) ??
-    configs.find((candidate) => candidate.activityType === '*')
-  );
 }

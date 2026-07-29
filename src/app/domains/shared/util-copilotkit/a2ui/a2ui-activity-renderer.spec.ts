@@ -1,13 +1,16 @@
-import { provideMarkdownRenderer } from '@a2ui/angular/v0_9';
+import {
+  A2uiRendererService,
+  provideMarkdownRenderer,
+} from '@a2ui/angular/v0_9';
 import { NgComponentOutlet } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, ErrorHandler, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { A2uiActivityRenderer } from './a2ui-activity-renderer';
 import { provideA2uiCatalog } from './provide-a2ui-catalog';
 
 const BASIC_CATALOG_ID =
-  'https://a2ui.org/specification/v0_9/basic_catalog.json';
+  'https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function inputsFor(id: string): Record<string, any> {
@@ -90,5 +93,41 @@ describe('A2uiActivityRenderer', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('hi surf-1');
     expect(text).toContain('hi surf-2'); // the second table must also render
+  });
+
+  it('releases its surface on destroy so the same surface can be rendered again', async () => {
+    const errors: unknown[] = [];
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideA2uiCatalog(),
+        provideMarkdownRenderer(async (markdown) => markdown),
+        {
+          provide: ErrorHandler,
+          useValue: { handleError: (error: unknown) => errors.push(error) },
+        },
+      ],
+    });
+
+    const renderer = TestBed.inject(A2uiRendererService);
+    const fixture = TestBed.createComponent(HostComponent);
+    const host = fixture.componentInstance;
+
+    host.items.set([{ id: 'surf-1', inputs: inputsFor('surf-1') }]);
+    fixture.detectChanges();
+    await settle(fixture);
+    expect(renderer.surfaceGroup.getSurface('surf-1')).toBeDefined();
+
+    host.items.set([]);
+    fixture.detectChanges();
+    await settle(fixture);
+    expect(renderer.surfaceGroup.getSurface('surf-1')).toBeUndefined();
+
+    host.items.set([{ id: 'surf-1', inputs: inputsFor('surf-1') }]);
+    fixture.detectChanges();
+    await settle(fixture);
+
+    expect(errors).toEqual([]);
+    expect(fixture.nativeElement.textContent).toContain('hi surf-1');
   });
 });

@@ -327,3 +327,37 @@ Found while live-testing the hotels flow; both bugs predate the migration.
   reported at all, which is why the failure above was invisible on the wire.
   Pending server-side calls are now tracked as a set and all of them get the
   fallback result. Same message as before, no new behavior.
+
+## A2UI surface lifecycle (2026-07-29)
+
+- **Surfaces are now built once and owned by the component that built them.**
+  [a2ui-activity-renderer.ts](../src/app/domains/shared/util-copilotkit/a2ui/a2ui-activity-renderer.ts)
+  ran `renderer.processMessages(content().operations)` in a plain effect, so
+  every re-delivery of the same activity message replayed its operations —
+  CopilotKit re-clones activity messages, and the A2UI processor rejects a
+  second `createSurface` for a known id (`ErrorHandler` noise, no visible
+  update). The renderer now remembers the surface id it built, skips
+  re-processing while that id is unchanged, and deletes the surface
+  (`surfaceGroup.deleteSurface`) both on `DestroyRef` teardown and before
+  switching to a different id. An activity message describes exactly one
+  surface, which is what makes build-once correct.
+- **Consequence:** the same surface id can be rendered again after its
+  component was destroyed, so the global sweep in
+  [dashboard.ts](../src/app/shell/dashboard/dashboard.ts)
+  (`clearRenderedSurfaces()` walking `surfaceGroup.surfacesMap` on every send
+  and reset) is deleted, together with its `A2uiRendererService` injection.
+  Point for the book/slides: surface lifetime belongs to the renderer
+  component, not to the screen that happens to host a chat.
+- **Specs.** `a2ui-activity-renderer.spec.ts` gained a destroy/re-render
+  roundtrip (render `surf-1` → unmount → surface gone → render `surf-1`
+  again, no errors) and its basic-catalog id was corrected to
+  `…/v0_9/catalogs/basic/catalog.json`. New
+  [copilot-activity.spec.ts](../src/app/domains/shared/util-copilotkit/activity/copilot-activity.spec.ts)
+  covers the same behavior one level up, through the real activity pipeline:
+  a re-cloned message, a later snapshot for an already-built surface, and a
+  switch to a different surface.
+- **Refactor, no behavior change:** the body of `CopilotActivity.rendered`
+  moved into the pure `toRenderActivity(message, configs, agent)` at the end
+  of
+  [copilot-activity.ts](../src/app/domains/shared/util-copilotkit/activity/copilot-activity.ts);
+  the computed only reads the three signals and delegates.

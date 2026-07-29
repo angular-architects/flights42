@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
@@ -46,11 +47,34 @@ export class A2uiActivityRenderer implements ActivityRenderer<A2uiSurfaceContent
   readonly agent = input.required<AbstractAgent | undefined>();
 
   private readonly renderer = inject(A2uiRendererService);
+  private renderedSurfaceId: string | null = null;
 
   constructor() {
+    // An activity message describes exactly one surface, so it is built once:
+    // CopilotKit re-delivers the parsed content whenever the message is
+    // re-cloned, and the A2UI processor rejects a second `createSurface`.
     effect(() => {
-      this.renderer.processMessages(this.content().operations);
+      const operations = this.content().operations;
+      const surfaceId = getRenderedSurfaceId(operations);
+      if (!surfaceId || surfaceId === this.renderedSurfaceId) {
+        return;
+      }
+
+      this.releaseSurface();
+      this.renderedSurfaceId = surfaceId;
+      this.renderer.processMessages(operations);
     });
+
+    inject(DestroyRef).onDestroy(() => {
+      this.releaseSurface();
+    });
+  }
+
+  private releaseSurface(): void {
+    if (this.renderedSurfaceId) {
+      this.renderer.surfaceGroup.deleteSurface(this.renderedSurfaceId);
+      this.renderedSurfaceId = null;
+    }
   }
 
   protected readonly surfaceId = computed(() =>

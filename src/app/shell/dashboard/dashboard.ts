@@ -1,4 +1,3 @@
-import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -38,7 +37,6 @@ interface DashboardToolCall {
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  private readonly renderer = inject(A2uiRendererService);
   private readonly copilotKit = inject(CopilotKit);
 
   protected readonly chat = injectDashboardAgentStore();
@@ -74,7 +72,6 @@ export class Dashboard {
     if (!content) {
       return;
     }
-    this.clearRenderedSurfaces();
     resetChat(this.chat);
     this.showToolDetails.set(false);
     void sendMessage(this.copilotKit, this.chat, content);
@@ -90,7 +87,6 @@ export class Dashboard {
   }
 
   protected reset(): void {
-    this.clearRenderedSurfaces();
     resetChat(this.chat);
     this.showToolDetails.set(false);
     this.message.set('');
@@ -102,15 +98,6 @@ export class Dashboard {
 
   protected formatToolArgs(args: unknown): string {
     return formatToolArgs(args);
-  }
-
-  private clearRenderedSurfaces(): void {
-    const surfaceIds = Array.from(
-      this.renderer.surfaceGroup.surfacesMap.keys(),
-    );
-    for (const id of surfaceIds) {
-      this.renderer.surfaceGroup.deleteSurface(id);
-    }
   }
 }
 
