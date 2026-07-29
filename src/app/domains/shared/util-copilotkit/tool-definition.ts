@@ -6,9 +6,11 @@ import {
 
 const TERMINAL_TOOL_HINT =
   `\n\nCalling this tool ENDS your turn — the agent is not invoked again ` +
-  `afterwards. Do all data gathering and other tool calls BEFORE it, and emit ` +
-  `it (together with any other end-of-turn widgets) as the LAST tool calls of ` +
-  `the turn.`;
+  `afterwards. Do all data gathering and other tool calls in EARLIER steps ` +
+  `and wait for their results first. NEVER mix this tool into the same ` +
+  `tool-call batch as non-widget tools — those calls would be dropped ` +
+  `unexecuted. Emit it (together with any other end-of-turn widgets) as the ` +
+  `LAST step of the turn.`;
 
 /**
  * Identity helper for a browser-executed frontend tool. Keeps schema, name,

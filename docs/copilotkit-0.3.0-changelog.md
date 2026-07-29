@@ -245,3 +245,26 @@ before the MCP Apps step, per protocol.
 Open: re-check the two LLM-driven flows manually once (booking approval via
 `injectInterrupt`, hotels via MCP Apps) — this session had no model API key;
 everything up to the LLM was exercised mechanically.
+
+## Post-migration fixes (2026-07-29, unrelated to 0.3.0)
+
+Found while live-testing the hotels flow; both bugs predate the migration.
+
+- **Mastra `tool-error` chunks were swallowed.**
+  `ExtendedMastraAgent.streamMastraAgent` did not handle the `tool-error`
+  chunk type, so a failing tool surfaced only as the generic "Tool execution
+  finished without a streamed result." It now emits the actual error message
+  as the `TOOL_CALL_RESULT`.
+- **Mixed tool batches lose server-side calls.** When the model emits a
+  server-side tool call (e.g. `hotels_findHotels`) and a client widget call
+  (e.g. `messageWidget`) in the _same_ assistant batch, Mastra ends the turn
+  without executing the server-side tool at all — no result, no error, no
+  MCP Apps widget (reproduced against Mastra 1.14 with a mock model; a
+  server-tools-only batch executes fine). Two mitigations: the
+  `TERMINAL_TOOL_HINT` in
+  [tool-definition.ts](../src/app/domains/shared/util-copilotkit/tool-definition.ts)
+  now explicitly forbids mixing widgets with non-widget tools in one batch,
+  and `ExtendedMastraAgent` finalizes **all** pending server-side tool calls
+  at run end (previously only the last active one) with an explanatory error
+  result, so a dropped call shows up in the chat instead of vanishing.
+  Candidate for an upstream Mastra issue.

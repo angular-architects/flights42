@@ -197,27 +197,47 @@ function getA2uiSurface(
     : null;
 }
 
-function finalizeActiveToolCall(
-  activeToolCallId: string | undefined,
-  activeToolName: string | undefined,
+type PendingToolCalls = Map<string, { toolName: string; args: unknown }>;
+
+function hasPendingServerToolCalls(
+  pendingToolCalls: PendingToolCalls,
+  clientToolNames: Set<string>,
+): boolean {
+  return [...pendingToolCalls.values()].some(
+    (call) => !clientToolNames.has(call.toolName),
+  );
+}
+
+function finalizePendingToolCalls(
+  pendingToolCalls: PendingToolCalls,
   clientToolNames: Set<string>,
   handlers: {
     onToolResultPart: (value: { toolCallId: string; result: unknown }) => void;
   },
-  errorMessage = 'Tool execution finished without a streamed result.',
+  errorMessage?: string,
 ): void {
-  if (
-    !activeToolCallId ||
-    !activeToolName ||
-    clientToolNames.has(activeToolName)
-  ) {
+  const entries = [...pendingToolCalls.entries()];
+  const serverCalls = entries.filter(
+    ([, call]) => !clientToolNames.has(call.toolName),
+  );
+  if (serverCalls.length === 0) {
     return;
   }
 
-  handlers.onToolResultPart({
-    toolCallId: activeToolCallId,
-    result: { error: errorMessage },
-  });
+  const mixedWithClientCalls = entries.length > serverCalls.length;
+  const message =
+    errorMessage ??
+    (mixedWithClientCalls
+      ? 'Not executed: this server-side tool call was emitted in the same ' +
+        'tool-call batch as client-side widget calls, so Mastra ended the ' +
+        'turn without running it. Call server-side tools in an earlier step ' +
+        'and wait for their results before emitting widgets.'
+      : 'Tool execution finished without a streamed result.');
+
+  for (const [toolCallId] of serverCalls) {
+    handlers.onToolResultPart({ toolCallId, result: { error: message } });
+    pendingToolCalls.delete(toolCallId);
+  }
 }
 
 function setThoughtSignature(
@@ -998,9 +1018,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
 
     this.requestContext.set('ag-ui', { context: input.context });
 
-    let activeToolCallId: string | undefined;
-    let activeToolName: string | undefined;
-
     try {
       const stream = await this.createMastraStream(
         input,
@@ -1037,8 +1054,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 providerMetadata?: UnknownRecord;
               };
             };
-            activeToolCallId = payload.payload.toolCallId;
-            activeToolName = payload.payload.toolName;
             cacheThoughtSignature(
               this.store,
               this.agentId,
@@ -1061,8 +1076,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 resumeSchema?: string;
               };
             };
-            activeToolCallId = undefined;
-            activeToolName = undefined;
             handlers.onRunInterrupted({
               kind: 'approval',
               runId: stream.runId,
@@ -1083,8 +1096,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 suspendPayload?: unknown;
               };
             };
-            activeToolCallId = undefined;
-            activeToolName = undefined;
             handlers.onRunInterrupted({
               kind: 'suspend',
               runId: stream.runId,
@@ -1103,8 +1114,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 result: unknown;
               };
             };
-            activeToolCallId = undefined;
-            activeToolName = undefined;
             handlers.onToolResultPart(payload.payload);
 
             const pending = pendingToolCalls.get(payload.payload.toolCallId);
@@ -1150,8 +1159,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 error: unknown;
               };
             };
-            activeToolCallId = undefined;
-            activeToolName = undefined;
             handlers.onToolResultPart({
               toolCallId: payload.payload.toolCallId,
               result: { error: toErrorMessage(payload.payload.error) },
@@ -1179,10 +1186,9 @@ export class ExtendedMastraAgent extends AbstractAgent {
           }
           case 'error': {
             const payload = chunk as { payload: { error: string } };
-            if (activeToolCallId) {
-              finalizeActiveToolCall(
-                activeToolCallId,
-                activeToolName,
+            if (hasPendingServerToolCalls(pendingToolCalls, clientToolNames)) {
+              finalizePendingToolCalls(
+                pendingToolCalls,
                 clientToolNames,
                 handlers,
                 payload.payload.error,
@@ -1195,9 +1201,8 @@ export class ExtendedMastraAgent extends AbstractAgent {
             return;
           }
           case 'finish': {
-            finalizeActiveToolCall(
-              activeToolCallId,
-              activeToolName,
+            finalizePendingToolCalls(
+              pendingToolCalls,
               clientToolNames,
               handlers,
             );
@@ -1207,18 +1212,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
         }
       }
 
-      finalizeActiveToolCall(
-        activeToolCallId,
-        activeToolName,
-        clientToolNames,
-        handlers,
-      );
+      finalizePendingToolCalls(pendingToolCalls, clientToolNames, handlers);
       handlers.onRunFinished();
     } catch (error) {
-      if (activeToolCallId) {
-        finalizeActiveToolCall(
-          activeToolCallId,
-          activeToolName,
+      if (hasPendingServerToolCalls(pendingToolCalls, clientToolNames)) {
+        finalizePendingToolCalls(
+          pendingToolCalls,
           clientToolNames,
           handlers,
           error instanceof Error ? error.message : 'Tool execution failed.',
