@@ -143,8 +143,13 @@ export class AssistantChat {
     }
   }
 
-  protected onResumeInterrupt(event: ResumeInterruptEvent): void {
-    void this.interruptController()?.resolve(event.payload, event.interruptId);
+  protected async onResumeInterrupt(
+    event: ResumeInterruptEvent,
+  ): Promise<void> {
+    const controller = this.interruptController();
+    if (controller) {
+      await controller.resolve(event.payload, event.interruptId);
+    }
   }
 
   protected setMode(mode: AgentMode): void {
