@@ -1,9 +1,10 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MarkdownComponent } from 'ngx-markdown';
 
 @Component({
   selector: 'app-message',
   imports: [MarkdownComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: ` <span><markdown [data]="data()"></markdown></span> `,
 })
 export class MessageComponent {

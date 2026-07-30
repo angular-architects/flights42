@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { uiChatResource } from '@hashbrownai/angular';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
@@ -16,7 +16,7 @@ import { toggleFlightSelection } from './tools/toggle-flight-selection.tool';
 import { updateFlight } from './tools/update-flight.tool';
 import { flightWidget } from './widgets/flight-widget';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TicketingChatService {
   private config = inject(ConfigService);
   private chatStore = inject(ChatRegistry);

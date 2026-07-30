@@ -7,6 +7,7 @@ import {
   effect,
   ElementRef,
   inject,
+  injectAsync,
   input,
   signal,
   viewChildren,
@@ -39,6 +40,10 @@ export class CheckinPage {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly formBuilder = inject(FormBuilder);
+
+  private readonly upgradeService = injectAsync(() =>
+    import('./upgrade-service').then((m) => m.UpgradeService),
+  );
 
   private readonly inputs = viewChildren<ElementRef>('input');
 
@@ -188,6 +193,12 @@ export class CheckinPage {
 
   protected toggleNextFlights(): void {
     this.showNextFlights.update((show) => !show);
+  }
+
+  protected async upgrade(): Promise<void> {
+    const flightNumber = this.checkinFormModel().ticketId;
+    const upgradeService = await this.upgradeService();
+    upgradeService.upgrade(flightNumber);
   }
 }
 

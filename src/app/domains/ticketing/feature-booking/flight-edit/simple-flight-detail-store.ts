@@ -1,11 +1,11 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Service, signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, finalize, firstValueFrom, tap, throwError } from 'rxjs';
 
 import { Flight } from '../../data/flight';
 import { FlightClient } from '../../data/flight-client';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SimpleFlightDetailStore {
   private flightClient = inject(FlightClient);
   private snackBar = inject(MatSnackBar);

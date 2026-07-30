@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { DialogService } from '../../domains/shared/ui-common/dialog/dialog.service';
 import { DIALOG_DATA } from '../../domains/shared/ui-common/dialog/dialog.token';
 
 @Component({
   selector: 'app-demo-dialog',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card">
       <div class="card-body mb-20">

@@ -6,12 +6,12 @@ import {
   DOCUMENT,
   EnvironmentInjector,
   inject,
-  Injectable,
+  Service,
 } from '@angular/core';
 
 import { DialogOutlet } from './dialog-outlet';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DialogOutletService {
   private envInjector = inject(EnvironmentInjector);
   private appRef = inject(ApplicationRef);

@@ -1,5 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, contentChildren, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  contentChildren,
+  input,
+} from '@angular/core';
 
 // import { CustomTemplateOutlet } from '../custom-template-outlet';
 import { TableField } from './table-field';
@@ -7,6 +12,7 @@ import { TableField } from './table-field';
 @Component({
   selector: 'app-data-table',
   imports: [NgTemplateOutlet],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <table class="table">
       <tr>

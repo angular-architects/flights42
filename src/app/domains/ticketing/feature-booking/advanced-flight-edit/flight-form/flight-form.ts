@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { FieldTree, FormField } from '@angular/forms/signals';
 
 import { DateControl } from '../../../../shared/ui-common/date-control/date-control';
@@ -16,6 +16,7 @@ import { Flight } from '../../../data/flight';
     FieldMetaDataPane,
     DateControl,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './flight-form.html',
 })
 export class FlightForm {

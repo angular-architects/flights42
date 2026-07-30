@@ -40,6 +40,9 @@ module.exports = defineConfig([
           varsIgnorePattern: '^_',
         },
       ],
+      // Newly part of tsRecommended in angular-eslint 22; several demos
+      // deliberately use ChangeDetectionStrategy.Eager
+      '@angular-eslint/prefer-on-push-component-change-detection': 'off',
     },
   },
   {

@@ -1,5 +1,5 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { inject, Injectable, Signal } from '@angular/core';
+import { inject, Service, Signal } from '@angular/core';
 import {
   httpMutation,
   HttpMutationOptions,
@@ -9,9 +9,7 @@ import { Observable } from 'rxjs';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initPassenger, Passenger } from './passenger';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class PassengerClient {
   private http = inject(HttpClient);
   private configService = inject(ConfigService);

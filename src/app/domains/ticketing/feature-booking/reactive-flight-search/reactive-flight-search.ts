@@ -5,13 +5,13 @@ import {
   computed,
   effect,
   inject,
+  linkedSignal,
 } from '@angular/core';
 import { debounce, form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
 import { appSettings } from '../../../shared/util-common/app-settings';
-import { delegatedSignal } from '../../../shared/util-common/delegated-signal';
 import { FlightCard } from '../../ui/flight-card/flight-card';
 import { FlightStore } from '../flight-search/flight-store';
 
@@ -33,13 +33,15 @@ export class ReactiveFlightSearch {
   //   to: this.to()
   // }));
 
-  protected readonly filter = delegatedSignal(
+  protected readonly filter = linkedSignal(
     () => ({
       from: this.from(),
       to: this.to(),
     }),
-    (value) => {
-      this.store.updateFilter(value.from, value.to);
+    {
+      set: (value) => {
+        this.store.updateFilter(value.from, value.to);
+      },
     },
   );
 

@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <p>
       <a routerLink="home">Your Miles</a> |

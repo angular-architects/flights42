@@ -1,4 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import {
   FieldTree,
   MAX_LENGTH,
@@ -11,6 +16,7 @@ import { CITY, CITY2 } from '../../util-common/properties';
 @Component({
   selector: 'app-field-meta-data-pane',
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './field-meta-data-pane.html',
 })
 export class FieldMetaDataPane {

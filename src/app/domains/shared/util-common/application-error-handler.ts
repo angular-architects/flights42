@@ -2,12 +2,12 @@ import {
   EnvironmentProviders,
   ErrorHandler,
   inject,
-  Injectable,
   makeEnvironmentProviders,
+  Service,
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-@Injectable()
+@Service({ autoProvided: false })
 export class ApplicationlErrorHandler implements ErrorHandler {
   private snackBar = inject(MatSnackBar);
 

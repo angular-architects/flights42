@@ -1,5 +1,11 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
 import { Router } from '@angular/router';
 
 import { FlightInfo } from '../../data/flight-info';
@@ -37,6 +43,7 @@ import { FlightStore } from '../../feature-booking/flight-search/flight-store';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .card {
       margin: 20px 0;

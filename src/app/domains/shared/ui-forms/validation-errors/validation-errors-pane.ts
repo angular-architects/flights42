@@ -1,9 +1,19 @@
-import { Component, computed, input } from '@angular/core';
-import { MinValidationError, ValidationError } from '@angular/forms/signals';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
+import {
+  MinLengthValidationError,
+  MinValidationError,
+  ValidationError,
+} from '@angular/forms/signals';
 
 @Component({
   selector: 'app-validation-errors-pane',
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './validation-errors-pane.html',
 })
 export class ValidationErrorsPane {
@@ -40,6 +50,8 @@ function toMessage(error: ValidationError): string {
       return 'Roundtrips are not supported!';
     case 'min':
       return `Minimum amount: ${(error as MinValidationError).min}`;
+    case 'minLength':
+      return `Please enter at least ${(error as MinLengthValidationError).minLength} characters!`;
     default:
       return error.kind ?? 'Validation Error';
   }

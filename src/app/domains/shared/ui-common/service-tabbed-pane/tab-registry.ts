@@ -1,12 +1,11 @@
-import { computed, Injectable, Signal, signal } from '@angular/core';
+import { computed, Service, Signal, signal } from '@angular/core';
 
 export interface TabInfo {
   title: Signal<string>;
 }
 
-// No { providedIn: 'root' }!
 // This service is provided in the tabbed-pane
-@Injectable()
+@Service({ autoProvided: false })
 export class TabRegistry {
   private readonly _current = signal(0);
   private readonly _tabs = signal<TabInfo[]>([]);

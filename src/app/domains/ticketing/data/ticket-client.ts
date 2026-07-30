@@ -1,11 +1,9 @@
-import { Injectable, resource } from '@angular/core';
+import { resource, Service } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
 import { Flight } from './flight';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class TicketClient {
   findTickets() {
     return resource({

@@ -1,5 +1,6 @@
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   contentChildren,
@@ -20,6 +21,7 @@ interface SortState<T> {
   selector: 'app-data-table',
   imports: [CommonModule, NgTemplateOutlet],
   templateUrl: './advanced-data-table.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './advanced-data-table.css',
 })
 export class DataTable<T extends object> {

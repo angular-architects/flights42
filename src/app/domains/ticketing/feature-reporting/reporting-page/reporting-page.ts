@@ -1,6 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import {
   afterRenderEffect,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   signal,
@@ -19,6 +20,7 @@ import { examplePrompts } from './example-prompts';
   selector: 'app-reporting-page',
   imports: [FormsModule, JsonPipe],
   templateUrl: './reporting-page.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './reporting-page.css',
 })
 export class ReportingPage {

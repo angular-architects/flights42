@@ -1,11 +1,9 @@
-import { Injectable, resource } from '@angular/core';
+import { resource, Service } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
 import { Luggage } from './luggage';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class LuggageClient {
   find(): Observable<Luggage[]> {
     return of(this.getLuggage());

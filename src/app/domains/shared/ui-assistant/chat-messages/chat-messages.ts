@@ -1,5 +1,10 @@
 import { JsonPipe } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -20,6 +25,7 @@ import { ToolStatusComponent } from '../tool-status';
     ToolStatusComponent,
   ],
   templateUrl: './chat-messages.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./chat-messages.css'],
 })
 export class ChatMessages {

@@ -1,9 +1,9 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Service, signal } from '@angular/core';
 
 import { Flight } from '../../data/flight';
 import { FlightClient } from '../../data/flight-client';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SimpleFlightStore {
   private flightClient = inject(FlightClient);
 

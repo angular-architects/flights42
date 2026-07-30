@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UserPanel } from '@flights42/ui-common';
 
 @Component({
   selector: 'app-miles',
   imports: [UserPanel],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <h1>Your Bonus Miles</h1>
 

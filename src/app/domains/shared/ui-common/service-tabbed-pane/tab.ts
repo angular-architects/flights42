@@ -1,4 +1,10 @@
-import { Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
 
 import { TabInfo, TabRegistry } from './tab-registry';
 
@@ -12,6 +18,7 @@ import { TabInfo, TabRegistry } from './tab-registry';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .tab-content {
       animation: fadeIn 0.2s ease-in;

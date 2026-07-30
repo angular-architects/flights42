@@ -1,4 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 
 import { TabbedPane } from './tabbed-pane';
 
@@ -12,6 +17,7 @@ import { TabbedPane } from './tabbed-pane';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .tab-content {
       animation: fadeIn 0.2s ease-in;

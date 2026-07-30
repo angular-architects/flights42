@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { UiChatResourceRef } from '@hashbrownai/angular';
 import { Chat } from '@hashbrownai/core';
 import { Subject } from 'rxjs';
@@ -7,7 +7,7 @@ export interface ChatInfo {
   chat: UiChatResourceRef<Chat.AnyTool> | null;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ChatRegistry {
   private chat: UiChatResourceRef<Chat.AnyTool> | null = null;
   private _chatInfo = new Subject<ChatInfo>();

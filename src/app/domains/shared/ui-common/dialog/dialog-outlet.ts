@@ -1,5 +1,6 @@
 import { NgComponentOutlet } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   DestroyableInjector,
   inject,
@@ -17,6 +18,7 @@ import { DialogEvent } from './dialog-event';
   selector: 'app-dialog-outlet',
   imports: [NgComponentOutlet],
   templateUrl: './dialog-outlet.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dialog-outlet.css',
 })
 export class DialogOutlet {

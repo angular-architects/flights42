@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { FieldTree, FormField } from '@angular/forms/signals';
 
 import { ValidationErrorsPane } from '../../../../shared/ui-forms/validation-errors/validation-errors-pane';
@@ -8,6 +8,7 @@ import { initialPrice } from '../../../data/price-schema';
 @Component({
   selector: 'app-prices',
   imports: [FormField, ValidationErrorsPane],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './prices-form.html',
 })
 export class PricesForm {

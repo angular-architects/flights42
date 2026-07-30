@@ -1,8 +1,8 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Service, signal } from '@angular/core';
 
 import { TicketClient } from '../../data/ticket-client';
 
-@Injectable()
+@Service({ autoProvided: false })
 export class SimpleNextFlightsStore {
   private ticketClient = inject(TicketClient);
 

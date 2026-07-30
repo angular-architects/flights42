@@ -1,12 +1,15 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Service, signal } from '@angular/core';
 
+import { withPreviousValue } from '../../../shared/util-common/with-previous-value';
 import { LuggageClient } from '../../data/luggage-client';
 
-@Injectable()
+@Service({ autoProvided: false })
 export class SimpleLuggageStore {
   private luggageClient = inject(LuggageClient);
 
-  private readonly luggageResource = this.luggageClient.findLuggage();
+  private readonly luggageResource = withPreviousValue(
+    this.luggageClient.findLuggage(),
+  );
   readonly luggage = this.luggageResource.value;
   readonly isLoading = this.luggageResource.isLoading;
   readonly error = this.luggageResource.error;

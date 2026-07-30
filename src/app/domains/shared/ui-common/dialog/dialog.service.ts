@@ -1,12 +1,10 @@
-import { inject, Injectable, Type } from '@angular/core';
+import { inject, Service, Type } from '@angular/core';
 import { Subject } from 'rxjs';
 
 import { DialogEvent } from './dialog-event';
 import { DialogOutletService } from './dialog-outlet-service';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class DialogService {
   private dialogOutletService = inject(DialogOutletService);
 

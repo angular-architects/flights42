@@ -1,10 +1,17 @@
-import { Component, effect, input, model } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  input,
+  model,
+} from '@angular/core';
 import { FormValueControl, ValidationError } from '@angular/forms/signals';
 
 @Component({
   selector: 'app-delay-stepper',
   imports: [],
   templateUrl: './delay-stepper.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delay-stepper.css',
 })
 export class DelayStepper implements FormValueControl<number> {

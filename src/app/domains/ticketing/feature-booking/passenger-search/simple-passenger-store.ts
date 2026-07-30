@@ -1,9 +1,9 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Service, signal } from '@angular/core';
 
 import { withPreviousValue } from '../../../shared/util-common/with-previous-value';
 import { PassengerClient } from '../../data/passenger-client';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SimplePassengerStore {
   private passengerClient = inject(PassengerClient);
 

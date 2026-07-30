@@ -1,5 +1,5 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { inject, Injectable, resource, Signal } from '@angular/core';
+import { inject, resource, Service, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   httpMutation,
@@ -13,9 +13,7 @@ import { ConfigService } from '../../shared/util-common/config-service';
 import { initialAircraft } from './aircraft';
 import { Flight, initialFlight } from './flight';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class FlightClient {
   private http = inject(HttpClient);
   private configService = inject(ConfigService);

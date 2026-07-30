@@ -1,5 +1,6 @@
 import {
   afterEveryRender,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   inject,
@@ -17,6 +18,7 @@ import { ChatRegistry } from '../chat-registry';
   selector: 'app-assistant-chat',
   imports: [FormsModule, ChatMessages],
   templateUrl: './assistant-chat.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./assistant-chat.css'],
 })
 export class AssistantChat {

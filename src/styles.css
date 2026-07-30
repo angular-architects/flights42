@@ -895,8 +895,16 @@ app-flight-card .card-body > p:nth-child(3) {
 
 app-flight-card .card-body > p:has(button) {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-x2);
   margin-bottom: 0;
+}
+
+/* projected text (e.g. the delay hint) takes its own line instead of
+   competing with the buttons for width and stretching them */
+app-flight-card .card-body > p:has(button) > p {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 app-flight-card .card-header {
@@ -1199,4 +1207,20 @@ td.error-col app-validation-errors-pane {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ══════════════════════════════════════════
+   6. Signal Forms
+   ══════════════════════════════════════════ */
+
+input.ng-valid {
+  border-left: 3px solid darkseagreen;
+}
+
+input.ng-invalid.ng-dirty {
+  border-left: 3px solid var(--color-error);
+}
+
+input.ng-pending {
+  border-left: 3px solid var(--color-border);
 }

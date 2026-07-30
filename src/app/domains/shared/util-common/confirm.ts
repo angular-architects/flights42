@@ -1,5 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 @Component({
   selector: 'app-confirm',
@@ -14,7 +14,11 @@ import { Component, inject } from '@angular/core';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
+    button {
+      margin-right: 5px;
+    }
     .card-body {
       padding: 0 10px;
       margin-bottom: 15px;

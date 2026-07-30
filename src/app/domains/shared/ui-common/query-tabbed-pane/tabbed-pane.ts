@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   contentChildren,
@@ -28,6 +29,7 @@ import { Tab } from './tab';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .pane {
       display: flex;
