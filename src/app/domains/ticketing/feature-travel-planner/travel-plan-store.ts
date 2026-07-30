@@ -17,17 +17,6 @@ export interface TravelPlan {
   hotels: HotelInfo[];
 }
 
-// An agent starts out with `{}` as its state and only carries a plan once the
-// server streamed one back, so shared state has to be checked before it is used.
-export function isTravelPlan(value: unknown): value is TravelPlan {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    Array.isArray((value as TravelPlan).flights) &&
-    Array.isArray((value as TravelPlan).hotels)
-  );
-}
-
 export const TravelPlanStore = signalStore(
   { providedIn: 'root' },
 

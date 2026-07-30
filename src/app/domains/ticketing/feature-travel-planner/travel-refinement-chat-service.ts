@@ -6,7 +6,7 @@ import {
   addDeveloperMessage,
   reset,
 } from '../../shared/util-copilotkit/agent-store-helper';
-import { isTravelPlan, TravelPlanStore } from './travel-plan-store';
+import { type TravelPlan, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import {
   injectTravelRefinementAgentStore,
@@ -25,8 +25,10 @@ export class TravelRefinementChatService {
 
   constructor() {
     effect(() => {
-      const state = this.store().state();
-      if (isTravelPlan(state)) {
+      // The agent starts out with `{}` as its state, so only states that
+      // actually carry a plan are forwarded to the store.
+      const state = this.store().state() as TravelPlan | undefined;
+      if (state?.flights) {
         this.planStore.setPlan(state);
       }
     });
