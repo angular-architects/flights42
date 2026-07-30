@@ -91,6 +91,11 @@
     "@angular/build": "$@angular/build",
     "@angular/platform-browser": "$@angular/platform-browser",
     "@ngrx/signals": "$@ngrx/signals",
-    "eslint": "$eslint"
+    "eslint": "$eslint",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@softarc/detective": {
+      "express": "^4.22.2"
+    },
+    "@hono/node-server": "^2.0.12"
   }
 }
