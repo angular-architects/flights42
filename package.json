@@ -83,12 +83,5 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "8.47.0",
     "vitest": "^4.0.8"
-  },
-  "overrides": {
-    "@angular/core": "^22.0.0",
-    "@angular/common": "^22.0.0",
-    "@angular/cli": "^22.0.0",
-    "@angular/platform-browser": "^22.0.0",
-    "typescript": "~6.0.3"
   }
 }
