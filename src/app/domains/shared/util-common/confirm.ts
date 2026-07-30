@@ -16,6 +16,9 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
+    button {
+      margin-right: 5px;
+    }
     .card-body {
       padding: 0 10px;
       margin-bottom: 15px;
