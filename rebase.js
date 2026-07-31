@@ -2,14 +2,14 @@
 import { execSync } from 'node:child_process';
 
 const tasks = [
-  { branch: 'ENT-chat-starter', base: 'FULL' },
-  { branch: 'ENT-llm-integration-starter', base: 'FULL' },
-  { branch: 'ENT-nf-sol', base: 'FULL' },
-  { branch: 'ENT-nf-starter', base: 'FULL' },
-  { branch: 'ENT-sheriff-starter', base: 'FULL' },
-  { branch: 'ENT-signal-forms-starter', base: 'FULL' },
-  { branch: 'ENT-signal-store-starter', base: 'FULL' },
-  { branch: 'ENT-signals-solution', base: 'FULL' },
+  { branch: 'ENT-chat-starter', base: 'main' },
+  { branch: 'ENT-llm-integration-starter', base: 'main' },
+  { branch: 'ENT-nf-sol', base: 'main' },
+  { branch: 'ENT-nf-starter', base: 'main' },
+  { branch: 'ENT-sheriff-starter', base: 'main' },
+  { branch: 'ENT-signal-forms-starter', base: 'main' },
+  { branch: 'ENT-signal-store-starter', base: 'main' },
+  { branch: 'ENT-signals-solution', base: 'main' },
   { branch: 'ENT-signals-starter', base: 'ENT-signals-solution' },
 ];
 
