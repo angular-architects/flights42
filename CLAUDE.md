@@ -46,3 +46,11 @@ gilt: vor Änderungen die `_context.md` des jeweiligen Labs-Ordners lesen.
   (flight-edit-Bereich, `eslint.config.js`, `booking-navigation.html`). Das ist
   akzeptiert (keine Kopplung an `flight-search`, Labs referenzieren den Branch nicht);
   für Demo-Diffs den Vergleich auf die Lab-Dateien einschränken.
+
+## Code-Konventionen
+
+- Seit der ng22.1-Kette ist `@Service()` (aus `@angular/core`) der bevorzugte Dekorator
+  für Services — nicht mehr `@Injectable()`. Lab-Snippets für Branches der aktuellen
+  Kette folgen dem. Ältere Ketten (`comp-starter`/Directives, ess-Kette) laufen noch
+  auf Angular 21 und nutzen dort weiterhin korrekt `@Injectable()` — nicht
+  „modernisieren“.
