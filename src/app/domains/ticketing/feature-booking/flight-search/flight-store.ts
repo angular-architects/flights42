@@ -23,7 +23,7 @@ export const FlightStore = signalStore(
   // TODO: Add withDevtools
 );
 
-// TODO: Call this function in your delay method
+// TODO: Call this function in your flightsWithDelays computed
 /*
 function toFlightsWithDelays(flights: Flight[], delay: number): Flight[] {
   if (flights.length === 0) {

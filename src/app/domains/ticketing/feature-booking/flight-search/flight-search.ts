@@ -43,7 +43,9 @@ export class FlightSearch {
     this.filterForm.to().value,
   );
 
-  protected readonly flights = this.flightsResource.value;
+  protected readonly flights = computed(() =>
+    toFlightsWithDelays(this.flightsResource.value(), this.delayInMin()),
+  );
   protected readonly isLoading = this.flightsResource.isLoading;
   protected readonly error = this.flightsResource.error;
 
@@ -51,10 +53,6 @@ export class FlightSearch {
 
   protected readonly flightRoute = computed(
     () => this.filter().from + ' - ' + this.filter().to,
-  );
-
-  protected readonly flightsWithDelay = computed(() =>
-    toFlightsWithDelays(this.flights(), this.delayInMin()),
   );
 
   constructor() {
