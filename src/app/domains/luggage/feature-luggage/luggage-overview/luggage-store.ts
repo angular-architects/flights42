@@ -10,8 +10,8 @@ import {
   withState,
 } from '@ngrx/signals';
 import {
-  Events,
   eventGroup,
+  Events,
   on,
   withEventHandlers,
   withReducer,
