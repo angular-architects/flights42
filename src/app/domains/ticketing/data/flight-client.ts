@@ -1,10 +1,10 @@
 import { httpResource } from '@angular/common/http';
-import { inject, Injectable, Signal } from '@angular/core';
+import { inject, Service, Signal } from '@angular/core';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 import { Flight } from './flight';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FlightClient {
   private configService = inject(ConfigService);
 

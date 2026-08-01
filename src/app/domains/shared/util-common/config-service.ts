@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export interface Config {
   baseUrl: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ConfigService {
   private http = inject(HttpClient);
 
