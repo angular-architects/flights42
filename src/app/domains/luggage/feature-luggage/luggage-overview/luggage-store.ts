@@ -29,7 +29,7 @@ export const LuggageStore = signalStore(
     _events: inject(Events),
   })),
 
-  // TODO: Add withReducers
+  // TODO: Add withReducer
 
   // TODO: Add withEventHandlers
 
