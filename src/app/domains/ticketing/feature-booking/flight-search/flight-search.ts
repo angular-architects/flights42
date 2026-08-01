@@ -7,12 +7,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { debounce, form, FormField } from '@angular/forms/signals';
+import { form, FormField } from '@angular/forms/signals';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
 // import { LuggageClient } from '../../../luggage/data/luggage-client';
-import { appSettings } from '../../../shared/util-common/app-settings';
 import { Flight } from '../../data/flight';
 import { FlightClient } from '../../data/flight-client';
 import { FlightCard } from '../../ui/flight-card/flight-card';
@@ -32,10 +31,7 @@ export class FlightSearch {
     to: 'Hamburg',
   });
 
-  protected readonly filterForm = form(this.filter, (path) => {
-    debounce(path.from, appSettings.debounceTimeMs);
-    debounce(path.to, appSettings.debounceTimeMs);
-  });
+  protected readonly filterForm = form(this.filter);
   protected readonly delayInMin = signal(0);
 
   protected readonly flightsResource = this.flightClient.findResource(
