@@ -43,6 +43,15 @@ Entscheidungslogik pro Konflikt:
   Lab-Lösung des Vorgänger-Labs): eingehende Seite nehmen (`git checkout --theirs`) oder
   beide Seiten kombinieren, wenn HEAD zusätzlich neue Upstream-Änderungen enthält
   (z.B. neuer Import auf beiden Seiten → beide behalten).
+- **AUSNAHME `package-lock.json`:** Für das Lockfile gelten die beiden Regeln oben NICHT —
+  niemals eine Seite übernehmen (auch nicht bei "echtem neuen Material"; genau so
+  entstehen stale Locks, die `npm ci` und frisches `npm i` brechen). Stattdessen immer:
+  `git checkout --ours package-lock.json`. Nur falls der Branch wirklich eigene
+  Dependencies in der package.json hat, danach `npm i` laufen lassen (regeneriert die
+  Branch-Extras auf der neuen Basis) — Soll-Zustand ist aber, dass Dependencies
+  ausschließlich aus `main` kommen (Superset-Invariante) und Ketten-Branches
+  package.json/Lock gar nicht anfassen. Hat rerere für das Lockfile eine Auflösung
+  aufgezeichnet, ist sie zu verwerfen (`git rerere forget package-lock.json`).
 - **Im Zweifel Zielzustand nachschlagen:** Der Branch-Stand vor dem Rebase zeigt, was
   inhaltlich rauskommen soll:
   `ORIG=$(tr -d '[:space:]' < .git/rebase-merge/orig-head); git show "$ORIG:<pfad>"`.
