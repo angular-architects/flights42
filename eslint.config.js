@@ -3,8 +3,6 @@ const eslint = require('@eslint/js');
 const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
-const simpleImportSort = require('eslint-plugin-simple-import-sort');
-const sheriff = require('@softarc/eslint-plugin-sheriff');
 
 module.exports = defineConfig([
   {
@@ -50,17 +48,4 @@ module.exports = defineConfig([
     ],
     rules: {},
   },
-  // {
-  //   plugins: {
-  //     'simple-import-sort': simpleImportSort,
-  //   },
-  //   rules: {
-  //     'simple-import-sort/imports': 'error',
-  //     'simple-import-sort/exports': 'error',
-  //   },
-  // },
-  // {
-  //   files: ['**/*.ts'],
-  //   extends: [sheriff.configs.all],
-  // },
 ]);
