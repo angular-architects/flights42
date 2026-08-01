@@ -2,7 +2,6 @@ import { inject, provideEnvironmentInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { authGuard } from '../shared/util-auth/auth.guard';
-import { exitGuard } from '../shared/util-common/exit.guard';
 import { TicketingChatService } from './ai/ticketing-chat-service';
 import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advanced-flight-edit';
 import { BookingNavigation } from './feature-booking/booking-navigation';
@@ -43,7 +42,6 @@ export const bookingRoutes: Routes = [
         path: 'flight-edit/:id',
         component: FlightEdit,
         canActivate: [authGuard],
-        canDeactivate: [exitGuard],
       },
       {
         path: 'proto-flight-edit/:id',
