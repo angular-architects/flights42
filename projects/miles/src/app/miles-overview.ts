@@ -1,7 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UserPanel } from '@flights42/ui-common';
-import { AuthService } from '@flights42/util-auth';
 
 @Component({
   selector: 'app-miles',
@@ -36,16 +34,6 @@ import { AuthService } from '@flights42/util-auth';
     </table>
   `,
 })
-export class MilesOverview {
-  private readonly authService = inject(AuthService);
-
-  constructor() {
-    this.authService.userName
-      .pipe(takeUntilDestroyed())
-      .subscribe((userName) => {
-        console.log('userName', userName ? userName : 'unknown');
-      });
-  }
-}
+export class MilesOverview {}
 
 export default MilesOverview;

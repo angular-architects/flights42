@@ -260,42 +260,6 @@
           }
         }
       }
-    },
-    "util-auth": {
-      "projectType": "library",
-      "root": "projects/util-auth",
-      "sourceRoot": "projects/util-auth/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:ng-packagr",
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/util-auth/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/util-auth/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular/build:unit-test",
-          "options": {
-            "tsConfig": "projects/util-auth/tsconfig.spec.json"
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "projects/util-auth/**/*.ts",
-              "projects/util-auth/**/*.html"
-            ],
-            "eslintConfig": "projects/util-auth/eslint.config.js"
-          }
-        }
-      }
     }
   }
 }
