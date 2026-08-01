@@ -29,7 +29,7 @@ export class FlightSearch {
     to: 'Hamburg',
   });
 
-  // TODO: add deboncing
+  // TODO: add debouncing
   protected readonly filterForm = form(this.filter);
 
   // TODO: create flightsResource
@@ -50,6 +50,7 @@ export class FlightSearch {
   // TODO: compute flights with delays
 
   constructor() {
+    // TODO: add an effect that logs the filter
     // TODO: add an effect that shows a snackbar with an error message
   }
 
