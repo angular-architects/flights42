@@ -9,9 +9,9 @@ import {
   withProps,
   withState,
 } from '@ngrx/signals';
-import { eventGroup } from '@ngrx/signals/events';
 import {
   Events,
+  eventGroup,
   on,
   withEventHandlers,
   withReducer,

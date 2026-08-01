@@ -77,8 +77,4 @@ export class FlightSearch {
   protected delay(): void {
     this.store.delay();
   }
-
-  private logStuff() {
-    console.log('filter', this.filter());
-  }
 }
