@@ -39,7 +39,11 @@
   <div class="form-group">
     <label for="flight-date">Date</label>
     <div class="input-group">
-      <app-date-control [formField]="flightForm.date" />
+      <input
+        class="form-control"
+        [formField]="flightForm.date"
+        id="flight-date"
+        type="datetime-local" />
       <!-- {{ flightForm.date().value() }} -->
       <app-validation-errors-pane [errors]="flightForm.date().errors()" />
     </div>
