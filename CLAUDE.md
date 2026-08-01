@@ -41,6 +41,9 @@ gilt: vor Änderungen die `_context.md` des jeweiligen Labs-Ordners lesen.
   `main` verwendet. Der Forms-Starter (`ENT-signal-forms-starter`) nutzt auf der
   Advanced-Seite bewusst ein schlichtes `datetime-local`-Input und normalisiert dafür
   das Datum in `advanced-flight-edit.ts` — beide Stellen synchron halten.
+- `exit.guard.ts` (`FormComponent`/`exitGuard` in `shared/util-common`) ist bewusst in
+  keiner Route registriert — der Guard wird nur in bestimmten Trainer-Demos eingehängt.
+  Weder den Guard noch `implements FormComponent`-Vorkommen "aufräumen".
 - Der Diff `ENT-signals-starter..ENT-signals-solution` enthält neben den drei
   Lab-Dateien historisch bedingt Extra-Änderungen in fünf lab-fremden Dateien
   (flight-edit-Bereich, `eslint.config.js`, `booking-navigation.html`). Das ist
