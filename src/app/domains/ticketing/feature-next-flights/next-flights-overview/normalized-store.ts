@@ -1,4 +1,5 @@
 import { computed } from '@angular/core';
+import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
   signalStore,
@@ -128,4 +129,6 @@ export const NormalizedStore = signalStore(
       );
     },
   }),
+
+  withDevtools('normalized'),
 );
