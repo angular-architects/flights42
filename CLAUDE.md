@@ -6,6 +6,8 @@ gilt: vor Änderungen die `_context.md` des jeweiligen Labs-Ordners lesen.
 
 ## Branch-Ketten
 
+- **Mentales Modell:** Ein Starterkit ist `main` minus Lösungsinhalte — für die Übung
+  wird typischerweise Code entfernt bzw. durch TODO-Kommentare ersetzt.
 - Die ENT-Branches basieren auf `main` und werden per `node rebase.js` aktualisiert;
   `ENT-signals-starter` basiert auf `ENT-signals-solution`. Die ess-Kette
   (`rebase-ess.mjs`) basiert auf `ess-starter`, nicht auf `main`.
@@ -39,3 +41,8 @@ gilt: vor Änderungen die `_context.md` des jeweiligen Labs-Ordners lesen.
   `main` verwendet. Der Forms-Starter (`ENT-signal-forms-starter`) nutzt auf der
   Advanced-Seite bewusst ein schlichtes `datetime-local`-Input und normalisiert dafür
   das Datum in `advanced-flight-edit.ts` — beide Stellen synchron halten.
+- Der Diff `ENT-signals-starter..ENT-signals-solution` enthält neben den drei
+  Lab-Dateien historisch bedingt Extra-Änderungen in fünf lab-fremden Dateien
+  (flight-edit-Bereich, `eslint.config.js`, `booking-navigation.html`). Das ist
+  akzeptiert (keine Kopplung an `flight-search`, Labs referenzieren den Branch nicht);
+  für Demo-Diffs den Vergleich auf die Lab-Dateien einschränken.
