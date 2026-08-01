@@ -23,9 +23,11 @@ export const flightSchema = schema<Flight>((path) => {
 
   // TODO: Apply custom round trip validator
 
+  // TODO: Apply custom duplicate prices validator
+
   // TODO: Disable delay if delayed is not true
 
-  // TODO: Apply delayedFlightSchema if flight is delayed
+  // TODO: Apply the delayedFlight schema if flight is delayed
 
   // TODO: Apply aircraftSchema to aircraft property
 
