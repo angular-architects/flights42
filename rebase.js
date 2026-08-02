@@ -11,6 +11,8 @@ const tasks = [
   { branch: 'ENT-signal-store-starter', base: 'main' },
   { branch: 'ENT-signals-solution', base: 'main' },
   { branch: 'ENT-signals-starter', base: 'ENT-signals-solution' },
+  { branch: 'directives-starter', base: 'main' },
+  { branch: 'components-starter', base: 'main' },
 ];
 
 const args = process.argv.slice(2);
