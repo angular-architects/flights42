@@ -6,7 +6,7 @@ export const HOTEL_ASSET_BASE_URL = 'http://127.0.0.1:3002/assets/hotels';
 export const hotelSchema = z.object({
   id: z.string(),
   name: z.string(),
-  sterne: z.number().int().min(1).max(5),
+  stars: z.number().int().min(1).max(5),
   imageUrl: z.string().url(),
 });
 
@@ -23,19 +23,19 @@ const baseHotels = [
   {
     id: 'biz-hotel',
     name: 'Biz Hotel',
-    sterne: 3,
+    stars: 3,
     imageUrl: `${HOTEL_ASSET_BASE_URL}/biz-hotel.svg`,
   },
   {
     id: 'skyline-suites',
     name: 'Skyline Suites',
-    sterne: 4,
+    stars: 4,
     imageUrl: `${HOTEL_ASSET_BASE_URL}/skyline-suites.svg`,
   },
   {
     id: 'grand-palace',
     name: 'Grand Palace',
-    sterne: 5,
+    stars: 5,
     imageUrl: `${HOTEL_ASSET_BASE_URL}/grand-palace.svg`,
   },
 ] as const;

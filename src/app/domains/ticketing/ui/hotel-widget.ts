@@ -8,7 +8,7 @@ import { HotelCard } from './hotel-card';
 const hotelSchema = z.object({
   id: z.string().describe('Stable hotel id (e.g. "grand-palace").'),
   name: z.string().describe('Full hotel name including the city.'),
-  sterne: z.number().int().min(1).max(5).describe('Star rating from 1 to 5.'),
+  stars: z.number().int().min(1).max(5).describe('Star rating from 1 to 5.'),
   imageUrl: z
     .string()
     .describe('Absolute or app-relative URL to a hotel image.'),

@@ -1,7 +1,7 @@
 export interface HotelInfo {
   id: string;
   name: string;
-  sterne: number;
+  stars: number;
   imageUrl: string;
   city: string;
 }

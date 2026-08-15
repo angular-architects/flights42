@@ -1,12 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { type FrontendToolHandlerContext } from '@copilotkit/core';
 
+import { makeToolContext } from '../../../../testing/tool-context';
 import { FlightStore } from '../../data/flight-store';
 import { getCurrentBasketTool } from './get-current-basket.tool';
 import { toggleFlightSelectionTool } from './toggle-flight-selection.tool';
 
-const toolContext = {} as unknown as FrontendToolHandlerContext;
+const toolContext = makeToolContext();
 
 describe('toggle-flight-selection.tool', () => {
   let basket: ReturnType<typeof signal<Record<number, boolean>>>;

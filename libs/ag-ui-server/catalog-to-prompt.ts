@@ -3,7 +3,7 @@ import { type JsonSchema, renderComponentEntry } from './schema-example.js';
 const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
 
 export const A2UI_DEFAULT_CATALOG_ID =
-  'https://a2ui.org/specification/v0_9/basic_catalog.json';
+  'https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json';
 
 interface ContextEntry {
   description?: string;

@@ -19,7 +19,7 @@ import { type HotelInfo } from '../data/hotel-info';
       <div class="card-body">
         <h2 class="title">{{ hotelValue.name }}</h2>
         <p class="city">{{ hotelValue.city }}</p>
-        <p class="stars" [attr.aria-label]="hotelValue.sterne + ' Sterne'">
+        <p class="stars" [attr.aria-label]="hotelValue.stars + ' stars'">
           @for (star of starsArray(); track $index) {
             <span class="star filled">★</span>
           }
@@ -92,9 +92,9 @@ export class HotelCard {
   readonly hotel = input.required<HotelInfo>();
 
   protected readonly starsArray = computed(() =>
-    Array.from({ length: this.hotel().sterne }),
+    Array.from({ length: this.hotel().stars }),
   );
   protected readonly emptyStarsArray = computed(() =>
-    Array.from({ length: Math.max(0, 5 - this.hotel().sterne) }),
+    Array.from({ length: Math.max(0, 5 - this.hotel().stars) }),
   );
 }

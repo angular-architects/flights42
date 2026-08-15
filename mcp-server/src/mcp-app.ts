@@ -8,7 +8,7 @@ import {
 interface Hotel {
   id: string;
   name: string;
-  sterne: number;
+  stars: number;
   imageUrl: string;
 }
 
@@ -53,7 +53,7 @@ function render(): void {
           <img src="${hotel.imageUrl}" alt="${hotel.name}" />
           <div class="hotel-card-body">
             <h3>${hotel.name}</h3>
-            <p>${'★'.repeat(hotel.sterne)}${'☆'.repeat(5 - hotel.sterne)}</p>
+            <p>${'★'.repeat(hotel.stars)}${'☆'.repeat(5 - hotel.stars)}</p>
           </div>
         </article>
       `,

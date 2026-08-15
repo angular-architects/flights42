@@ -64,7 +64,7 @@ Flight time (choose one flight from the candidate lists):
 {
   "outbound": { "id": number, "from": string, "to": string, "date": string, "delay": number },
   "return":   { "id": number, "from": string, "to": string, "date": string, "delay": number },
-  "hotel":    { "id": string, "name": string, "sterne": number, "imageUrl": string, "city": string } | null,
+  "hotel":    { "id": string, "name": string, "stars": number, "imageUrl": string, "city": string } | null,
   "summary":  string
 }
 

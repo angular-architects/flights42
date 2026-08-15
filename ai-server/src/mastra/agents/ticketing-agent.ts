@@ -46,6 +46,6 @@ export const ticketingAgent = new Agent({
     ...hotelsMcpTools,
   },
   agents: USE_MCP ? {} : { hotelAgent },
-  inputProcessors: [blockedWordsGuard, offTopicGuard, promptInjectionGuard],
+  // inputProcessors: [blockedWordsGuard, offTopicGuard, promptInjectionGuard],
   memory: new Memory(),
 });

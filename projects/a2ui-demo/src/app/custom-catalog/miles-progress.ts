@@ -59,7 +59,7 @@ export class MilesProgress {
 
 const milesProgressSchema = z
   .object({
-    passenger: binding(passengerSchema).optional(),
+    passenger: binding(passengerSchema),
   })
   .strict();
 
