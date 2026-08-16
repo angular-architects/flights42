@@ -1,10 +1,5 @@
-import { type AgUiChatResourceRef, agUiResource } from '@agentic-angular/core';
-import {
-  EnvironmentInjector,
-  inject,
-  Injectable,
-  runInInjectionContext,
-} from '@angular/core';
+import { agUiResource } from '@agentic-angular/core';
+import { inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
@@ -25,40 +20,26 @@ export class TravelRefinementChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
   private readonly requestStore = inject(TravelPlannerRequestStore);
-  // Root injector (this service is providedIn: 'root'). Used to create the chat
-  // resource so its lifecycle is bound to the root injector, not to the
-  // component that happens to trigger init() first.
-  private readonly injector = inject(EnvironmentInjector);
 
-  private chat: AgUiChatResourceRef | null = null;
+  private readonly chat = agUiResource({
+    url: `${this.config.aiServerUrl}/ag-ui/travelRefinementAgent`,
+    model: this.config.model,
+    useServerMemory: true,
+    firstMessagePreamble: () =>
+      buildPreferencePreamble(this.requestStore.preferences()),
+    tools: [
+      getTravelPlanTool,
+      setTravelPlanTool,
+      addFlightToPlanTool,
+      removeFlightFromPlanTool,
+      replaceFlightInPlanTool,
+      addHotelToPlanTool,
+      removeHotelFromPlanTool,
+    ],
+    components: [messageWidget, flightWidget, hotelWidget],
+  });
 
   public init(): void {
-    if (!this.chat) {
-      // agUiResource() builds an Angular resource() whose internal effect is
-      // tied to the active injection context's DestroyRef. Creating it in the
-      // root injector keeps it alive across navigations; otherwise it would die
-      // with the first page that called init() and the cached chat would stop
-      // reacting after navigating away and back.
-      this.chat = runInInjectionContext(this.injector, () =>
-        agUiResource({
-          url: `${this.config.aiServerUrl}/ag-ui/travelRefinementAgent`,
-          model: this.config.model,
-          useServerMemory: true,
-          firstMessagePreamble: () =>
-            buildPreferencePreamble(this.requestStore.preferences()),
-          tools: [
-            getTravelPlanTool,
-            setTravelPlanTool,
-            addFlightToPlanTool,
-            removeFlightFromPlanTool,
-            replaceFlightInPlanTool,
-            addHotelToPlanTool,
-            removeHotelFromPlanTool,
-          ],
-          components: [messageWidget, flightWidget, hotelWidget],
-        }),
-      );
-    }
     this.chatStore.setChat(
       this.chat,
       'Do you want to refine your travel plan?',
@@ -71,7 +52,7 @@ export class TravelRefinementChatService {
    * from a fresh session. Preferences are read live from the input store.
    */
   public reset(): void {
-    this.chat?.reset();
+    this.chat.reset();
   }
 }
 
