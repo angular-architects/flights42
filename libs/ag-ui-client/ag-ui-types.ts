@@ -45,13 +45,6 @@ export interface AgUiWidget {
   component: Type<unknown>;
 }
 
-export interface AgUiA2uiWidget {
-  kind: 'a2ui';
-  id: string;
-  name: string;
-  a2uiSurfaceId: string;
-}
-
 export interface AgUiActionData<TInput = unknown, TResult = unknown> {
   toolCallId: string;
   toolName: string;
@@ -78,10 +71,7 @@ export interface AgUiActionCard<
   actionData: InputSignal<TActionData>;
 }
 
-export type AgUiWidgetInstance =
-  | AgUiResultWidget
-  | AgUiActionWidget
-  | AgUiA2uiWidget;
+export type AgUiWidgetInstance = AgUiResultWidget | AgUiActionWidget;
 
 export interface AgUiMcpAppsSnapshotContent {
   serverId: string;

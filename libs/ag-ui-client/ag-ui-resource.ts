@@ -1,4 +1,3 @@
-import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import type { AgentSubscriber, RunAgentInput } from '@ag-ui/client';
 import { HttpAgent, randomUUID } from '@ag-ui/client';
 import {
@@ -11,6 +10,10 @@ import {
   type WritableSignal,
 } from '@angular/core';
 
+import {
+  ACTIVITY_RENDERERS,
+  type ActivityRendererMap,
+} from './activity/activity-renderer';
 import {
   type AgUiChatMessage,
   type AgUiChatMessageAttachment,
@@ -175,7 +178,13 @@ export function agUiResource(
   const useServerMemory = options.useServerMemory ?? false;
   const maxLocalTurns = options.maxLocalTurns ?? 10;
   const environmentInjector = inject(EnvironmentInjector);
-  const renderer = inject(A2uiRendererService);
+  // Last registration wins when two renderers claim the same activityType.
+  const activityRenderers: ActivityRendererMap = new Map(
+    (inject(ACTIVITY_RENDERERS, { optional: true }) ?? []).map((renderer) => [
+      renderer.activityType,
+      renderer,
+    ]),
+  );
   const createAgent = (): InterruptAwareHttpAgent =>
     new InterruptAwareHttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();
@@ -223,7 +232,7 @@ export function agUiResource(
       tools,
       toolMap,
       componentMap,
-      renderer,
+      activityRenderers,
       environmentInjector,
       runId: params.id,
       resume: params.resume,

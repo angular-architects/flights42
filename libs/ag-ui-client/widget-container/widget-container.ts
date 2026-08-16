@@ -1,5 +1,4 @@
 import { NgComponentOutlet } from '@angular/common';
-import { SurfaceComponent } from '@a2ui/angular/v0_9';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,15 +11,11 @@ import { AgUiWidgetInstance } from '../ag-ui-types';
 @Component({
   selector: 'app-widget-container',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgComponentOutlet, SurfaceComponent],
+  imports: [NgComponentOutlet],
   template: `
     @let currentWidget = widget();
-    @if (currentWidget.kind === 'a2ui') {
-      <a2ui-v09-surface [surfaceId]="currentWidget.a2uiSurfaceId" />
-    } @else {
-      <ng-container
-        *ngComponentOutlet="currentWidget.component; inputs: widgetInputs()" />
-    }
+    <ng-container
+      *ngComponentOutlet="currentWidget.component; inputs: widgetInputs()" />
   `,
 })
 export class WidgetContainerComponent {
@@ -32,8 +27,6 @@ export class WidgetContainerComponent {
       ? {
           actionData: widget.data,
         }
-      : widget.kind === 'a2ui'
-        ? {}
-        : widget.props;
+      : widget.props;
   });
 }

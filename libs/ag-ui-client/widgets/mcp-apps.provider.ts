@@ -9,6 +9,9 @@ import type {
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 
+import { ACTIVITY_RENDERERS } from '../activity/activity-renderer';
+import { McpAppsActivityRenderer } from '../activity/mcp-apps-activity-renderer';
+
 export type StyleVariables = NonNullable<
   McpUiHostContext['styles']
 >['variables'];
@@ -32,6 +35,11 @@ export function provideMcpApps(config: McpAppsConfig): EnvironmentProviders {
     {
       provide: MCP_APPS_CONFIG,
       useValue: config,
+    },
+    {
+      provide: ACTIVITY_RENDERERS,
+      useClass: McpAppsActivityRenderer,
+      multi: true,
     },
   ]);
 }

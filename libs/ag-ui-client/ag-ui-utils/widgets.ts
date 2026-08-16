@@ -1,14 +1,11 @@
-import { A2uiRendererService } from '@a2ui/angular/v0_9';
-import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 import { type Injector, runInInjectionContext } from '@angular/core';
 
+import { type ActivityRendererMap } from '../activity/activity-renderer';
 import {
-  type AgUiA2uiWidget,
   type AgUiActionRegisteredComponent,
   type AgUiActionWidget,
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
-  type AgUiMcpAppsSnapshotContent,
   type AgUiRegisteredComponent,
   type AgUiResultRegisteredComponent,
   type AgUiToolCall,
@@ -89,62 +86,22 @@ export function upsertWidgetFromActivitySnapshot(
   messageId: string,
   activityType: string,
   content: unknown,
-  componentMap: Map<string, AgUiRegisteredComponent>,
-  renderer: A2uiRendererService,
+  activityRenderers: ActivityRendererMap,
 ): AgUiChatMessage[] {
-  if (activityType === 'a2ui-surface') {
-    const widget = toA2uiWidgetFromActivitySnapshot(
-      messageId,
-      content,
-      renderer,
-    );
-    return widget
-      ? appendStandaloneWidget(messages, messageId, widget)
-      : messages;
-  }
-
-  if (activityType !== 'mcp-apps') {
+  const activityRenderer = activityRenderers.get(activityType);
+  if (!activityRenderer) {
     return messages;
   }
 
-  const widget = toMcpAppsWidget(messageId, content, componentMap);
+  const widget = activityRenderer.buildWidget({ messageId, content });
   if (!widget) {
     return messages;
   }
 
-  const existingIndex = messages.findIndex(
-    (message) => message.id === messageId,
-  );
-  if (existingIndex === -1) {
-    return [
-      ...messages,
-      {
-        id: messageId,
-        role: 'assistant',
-        content: '',
-        widgets: [widget],
-        toolCalls: [],
-        workflowSteps: [],
-      },
-    ];
-  }
-
-  const existingMessage = messages[existingIndex];
-  if (existingMessage.role !== 'assistant') {
-    return messages;
-  }
-
-  const nextWidgets = existingMessage.widgets.filter(
-    (entry) => entry.name !== widget.name,
-  );
-
-  return replaceMessage(messages, existingIndex, {
-    ...existingMessage,
-    widgets: [...nextWidgets, widget],
-  });
+  return upsertStandaloneWidget(messages, messageId, widget);
 }
 
-function appendStandaloneWidget(
+function upsertStandaloneWidget(
   messages: AgUiChatMessage[],
   messageId: string,
   widget: AgUiWidgetInstance,
@@ -172,16 +129,22 @@ function appendStandaloneWidget(
     return messages;
   }
 
-  const hasWidget = existingMessage.widgets.some(
+  const widgetIndex = existingMessage.widgets.findIndex(
     (entry) => entry.id === widget.id,
   );
-  if (hasWidget) {
-    return messages;
+  if (widgetIndex === -1) {
+    return replaceMessage(messages, existingIndex, {
+      ...existingMessage,
+      widgets: [...existingMessage.widgets, widget],
+    });
   }
+
+  const nextWidgets = [...existingMessage.widgets];
+  nextWidgets[widgetIndex] = widget;
 
   return replaceMessage(messages, existingIndex, {
     ...existingMessage,
-    widgets: [...existingMessage.widgets, widget],
+    widgets: nextWidgets,
   });
 }
 
@@ -430,63 +393,6 @@ function toRegisteredWidget(
   };
 }
 
-function toMcpAppsWidget(
-  messageId: string,
-  value: unknown,
-  componentMap: Map<string, AgUiRegisteredComponent>,
-): AgUiWidgetInstance | null {
-  if (!isMcpAppsSnapshotContent(value)) {
-    return null;
-  }
-
-  const componentName = 'mcpAppsWidget';
-  const registeredComponent = componentMap.get(componentName);
-  const component =
-    registeredComponent && registeredComponent.kind !== 'action'
-      ? registeredComponent.component
-      : undefined;
-  if (!component) {
-    return null;
-  }
-
-  return {
-    id: `${messageId}-mcp-apps`,
-    name: componentName,
-    component,
-    props: { data: value } as Record<string, unknown>,
-  };
-}
-
-function toA2uiWidgetFromActivitySnapshot(
-  messageId: string,
-  value: unknown,
-  renderer: A2uiRendererService,
-): AgUiA2uiWidget | null {
-  if (
-    !value ||
-    typeof value !== 'object' ||
-    !('operations' in value) ||
-    !Array.isArray((value as { operations?: unknown }).operations)
-  ) {
-    return null;
-  }
-
-  const operations = (value as { operations: A2uiMessage[] }).operations;
-  renderer.processMessages(operations);
-
-  const surfaceId = getRenderedSurfaceId(operations);
-  if (!surfaceId || !renderer.surfaceGroup.getSurface(surfaceId)) {
-    return null;
-  }
-
-  return {
-    kind: 'a2ui',
-    id: `${messageId}-a2ui-${surfaceId}`,
-    name: `a2ui_${messageId}`,
-    a2uiSurfaceId: surfaceId,
-  };
-}
-
 function toActionWidget(
   toolCall: AgUiToolCall,
   componentMap: Map<string, AgUiRegisteredComponent>,
@@ -525,48 +431,6 @@ function findActionComponent(
   }
 
   return undefined;
-}
-
-function isMcpAppsSnapshotContent(
-  value: unknown,
-): value is AgUiMcpAppsSnapshotContent {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { serverId?: unknown }).serverId === 'string' &&
-    typeof (value as { resourceUri?: unknown }).resourceUri === 'string' &&
-    typeof (value as { toolInput?: unknown }).toolInput === 'object' &&
-    isCallToolResult((value as { result?: unknown }).result)
-  );
-}
-
-function isCallToolResult(value: unknown): boolean {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    Array.isArray((value as { content?: unknown }).content)
-  );
-}
-
-function getRenderedSurfaceId(operations: A2uiMessage[]): string | null {
-  for (const operation of operations) {
-    if ('createSurface' in operation && operation.createSurface.surfaceId) {
-      return operation.createSurface.surfaceId;
-    }
-
-    if (
-      'updateComponents' in operation &&
-      operation.updateComponents.surfaceId
-    ) {
-      return operation.updateComponents.surfaceId;
-    }
-
-    if ('updateDataModel' in operation && operation.updateDataModel.surfaceId) {
-      return operation.updateDataModel.surfaceId;
-    }
-  }
-
-  return null;
 }
 
 function safeParseJson(value: string): unknown {

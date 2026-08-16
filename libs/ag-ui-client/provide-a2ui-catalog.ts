@@ -16,6 +16,8 @@ import {
 } from '@angular/core';
 
 import { type A2uiCustomCatalogFunction } from './a2ui-schema';
+import { A2uiActivityRenderer } from './activity/a2ui-activity-renderer';
+import { ACTIVITY_RENDERERS } from './activity/activity-renderer';
 import {
   type A2uiCustomCatalog,
   type A2uiCustomCatalogComponent,
@@ -92,6 +94,11 @@ export function provideA2uiCatalog(
         }),
       },
       A2uiRendererService,
+      {
+        provide: ACTIVITY_RENDERERS,
+        useClass: A2uiActivityRenderer,
+        multi: true,
+      },
     ]);
   }
 
@@ -121,5 +128,10 @@ export function provideA2uiCatalog(
     { provide: A2UI_CUSTOM_CATALOG, useValue: storedCatalog },
     { provide: A2UI_RENDERER_CONFIG, useValue: rendererConfig },
     A2uiRendererService,
+    {
+      provide: ACTIVITY_RENDERERS,
+      useClass: A2uiActivityRenderer,
+      multi: true,
+    },
   ]);
 }

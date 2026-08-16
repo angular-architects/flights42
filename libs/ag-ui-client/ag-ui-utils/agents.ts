@@ -5,19 +5,19 @@ import {
   type HttpAgent,
   randomUUID,
 } from '@ag-ui/client';
-import type { A2uiRendererService } from '@a2ui/angular/v0_9';
 import {
   type EnvironmentInjector,
   type ResourceStreamItem,
   type WritableSignal,
 } from '@angular/core';
 
+import { type ActivityRendererMap } from '../activity/activity-renderer';
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
   type AgUiInterrupt,
-  type AgUiResumeRequest,
   type AgUiRegisteredComponent,
+  type AgUiResumeRequest,
   type AgUiWorkflowStep,
 } from '../ag-ui-types';
 import {
@@ -75,7 +75,7 @@ export interface RunAgentOptions {
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
-  renderer: A2uiRendererService;
+  activityRenderers: ActivityRendererMap;
   runId: string;
   resume?: AgUiResumeRequest;
   model?: string;
@@ -98,7 +98,7 @@ export async function runAgent(
     tools,
     toolMap,
     componentMap,
-    renderer,
+    activityRenderers,
     model,
     useServerMemory,
     forwardedProps,
@@ -356,8 +356,7 @@ export async function runAgent(
           event.messageId,
           event.activityType,
           event.content,
-          componentMap,
-          renderer,
+          activityRenderers,
         ),
       }));
     },
@@ -531,7 +530,7 @@ export interface RunUntilSettledOptions {
   tools: AgUiClientToolDefinition<never>[];
   toolMap: Map<string, AgUiClientToolDefinition<never>>;
   componentMap: Map<string, AgUiRegisteredComponent>;
-  renderer: A2uiRendererService;
+  activityRenderers: ActivityRendererMap;
   environmentInjector: EnvironmentInjector;
   runId: string;
   interrupt: WritableSignal<AgUiInterrupt | null>;
@@ -553,7 +552,7 @@ export async function runUntilSettled(
     tools,
     toolMap,
     componentMap,
-    renderer,
+    activityRenderers,
     environmentInjector,
     runId,
     interrupt,
@@ -587,7 +586,7 @@ export async function runUntilSettled(
       tools,
       toolMap,
       componentMap,
-      renderer,
+      activityRenderers,
       runId: currentRunId,
       resume: turnCount === 1 ? resume : undefined,
       model,
