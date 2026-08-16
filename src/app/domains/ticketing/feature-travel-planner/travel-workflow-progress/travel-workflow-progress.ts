@@ -1,3 +1,8 @@
+import type {
+  AgUiChatMessage,
+  AgUiToolCall,
+  AgUiWorkflowStep,
+} from '@agentic-angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,11 +10,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import type {
-  AgUiChatMessage,
-  AgUiToolCall,
-  AgUiWorkflowStep,
-} from '@internal/ag-ui-client';
 
 import {
   buildPipeline,

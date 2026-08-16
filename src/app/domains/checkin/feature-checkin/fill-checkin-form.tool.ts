@@ -1,5 +1,5 @@
+import { defineAgUiTool } from '@agentic-angular/core';
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 
 import { CheckinTicketStore, TicketInfoSchema } from './checkin-ticket-store';
 

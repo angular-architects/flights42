@@ -1,10 +1,10 @@
-import { inject, Injectable } from '@angular/core';
 import {
   type AgUiChatResourceRef,
   agUiResource,
   createShowComponentsTool,
   mcpAppsWidgetComponent,
-} from '@internal/ag-ui-client';
+} from '@agentic-angular/core';
+import { inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';

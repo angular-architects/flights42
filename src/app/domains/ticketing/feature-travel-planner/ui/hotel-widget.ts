@@ -1,10 +1,10 @@
+import { defineAgUiComponent } from '@agentic-angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   input,
 } from '@angular/core';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 const hotelSchema = z.object({

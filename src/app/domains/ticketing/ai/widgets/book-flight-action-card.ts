@@ -1,4 +1,9 @@
 import {
+  type AgUiActionCard,
+  type AgUiActionData,
+  defineActionCard,
+} from '@agentic-angular/core';
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -6,11 +11,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import {
-  type AgUiActionCard,
-  type AgUiActionData,
-  defineActionCard,
-} from '@internal/ag-ui-client';
 
 import {
   BookingClient,

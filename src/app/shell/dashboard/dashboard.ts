@@ -1,5 +1,13 @@
 import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import {
+  type AgUiChatMessage,
+  agUiResource,
+  type AgUiToolCall,
+  type AgUiWidgetInstance,
+  registerHandlers,
+  WidgetContainerComponent,
+} from '@agentic-angular/core';
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -9,14 +17,6 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  type AgUiChatMessage,
-  agUiResource,
-  type AgUiToolCall,
-  type AgUiWidgetInstance,
-  registerHandlers,
-  WidgetContainerComponent,
-} from '@internal/ag-ui-client';
 
 import { ConfigService } from '../../domains/shared/util-common/config-service';
 import { checkInAction } from '../../domains/ticketing/ai/actions/check-in-action';

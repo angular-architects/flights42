@@ -1,14 +1,14 @@
 import {
+  type AgUiChatResourceRef,
+  agUiResource,
+  createShowComponentsTool,
+} from '@agentic-angular/core';
+import {
   EnvironmentInjector,
   inject,
   Injectable,
   runInInjectionContext,
 } from '@angular/core';
-import {
-  type AgUiChatResourceRef,
-  agUiResource,
-  createShowComponentsTool,
-} from '@internal/ag-ui-client';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';

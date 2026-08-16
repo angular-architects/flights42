@@ -1,5 +1,5 @@
+import { defineAgUiComponent } from '@agentic-angular/core';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { MarkdownComponent } from 'ngx-markdown';
 import { z } from 'zod';
 

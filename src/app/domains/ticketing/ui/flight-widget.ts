@@ -1,3 +1,4 @@
+import { defineAgUiComponent } from '@agentic-angular/core';
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -7,7 +8,6 @@ import {
   input,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { FlightInfo } from '../data/flight-info';

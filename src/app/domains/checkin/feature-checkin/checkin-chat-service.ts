@@ -1,5 +1,5 @@
+import { type AgUiChatResourceRef, agUiResource } from '@agentic-angular/core';
 import { DestroyRef, inject, Injectable } from '@angular/core';
-import { type AgUiChatResourceRef, agUiResource } from '@internal/ag-ui-client';
 
 import { ConfigService } from '../../shared/util-common/config-service';
 import { CheckinTicketStore } from './checkin-ticket-store';

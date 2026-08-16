@@ -2,7 +2,7 @@ import {
   A2uiCustomCatalogComponent,
   binding,
   createCustomComponent,
-} from '@internal/ag-ui-client';
+} from '@agentic-angular/core';
 import { z } from 'zod/v3';
 
 import { TicketWidget } from './ticket/ticket-widget';

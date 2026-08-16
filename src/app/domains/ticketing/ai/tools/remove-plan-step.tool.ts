@@ -1,5 +1,5 @@
+import { defineAgUiTool } from '@agentic-angular/core';
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { PlanStore } from '../plan/plan-store';

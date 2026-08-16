@@ -1,4 +1,4 @@
-import { type AgUiToolCallStatus } from '@internal/ag-ui-client';
+import { type AgUiToolCallStatus } from '@agentic-angular/core';
 
 import { formatUiDateTime } from '../../../shared/util-common/date-utils';
 import {

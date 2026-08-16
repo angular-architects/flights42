@@ -1,3 +1,4 @@
+import { defineAgUiComponent } from '@agentic-angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,7 +6,6 @@ import {
   inject,
   input,
 } from '@angular/core';
-import { defineAgUiComponent } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';

@@ -1,4 +1,4 @@
-import { createCustomCatalog } from '@internal/ag-ui-client';
+import { createCustomCatalog } from '@agentic-angular/core';
 
 import { ticketingExtraComponents } from './ticketing-extra-components';
 

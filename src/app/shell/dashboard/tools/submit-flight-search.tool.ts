@@ -1,6 +1,6 @@
+import { defineAgUiTool } from '@agentic-angular/core';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 import { z } from 'zod';
 
 import { FlightStore } from '../../../domains/ticketing/data/flight-store';

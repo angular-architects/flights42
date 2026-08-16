@@ -1,5 +1,5 @@
+import { defineAgUiTool } from '@agentic-angular/core';
 import { inject } from '@angular/core';
-import { defineAgUiTool } from '@internal/ag-ui-client';
 
 import { TravelPlanStore } from '../travel-plan-store';
 

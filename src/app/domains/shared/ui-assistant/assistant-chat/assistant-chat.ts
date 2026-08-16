@@ -1,4 +1,8 @@
 import {
+  AgUiChatResourceRef,
+  type AgUiResumePayload,
+} from '@agentic-angular/core';
+import {
   Component,
   ElementRef,
   inject,
@@ -6,10 +10,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  AgUiChatResourceRef,
-  type AgUiResumePayload,
-} from '@internal/ag-ui-client';
 
 import {
   AgentMode,

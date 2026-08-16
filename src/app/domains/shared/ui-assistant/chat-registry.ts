@@ -1,5 +1,5 @@
+import { AgUiChatResourceRef } from '@agentic-angular/core';
 import { Injectable } from '@angular/core';
-import { AgUiChatResourceRef } from '@internal/ag-ui-client';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 export interface ChatInfo {

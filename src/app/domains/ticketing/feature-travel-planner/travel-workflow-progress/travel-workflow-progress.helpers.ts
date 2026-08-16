@@ -3,7 +3,7 @@ import type {
   AgUiToolCall,
   AgUiWorkflowStep,
   AgUiWorkflowStepStatus,
-} from '@internal/ag-ui-client';
+} from '@agentic-angular/core';
 
 export const PIPELINE_STEPS = [
   { id: 'findFlights', label: 'Flights' },

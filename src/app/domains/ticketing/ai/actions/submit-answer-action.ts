@@ -1,5 +1,5 @@
 import type { A2uiClientAction } from '@a2ui/web_core/v0_9';
-import type { AgUiChatResourceRef } from '@internal/ag-ui-client';
+import type { AgUiChatResourceRef } from '@agentic-angular/core';
 
 interface Question {
   id: string;

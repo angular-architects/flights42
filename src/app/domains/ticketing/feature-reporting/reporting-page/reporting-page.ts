@@ -1,4 +1,9 @@
 import {
+  agUiResource,
+  type AgUiToolCall,
+  defineAgUiTool,
+} from '@agentic-angular/core';
+import {
   afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
@@ -11,11 +16,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  agUiResource,
-  type AgUiToolCall,
-  defineAgUiTool,
-} from '@internal/ag-ui-client';
 import { Chart } from 'chart.js/auto';
 import { z } from 'zod';
 

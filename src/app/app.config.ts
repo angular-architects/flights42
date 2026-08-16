@@ -1,16 +1,16 @@
 import { provideMarkdownRenderer } from '@a2ui/angular/v0_9';
 import {
+  MCP_APPS_SERVER_URL,
+  provideA2uiCatalog,
+  provideMcpApps,
+} from '@agentic-angular/core';
+import {
   ApplicationConfig,
   inject,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import {
-  MCP_APPS_SERVER_URL,
-  provideA2uiCatalog,
-  provideMcpApps,
-} from '@internal/ag-ui-client';
 import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 

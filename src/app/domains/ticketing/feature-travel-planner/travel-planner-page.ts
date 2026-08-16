@@ -1,4 +1,11 @@
 import {
+  type AgUiChatMessage,
+  agUiResource,
+  type AgUiResultWidget,
+  type AgUiWidgetInstance,
+  createShowComponentsTool,
+} from '@agentic-angular/core';
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -7,13 +14,6 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  type AgUiChatMessage,
-  agUiResource,
-  type AgUiResultWidget,
-  type AgUiWidgetInstance,
-  createShowComponentsTool,
-} from '@internal/ag-ui-client';
 import { addDays, format } from 'date-fns';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';

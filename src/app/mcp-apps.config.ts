@@ -1,4 +1,4 @@
-import type { McpAppsConfig, StyleVariables } from '@internal/ag-ui-client';
+import type { McpAppsConfig, StyleVariables } from '@agentic-angular/core';
 
 export const mcpAppsConfig: McpAppsConfig = {
   hostInfo: {

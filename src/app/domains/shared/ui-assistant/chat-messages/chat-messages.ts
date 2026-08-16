@@ -1,7 +1,3 @@
-import { JsonPipe } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   type AgUiActionWidget,
   AgUiChatMessage,
@@ -9,7 +5,11 @@ import {
   type AgUiInterruptOption,
   type AgUiResumePayload,
   WidgetContainerComponent,
-} from '@internal/ag-ui-client';
+} from '@agentic-angular/core';
+import { JsonPipe } from '@angular/common';
+import { Component, computed, input, output } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MessageComponent } from '../message';
 import { ToolStatusComponent } from '../tool-status';
