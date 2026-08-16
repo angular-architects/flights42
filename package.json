@@ -20,6 +20,8 @@
     "test:aimock": "ng run flights:test-node",
     "lint": "ng lint",
     "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
+    "ag-ui-simple:client": "node --import tsx ag-ui-simple/index.ts",
+    "ag-ui-simple:client-tools": "node --import tsx ag-ui-simple/with-tools.ts",
     "ai-demo-server": "mastra dev --dir ai-demo/server",
     "ai-demo-client": "node --watch --import tsx ai-demo/client/index.ts",
     "simple-client": "ng serve simple-client",
