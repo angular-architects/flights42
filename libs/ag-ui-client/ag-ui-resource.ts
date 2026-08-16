@@ -36,6 +36,7 @@ import {
 } from './ag-ui-utils/messages';
 import { type PendingRun } from './ag-ui-utils/tools';
 import { readRegisteredComponents } from './ag-ui-utils/widgets';
+import { createShowComponentsTool } from './tools/show-component.tool';
 
 interface StreamOptions {
   params: PendingRun | undefined;
@@ -171,6 +172,24 @@ function normalizeUserMessageContent(
   };
 }
 
+function toolsWithComponents(
+  options: AgUiResourceOptions,
+): AgUiClientToolDefinition<never>[] {
+  const tools = options.tools ?? [];
+  if (!options.components?.length) {
+    return tools;
+  }
+
+  if (tools.some((tool) => tool.name === 'showComponents')) {
+    throw new Error(
+      'agUiResource: pass UI components either via `components` or via a ' +
+        'createShowComponentsTool entry in `tools`, not both.',
+    );
+  }
+
+  return [...tools, createShowComponentsTool(options.components)];
+}
+
 export function agUiResource(
   options: AgUiResourceOptions,
 ): AgUiChatResourceRef {
@@ -188,7 +207,7 @@ export function agUiResource(
   const createAgent = (): InterruptAwareHttpAgent =>
     new InterruptAwareHttpAgent({ url: options.url, threadId: randomUUID() });
   let agent = createAgent();
-  const tools = options.tools;
+  const tools = toolsWithComponents(options);
   const toolMap = new Map<string, AgUiClientToolDefinition<never>>(
     tools.map((tool: AgUiClientToolDefinition<never>) => [tool.name, tool]),
   );

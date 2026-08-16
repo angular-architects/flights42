@@ -359,7 +359,13 @@ export function defineAgUiTool(
 
 export interface AgUiResourceOptions {
   url: string;
-  tools: AgUiClientToolDefinition<never>[];
+  tools?: AgUiClientToolDefinition<never>[];
+  /**
+   * Components the assistant may render via the `showComponents` pseudo-tool.
+   * Internally delegates to `createShowComponentsTool`, so passing components
+   * here and a hand-built `showComponents` tool in `tools` is an error.
+   */
+  components?: readonly AgUiRegisteredComponent[];
   hideInternal?: boolean;
   useServerMemory?: boolean;
   maxLocalTurns?: number;

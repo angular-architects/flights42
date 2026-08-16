@@ -15,12 +15,8 @@ import {
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { z } from 'zod';
 
-import {
-  type AgUiMcpAppsSnapshotContent,
-  defineAgUiComponent,
-} from '../ag-ui-types';
+import { type AgUiMcpAppsSnapshotContent } from '../ag-ui-types';
 import { MCP_APPS_CONFIG, MCP_APPS_SERVER_URL } from './mcp-apps.provider';
 
 @Component({
@@ -190,20 +186,3 @@ function whenInitialized(bridge: AppBridge): Promise<void> {
     };
   });
 }
-
-const mcpAppsSchema = z.object({
-  data: z.object({
-    serverId: z.string(),
-    resourceUri: z.string(),
-    result: z.unknown(),
-    toolInput: z.record(z.string(), z.unknown()),
-  }),
-});
-
-export const mcpAppsWidgetComponent = defineAgUiComponent({
-  name: 'mcpAppsWidget',
-  description: 'Renders an interactive MCP App inside an iframe.',
-  clientOnly: true,
-  component: McpAppsWidgetComponent,
-  schema: mcpAppsSchema as z.ZodType<{ data: AgUiMcpAppsSnapshotContent }>,
-});
