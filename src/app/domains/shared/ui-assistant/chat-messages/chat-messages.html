@@ -50,34 +50,19 @@
           {{ activeInterrupt.message }}
         </div>
         <div class="approval-actions">
-          @if (activeInterrupt.options.length > 0) {
-            @for (option of activeInterrupt.options; track option.id) {
-              <button
-                type="button"
-                [class]="
-                  'btn ' +
-                  (option.variant === 'danger'
-                    ? 'btn-danger'
-                    : option.variant === 'primary'
-                      ? 'btn-primary'
-                      : 'btn-default')
-                "
-                (click)="resumeInterrupt.emit(option.payload)">
-                {{ option.label }}
-              </button>
-            }
-          } @else {
+          @for (option of activeInterrupt.options; track option.id) {
             <button
-              class="btn btn-default"
               type="button"
-              (click)="resumeInterrupt.emit(rejectPayload)">
-              Reject
-            </button>
-            <button
-              class="btn btn-primary"
-              type="button"
-              (click)="resumeInterrupt.emit(approvePayload)">
-              Approve
+              [class]="
+                'btn ' +
+                (option.variant === 'danger'
+                  ? 'btn-danger'
+                  : option.variant === 'primary'
+                    ? 'btn-primary'
+                    : 'btn-default')
+              "
+              (click)="resumeInterrupt.emit(option.payload)">
+              {{ option.label }}
             </button>
           }
         </div>

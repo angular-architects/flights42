@@ -38,9 +38,6 @@ export class ChatMessages {
     toInterruptModel(this.interrupt()),
   );
 
-  protected readonly approvePayload: AgUiResumePayload = { approved: true };
-  protected readonly rejectPayload: AgUiResumePayload = { approved: false };
-
   protected readonly icons = {
     user: '💬',
     assistant: '🤖',
@@ -88,6 +85,21 @@ interface InterruptPayload {
   options?: AgUiInterruptOption[];
 }
 
+const DEFAULT_INTERRUPT_OPTIONS: AgUiInterruptOption[] = [
+  {
+    id: 'reject',
+    label: 'Reject',
+    payload: { approved: false },
+    variant: 'default',
+  },
+  {
+    id: 'approve',
+    label: 'Approve',
+    payload: { approved: true },
+    variant: 'primary',
+  },
+];
+
 interface InterruptModel {
   id: AgUiInterrupt['id'];
   reason: AgUiInterrupt['reason'];
@@ -113,9 +125,11 @@ function toInterruptModel(
       typeof suspendPayload?.message === 'string'
         ? suspendPayload.message
         : `Tool Call: ${interrupt.payload.toolName}`,
-    options: Array.isArray(suspendPayload?.options)
-      ? suspendPayload.options
-      : [],
+    options:
+      Array.isArray(suspendPayload?.options) &&
+      suspendPayload.options.length > 0
+        ? suspendPayload.options
+        : DEFAULT_INTERRUPT_OPTIONS,
   };
 }
 
