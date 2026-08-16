@@ -76,7 +76,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "browsers": ["Chromium"]
+            "browsers": ["Chromium"],
+            "include": ["src/**/*.spec.ts", "../libs/**/*.spec.ts"]
           },
           "configurations": {
             "ci": {

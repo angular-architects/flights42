@@ -1,4 +1,4 @@
-import { randomUUID } from '@ag-ui/client';
+import { randomUUID } from './random-uuid';
 import { type ResourceStreamItem } from '@angular/core';
 
 import { type AgUiChatMessage } from '../ag-ui-types';

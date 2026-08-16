@@ -1,4 +1,5 @@
-import { type HttpAgent, type Message, randomUUID } from '@ag-ui/client';
+import { type HttpAgent, type Message } from '@ag-ui/client';
+import { randomUUID } from './random-uuid';
 import {
   EnvironmentInjector,
   type ResourceStreamItem,

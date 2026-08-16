@@ -52,3 +52,4 @@ ai-server/cache
 
 agent/src/mastra/public
 
+.vitest-attachments/

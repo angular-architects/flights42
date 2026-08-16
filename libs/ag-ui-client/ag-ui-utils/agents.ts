@@ -3,7 +3,6 @@ import {
   type BaseEvent,
   EventType,
   type HttpAgent,
-  randomUUID,
 } from '@ag-ui/client';
 import {
   type EnvironmentInjector,
@@ -12,6 +11,7 @@ import {
 } from '@angular/core';
 
 import { type ActivityRendererMap } from '../activity/activity-renderer';
+import { randomUUID } from './random-uuid';
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,

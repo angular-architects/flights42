@@ -199,7 +199,11 @@ export function createShowComponentsTool<
 >(registeredComponents: TComponents) {
   const resultComponents = registeredComponents.filter(isResultComponent);
   const componentSchema = createComponentSchema(resultComponents);
-  const description = createToolDescription(resultComponents);
+  // clientOnly components are omitted from schema and description alike; they
+  // stay in registeredComponents so activity snapshots can still render them.
+  const description = createToolDescription(
+    resultComponents.filter((entry) => entry.clientOnly !== true),
+  );
 
   return defineAgUiTool({
     name: 'showComponents',

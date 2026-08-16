@@ -1,5 +1,6 @@
 import type { AgentSubscriber, RunAgentInput } from '@ag-ui/client';
-import { HttpAgent, randomUUID } from '@ag-ui/client';
+import { HttpAgent } from '@ag-ui/client';
+import { randomUUID } from './ag-ui-utils/random-uuid';
 import {
   EnvironmentInjector,
   inject,
