@@ -75,8 +75,9 @@ Rules for editing:
 
 ## Rebooking (German: "Umbuchen")
 
-- "Umbuchen" / "rebook" / "change" / "reschedule" ALWAYS mean the same thing:
-  cancel an already booked flight AND book a replacement flight instead.
+- "Umbuchen" / "verschieben" / "rebook" / "change" / "reschedule" ALWAYS mean
+  the same thing: cancel an already booked flight AND book a replacement flight
+  instead. "Verschiebe N auf M" = cancel flight N, book flight M.
   Both steps MUST appear in the plan:
   - Cancel the existing booking (reference it by its booked flight id).
   - Book the new flight (reference the new flight id).
@@ -92,10 +93,27 @@ Rules for editing:
 ## Flight Reference Rules
 
 - "flight N" / "Flug N" refers to the flight whose id is N.
-- "the Nth flight" / "der N-te Flug" refers to the N-th entry (1-based) in the
-  most recently loaded result list (e.g. from findFlights / findBookedFlights /
-  getLoadedFlights). Resolve it by looking at that list and picking that
-  entry's id before talking about it in the plan.
+- "book N", "cancel N", "rebook N to/for M" / "buche N", "storniere N",
+  "verschiebe N auf M", "buche N auf M um" — a bare number right after these
+  verbs, no "flight"/"Flug" needed — mean the SAME thing as "flight N": the
+  flight whose id is N (and M for the target of a rebook). So "Buche 17" is a
+  book step for flight 17, "Storniere 19" a cancel step for flight 19. Never
+  treat these bare numbers as positions, and NEVER ask back whether a flight
+  or a plan step is meant — these patterns are unambiguous. Resolve and act.
+- "verschiebe N auf M" / "reschedule/move N to M" is a rebook: add a step to
+  cancel flight N and a step to book flight M (see "## Rebooking"). It NEVER
+  means moving a plan step — reordering the plan requires the word
+  "Schritt"/"step" ("verschiebe Schritt 1 an Position 4", "move step 2 to the
+  end"). Without that word, the numbers are flight ids and the instruction is a
+  rebook, even if a plan with matching positions exists.
+- A rebook instruction with an empty (or missing) plan is NOT an error: create
+  the plan right there with the two steps (cancel flight N, book flight M) via
+  setPlan. Never answer that there is no plan to change.
+- "the Nth flight" / "der N-te Flug" — including "the first" / "der erste" /
+  "der 1." — refers to the N-th entry (1-based) in the most recently loaded
+  result list (e.g. from findFlights / findBookedFlights / getLoadedFlights).
+  Resolve it by looking at that list and picking that entry's id before talking
+  about it in the plan.
 - "step N" / "der N-te Schritt" refers to the N-th entry of the PLAN — resolve
   it via getPlan, not from the loaded flight list.
 - If no result list is loaded yet and the user uses positional wording

@@ -271,6 +271,14 @@ export interface AgUiInterrupt {
   id: string;
   reason: string;
   payload: AgUiInterruptPayload;
+  /**
+   * Client-side run id of the run that raised the interrupt. Not part of the
+   * server payload; attached on the client so the resume run can reuse it —
+   * render ids (message/widget) are scoped to the run id, and only a matching
+   * id lets the resumed tool call update the already rendered card instead of
+   * appending a second one.
+   */
+  clientRunId?: string;
 }
 
 /**

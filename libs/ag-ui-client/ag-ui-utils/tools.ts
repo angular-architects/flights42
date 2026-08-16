@@ -1,5 +1,4 @@
 import { type HttpAgent, type Message } from '@ag-ui/client';
-import { randomUUID } from './random-uuid';
 import {
   EnvironmentInjector,
   type ResourceStreamItem,
@@ -16,6 +15,7 @@ import {
   type AgUiToolCall,
 } from '../ag-ui-types';
 import { readMessages, replaceMessage, scopeRenderId } from './messages';
+import { randomUUID } from './random-uuid';
 import {
   appendWidgetsFromPendingToolResult,
   upsertActionWidgetForToolCall,

@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 
 import { type ActivityRendererMap } from '../activity/activity-renderer';
-import { randomUUID } from './random-uuid';
 import {
   type AgUiChatMessage,
   type AgUiClientToolDefinition,
@@ -26,6 +25,7 @@ import {
   readMessages,
   upsertAssistantMessage,
 } from './messages';
+import { randomUUID } from './random-uuid';
 import {
   executePendingTools,
   keepToolCallMessages,
@@ -596,7 +596,7 @@ export async function runUntilSettled(
     });
 
     if (runResult.interrupt) {
-      interrupt.set(runResult.interrupt);
+      interrupt.set({ ...runResult.interrupt, clientRunId: currentRunId });
       break;
     }
 

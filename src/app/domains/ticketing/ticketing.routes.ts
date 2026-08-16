@@ -1,9 +1,8 @@
-import { inject, provideEnvironmentInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { authGuard } from '../shared/util-auth/auth.guard';
 import { exitGuard } from '../shared/util-common/exit.guard';
-import { TicketingChatService } from './ai/ticketing-chat-service';
+import { activateTicketingChat } from './ai/activate-ticketing-chat.guard';
 import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advanced-flight-edit';
 import { BookingNavigation } from './feature-booking/booking-navigation';
 import { FlightEdit } from './feature-booking/flight-edit/flight-edit';
@@ -21,9 +20,7 @@ export const bookingRoutes: Routes = [
   {
     path: 'booking',
     component: BookingNavigation,
-    providers: [
-      provideEnvironmentInitializer(() => inject(TicketingChatService).init()),
-    ],
+    canActivate: [activateTicketingChat],
     children: [
       {
         path: '',

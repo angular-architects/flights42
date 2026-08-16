@@ -1,4 +1,5 @@
 // import { initMcpServer } from '@internal/ag-ui-server';
+import { renderA2uiTool } from '@internal/ag-ui-server';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -18,10 +19,16 @@ export const ticketingAgent = new Agent({
   name: 'Flight42 Ticketing Assistant',
   instructions: ticketingAgentPrompt,
   model,
+  defaultOptions: {
+    providerOptions: {
+      openai: { parallelToolCalls: false },
+    },
+  },
   tools: {
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
+    renderA2uiTool,
     // ...hotelsMcpTools,
   },
   memory: new Memory(),

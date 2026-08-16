@@ -13,6 +13,7 @@ import {
 } from './mcp-apps-registry.js';
 import { Store } from './memory-store.js';
 import { defaultStore } from './memory-store.js';
+import { RENDER_A2UI_TOOL_NAME } from './render-a2ui-tool.js';
 import {
   type AgUiBridge,
   type AgUiStepEvent,
@@ -120,6 +121,18 @@ function buildMcpAppsActivityContent(
     toolInput: input,
     result: shapedResult,
   };
+}
+
+/**
+ * Turns a `renderA2uiTool` result into the payload the client's
+ * `a2ui-surface` activity renderer expects. Returns `undefined` when the
+ * result does not carry an A2UI message list.
+ */
+function buildA2uiActivityContent(
+  result: unknown,
+): Record<string, unknown> | undefined {
+  const operations = asRecord(result)?.['messages'];
+  return Array.isArray(operations) ? { operations } : undefined;
 }
 
 function readThoughtSignature(value: unknown): string | undefined {
@@ -972,6 +985,17 @@ export class ExtendedMastraAgent extends AbstractAgent {
                     payload.payload.result,
                   ),
                 });
+              } else if (pending.toolName === RENDER_A2UI_TOOL_NAME) {
+                const content = buildA2uiActivityContent(
+                  payload.payload.result,
+                );
+                if (content) {
+                  handlers.onActivitySnapshot({
+                    messageId: assistantMessageId,
+                    activityType: 'a2ui-surface',
+                    content,
+                  });
+                }
               }
               pendingToolCalls.delete(payload.payload.toolCallId);
             }

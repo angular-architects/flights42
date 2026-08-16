@@ -1,5 +1,10 @@
 import { type AgUiChatResourceRef, agUiResource } from '@agentic-angular/core';
-import { inject, Injectable } from '@angular/core';
+import {
+  EnvironmentInjector,
+  inject,
+  Injectable,
+  runInInjectionContext,
+} from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
@@ -43,26 +48,35 @@ export class TicketingChatService {
   private readonly config = inject(ConfigService);
   private readonly chatStore = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
+  // Root injector (this service is providedIn: 'root'). Used to create the chat
+  // resource so its lifecycle is bound to the root injector, not to the
+  // component that happens to trigger init() first.
+  private readonly injector = inject(EnvironmentInjector);
 
   private chat: AgUiChatResourceRef | null = null;
 
   public init(): void {
     if (!this.chat) {
-      this.chat = agUiResource({
-        url: this.config.agUiUrl,
-        model: this.config.model,
-        useServerMemory: true,
-        forwardedProps: () => ({ agentMode: this.agentMode.mode() }),
-        tools: [
-          findFlightsTool,
-          getLoadedFlightsTool,
-          toggleFlightSelectionTool,
-          getCurrentBasketTool,
-          displayFlightDetailTool,
-          ...planTools,
-        ],
-        components: [messageWidget, flightWidget, planWidget, ...actionCards],
-      });
+      // agUiResource() ties its internal effect to the active injection
+      // context's DestroyRef; creating it in the root injector keeps the cached
+      // chat reacting after navigating away and back.
+      this.chat = runInInjectionContext(this.injector, () =>
+        agUiResource({
+          url: this.config.agUiUrl,
+          model: this.config.model,
+          useServerMemory: true,
+          forwardedProps: () => ({ agentMode: this.agentMode.mode() }),
+          tools: [
+            findFlightsTool,
+            getLoadedFlightsTool,
+            toggleFlightSelectionTool,
+            getCurrentBasketTool,
+            displayFlightDetailTool,
+            ...planTools,
+          ],
+          components: [messageWidget, flightWidget, planWidget, ...actionCards],
+        }),
+      );
     }
     this.chatStore.setChat(this.chat);
   }

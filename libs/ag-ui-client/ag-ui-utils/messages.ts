@@ -1,7 +1,7 @@
-import { randomUUID } from './random-uuid';
 import { type ResourceStreamItem } from '@angular/core';
 
 import { type AgUiChatMessage } from '../ag-ui-types';
+import { randomUUID } from './random-uuid';
 
 export function readMessages(
   item: ResourceStreamItem<AgUiChatMessage[]>,

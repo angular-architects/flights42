@@ -361,7 +361,9 @@ export function agUiResource(
 
     interrupt.set(null);
     pendingRun.set({
-      id: randomUUID(),
+      // Reuse the interrupted run's id: render ids are scoped per run, so the
+      // resumed tool call only updates the existing card under the same id.
+      id: activeInterrupt.clientRunId ?? randomUUID(),
       resume: {
         interruptId: activeInterrupt.id,
         payload,
