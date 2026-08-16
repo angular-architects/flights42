@@ -3,7 +3,6 @@ import {
   agUiResource,
   type AgUiResultWidget,
   type AgUiWidgetInstance,
-  createShowComponentsTool,
 } from '@agentic-angular/core';
 import {
   ChangeDetectionStrategy,
@@ -72,9 +71,7 @@ export class TravelPlannerPage {
     url: `${this.config.aiServerUrl}/ag-ui/travelPlannerAgent`,
     model: this.config.model,
     useServerMemory: false,
-    tools: [
-      createShowComponentsTool([messageWidget, flightWidget, hotelWidget]),
-    ],
+    components: [messageWidget, flightWidget, hotelWidget],
   });
 
   protected readonly widgets = computed(() =>

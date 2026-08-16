@@ -1,9 +1,4 @@
-import {
-  type AgUiChatResourceRef,
-  agUiResource,
-  createShowComponentsTool,
-  mcpAppsWidgetComponent,
-} from '@agentic-angular/core';
+import { type AgUiChatResourceRef, agUiResource } from '@agentic-angular/core';
 import { inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
@@ -65,14 +60,8 @@ export class TicketingChatService {
           getCurrentBasketTool,
           displayFlightDetailTool,
           ...planTools,
-          createShowComponentsTool([
-            messageWidget,
-            flightWidget,
-            planWidget,
-            mcpAppsWidgetComponent,
-            ...actionCards,
-          ]),
         ],
+        components: [messageWidget, flightWidget, planWidget, ...actionCards],
       });
     }
     this.chatStore.setChat(this.chat);

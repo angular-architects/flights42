@@ -1,8 +1,4 @@
-import {
-  type AgUiChatResourceRef,
-  agUiResource,
-  createShowComponentsTool,
-} from '@agentic-angular/core';
+import { type AgUiChatResourceRef, agUiResource } from '@agentic-angular/core';
 import {
   EnvironmentInjector,
   inject,
@@ -58,12 +54,8 @@ export class TravelRefinementChatService {
             replaceFlightInPlanTool,
             addHotelToPlanTool,
             removeHotelFromPlanTool,
-            createShowComponentsTool([
-              messageWidget,
-              flightWidget,
-              hotelWidget,
-            ]),
           ],
+          components: [messageWidget, flightWidget, hotelWidget],
         }),
       );
     }
