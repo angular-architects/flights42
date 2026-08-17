@@ -172,16 +172,8 @@ safety net. Everything else is either React-side, cloud-side, or opt-in.
 
 ## 4. What could now be done better — and what it is worth
 
-**Runtime tool gating via `core.setToolEnabled` (E).** Today every agent store
-registers its frontend tools statically
-([init-agent-store.ts](../src/app/domains/shared/util-copilotkit/init-agent-store.ts));
-turning a capability off means not registering it. With (E) the chat shell's
-mode selector could toggle individual widgets/tools at runtime, e.g. an
-"expert mode" that unlocks `setTravelPlan`, without re-running
-`initAgentStore`. Cost: a thin wrapper around `copilotKit.core.setToolEnabled`,
-since there is no Angular-level API. Takes effect on the next run, not the
-in-flight one. This is the one genuinely new capability worth considering —
-and a good workshop demo, because it shows the core/Angular layering.
+**Runtime tool gating via `core.setToolEnabled` (E) — planned as part of this
+migration.** See §4.1; this is the one genuinely new capability worth adopting.
 
 **Registering the custom A2UI catalog with core (F).** We currently push the
 catalog to the agent as context only
@@ -199,6 +191,66 @@ server-side memory is a Mastra concern. Skip.
 
 **Simplification of existing workarounds: none.** Nothing in 0.3.1 lets us
 delete code we currently carry.
+
+### 4.1 Mode-scoped tool gating for the ticketing agent — do this with the bump
+
+Decided 2026-08-16: adopt (E) as part of this migration, not as a later
+follow-up.
+
+**Problem.** `forwardedProps.agentMode` routes server-side to a _different
+agent_ — [ag-ui-route.ts:51-58](../ai-server/src/mastra/routes/ag-ui-route.ts#L51-L58):
+`plan` → `planningAgent`, `execution` → `ticketingAgent`. The client, however,
+registers one tool set under `TICKETING_AGENT_ID`
+([ticketing-agent-store.ts](../src/app/domains/ticketing/ai/ticketing-agent-store.ts)),
+so both agents receive all ~17 frontend tools even though each may only use
+about half. The boundary is currently drawn by prompt alone, and repeatedly:
+
+- [planning-agent.prompt.ts](../ai-server/src/mastra/agents/planning-agent.prompt.ts):
+  "Never call flightWidget (or any other widget) alongside the plan".
+- [ticketing-agent.prompt.ts](../ai-server/src/mastra/agents/ticketing-agent.prompt.ts)
+  lines 320, 333-334, 372: three separate "do NOT call getPlan / setPlan /
+  addPlanStep / planWidget" rules.
+
+**Plan.**
+
+| Mode        | disable                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| `plan`      | `flightWidget`, `hotelWidget`, `toggleFlightSelection`, `displayFlightDetail`, `getCurrentBasket` |
+| `execution` | the nine plan tools + `planWidget`                                                                |
+
+`messageWidget` and `getLoadedFlights` stay on in both modes — both prompts need
+them. **Open decision:** whether `findFlights` stays on in plan mode. The
+planning prompt names it as a source of the "most recently loaded result list",
+but server-side `planningAgent` only has `findBookedFlightsTool`.
+
+Safe to gate because the Execute button hands the plan over as a _developer
+message_ ([plan-widget.ts:113-128](../src/app/domains/ticketing/ai/widgets/plan-widget.ts#L113-L128));
+the execution agent never reads the plan through tools.
+
+**Implementation notes.**
+
+- No Angular-level API: call `copilotKit.core.setToolEnabled(name, enabled,
+TICKETING_AGENT_ID)`. The `agentId` is mandatory — `buildFrontendTools`
+  filters via `isToolEnabled(tool.name, tool.agentId)` and `initAgentStore`
+  registers everything with `agentId: TICKETING_AGENT_ID`.
+- **Do not wire it through `effect()`.**
+  [plan-widget.ts](../src/app/domains/ticketing/ai/widgets/plan-widget.ts#L113-L128)
+  sets `mode.set('execution')` and calls `sendDeveloperMessage` synchronously
+  right after; an effect flushes only on the next change detection, so the run
+  would still be built with the old tool set — on the most important path.
+  Route both call sites
+  ([assistant-chat.ts:156](../src/app/domains/shared/ui-assistant/assistant-chat/assistant-chat.ts#L156)
+  and the Execute button) through an `AgentModeService.setMode()` that updates
+  signal and gating synchronously.
+- Not back-portable to 0.3.0: `registerFrontendTool` is a one-shot registration
+  with no reactivity, and `available` is frozen at registration time. The
+  alternative would be manual `removeTool` + `addFrontendTool` — precisely what
+  `setToolEnabled` is documented to survive.
+
+**Keep the prompt rules.** This is workshop material and "guardrails by prompt"
+is itself teaching content. Add the gating as a second layer next to the rules
+rather than replacing them — the contrast between "the prompt says no" and "the
+tool is not in the set at all" is worth more than either alone.
 
 ## 5. Still on us after 0.3.1
 
@@ -222,4 +274,4 @@ building on any core-only API such as (E).
 
 Do the bump. It is a one-line change plus an install, it fixes a real ordering
 bug in the parallel-widget flow the whole training builds on, and it carries no
-API risk. Treat (E) as a separate, optional follow-up.
+API risk. Then do §4.1 in the same migration — the bump is what unlocks it.
