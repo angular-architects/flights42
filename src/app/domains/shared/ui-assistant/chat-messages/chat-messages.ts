@@ -1,14 +1,14 @@
 import { type Interrupt } from '@ag-ui/core';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { type Message, RenderToolCalls } from '@copilotkit/angular';
+import { MarkdownComponent } from 'ngx-markdown';
 
 import { CopilotActivity } from '../../util-copilotkit/activity/copilot-activity';
-import { MessageComponent } from '../message';
 
 type ActivityMessage = Extract<Message, { role: 'activity' }>;
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 
-interface ChatToolCallView {
+interface ChatToolCallModel {
   id: string;
   message: AssistantMessage;
 }
@@ -48,23 +48,23 @@ const DEFAULT_INTERRUPT_OPTIONS: InterruptOption[] = [
   { id: 'decline', label: 'Decline', payload: { approved: false } },
 ];
 
-interface ChatActivityView {
+interface ChatActivityModel {
   message: ActivityMessage;
   isSurface: boolean;
 }
 
-interface ChatMessageView {
+interface ChatMessageModel {
   id: string;
   variant: 'user' | 'assistant';
   avatar: string;
   text: string;
-  activity: ChatActivityView | null;
-  toolCalls: ChatToolCallView[];
+  activity: ChatActivityModel | null;
+  toolCalls: ChatToolCallModel[];
 }
 
 @Component({
   selector: 'app-chat-messages',
-  imports: [RenderToolCalls, CopilotActivity, MessageComponent],
+  imports: [RenderToolCalls, CopilotActivity, MarkdownComponent],
   templateUrl: './chat-messages.html',
   styleUrls: ['./chat-messages.css'],
 })
@@ -78,7 +78,9 @@ export class ChatMessages {
 
   private readonly resolvedInterruptId = signal<string | null>(null);
 
-  protected readonly views = computed(() => toMessageViews(this.messages()));
+  protected readonly messageModel = computed(() =>
+    toMessageModels(this.messages()),
+  );
 
   protected readonly interrupts = computed(() =>
     toInterruptModels(this.pendingInterrupts(), this.resolvedInterruptId()),
@@ -93,9 +95,9 @@ export class ChatMessages {
   }
 }
 
-function toMessageViews(messages: Message[]): ChatMessageView[] {
+function toMessageModels(messages: Message[]): ChatMessageModel[] {
   return messages.map(
-    (message): ChatMessageView => ({
+    (message): ChatMessageModel => ({
       id: message.id,
       variant: message.role === 'user' ? 'user' : 'assistant',
       avatar: message.role === 'user' ? '💬' : '🤖',
@@ -104,12 +106,12 @@ function toMessageViews(messages: Message[]): ChatMessageView[] {
         message.role === 'activity'
           ? { message, isSurface: message.activityType === 'a2ui-surface' }
           : null,
-      toolCalls: toToolCallViews(message),
+      toolCalls: toToolCallModels(message),
     }),
   );
 }
 
-function toToolCallViews(message: Message): ChatToolCallView[] {
+function toToolCallModels(message: Message): ChatToolCallModel[] {
   if (message.role !== 'assistant') {
     return [];
   }
