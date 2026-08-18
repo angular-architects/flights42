@@ -8,9 +8,6 @@ import { Memory } from '@mastra/memory';
 
 import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
 import { model } from '../config.js';
-import { blockedWordsGuard } from '../processors/blocked-words-guard.js';
-import { offTopicGuard } from '../processors/off-topic-guard.js';
-import { promptInjectionGuard } from '../processors/prompt-injection-guard.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';

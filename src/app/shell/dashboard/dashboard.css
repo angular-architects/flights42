@@ -316,7 +316,7 @@
 
 /* Standalone top-level Rows still span the full grid width (used when the
  * agent emits a wide horizontal section as a direct child of root).
- * Boarding passes live in root-level `Column#boarding-stack` (no Card);
+ * Boarding passes live in root-level `Column#boarding-passes-stack` (no Card);
  * tickets flex within that cell like other tiles. Inner layout still follows
  * ticket-widget.css container queries on narrow cells. */
 .dashboard-output
@@ -355,8 +355,8 @@
   height: 100%;
 }
 
-/* Boarding-pass stack: one root Column tile (id from dashboard agent prompt). */
-.dashboard-output ::ng-deep a2ui-v09-column#boarding-stack {
+/* Boarding-pass stack: one root Column tile (id from the dashboard compiler). */
+.dashboard-output ::ng-deep a2ui-v09-column[id^='boarding-passes'] {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -509,31 +509,39 @@
  * columns: main stub | perforation | boarding stub). Chat keeps catalog /
  * container-query behaviour. */
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget {
+.dashboard-output ::ng-deep [id^='boarding-passes'] app-ticket-widget {
   display: block;
   flex: 1 1 0;
   height: auto;
   min-height: 0;
 }
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget .ticket {
+.dashboard-output ::ng-deep [id^='boarding-passes'] app-ticket-widget .ticket {
   grid-template-columns: minmax(0, 2fr) auto minmax(0, 1fr);
   min-height: 0;
   border-radius: 1rem;
   box-shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.35);
 }
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget .main-stub {
+.dashboard-output
+  ::ng-deep
+  [id^='boarding-passes']
+  app-ticket-widget
+  .main-stub {
   padding: 1.25rem 1.4rem;
   gap: 1rem;
 }
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget .meta {
+.dashboard-output ::ng-deep [id^='boarding-passes'] app-ticket-widget .meta {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.6rem;
 }
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget .perforation {
+.dashboard-output
+  ::ng-deep
+  [id^='boarding-passes']
+  app-ticket-widget
+  .perforation {
   width: 1px;
   height: auto;
   align-self: stretch;
@@ -548,7 +556,7 @@
 
 .dashboard-output
   ::ng-deep
-  #boarding-stack
+  [id^='boarding-passes']
   app-ticket-widget
   .perforation::before {
   left: 50%;
@@ -558,7 +566,7 @@
 
 .dashboard-output
   ::ng-deep
-  #boarding-stack
+  [id^='boarding-passes']
   app-ticket-widget
   .perforation::after {
   left: 50%;
@@ -568,17 +576,25 @@
   transform: translate(-50%, 50%);
 }
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget .boarding-stub {
+.dashboard-output
+  ::ng-deep
+  [id^='boarding-passes']
+  app-ticket-widget
+  .boarding-stub {
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
   padding: 1.25rem 1.2rem;
 }
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget .stub-info {
+.dashboard-output
+  ::ng-deep
+  [id^='boarding-passes']
+  app-ticket-widget
+  .stub-info {
   gap: 0.75rem;
 }
 
-.dashboard-output ::ng-deep #boarding-stack app-ticket-widget .qr-wrap {
+.dashboard-output ::ng-deep [id^='boarding-passes'] app-ticket-widget .qr-wrap {
   width: 7rem;
   height: 7rem;
   justify-self: center;

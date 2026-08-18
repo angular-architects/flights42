@@ -7,7 +7,10 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideCopilotKit } from '@copilotkit/angular';
-import { provideMCPApps } from '@copilotkit/angular/mcp-apps';
+import {
+  mcpAppsActivityRendererConfig,
+  provideMCPApps,
+} from '@copilotkit/angular/mcp-apps';
 import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 
@@ -26,11 +29,15 @@ export const appConfig: ApplicationConfig = {
 
     provideCopilotKit({
       defaultToolRendering: true,
-      renderActivityMessages: [a2uiActivityRendererConfig],
+      renderActivityMessages: [
+        a2uiActivityRendererConfig,
+        mcpAppsActivityRendererConfig,
+      ],
     }),
-    provideMCPApps(mcpAppsConfig),
 
+    provideMCPApps(mcpAppsConfig),
     provideA2uiCatalog(customCatalog),
+
     provideMarkdownRenderer(async (markdown) =>
       marked.parse(String(markdown ?? '')),
     ),

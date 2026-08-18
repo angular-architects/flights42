@@ -145,6 +145,42 @@ async function fetchAllDashboardData(
   return { bookedFlights, flightsByRoute };
 }
 
+// Component ids and data-model paths are derived from the tile type so
+// the emitted A2UI stays readable ("flights-table-card" instead of
+// "t2-card"). Types occurring more than once in a spec get a 1-based
+// suffix.
+const TILE_SLUGS: Record<DashboardTile['type'], string> = {
+  flightsTable: 'flights-table',
+  delayedFlightsTable: 'delayed-flights-table',
+  delayShareChart: 'delay-share-chart',
+  delaysPerDayChart: 'delays-per-day-chart',
+  boardingPasses: 'boarding-passes',
+  bookedFlightsList: 'booked-flights',
+  flightSearch: 'flight-search',
+  rentalCars: 'rental-cars',
+  hotels: 'hotels',
+  weatherList: 'weather-list',
+};
+
+function tileBaseNames(tiles: DashboardTile[]): string[] {
+  const totals = new Map<string, number>();
+  for (const tile of tiles) {
+    const slug = TILE_SLUGS[tile.type];
+    totals.set(slug, (totals.get(slug) ?? 0) + 1);
+  }
+
+  const seen = new Map<string, number>();
+  return tiles.map((tile) => {
+    const slug = TILE_SLUGS[tile.type];
+    if (totals.get(slug) === 1) {
+      return slug;
+    }
+    const position = (seen.get(slug) ?? 0) + 1;
+    seen.set(slug, position);
+    return `${slug}-${position}`;
+  });
+}
+
 function assembleDashboard(
   spec: DashboardSpec,
   data: DashboardData,
@@ -158,8 +194,10 @@ function assembleDashboard(
   const allDataOps: A2uiMessage[] = [];
   const rootChildren: string[] = [];
 
+  const baseNames = tileBaseNames(spec.tiles);
+
   spec.tiles.forEach((tile, idx) => {
-    const result = buildTile(idx, tile, data, surfaceId, dataSteps);
+    const result = buildTile(baseNames[idx], tile, data, surfaceId, dataSteps);
     rootChildren.push(...result.rootChildren);
     allComponents.push(...result.components);
     allDataOps.push(...result.dataOps);
@@ -187,7 +225,7 @@ function assembleDashboard(
 }
 
 function buildTile(
-  idx: number,
+  base: string,
   tile: DashboardTile,
   data: DashboardData,
   surfaceId: string,
@@ -195,30 +233,30 @@ function buildTile(
 ): TileBuildResult {
   switch (tile.type) {
     case 'flightsTable':
-      return buildFlightsTable(idx, tile, data, surfaceId, false);
+      return buildFlightsTable(base, tile, data, surfaceId, false);
     case 'delayedFlightsTable':
-      return buildFlightsTable(idx, tile, data, surfaceId, true);
+      return buildFlightsTable(base, tile, data, surfaceId, true);
     case 'delayShareChart':
-      return buildDelayShareChart(idx, tile, data, surfaceId, dataSteps);
+      return buildDelayShareChart(base, tile, data, surfaceId, dataSteps);
     case 'delaysPerDayChart':
-      return buildDelaysPerDayChart(idx, tile, data, surfaceId, dataSteps);
+      return buildDelaysPerDayChart(base, tile, data, surfaceId, dataSteps);
     case 'boardingPasses':
-      return buildBoardingPasses(idx, tile, data, surfaceId);
+      return buildBoardingPasses(base, tile, data, surfaceId);
     case 'bookedFlightsList':
-      return buildBookedFlightsList(idx, tile, data, surfaceId, dataSteps);
+      return buildBookedFlightsList(base, tile, data, surfaceId, dataSteps);
     case 'flightSearch':
-      return buildFlightSearch(idx, tile, surfaceId);
+      return buildFlightSearch(base, tile, surfaceId);
     case 'rentalCars':
-      return buildRentalCars(idx, tile, data, surfaceId, dataSteps);
+      return buildRentalCars(base, tile, data, surfaceId, dataSteps);
     case 'hotels':
-      return buildHotels(idx, tile, data, surfaceId, dataSteps);
+      return buildHotels(base, tile, data, surfaceId, dataSteps);
     case 'weatherList':
-      return buildWeatherList(idx, tile, data, surfaceId, dataSteps);
+      return buildWeatherList(base, tile, data, surfaceId, dataSteps);
   }
 }
 
 function buildFlightsTable(
-  idx: number,
+  base: string,
   tile: Extract<
     DashboardTile,
     { type: 'flightsTable' | 'delayedFlightsTable' }
@@ -232,14 +270,18 @@ function buildFlightsTable(
   const limit = tile.maxRows ?? DEFAULT_FLIGHT_TABLE_MAX_ROWS;
   const flights = filtered.slice(0, limit);
 
-  const cardId = tileId(idx, 'card');
-  const bodyId = tileId(idx, 'body');
-  const titleId = tileId(idx, 'title');
-  const hdrId = tileId(idx, 'hdr');
+  const cardId = nodeId(base, 'card');
+  const bodyId = nodeId(base, 'body');
+  const titleId = nodeId(base, 'title');
+  const headerId = nodeId(base, 'header');
   const lastColumnHeader = onlyDelayed ? 'Delay (min)' : 'Status';
-  const headerCellIds = ['c0', 'c1', 'c2', 'c3'].map(
-    (slot) => `${hdrId}-${slot}`,
-  );
+  const columnNames = [
+    'flight',
+    'date',
+    'time',
+    onlyDelayed ? 'delay' : 'status',
+  ];
+  const headerCellIds = columnNames.map((name) => `${headerId}-${name}`);
 
   const rowIds: string[] = [];
   const components: Component[] = [];
@@ -251,7 +293,7 @@ function buildFlightsTable(
   }[] = [];
 
   if (flights.length === 0) {
-    const emptyId = `${bodyId}-empty`;
+    const emptyId = nodeId(base, 'empty');
     components.push(
       { id: cardId, component: 'Card', child: bodyId },
       {
@@ -278,9 +320,9 @@ function buildFlightsTable(
   }
 
   for (let j = 0; j < flights.length; j += 1) {
-    const rowId = `${tileId(idx, 'r')}${j}`;
+    const rowId = `${nodeId(base, 'row')}-${j + 1}`;
     rowIds.push(rowId);
-    const cellIds = [0, 1, 2, 3].map((c) => `${rowId}-c${c}`);
+    const cellIds = columnNames.map((name) => `${rowId}-${name}`);
     const f = flights[j];
     const datePart = f.date.slice(0, 10);
     const timePart = f.date.slice(11, 16);
@@ -297,10 +339,10 @@ function buildFlightsTable(
         align: 'stretch',
         children: cellIds,
       },
-      cellText(cellIds[0], pathFor(idx, `flights/${j}/number`)),
-      cellText(cellIds[1], pathFor(idx, `flights/${j}/date`)),
-      cellText(cellIds[2], pathFor(idx, `flights/${j}/time`)),
-      cellText(cellIds[3], pathFor(idx, `flights/${j}/status`)),
+      cellText(cellIds[0], pathFor(base, `flights/${j}/number`)),
+      cellText(cellIds[1], pathFor(base, `flights/${j}/date`)),
+      cellText(cellIds[2], pathFor(base, `flights/${j}/time`)),
+      cellText(cellIds[3], pathFor(base, `flights/${j}/status`)),
     );
 
     flightRows.push({
@@ -316,7 +358,7 @@ function buildFlightsTable(
     {
       id: bodyId,
       component: 'Column',
-      children: [titleId, hdrId, ...rowIds],
+      children: [titleId, headerId, ...rowIds],
     },
     {
       id: titleId,
@@ -325,7 +367,7 @@ function buildFlightsTable(
       variant: 'h2',
     },
     {
-      id: hdrId,
+      id: headerId,
       component: 'Row',
       align: 'stretch',
       children: headerCellIds,
@@ -336,13 +378,13 @@ function buildFlightsTable(
     headerText(headerCellIds[3], lastColumnHeader),
   );
 
-  const dataOps = [dataOp(surfaceId, tilePath(idx), { flights: flightRows })];
+  const dataOps = [dataOp(surfaceId, tilePath(base), { flights: flightRows })];
 
   return { rootChildren: [cardId], components, dataOps };
 }
 
 function buildDelayShareChart(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'delayShareChart' }>,
   data: DashboardData,
   surfaceId: string,
@@ -373,7 +415,7 @@ function buildDelayShareChart(
     result: { onTime, delayed, total: onTime + delayed, url },
   });
   return chartTile(
-    idx,
+    base,
     surfaceId,
     `Delay share ${tile.from} → ${tile.to}`,
     url,
@@ -381,7 +423,7 @@ function buildDelayShareChart(
 }
 
 function buildDelaysPerDayChart(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'delaysPerDayChart' }>,
   data: DashboardData,
   surfaceId: string,
@@ -419,7 +461,7 @@ function buildDelaysPerDayChart(
     result: { days: sortedDays.length, url },
   });
   return chartTile(
-    idx,
+    base,
     surfaceId,
     `Delays per day ${tile.from} → ${tile.to}`,
     url,
@@ -427,30 +469,30 @@ function buildDelaysPerDayChart(
 }
 
 function chartTile(
-  idx: number,
+  base: string,
   surfaceId: string,
   title: string,
   chartUrl: string,
 ): TileBuildResult {
-  const cardId = tileId(idx, 'card');
-  const bodyId = tileId(idx, 'body');
-  const titleId = tileId(idx, 'title');
-  const imgId = tileId(idx, 'img');
-  const path = pathFor(idx, 'chart');
+  const cardId = nodeId(base, 'card');
+  const bodyId = nodeId(base, 'body');
+  const titleId = nodeId(base, 'title');
+  const chartId = nodeId(base, 'chart');
+  const path = pathFor(base, 'chart');
   return {
     rootChildren: [cardId],
     components: [
       { id: cardId, component: 'Card', child: bodyId },
-      { id: bodyId, component: 'Column', children: [titleId, imgId] },
+      { id: bodyId, component: 'Column', children: [titleId, chartId] },
       { id: titleId, component: 'Text', text: title, variant: 'h2' },
-      { id: imgId, component: 'Image', url: { path } },
+      { id: chartId, component: 'Image', url: { path } },
     ],
-    dataOps: [dataOp(surfaceId, tilePath(idx), { chart: chartUrl })],
+    dataOps: [dataOp(surfaceId, tilePath(base), { chart: chartUrl })],
   };
 }
 
 function buildBoardingPasses(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'boardingPasses' }>,
   data: DashboardData,
   surfaceId: string,
@@ -463,13 +505,13 @@ function buildBoardingPasses(
     return { rootChildren: [], components: [], dataOps: [] };
   }
 
-  const stackId = 'boarding-stack';
-  const ticketIds = flights.map((_, j) => `${tileId(idx, 't')}${j}`);
+  const stackId = nodeId(base, 'stack');
+  const ticketIds = flights.map((_, j) => `${nodeId(base, 'ticket')}-${j + 1}`);
 
   const components: Component[] = [
     { id: stackId, component: 'Column', children: ticketIds },
     ...flights.map((_flight, j) => {
-      const path = (key: string) => pathFor(idx, `tickets/${j}/${key}`);
+      const path = (key: string) => pathFor(base, `tickets/${j}/${key}`);
       const widget: Component = {
         id: ticketIds[j],
         component: 'TicketWidget',
@@ -491,13 +533,13 @@ function buildBoardingPasses(
     delay: flight.delay,
   }));
 
-  const dataOps = [dataOp(surfaceId, tilePath(idx), { tickets })];
+  const dataOps = [dataOp(surfaceId, tilePath(base), { tickets })];
 
   return { rootChildren: [stackId], components, dataOps };
 }
 
 function buildBookedFlightsList(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'bookedFlightsList' }>,
   data: DashboardData,
   surfaceId: string,
@@ -508,12 +550,12 @@ function buildBookedFlightsList(
   const showCheckIn = tile.showCheckInButton ?? true;
   const showWeather = tile.showWeather ?? true;
 
-  const cardId = tileId(idx, 'card');
-  const bodyId = tileId(idx, 'body');
-  const titleId = tileId(idx, 'title');
+  const cardId = nodeId(base, 'card');
+  const bodyId = nodeId(base, 'body');
+  const titleId = nodeId(base, 'title');
 
   if (flights.length === 0) {
-    const emptyId = `${bodyId}-empty`;
+    const emptyId = nodeId(base, 'empty');
     return {
       rootChildren: [cardId],
       components: [
@@ -541,15 +583,15 @@ function buildBookedFlightsList(
   const rowIds: string[] = [];
 
   flights.forEach((flight, j) => {
-    const rowId = `${tileId(idx, 'r')}${j}`;
-    const colId = `${rowId}-col`;
-    const titleNodeId = `${rowId}-title`;
-    const metaId = `${rowId}-meta`;
-    const btnId = `${rowId}-btn`;
+    const rowId = `${nodeId(base, 'flight')}-${j + 1}`;
+    const colId = `${rowId}-content`;
+    const titleNodeId = `${rowId}-route`;
+    const metaId = `${rowId}-details`;
+    const btnId = `${rowId}-check-in`;
     const btnLabelId = `${btnId}-label`;
     rowIds.push(rowId);
 
-    const path = (key: string) => pathFor(idx, `flights/${j}/${key}`);
+    const path = (key: string) => pathFor(base, `flights/${j}/${key}`);
 
     const colChildren = showCheckIn
       ? [titleNodeId, metaId, btnId]
@@ -621,7 +663,7 @@ function buildBookedFlightsList(
     });
   });
 
-  const dataOps = [dataOp(surfaceId, tilePath(idx), { flights: flightRows })];
+  const dataOps = [dataOp(surfaceId, tilePath(base), { flights: flightRows })];
 
   components.unshift(
     { id: cardId, component: 'Card', child: bodyId },
@@ -642,19 +684,19 @@ function buildBookedFlightsList(
 }
 
 function buildFlightSearch(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'flightSearch' }>,
   surfaceId: string,
 ): TileBuildResult {
-  const cardId = tileId(idx, 'card');
-  const bodyId = tileId(idx, 'body');
-  const titleId = tileId(idx, 'title');
-  const fromId = tileId(idx, 'from');
-  const toId = tileId(idx, 'to');
-  const btnId = tileId(idx, 'btn');
+  const cardId = nodeId(base, 'card');
+  const bodyId = nodeId(base, 'body');
+  const titleId = nodeId(base, 'title');
+  const fromId = nodeId(base, 'from-field');
+  const toId = nodeId(base, 'to-field');
+  const btnId = nodeId(base, 'submit');
   const btnLabelId = `${btnId}-label`;
-  const fromPath = pathFor(idx, 'search/from');
-  const toPath = pathFor(idx, 'search/to');
+  const fromPath = pathFor(base, 'search/from');
+  const toPath = pathFor(base, 'search/to');
 
   const components: Component[] = [
     { id: cardId, component: 'Card', child: bodyId },
@@ -699,7 +741,7 @@ function buildFlightSearch(
   ];
 
   const dataOps = [
-    dataOp(surfaceId, tilePath(idx), {
+    dataOp(surfaceId, tilePath(base), {
       search: {
         from: tile.defaultFrom ?? 'Graz',
         to: tile.defaultTo ?? 'Hamburg',
@@ -711,7 +753,7 @@ function buildFlightSearch(
 }
 
 function buildRentalCars(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'rentalCars' }>,
   data: DashboardData,
   surfaceId: string,
@@ -728,7 +770,7 @@ function buildRentalCars(
     result: { count: cars.length },
   });
   return imageRowList({
-    idx,
+    base,
     surfaceId,
     title: `Rent a car in ${result.city}`,
     items: cars.map((car) => ({
@@ -740,7 +782,7 @@ function buildRentalCars(
 }
 
 function buildHotels(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'hotels' }>,
   data: DashboardData,
   surfaceId: string,
@@ -757,7 +799,7 @@ function buildHotels(
     result: { count: hotels.length },
   });
   return imageRowList({
-    idx,
+    base,
     surfaceId,
     title: `Hotels in ${result.city}`,
     items: hotels.map((hotel) => ({
@@ -769,7 +811,7 @@ function buildHotels(
 }
 
 function buildWeatherList(
-  idx: number,
+  base: string,
   tile: Extract<DashboardTile, { type: 'weatherList' }>,
   data: DashboardData,
   surfaceId: string,
@@ -777,12 +819,12 @@ function buildWeatherList(
 ): TileBuildResult {
   const allBooked = data.bookedFlights;
   const flights = tile.maxRows ? allBooked.slice(0, tile.maxRows) : allBooked;
-  const cardId = tileId(idx, 'card');
-  const bodyId = tileId(idx, 'body');
-  const titleId = tileId(idx, 'title');
+  const cardId = nodeId(base, 'card');
+  const bodyId = nodeId(base, 'body');
+  const titleId = nodeId(base, 'title');
 
   if (flights.length === 0) {
-    const emptyId = `${bodyId}-empty`;
+    const emptyId = nodeId(base, 'empty');
     return {
       rootChildren: [cardId],
       components: [
@@ -810,9 +852,9 @@ function buildWeatherList(
   const rowIds: string[] = [];
 
   flights.forEach((flight, j) => {
-    const lineId = `${tileId(idx, 'w')}${j}`;
+    const lineId = `${nodeId(base, 'entry')}-${j + 1}`;
     rowIds.push(lineId);
-    const path = pathFor(idx, `items/${j}/text`);
+    const path = pathFor(base, `items/${j}/text`);
     components.push({
       id: lineId,
       component: 'Text',
@@ -829,7 +871,7 @@ function buildWeatherList(
     itemRows.push({ text: line });
   });
 
-  const dataOps = [dataOp(surfaceId, tilePath(idx), { items: itemRows })];
+  const dataOps = [dataOp(surfaceId, tilePath(base), { items: itemRows })];
 
   components.unshift(
     { id: cardId, component: 'Card', child: bodyId },
@@ -850,31 +892,31 @@ function buildWeatherList(
 }
 
 function imageRowList(args: {
-  idx: number;
+  base: string;
   surfaceId: string;
   title: string;
   items: { imageUrl: string; title: string; subtitle: string }[];
 }): TileBuildResult {
-  const { idx, surfaceId, title, items } = args;
-  const cardId = tileId(idx, 'card');
-  const bodyId = tileId(idx, 'body');
-  const titleId = tileId(idx, 'title');
+  const { base, surfaceId, title, items } = args;
+  const cardId = nodeId(base, 'card');
+  const bodyId = nodeId(base, 'body');
+  const titleId = nodeId(base, 'title');
 
   const components: Component[] = [];
   const itemRows: { image: string; title: string; subtitle: string }[] = [];
   const rowIds: string[] = [];
 
   items.forEach((item, j) => {
-    const rowId = `${tileId(idx, 'r')}${j}`;
-    const imgId = `${rowId}-img`;
-    const colId = `${rowId}-col`;
+    const rowId = `${nodeId(base, 'item')}-${j + 1}`;
+    const imgId = `${rowId}-image`;
+    const colId = `${rowId}-content`;
     const titleNodeId = `${rowId}-title`;
-    const subId = `${rowId}-sub`;
+    const subId = `${rowId}-subtitle`;
     rowIds.push(rowId);
 
-    const imgPath = pathFor(idx, `items/${j}/image`);
-    const titlePath = pathFor(idx, `items/${j}/title`);
-    const subPath = pathFor(idx, `items/${j}/subtitle`);
+    const imgPath = pathFor(base, `items/${j}/image`);
+    const titlePath = pathFor(base, `items/${j}/title`);
+    const subPath = pathFor(base, `items/${j}/subtitle`);
 
     components.push(
       { id: rowId, component: 'Row', align: 'start', children: [imgId, colId] },
@@ -906,7 +948,7 @@ function imageRowList(args: {
     });
   });
 
-  const dataOps = [dataOp(surfaceId, tilePath(idx), { items: itemRows })];
+  const dataOps = [dataOp(surfaceId, tilePath(base), { items: itemRows })];
 
   components.unshift(
     { id: cardId, component: 'Card', child: bodyId },
@@ -928,20 +970,21 @@ function dataOp(surfaceId: string, path: string, value: unknown): A2uiMessage {
   } as unknown as A2uiMessage;
 }
 
-function tileId(idx: number, suffix: string): string {
-  return `t${idx}-${suffix}`;
+function nodeId(base: string, suffix: string): string {
+  return `${base}-${suffix}`;
 }
 
-function pathFor(idx: number, suffix: string): string {
-  return `/t${idx}/${suffix}`;
+function pathFor(base: string, suffix: string): string {
+  return `/${base}/${suffix}`;
 }
 
 // Root data-model path for a tile. Every tile now seeds its whole
 // subtree with a single `updateDataModel` op at this path instead of one
 // op per leaf value. A2UI's `DataModel.set` notifies descendant signals,
-// so component bindings like `/t3/flights/0/number` still resolve.
-function tilePath(idx: number): string {
-  return `/t${idx}`;
+// so component bindings like `/flights-table/flights/0/number` still
+// resolve.
+function tilePath(base: string): string {
+  return `/${base}`;
 }
 
 function routeKey(from: string, to: string): string {
