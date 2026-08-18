@@ -2,28 +2,28 @@
   <div class="avatar">🤖</div>
   <div>
     <div class="bubble">
-      <app-message [data]="greeting()"></app-message>
+      <markdown [data]="greeting()"></markdown>
     </div>
     <div class="meta"></div>
   </div>
 </article>
 
-@for (view of views(); track view.id) {
-  @if (view.text) {
-    <article class="msg {{ view.variant }}">
-      <div class="avatar">{{ view.avatar }}</div>
+@for (model of messageModel(); track model.id) {
+  @if (model.text) {
+    <article class="msg {{ model.variant }}">
+      <div class="avatar">{{ model.avatar }}</div>
       <div>
         <div class="bubble">
-          <app-message [data]="view.text"></app-message>
+          <markdown [data]="model.text"></markdown>
         </div>
         <div class="meta"></div>
       </div>
     </article>
   }
 
-  @for (call of view.toolCalls; track call.id) {
-    <article class="msg {{ view.variant }}">
-      <div class="avatar">{{ view.avatar }}</div>
+  @for (call of model.toolCalls; track call.id) {
+    <article class="msg {{ model.variant }}">
+      <div class="avatar">{{ model.avatar }}</div>
       <div>
         <div class="bubble">
           <copilot-render-tool-calls
@@ -37,10 +37,10 @@
     </article>
   }
 
-  @if (view.activity) {
-    @let activity = view.activity;
-    <article class="msg {{ view.variant }}">
-      <div class="avatar">{{ view.avatar }}</div>
+  @if (model.activity) {
+    @let activity = model.activity;
+    <article class="msg {{ model.variant }}">
+      <div class="avatar">{{ model.avatar }}</div>
       <div>
         <div class="bubble" [class.bubble--a2ui]="activity.isSurface">
           <app-copilot-activity

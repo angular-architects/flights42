@@ -29,5 +29,6 @@ export function injectTicketingAgentStore() {
     ],
   });
 
-  return injectAgentStore(TICKETING_AGENT_ID);
+  const store = injectAgentStore(TICKETING_AGENT_ID);
+  return store;
 }
