@@ -1,5 +1,16 @@
 # Flights42 with AG-UI
 
+## Table of Contents
+
+- [Providing API Key and Selecting Model](#providing-api-key-and-selecting-model)
+  - [Starting and Running the Example](#starting-and-running-the-example)
+  - [Trying out](#trying-out)
+- [Mini-Applications](#mini-applications)
+  - [AG-UI SDK Demo (Chapter 2)](#ag-ui-sdk-demo-chapter-2)
+  - [Mastra + AG-UI Demo (Chapter 2)](#mastra--ag-ui-demo-chapter-2)
+  - [A2UI Demo (Chapter 3)](#a2ui-demo-chapter-3)
+  - [MCP Apps Demo (Chapter 4)](#mcp-apps-demo-chapter-4)
+
 ## Providing API Key and Selecting Model
 
 For executing the example, you need an OpenAI API Key for GPT or a GOOGLE API Key for Gemini. Set it as an environment variable:
