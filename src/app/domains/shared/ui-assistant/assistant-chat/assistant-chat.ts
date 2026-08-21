@@ -22,6 +22,7 @@ import {
 } from '../../util-copilotkit/agent-store-helper';
 import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
+import { VoiceService } from '../voice/voice-service';
 
 const DEFAULT_GREETING = 'Hi! How can I help you?';
 
@@ -35,6 +36,7 @@ export class AssistantChat {
   private chatRegistry = inject(ChatRegistry);
   private agentMode = inject(AgentModeService);
   private copilotKit = inject(CopilotKit);
+  protected readonly voice = inject(VoiceService);
 
   protected mode = this.agentMode.mode;
 
@@ -106,12 +108,38 @@ export class AssistantChat {
   }
 
   protected submit() {
+    if (this.voice.dictating()) {
+      this.voice.stopDictation();
+    }
     const message = this.message();
     this.message.set('');
     const store = this.store();
     if (store) {
       void sendMessage(this.copilotKit, store, message);
     }
+  }
+
+  protected toggleDictation(): void {
+    if (this.voice.dictating()) {
+      this.voice.stopDictation();
+      return;
+    }
+    this.voice.startDictation(this.message(), {
+      onText: (text) => {
+        this.message.set(text);
+      },
+      onSilence: () => {
+        this.submit();
+      },
+    });
+  }
+
+  protected toggleReading(): void {
+    this.voice.toggleReading();
+  }
+
+  protected setLanguage(language: string): void {
+    this.voice.setLanguage(language);
   }
 
   protected stopRun(): void {
