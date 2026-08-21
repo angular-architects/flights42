@@ -4,6 +4,7 @@
 /dist
 /tmp
 /out-tsc
+/ai-server/out-tsc
 /bazel-out
 
 # Node
