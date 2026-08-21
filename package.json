@@ -22,6 +22,7 @@
     "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
     "ai-demo-server": "mastra dev --dir ai-demo/server",
     "ai-demo-client": "node --watch --import tsx ai-demo/client/index.ts",
+    "ai-demo-client:details": "node --watch --import tsx ai-demo/client/index.ts --details",
     "simple-client": "ng serve simple-client",
     "mcp-apps-demo": "vite --config mcp-apps-demo/vite.config.ts --open /host.html",
     "mcp-apps-demo:build": "vite build --config mcp-apps-demo/vite.config.ts",
