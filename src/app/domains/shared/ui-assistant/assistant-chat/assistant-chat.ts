@@ -18,10 +18,6 @@ import {
 } from '@copilotkit/angular';
 
 import {
-  AgentMode,
-  AgentModeService,
-} from '../../util-common/agent-mode-service';
-import {
   getAgentMessages,
   sendMessage,
   stop,
@@ -42,10 +38,7 @@ const DEFAULT_GREETING = 'Hi! How can I help you?';
 })
 export class AssistantChat {
   private chatRegistry = inject(ChatRegistry);
-  private agentMode = inject(AgentModeService);
   private copilotKit = inject(CopilotKit);
-
-  protected mode = this.agentMode.mode;
 
   private composerInput =
     viewChild<ElementRef<HTMLInputElement>>('composerInput');
@@ -55,7 +48,6 @@ export class AssistantChat {
   protected readonly panelVisible = signal(false);
   protected readonly message = signal('');
   protected readonly greeting = signal<string>(DEFAULT_GREETING);
-  protected readonly showModeSelector = signal(true);
 
   protected readonly store = signal<Signal<AgentStore> | undefined>(undefined);
   protected readonly agentId = signal<string | undefined>(undefined);
@@ -88,7 +80,6 @@ export class AssistantChat {
       this.store.set(chatInfo.store);
       this.agentId.set(chatInfo.agentId);
       this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
-      this.showModeSelector.set(chatInfo.showModeSelector ?? true);
       this.interruptController.set(chatInfo.interrupts);
     });
 
@@ -150,9 +141,5 @@ export class AssistantChat {
     if (controller) {
       await controller.resolve(event.payload, event.interruptId);
     }
-  }
-
-  protected setMode(mode: AgentMode): void {
-    this.agentMode.mode.set(mode);
   }
 }
