@@ -3,9 +3,6 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { type Message, RenderToolCalls } from '@copilotkit/angular';
 import { MarkdownComponent } from 'ngx-markdown';
 
-import { CopilotActivity } from '../../util-copilotkit/activity/copilot-activity';
-
-type ActivityMessage = Extract<Message, { role: 'activity' }>;
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 
 interface ChatToolCallView {
@@ -48,23 +45,17 @@ const DEFAULT_INTERRUPT_OPTIONS: InterruptOption[] = [
   { id: 'decline', label: 'Decline', payload: { approved: false } },
 ];
 
-interface ChatActivityView {
-  message: ActivityMessage;
-  isSurface: boolean;
-}
-
 interface ChatMessageView {
   id: string;
   variant: 'user' | 'assistant';
   avatar: string;
   text: string;
-  activity: ChatActivityView | null;
   toolCalls: ChatToolCallView[];
 }
 
 @Component({
   selector: 'app-chat-messages',
-  imports: [RenderToolCalls, CopilotActivity, MarkdownComponent],
+  imports: [RenderToolCalls, MarkdownComponent],
   templateUrl: './chat-messages.html',
   styleUrls: ['./chat-messages.css'],
 })
@@ -100,10 +91,6 @@ function toMessageViews(messages: Message[]): ChatMessageView[] {
       variant: message.role === 'user' ? 'user' : 'assistant',
       avatar: message.role === 'user' ? '💬' : '🤖',
       text: toMessageText(message),
-      activity:
-        message.role === 'activity'
-          ? { message, isSurface: message.activityType === 'a2ui-surface' }
-          : null,
       toolCalls: toToolCallViews(message),
     }),
   );

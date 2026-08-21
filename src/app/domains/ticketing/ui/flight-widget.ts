@@ -12,6 +12,7 @@ import { createFrontendTool } from '../../shared/util-copilotkit/tool-definition
 import { FlightStore } from '../data/flight-store';
 import { FlightCard } from './flight-card/flight-card';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const flightSchema = z.object({
   id: z.number().describe('The flight id'),
   from: z.string().describe('Departure city'),
@@ -20,12 +21,20 @@ const flightSchema = z.object({
   delay: z.number().describe('Delay in minutes'),
 });
 
-const flightWidgetSchema = z.object({
-  flight: flightSchema,
-  status: z.enum(['booked', 'other', 'none']).describe('Status of the flight'),
+const flightWidgetSchema: z.ZodType<FlightWidgetArgs> = z.object({
+  // TODO: describe the widget inputs (flight and status)
+  // HINT: use the above declared flightSchema
+  //       and a zod-based enum with the possible
+  //       values 'booked', 'other', and 'none'
 });
 
-type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
+// TODO: once the schema above is complete, derive the args type from it
+//       (and remove the type annotation on flightWidgetSchema):
+//       type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
+type FlightWidgetArgs = Partial<{
+  flight: z.infer<typeof flightSchema>;
+  status: 'booked' | 'other' | 'none';
+}>;
 
 @Component({
   selector: 'app-flight-widget',
