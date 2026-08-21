@@ -1,19 +1,19 @@
 import { inject, Injectable } from '@angular/core';
 import { CopilotKit, injectAgentStore } from '@copilotkit/angular';
 
+import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
 import { sendDeveloperMessage } from '../../../shared/util-copilotkit/agent-store-helper';
 import { TICKETING_AGENT_ID } from '../agent-ids';
-import { TicketingChatService } from '../ticketing-chat-service';
 import { Plan, PlanStep } from './plan-model';
 
 @Injectable({ providedIn: 'root' })
 export class PlanHandoff {
   private readonly copilotKit = inject(CopilotKit);
-  private readonly ticketingChat = inject(TicketingChatService);
+  private readonly agentMode = inject(AgentModeService);
   private readonly executionStore = injectAgentStore(TICKETING_AGENT_ID);
 
   async execute(plan: Plan): Promise<void> {
-    this.ticketingChat.setMode('execution');
+    this.agentMode.setMode('execution');
     const message = buildExecutionMessage(plan.steps);
     await sendDeveloperMessage(this.copilotKit, this.executionStore, message);
   }
