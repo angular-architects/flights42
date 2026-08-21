@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
-import { USE_ACTION_CARDS, USE_MCP } from '@flights42/feature-flags';
 
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -8,8 +7,6 @@ import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { destinationInfoCard } from '../ui/destination-info-card';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
-import { bookFlightActionCard } from './action-cards/book-flight-action-card';
-import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
 import { TICKETING_AGENT_ID } from './agent-ids';
 import { checkInTool } from './tools/check-in.tool';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
@@ -18,13 +15,7 @@ import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 
-const widgets = USE_MCP
-  ? [messageWidget, flightWidget]
-  : [messageWidget, flightWidget, hotelWidget];
-
-const actionCards = USE_ACTION_CARDS
-  ? [bookFlightActionCard, cancelFlightActionCard]
-  : [];
+const widgets = [messageWidget, flightWidget, hotelWidget];
 
 export function injectTicketingAgentStore() {
   initAgentStore({
@@ -39,7 +30,9 @@ export function injectTicketingAgentStore() {
       displayFlightDetailTool,
       checkInTool,
     ],
-    toolCallRenderer: [...actionCards],
+    // TODO: Add the action cards for bookFlight and cancelFlight
+    //       to the toolCallRenderer list
+    toolCallRenderer: [],
     components: [...widgets, destinationInfoCard],
   });
 
