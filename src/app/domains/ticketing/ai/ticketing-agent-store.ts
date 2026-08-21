@@ -1,16 +1,12 @@
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
 
-import {
-  USE_ACTION_CARDS,
-  USE_MCP,
-} from '../../../../../libs/feature-flags/feature-flags';
+import { USE_ACTION_CARDS } from '../../../../../libs/feature-flags/feature-flags';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
-import { hotelWidget } from '../ui/hotel-widget';
 import { bookFlightActionCard } from './action-cards/book-flight-action-card';
 import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
 import { addPlanStepTool } from './tools/add-plan-step.tool';
@@ -43,9 +39,7 @@ const planTools = [
   clearPlanTool,
 ];
 
-const widgets = USE_MCP
-  ? [messageWidget, flightWidget, planWidget]
-  : [messageWidget, flightWidget, hotelWidget, planWidget];
+const widgets = [messageWidget, flightWidget, planWidget];
 
 export function injectTicketingAgentStore() {
   initAgentStore({
