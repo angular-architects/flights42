@@ -1,17 +1,4 @@
-import { USE_MCP } from '@flights42/feature-flags';
-
-const hotelsSection = USE_MCP
-  ? `## Hotels
-
-- For hotel searches, call the findHotels tool with the city. It renders the
-  hotels itself as an interactive widget in the chat, and it ENDS your turn:
-  you are not called again after it, so call it ALONE as the last tool call of
-  the turn and do NOT add a messageWidget, hotelWidget, flightWidget or
-  render_a2ui for the same hotels — the widget IS the hotel presentation.
-- When the user asks for hotels without naming a city, use the most recently
-  discussed destination city. If there is no such city, ask for the city with a
-  messageWidget.`
-  : `## Hotels
+const hotelsSection = `## Hotels
 
 - For hotel searches, delegate to the hotelAgent: call it with the city. It
   returns a list of hotel options, each with id, name, stars, image and city.
