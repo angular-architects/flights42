@@ -1,9 +1,6 @@
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { z } from 'zod';
 
 import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
-import { FlightStore } from '../../data/flight-store';
 
 export const findFlightsTool = createFrontendTool({
   name: 'findFlights',
@@ -17,14 +14,15 @@ export const findFlightsTool = createFrontendTool({
     - If needed, send at most one short text confirmation after the tool call has completed.
   `,
   parameters: z.object({
-    from: z.string().describe('airport of departure'),
-    to: z.string().describe('airport of destination'),
+    // TODO: add parameters for from and to including a description
   }),
-  handler: async ({ from, to }) => {
-    const store = inject(FlightStore);
-    const router = inject(Router);
-    store.updateFilter(from, to);
-    await router.navigate(['/ticketing/booking/flight-search']);
+  handler: async (args) => {
+    console.log('findFlights', args);
+
+    // TODO: Inject FlightStore and Router
+    // TODO: forward from and to from args to the store (updateFilter)
+    // TODO: route to /ticketing/booking/flight-search (router.navigate)
+
     return { ok: true };
   },
 });
