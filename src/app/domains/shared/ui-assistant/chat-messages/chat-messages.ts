@@ -9,6 +9,8 @@ import {
 } from '@copilotkit/angular';
 import { MarkdownComponent } from 'ngx-markdown';
 
+import { WidgetIdDirective } from '../widgets/widget-id';
+
 type ActivityMessage = Extract<Message, { role: 'activity' }>;
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 
@@ -64,7 +66,7 @@ interface ChatMessageView {
 
 @Component({
   selector: 'app-chat-messages',
-  imports: [RenderToolCalls, CopilotActivity, MarkdownComponent],
+  imports: [RenderToolCalls, CopilotActivity, MarkdownComponent, WidgetIdDirective],
   templateUrl: './chat-messages.html',
   styleUrls: ['./chat-messages.css'],
 })
