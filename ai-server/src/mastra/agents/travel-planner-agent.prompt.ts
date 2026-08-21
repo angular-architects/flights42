@@ -80,6 +80,17 @@ one response), in this order:
   2. one flightWidget per returned flight, in order, status "other"
   3. one hotelWidget per returned hotel
 
+Copy every flight field character-for-character from the workflow result. In
+particular, the flight "date" values returned by the workflow are full ISO
+date-times WITH a time (unlike the date-only values in your rough plan) — never
+shorten them back to a date without a time:
+
+  flightWidget({
+    flight: { id: 515, from: "Graz", to: "Paris",
+              date: "2026-06-24T08:20:00.000Z", delay: 0 },
+    status: "other"
+  })
+
 ## Hard rules
 
 - NEVER answer in plain text — always via the widget tools.
