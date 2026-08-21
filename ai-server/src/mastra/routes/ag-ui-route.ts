@@ -67,6 +67,8 @@ export async function agUiRouteHandler(
     hiddenToolNames: HIDDEN_TOOLS[effectiveAgentId],
   });
 
+  agent.setAbortSignal(c.req.raw.signal);
+
   const middleware = isProxiedMcpRequest(parsed.input.forwardedProps)
     ? mcpAppsProxy
     : undefined;
