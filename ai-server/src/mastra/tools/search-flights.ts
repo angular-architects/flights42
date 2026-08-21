@@ -10,7 +10,13 @@ export const flightSchema = z.object({
   id: z.number(),
   from: z.string(),
   to: z.string(),
-  date: z.string(),
+  date: z.string().describe(
+    `
+        Full ISO date-time including the time, e.g. "2026-06-24T08:20:00.000Z".
+        When copying a flight, take this value verbatim from the source flight;
+        never shorten it to a date without a time.
+      `,
+  ),
   delay: z.number(),
 });
 
