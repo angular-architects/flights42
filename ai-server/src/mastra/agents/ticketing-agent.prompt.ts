@@ -1,22 +1,4 @@
-import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
-
-const hotelsSection = USE_MCP
-  ? `## Hotels
-
-- For hotel searches, call the hotels_findHotels tool with the city. It is a
-  DATA tool: call it ALONE and wait for its result. It returns the hotels AND
-  renders them itself as an interactive widget in the chat.
-- When the user asks for hotels without naming a city, use the most recently
-  discussed destination city. If there is no such city, ask for the city with a
-  messageWidget.
-- The hotels_findHotels widget IS the hotel presentation. Do NOT additionally
-  render the hotels via renderA2uiTool, hotelWidget, or flightWidget — that
-  would show them twice.
-- Only AFTER its result has arrived, emit exactly ONE short messageWidget as
-  intro text (e.g. "Here are hotels for <city>."). NEVER put that messageWidget
-  in the same tool-call batch as hotels_findHotels. Do not repeat the hotel
-  details in it.`
-  : `## Hotels
+const hotelsSection = `## Hotels
 
 - For hotel searches, delegate to the hotelAgent: call it with the city. It
   returns a list of hotel options, each with id, name, stars, image and city.
