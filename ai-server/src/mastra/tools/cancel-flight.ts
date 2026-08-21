@@ -1,4 +1,3 @@
-import { USE_APPROVAL } from '@flights42/feature-flags';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
@@ -17,8 +16,8 @@ const flightSchema = z.object({
   delay: z.number(),
 });
 
-// See bookFlightTool for format rationale (Mastra-compatible `result` string
-// plus additive domain data).
+// Shape mirrors Mastra's tool-result convention (`result: string`) with
+// additive domain fields (`flight`, `code`).
 const resultSchema = z.union([
   z.object({
     ok: z.literal(true),
@@ -32,41 +31,20 @@ const resultSchema = z.union([
   }),
 ]);
 
-// Generic option descriptor the client renders as a choice button.
-const suspendOptionSchema = z.object({
-  label: z.string(),
-  payload: z.record(z.string(), z.unknown()),
-});
-
 export const cancelFlightTool = createTool({
   id: 'cancelFlight',
   description:
-    'Cancels a previously booked flight for the current passenger. Requires explicit user approval once pre-checks pass. Fails if the flight is not booked.',
+    'Cancels a previously booked flight for the current passenger. Fails if the flight is not booked.',
   inputSchema: z.object({
     flightId: z.number().describe('The id of the flight to cancel.'),
   }),
   outputSchema: resultSchema,
-  suspendSchema: z.object({
-    action: z.literal('cancel'),
-    flightId: z.number(),
-    flight: flightSchema.nullable(),
-    message: z.string(),
-    options: z.array(suspendOptionSchema),
-  }),
-  resumeSchema: z.object({
-    approved: z.boolean(),
-  }),
-  execute: async ({ flightId }, context) => {
-    const resumeData = context?.agent?.resumeData;
-    const suspend = context?.agent?.suspend;
-
-    if (resumeData && !resumeData.approved) {
-      return {
-        ok: false as const,
-        result: `Cancellation of flight ${flightId} was cancelled by the user.`,
-        code: 'USER_CANCELLED',
-      };
-    }
+  // TODO: Add suspendSchema and resumeSchema for the approval flow
+  execute: async ({ flightId }) => {
+    // TODO (simple approval): read resumeData and suspend from the context;
+    //       suspend right here, before the pre-checks, unless the tool was
+    //       resumed, and return early with code 'USER_CANCELLED' if the user
+    //       declined
 
     if (!isBooked(flightId)) {
       return {
@@ -78,27 +56,9 @@ export const cancelFlightTool = createTool({
 
     const flight = await fetchFlight(flightId).catch(() => null);
 
-    if (USE_APPROVAL && !resumeData) {
-      const flightContext = flight
-        ? ` from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}`
-        : '';
-
-      await suspend?.({
-        action: 'cancel',
-        flightId,
-        flight,
-        message: `Cancel flight ${flightId}${flightContext}?`,
-        options: [
-          { label: 'Accept', payload: { approved: true } },
-          { label: 'Decline', payload: { approved: false } },
-        ],
-      });
-      return {
-        ok: false as const,
-        result: 'Awaiting user approval.',
-        code: 'AWAITING_APPROVAL',
-      };
-    }
+    // TODO (situational approval): move the suspend down here, after the
+    //       pre-checks, and hand the user a meaningful message in the
+    //       suspend payload
 
     removeBooking(flightId);
 
