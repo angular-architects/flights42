@@ -57,8 +57,8 @@
             [ngModel]="voice.language()"
             (ngModelChange)="setLanguage($event)"
             name="voiceLanguage"
-            title="Sprache"
-            aria-label="Sprache">
+            title="Language"
+            aria-label="Language">
             @for (language of voice.languages(); track language) {
               <option [value]="language">
                 {{ voice.describeLanguage(language) }}
@@ -71,14 +71,10 @@
           class="icon-btn"
           [attr.aria-pressed]="voice.readingEnabled()"
           [title]="
-            voice.readingEnabled()
-              ? 'Vorlesen deaktivieren'
-              : 'Vorlesen aktivieren'
+            voice.readingEnabled() ? 'Disable read-aloud' : 'Enable read-aloud'
           "
           [attr.aria-label]="
-            voice.readingEnabled()
-              ? 'Vorlesen deaktivieren'
-              : 'Vorlesen aktivieren'
+            voice.readingEnabled() ? 'Disable read-aloud' : 'Enable read-aloud'
           ">
           {{ voice.readingEnabled() ? '🔊' : '🔇' }}
         </button>
@@ -133,9 +129,9 @@
               [class.active]="voice.dictating()"
               [attr.aria-pressed]="voice.dictating()"
               (click)="toggleDictation()"
-              [title]="voice.dictating() ? 'Diktat beenden' : 'Diktat starten'"
+              [title]="voice.dictating() ? 'Stop dictation' : 'Start dictation'"
               [attr.aria-label]="
-                voice.dictating() ? 'Diktat beenden' : 'Diktat starten'
+                voice.dictating() ? 'Stop dictation' : 'Start dictation'
               ">
               🎙️
             </button>
