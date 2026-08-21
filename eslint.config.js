@@ -10,9 +10,10 @@ module.exports = defineConfig([
   {
     files: ['**/*.ts'],
     extends: [
-      eslint.configs.recommended,
-      tseslint.configs.recommended,
-      tseslint.configs.stylistic,
+      // Relaxed for the workshop starter:
+      // eslint.configs.recommended,
+      // tseslint.configs.recommended,
+      // tseslint.configs.stylistic,
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
@@ -33,8 +34,10 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
+      // Relaxed for the workshop: participants intentionally leave imports
+      // and variables unused until they complete the TODO steps.
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'off',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -50,18 +53,19 @@ module.exports = defineConfig([
     ],
     rules: {},
   },
-  {
-    plugins: {
-      'simple-import-sort': simpleImportSort,
-    },
-    rules: {
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
-    },
-  },
-  {
-    files: ['**/*.ts'],
-    ignores: ['ai-server/**/*.ts'],
-    extends: [sheriff.configs.all],
-  },
+  // Relaxed for the workshop starter:
+  // {
+  //   plugins: {
+  //     'simple-import-sort': simpleImportSort,
+  //   },
+  //   rules: {
+  //     'simple-import-sort/imports': 'error',
+  //     'simple-import-sort/exports': 'error',
+  //   },
+  // },
+  // {
+  //   files: ['**/*.ts'],
+  //   ignores: ['ai-server/**/*.ts'],
+  //   extends: [sheriff.configs.all],
+  // },
 ]);
