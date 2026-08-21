@@ -27,6 +27,7 @@
       <div>
         <div class="bubble">
           <copilot-render-tool-calls
+            [appWidgetId]="call.id"
             [message]="call.message"
             [messages]="messages()"
             [agentId]="agentId()"
