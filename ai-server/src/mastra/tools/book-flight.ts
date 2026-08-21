@@ -1,7 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../libs/feature-flags/feature-flags.js';
 import {
   addBooking,
   fetchFlight,
@@ -17,16 +16,11 @@ const flightSchema = z.object({
   delay: z.number(),
 });
 
-const paymentMethodSchema = z.enum(['creditCard', 'miles']);
-
-// Shape mirrors Mastra's tool-result convention (`result: string`) with
-// additive domain fields (`flight`, `code`, `paymentMethod`).
 const resultSchema = z.union([
   z.object({
     ok: z.literal(true),
     result: z.string(),
     flight: flightSchema,
-    paymentMethod: paymentMethodSchema.optional(),
   }),
   z.object({
     ok: z.literal(false),
@@ -35,45 +29,18 @@ const resultSchema = z.union([
   }),
 ]);
 
-const paymentSelectionSchema = z.enum(['creditCard', 'miles', 'cancel']);
-
-// Generic option descriptor the client renders as a choice button.
-const suspendOptionSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  payload: z.record(z.string(), z.unknown()),
-  variant: z.enum(['primary', 'default', 'danger']).optional(),
-});
-
 export const bookFlightTool = createTool({
   id: 'bookFlight',
   description:
-    'Books a flight for the current passenger. Requires the user to choose a payment method (credit card or bonus miles) once pre-checks pass; the user may also cancel. Fails if the flight does not exist or is already booked.',
+    'Books a flight for the current passenger. Fails if the flight does not exist or is already booked.',
   inputSchema: z.object({
     flightId: z.number().describe('The id of the flight to book.'),
   }),
   outputSchema: resultSchema,
-  suspendSchema: z.object({
-    action: z.literal('book'),
-    flightId: z.number(),
-    flight: flightSchema,
-    message: z.string(),
-    options: z.array(suspendOptionSchema),
-  }),
-  resumeSchema: z.object({
-    selection: paymentSelectionSchema,
-  }),
-  execute: async ({ flightId }, context) => {
-    const resumeData = context?.agent?.resumeData;
-    const suspend = context?.agent?.suspend;
-
-    if (resumeData?.selection === 'cancel') {
-      return {
-        ok: false as const,
-        result: `Booking of flight ${flightId} was cancelled by the user.`,
-        code: 'USER_CANCELLED',
-      };
-    }
+  // TODO: Add suspendSchema and resumeSchema for the approval flow
+  execute: async ({ flightId }) => {
+    // TODO: Read resumeData/suspend from the context and
+    //       return early with code 'USER_CANCELLED' if the user declined
 
     if (isBooked(flightId)) {
       return {
@@ -92,53 +59,35 @@ export const bookFlightTool = createTool({
       };
     }
 
-    const requestedSelection = resumeData?.selection;
-    const hasPaymentSelection =
-      requestedSelection === 'creditCard' || requestedSelection === 'miles';
+    // TODO: If the user has not approved yet, suspend the tool
+    //       and return with code 'AWAITING_APPROVAL'
 
-    if (USE_APPROVAL && !hasPaymentSelection) {
-      await suspend?.({
-        action: 'book',
-        flightId,
-        flight,
-        message: `How would you like to pay for flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}?`,
-        options: [
-          {
-            id: 'creditCard',
-            label: 'Pay with credit card',
-            payload: { selection: 'creditCard' },
-            variant: 'default',
-          },
-          {
-            id: 'miles',
-            label: 'Pay with bonus miles',
-            payload: { selection: 'miles' },
-            variant: 'default',
-          },
-          {
-            id: 'cancel',
-            label: 'Cancel',
-            payload: { selection: 'cancel' },
-            variant: 'default',
-          },
-        ],
-      });
-      return {
-        ok: false as const,
-        result: 'Awaiting user approval.',
-        code: 'AWAITING_APPROVAL',
-      };
-    }
-
-    const selection = hasPaymentSelection ? requestedSelection : 'creditCard';
-    const paymentSuffix = ` (paid with ${selection === 'creditCard' ? 'credit card' : 'bonus miles'})`;
+    // await abortableDelay(6000, abortSignal);
 
     addBooking(flightId);
     return {
       ok: true as const,
-      result: `Booked flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}${paymentSuffix}.`,
+      result: `Booked flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}.`,
       flight,
-      paymentMethod: selection,
     };
   },
 });
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(timeout);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
