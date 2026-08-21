@@ -16,7 +16,13 @@ const flightSchema = z.object({
   id: z.number().describe('The flight id'),
   from: z.string().describe('Departure city'),
   to: z.string().describe('Arrival city'),
-  date: z.string().describe('Departure date in ISO format'),
+  date: z.string().describe(
+    `
+        Full ISO date-time including the time, e.g. "2026-06-24T08:20:00.000Z".
+        Copy it character-for-character from the flight data you received; a
+        value without a time component is an error.
+      `,
+  ),
   delay: z.number().describe('Delay in minutes'),
 });
 
