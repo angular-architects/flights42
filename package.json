@@ -91,7 +91,7 @@
     "@angular/material": "^22.1.4",
     "@angular/platform-browser": "^22.1.4",
     "@angular/router": "^22.1.4",
-    "@copilotkit/angular": "0.3.0",
+    "@copilotkit/angular": "0.4.0",
     "@mastra/client-js": "^1.11.2",
     "@mastra/core": "^1.24.1",
     "@mastra/libsql": "^1.7.3",

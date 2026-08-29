@@ -1,6 +1,6 @@
 # CopilotKit 0.4.0 / Angular 22 / Mastra 1.63 upgrade plan
 
-Status: Phase A executed (see the migration log at the end); Phases B–F pending. Written 2026-08-29 from the published
+Status: Phases A–B executed (see the migration log at the end); Phases C–F pending. Written 2026-08-29 from the published
 npm tarballs and the `ng update` listing.
 Related docs: [copilot-migration.md](copilot-migration.md) (0.3.0 evaluation),
 [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md) (last executed
@@ -269,3 +269,22 @@ Delete, one commit each, re-running the Phase D scenarios after every step:
 - Observed for Phase D: `@copilotkit/runtime@1.63.1` is still installed as
   the peer of `@ag-ui/mastra@1.0.0` — the alias override only takes effect
   once `@ag-ui/mastra` itself is reinstalled.
+
+### Phase B — executed 2026-08-29
+
+- `@copilotkit/angular` pinned to 0.4.0 (bundles `@copilotkit/core` 1.69.3,
+  `@copilotkit/web-inspector`, `@copilotkit/a2ui-renderer`,
+  `@copilotkit/web-components`). No source change was needed — the 0.3.0 API
+  surface is a strict subset of 0.4.0.
+- `@ag-ui/client` / `@ag-ui/core` stay deduplicated at 0.0.57. The only
+  0.0.54 copies in the tree come from `@copilotkit/runtime@1.63.1`, which is
+  still pulled in as the peer of `@ag-ui/mastra@1.0.0` and disappears in
+  Phase D.
+- `@copilotkit/angular/styles.css` is not imported anywhere, so no class-name
+  check was needed.
+- Verified: `ng build` for all three projects, `ng test` (25 passed),
+  `test:aimock` (3 passed), `ng lint`. The Vitest browser tests use
+  `provideCopilotKit` and therefore mount the Inspector (dev mode); the run
+  logs no inspector errors — the explicit opt-out is done in Phase C.
+- The manual smoke test of chat, interrupts, MCP Apps and the A2UI activity
+  renderer is done together with the Inspector check in Phase C.
