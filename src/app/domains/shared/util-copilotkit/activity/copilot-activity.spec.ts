@@ -74,6 +74,7 @@ describe('CopilotActivity', () => {
     TestBed.configureTestingModule({
       providers: [
         provideCopilotKit({
+          enableInspector: false,
           renderActivityMessages: [a2uiActivityRendererConfig],
         }),
         provideA2uiCatalog(),

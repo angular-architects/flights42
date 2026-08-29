@@ -1,6 +1,6 @@
 # CopilotKit 0.4.0 / Angular 22 / Mastra 1.63 upgrade plan
 
-Status: Phases A–B executed (see the migration log at the end); Phases C–F pending. Written 2026-08-29 from the published
+Status: Phases A–C executed (see the migration log at the end); Phases D–F pending. Written 2026-08-29 from the published
 npm tarballs and the `ng update` listing.
 Related docs: [copilot-migration.md](copilot-migration.md) (0.3.0 evaluation),
 [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md) (last executed
@@ -288,3 +288,34 @@ Delete, one commit each, re-running the Phase D scenarios after every step:
   logs no inspector errors — the explicit opt-out is done in Phase C.
 - The manual smoke test of chat, interrupts, MCP Apps and the A2UI activity
   renderer is done together with the Inspector check in Phase C.
+
+### Phase C — executed 2026-08-29
+
+- Inspector verified in a headless-Chromium run against `ng serve` + `mastra dev`
+  (`ai-server`, OpenAI). It mounts without any wiring: `cpk-web-inspector`
+  is appended to `document.body` with a shadow root as soon as
+  `provideCopilotKit` is present in a dev build. `enableInspector` is **not**
+  set in `app.config.ts`.
+- With our self-managed `AppHttpAgent`s the Home pane shows _Runtime:
+  Offline — Runtime URL not configured_ and _Live updates: Disconnected_
+  (expected — no CopilotKit runtime). The Inspect group works from the
+  client core alone: _AG-UI Events_ listed all 24 events of a
+  `ticketingAgent` run (`RUN_STARTED` … `TOOL_CALL_*` … `RUN_FINISHED`) with
+  agent id, timestamp and raw payload; _Agent_ shows the agent.
+- Smoke test (Phase B + C): chat send/stop, `findBookedFlightsTool`,
+  `bookFlight` suspend → payment options rendered from `suspendPayload` →
+  resolve with _Pay with credit card_ → `TOOL_CALL_RESULT` and success card,
+  `renderA2uiTool` → one `a2ui-surface` activity rendered by `@a2ui/angular`.
+  No console errors. MCP Apps not exercised (`USE_MCP` is `false` on this
+  branch).
+- Known UI collision: the inspector launcher is fixed at the top-right
+  (`right: 14px`, no public option to move it — `launcherHudSide` only
+  flips its HUD) and overlaps the close button and the mode `<select>` of
+  the assistant panel header while the panel is open. The panel still closes
+  via the toggle button; decide whether to shift the header controls in dev
+  or live with it.
+- Vitest browser specs that call `provideCopilotKit` now pass
+  `enableInspector: false` (four specs), so the inspector is not mounted into
+  the test document. `ng test` 25 passed, `ng lint` clean.
+- The Playwright scripts used for the smoke test live in `tmp/` (gitignored):
+  `tmp/smoke.mjs`, `tmp/inspector.mjs`.

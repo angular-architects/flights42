@@ -69,7 +69,7 @@ function provideTicketingStore(mock: AguiMock): Signal<AgentStore> {
 describe('ticketing-agent-store (mocked AG-UI communication)', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideCopilotKit({})],
+      providers: [provideCopilotKit({ enableInspector: false })],
     });
   });
 
