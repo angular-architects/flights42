@@ -1,6 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 
-import { modelAdvancedTasks } from '../config.js';
+import { defaultOptions, modelAdvancedTasks } from '../config.js';
 import { planFinalizerAgentPrompt } from './plan-finalizer-agent.prompt.js';
 
 export const planFinalizerAgent = new Agent({
@@ -11,6 +11,7 @@ export const planFinalizerAgent = new Agent({
   defaultOptions: {
     providerOptions: {
       openai: {
+        ...defaultOptions.providerOptions.openai,
         reasoningEffort: 'high',
       },
     },

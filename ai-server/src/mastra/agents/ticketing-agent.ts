@@ -7,7 +7,7 @@ import { MCPClient } from '@mastra/mcp';
 import { Memory } from '@mastra/memory';
 
 import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
-import { model } from '../config.js';
+import { defaultOptions, model } from '../config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
@@ -28,6 +28,7 @@ export const ticketingAgent = new Agent({
     systemInstructions: ticketingAgentPrompt,
   }),
   model,
+  defaultOptions,
   tools: {
     findBookedFlightsTool,
     bookFlightTool,

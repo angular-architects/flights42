@@ -1,6 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 
-import { model } from '../config.js';
+import { defaultOptions, model } from '../config.js';
 import {
   RENDER_DASHBOARD_TOOL_NAME,
   renderDashboardTool,
@@ -13,6 +13,6 @@ export const dashboardAgent = new Agent({
   instructions: dashboardAgentPrompt,
   model,
   tools: { [RENDER_DASHBOARD_TOOL_NAME]: renderDashboardTool },
-  defaultOptions: { maxSteps: 1 },
+  defaultOptions: { ...defaultOptions, maxSteps: 1 },
   // memory: new Memory(),
 });

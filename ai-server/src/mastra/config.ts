@@ -8,3 +8,11 @@ export const model: MastraModelConfig = 'openai/gpt-5.6-luna';
 export const modelAdvancedTasks: MastraModelConfig = 'openai/gpt-5.6-terra';
 
 // export const model: MastraModelConfig = 'google/gemini-flash-latest'; // Gemini Flash
+
+export const defaultOptions = {
+  providerOptions: {
+    openai: {
+      serviceTier: 'priority' as const,
+    },
+  },
+};

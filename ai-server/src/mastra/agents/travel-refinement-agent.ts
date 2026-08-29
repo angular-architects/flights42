@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { modelAdvancedTasks } from '../config.js';
+import { defaultOptions, modelAdvancedTasks } from '../config.js';
 import { findHotelsTool } from '../tools/find-hotels.js';
 import {
   addFlightToPlanTool,
@@ -34,6 +34,7 @@ export const travelRefinementAgent = new Agent({
   defaultOptions: {
     providerOptions: {
       openai: {
+        ...defaultOptions.providerOptions.openai,
         reasoningEffort: 'high',
       },
     },

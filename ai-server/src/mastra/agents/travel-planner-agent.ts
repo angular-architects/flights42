@@ -1,6 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 
-import { model } from '../config.js';
+import { defaultOptions, model } from '../config.js';
 import { packageTourWorkflow } from '../workflows/package-tour-workflow.js';
 import { travelPlannerAgentPrompt } from './travel-planner-agent.prompt.js';
 
@@ -13,6 +13,7 @@ export const travelPlannerAgent = new Agent({
   defaultOptions: {
     providerOptions: {
       openai: {
+        ...defaultOptions.providerOptions.openai,
         reasoningEffort: 'medium',
       },
     },
