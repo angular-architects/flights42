@@ -67,9 +67,6 @@
       "@angular/core": "$@angular/core",
       "@angular/common": "$@angular/common",
       "@angular/platform-browser": "$@angular/platform-browser"
-    },
-    "@ag-ui/mastra": {
-      "@copilotkit/runtime": "npm:empty-npm-package@1"
     }
   },
   "dependencies": {
@@ -77,7 +74,6 @@
     "@a2ui/web_core": "^0.10.5",
     "@ag-ui/client": "0.0.57",
     "@ag-ui/core": "0.0.57",
-    "@ag-ui/mastra": "1.0.0",
     "@ag-ui/mcp-apps-middleware": "0.0.3",
     "@angular-architects/native-federation": "^22.1.2",
     "@angular-architects/ngrx-toolkit": "^21.0.1",

@@ -1,13 +1,13 @@
 import { BaseEvent, RunAgentInput } from '@ag-ui/client';
 import { AbstractAgent, EventType, randomUUID } from '@ag-ui/client';
 import type { Message } from '@ag-ui/core';
-import { convertAGUIMessagesToMastra } from '@ag-ui/mastra';
 import { Agent } from '@mastra/core/agent';
 import { CoreMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Observable } from 'rxjs';
 
+import { convertAgUiMessages } from './convert-messages.js';
 import { Store } from './memory-store.js';
 import { defaultStore } from './memory-store.js';
 import {
@@ -15,6 +15,7 @@ import {
   type AgUiStepEvent,
   type AgUiToolCallEvent,
   attachBridge,
+  setAgUiState,
 } from './step-bridge.js';
 
 interface ExtendedLocalAgentOptions {
@@ -46,16 +47,12 @@ interface ClientToolDefinition {
   inputSchema?: Record<string, unknown>;
 }
 
-type InterruptKind = 'approval' | 'suspend';
-
 interface InterruptDescriptor {
-  kind: InterruptKind;
   runId: string;
-  toolCallId?: string;
+  toolCallId: string;
 }
 
 interface PendingInterrupt extends InterruptDescriptor {
-  toolCallId: string;
   toolName: string;
   args: unknown;
   resumeSchema?: string;
@@ -70,21 +67,6 @@ function asRecord(value: unknown): UnknownRecord | undefined {
   }
 
   return value as UnknownRecord;
-}
-
-function getNestedRecord(
-  record: UnknownRecord | undefined,
-  key: string,
-): UnknownRecord | undefined {
-  return asRecord(record?.[key]);
-}
-
-function getNestedString(
-  record: UnknownRecord | undefined,
-  key: string,
-): string | undefined {
-  const value = record?.[key];
-  return typeof value === 'string' ? value : undefined;
 }
 
 function createToolCallCacheKey(
@@ -156,28 +138,6 @@ function buildMcpAppsActivityContent(
   };
 }
 
-function readThoughtSignature(value: unknown): string | undefined {
-  const record = asRecord(value);
-  const googleMetadata = getNestedRecord(
-    getNestedRecord(record, 'providerMetadata'),
-    'google',
-  );
-  const googleOptions = getNestedRecord(
-    getNestedRecord(record, 'providerOptions'),
-    'google',
-  );
-
-  return (
-    getNestedString(googleMetadata, 'thoughtSignature') ??
-    getNestedString(googleOptions, 'thoughtSignature')
-  );
-}
-
-function readToolName(value: unknown): string | undefined {
-  const record = asRecord(value);
-  return getNestedString(record, 'toolName');
-}
-
 /**
  * Detects a tool result that carries an A2UI surface (`{ surfaceId, messages }`,
  * e.g. from the server-built `showTable` tool) and returns the surface id plus
@@ -228,180 +188,6 @@ function finalizePendingToolCalls(
   }
 }
 
-function setThoughtSignature(
-  value: UnknownRecord,
-  thoughtSignature: string,
-): UnknownRecord {
-  const providerOptions = getNestedRecord(value, 'providerOptions') ?? {};
-  const googleOptions = getNestedRecord(providerOptions, 'google') ?? {};
-
-  return {
-    ...value,
-    providerOptions: {
-      ...providerOptions,
-      google: {
-        ...googleOptions,
-        thoughtSignature,
-      },
-    },
-  };
-}
-
-function cacheThoughtSignature(
-  store: Store,
-  agentId: string,
-  threadId: string,
-  value: unknown,
-): void {
-  const record = asRecord(value);
-  const toolCallId = getNestedString(record, 'toolCallId');
-  const thoughtSignature = readThoughtSignature(record);
-  const toolName = readToolName(record);
-
-  if (!toolCallId) {
-    return;
-  }
-
-  const cacheKey = createToolCallCacheKey(agentId, threadId, toolCallId);
-
-  if (thoughtSignature) {
-    store.set(cacheKey, { thoughtSignature });
-  }
-
-  if (toolName) {
-    store.set(cacheKey, { toolName });
-  }
-}
-
-function rehydrateThoughtSignatures(
-  store: Store,
-  messages: CoreMessage[],
-  agentId: string,
-  threadId: string,
-): CoreMessage[] {
-  const nextMessages = messages.map((message) => {
-    const messageRecord = asRecord(message);
-    if (!messageRecord || messageRecord['role'] !== 'assistant') {
-      return message;
-    }
-
-    const content = messageRecord['content'];
-    if (!Array.isArray(content)) {
-      return message;
-    }
-
-    let changed = false;
-    const nextContent = content.map((part) => {
-      const partRecord = asRecord(part);
-      if (!partRecord || partRecord['type'] !== 'tool-call') {
-        return part;
-      }
-
-      if (readThoughtSignature(partRecord)) {
-        return part;
-      }
-
-      const toolCallId = getNestedString(partRecord, 'toolCallId');
-      if (!toolCallId) {
-        return part;
-      }
-
-      const cachedThoughtSignature = store.get(
-        createToolCallCacheKey(agentId, threadId, toolCallId),
-      )?.thoughtSignature;
-
-      if (!cachedThoughtSignature) {
-        return part;
-      }
-
-      changed = true;
-
-      return setThoughtSignature(partRecord, cachedThoughtSignature);
-    });
-
-    if (!changed) {
-      return message;
-    }
-
-    return {
-      ...(message as UnknownRecord),
-      content: nextContent,
-    } as CoreMessage;
-  });
-
-  return nextMessages;
-}
-
-function setToolResultName(
-  value: UnknownRecord,
-  toolName: string,
-): UnknownRecord {
-  return {
-    ...value,
-    toolName,
-  };
-}
-
-function rehydrateToolResultNames(
-  store: Store,
-  messages: CoreMessage[],
-  agentId: string,
-  threadId: string,
-): CoreMessage[] {
-  const nextMessages = messages.map((message) => {
-    const messageRecord = asRecord(message);
-    if (!messageRecord || messageRecord['role'] !== 'tool') {
-      return message;
-    }
-
-    const content = messageRecord['content'];
-    if (!Array.isArray(content)) {
-      return message;
-    }
-
-    let changed = false;
-    const nextContent = content.map((part) => {
-      const partRecord = asRecord(part);
-      if (!partRecord || partRecord['type'] !== 'tool-result') {
-        return part;
-      }
-
-      const toolName = readToolName(partRecord);
-      if (toolName && toolName !== 'unknown') {
-        return part;
-      }
-
-      const toolCallId = getNestedString(partRecord, 'toolCallId');
-      if (!toolCallId) {
-        return part;
-      }
-
-      const cachedToolName = store.get(
-        createToolCallCacheKey(agentId, threadId, toolCallId),
-      )?.toolName;
-
-      if (!cachedToolName) {
-        return part;
-      }
-
-      changed = true;
-
-      return setToolResultName(partRecord, cachedToolName);
-    });
-
-    if (!changed) {
-      return message;
-    }
-
-    return {
-      ...(message as UnknownRecord),
-      content: nextContent,
-    } as CoreMessage;
-  });
-
-  return nextMessages;
-}
-
 function toClientTools(
   tools: RunAgentInput['tools'],
 ): Record<string, ClientToolDefinition> {
@@ -413,115 +199,6 @@ function toClientTools(
     };
     return result;
   }, {});
-}
-
-/**
- * Multimodal user content support for `@ag-ui/mastra@1.0.0`'s
- * `convertAGUIMessagesToMastra` which strips non-text content parts.
- * We re-walk the original AG-UI messages and rewrite each user message
- * whose content was an array (containing image/audio/video/document/
- * binary parts) into a Mastra/AI-SDK-style multipart user message.
- */
-type CoreUserContentPart =
-  | { type: 'text'; text: string }
-  | { type: 'image'; image: string | URL; mimeType?: string }
-  | {
-      type: 'file';
-      data: string | URL;
-      mimeType: string;
-    };
-
-function isAgUiUserMessage(
-  message: Message,
-): message is Extract<Message, { role: 'user' }> {
-  return message.role === 'user';
-}
-
-function agUiPartToCorePart(part: unknown): CoreUserContentPart | null {
-  if (!part || typeof part !== 'object') {
-    return null;
-  }
-  const record = part as Record<string, unknown>;
-  if (record['type'] === 'text') {
-    const text = record['text'];
-    return typeof text === 'string' && text.length > 0
-      ? { type: 'text', text }
-      : null;
-  }
-
-  const source = record['source'];
-  if (!source || typeof source !== 'object') {
-    return null;
-  }
-  const sourceRecord = source as Record<string, unknown>;
-  const sourceType = sourceRecord['type'];
-  const value = sourceRecord['value'];
-  const mimeType = sourceRecord['mimeType'];
-  if (typeof value !== 'string' || !value) {
-    return null;
-  }
-
-  let resolvedImage: string | URL;
-  try {
-    resolvedImage = sourceType === 'url' ? new URL(value) : value;
-  } catch {
-    resolvedImage = value;
-  }
-
-  if (record['type'] === 'image') {
-    return {
-      type: 'image',
-      image: resolvedImage,
-      mimeType: typeof mimeType === 'string' ? mimeType : undefined,
-    };
-  }
-
-  if (typeof mimeType !== 'string' || !mimeType) {
-    return null;
-  }
-  return {
-    type: 'file',
-    data: resolvedImage,
-    mimeType,
-  };
-}
-
-function injectMultimodalUserParts(
-  agUiMessages: readonly Message[],
-  mastraMessages: CoreMessage[],
-): CoreMessage[] {
-  if (agUiMessages.length !== mastraMessages.length) {
-    return mastraMessages;
-  }
-
-  return mastraMessages.map((mastraMessage, index) => {
-    const original = agUiMessages[index];
-    if (
-      !mastraMessage ||
-      mastraMessage.role !== 'user' ||
-      !isAgUiUserMessage(original) ||
-      !Array.isArray(original.content)
-    ) {
-      return mastraMessage;
-    }
-
-    const parts: CoreUserContentPart[] = [];
-    for (const part of original.content) {
-      const corePart = agUiPartToCorePart(part);
-      if (corePart) {
-        parts.push(corePart);
-      }
-    }
-
-    if (parts.length === 0) {
-      return mastraMessage;
-    }
-
-    return {
-      role: 'user',
-      content: parts,
-    } as unknown as CoreMessage;
-  });
 }
 
 function getStringField(value: unknown, ...keys: string[]): string | undefined {
@@ -595,9 +272,7 @@ function parseWorkflowStepChunk(chunk: unknown): ParsedStepEvent | null {
 }
 
 function createInterruptId(descriptor: InterruptDescriptor): string {
-  return [descriptor.kind, descriptor.runId, descriptor.toolCallId ?? ''].join(
-    ':',
-  );
+  return ['suspend', descriptor.runId, descriptor.toolCallId].join(':');
 }
 
 function parseInterruptId(
@@ -608,25 +283,11 @@ function parseInterruptId(
   }
 
   const [kind, runId, toolCallId] = value.split(':');
-  if (
-    (kind !== 'approval' && kind !== 'suspend') ||
-    typeof runId !== 'string' ||
-    runId.length === 0
-  ) {
+  if (kind !== 'suspend' || !runId || !toolCallId) {
     return null;
   }
 
-  return {
-    kind,
-    runId,
-    toolCallId: toolCallId || undefined,
-  };
-}
-
-function readApproved(value: unknown): boolean | undefined {
-  const record = asRecord(value);
-  const approved = record?.['approved'];
-  return typeof approved === 'boolean' ? approved : undefined;
+  return { runId, toolCallId };
 }
 
 function safeParseJson(value: string): unknown {
@@ -793,11 +454,11 @@ export class ExtendedMastraAgent extends AbstractAgent {
         }
       };
 
-      // Per-run shared working state. Starts from the client-provided
-      // RunAgentInput.state and is mutated in place by state-aware tools
-      // (via the bridge) during the run. The client is the source of truth;
-      // we ship a fresh STATE_SNAPSHOT back on every commit.
-      let runState: unknown = input.state;
+      // Per-run shared working state: seeded from the client-provided
+      // RunAgentInput.state on the RequestContext, where state-aware tools
+      // read and update it. The client is the source of truth; tools ship a
+      // fresh STATE_SNAPSHOT back on every commit via the bridge.
+      setAgUiState(this.requestContext, input.state);
 
       // Per-request bridge: workflow steps push progress AND tool calls
       // here; this bypasses Mastra's tool-stream pipe entirely and is
@@ -810,10 +471,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
             type: EventType.STATE_SNAPSHOT,
             snapshot: state,
           } as BaseEvent);
-        },
-        getState: () => runState,
-        setState: (state) => {
-          runState = state;
         },
       };
       attachBridge(this.requestContext, bridge);
@@ -907,16 +564,12 @@ export class ExtendedMastraAgent extends AbstractAgent {
               interrupts: [
                 {
                   id: createInterruptId(interrupt),
-                  reason:
-                    interrupt.kind === 'approval'
-                      ? 'human_approval'
-                      : 'tool_suspended',
+                  reason: 'tool_suspended',
                   toolCallId: interrupt.toolCallId,
                   responseSchema: asRecord(
                     safeParseJson(interrupt.resumeSchema ?? ''),
                   ),
                   metadata: {
-                    kind: interrupt.kind,
                     toolName: interrupt.toolName,
                     args: interrupt.args,
                     suspendPayload: interrupt.suspendPayload,
@@ -978,27 +631,15 @@ export class ExtendedMastraAgent extends AbstractAgent {
       string,
       { toolName: string; args: unknown }
     >();
-    const messagesForConversion = input.messages.map((message) =>
-      message.role === 'developer' ? { ...message, role: 'user' } : message,
-    );
-    const mastraMessages = convertAGUIMessagesToMastra(
-      messagesForConversion as never,
-    );
-    const multimodalMessages = injectMultimodalUserParts(
+    // Tool results for client tools arrive in a later request than their
+    // tool call (the client only sends messages it has not sent yet), so the
+    // tool name is resolved from the per-thread cache filled on `tool-call`.
+    const mastraMessages = convertAgUiMessages(
       input.messages as readonly Message[],
-      mastraMessages as CoreMessage[],
-    );
-    const rehydratedToolResultNames = rehydrateToolResultNames(
-      this.store,
-      multimodalMessages,
-      this.agentId,
-      input.threadId,
-    );
-    const rehydratedMastraMessages = rehydrateThoughtSignatures(
-      this.store,
-      rehydratedToolResultNames,
-      this.agentId,
-      input.threadId,
+      (toolCallId) =>
+        this.store.get(
+          createToolCallCacheKey(this.agentId, input.threadId, toolCallId),
+        )?.toolName,
     );
     const clientTools = toClientTools(input.tools);
     const clientToolNames = new Set(Object.keys(clientTools));
@@ -1009,7 +650,7 @@ export class ExtendedMastraAgent extends AbstractAgent {
     try {
       const stream = await this.createMastraStream(
         input,
-        rehydratedMastraMessages,
+        mastraMessages,
         clientTools,
       );
 
@@ -1039,14 +680,15 @@ export class ExtendedMastraAgent extends AbstractAgent {
                 toolCallId: string;
                 toolName: string;
                 args: unknown;
-                providerMetadata?: UnknownRecord;
               };
             };
-            cacheThoughtSignature(
-              this.store,
-              this.agentId,
-              input.threadId,
-              payload.payload,
+            this.store.set(
+              createToolCallCacheKey(
+                this.agentId,
+                input.threadId,
+                payload.payload.toolCallId,
+              ),
+              { toolName: payload.payload.toolName },
             );
             pendingToolCalls.set(payload.payload.toolCallId, {
               toolName: payload.payload.toolName,
@@ -1054,25 +696,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
             });
             handlers.onToolCallPart(payload.payload);
             break;
-          }
-          case 'tool-call-approval': {
-            const payload = chunk as {
-              payload: {
-                toolCallId: string;
-                toolName: string;
-                args: unknown;
-                resumeSchema?: string;
-              };
-            };
-            handlers.onRunInterrupted({
-              kind: 'approval',
-              runId: stream.runId,
-              toolCallId: payload.payload.toolCallId,
-              toolName: payload.payload.toolName,
-              args: payload.payload.args,
-              resumeSchema: payload.payload.resumeSchema,
-            });
-            return;
           }
           case 'tool-call-suspended': {
             const payload = chunk as {
@@ -1085,7 +708,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
               };
             };
             handlers.onRunInterrupted({
-              kind: 'suspend',
               runId: stream.runId,
               toolCallId: payload.payload.toolCallId,
               toolName: payload.payload.toolName,
@@ -1232,35 +854,6 @@ export class ExtendedMastraAgent extends AbstractAgent {
     const interrupt = parseInterruptId(resumeEntry?.interruptId);
 
     if (interrupt) {
-      if (interrupt.kind === 'approval') {
-        const approved = readApproved(resumeEntry?.payload);
-        if (approved === undefined) {
-          throw new Error(
-            'Approval resume payload must include an approved boolean.',
-          );
-        }
-
-        if (approved) {
-          return this.agent.approveToolCall({
-            runId: interrupt.runId,
-            toolCallId: interrupt.toolCallId,
-            memory: { thread: input.threadId, resource: this.resourceId },
-            clientTools,
-            requestContext: this.requestContext,
-            abortSignal: this.abortSignal,
-          });
-        }
-
-        return this.agent.declineToolCall({
-          runId: interrupt.runId,
-          toolCallId: interrupt.toolCallId,
-          memory: { thread: input.threadId, resource: this.resourceId },
-          clientTools,
-          requestContext: this.requestContext,
-          abortSignal: this.abortSignal,
-        });
-      }
-
       return this.agent.resumeStream(resumeEntry?.payload, {
         runId: interrupt.runId,
         toolCallId: interrupt.toolCallId,

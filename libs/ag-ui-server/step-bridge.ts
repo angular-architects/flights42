@@ -5,22 +5,23 @@
  * workflow internals reliably when a workflow is invoked as an agent tool.
  *
  * The bridge is stored on the per-request `RequestContext` under a known
- * key. Workflow steps read it (if present) and push events:
+ * key. Workflow steps and tools read it (if present) and push events:
  *
  *   - `emit({ stepName, kind: 'started' | 'finished' })` for step boundaries.
  *   - `emitToolCall({ toolName, args, result })` for tool calls performed
  *     inside a step (e.g. a direct service call we want to expose to the UI
  *     as a regular AG-UI tool call).
+ *   - `emitStateSnapshot(state)` to push the run's shared state to the client.
  *
- * The adapter consumes these events and translates them into AG-UI
- * `STEP_*` / `TOOL_CALL_*` events on the SSE wire.
- *
- * Because the bridge lives on `RequestContext`, it is naturally per-request
- * and does not leak across concurrent users.
+ * The shared state itself lives on the `RequestContext` under
+ * {@link AG_UI_STATE_KEY}: the adapter seeds it from `RunAgentInput.state`,
+ * tools read and update it there. Because the context is request-bound, it
+ * does not leak across concurrent users.
  */
 import type { RequestContext } from '@mastra/core/request-context';
 
 export const AG_UI_BRIDGE_KEY = 'agUiBridge';
+export const AG_UI_STATE_KEY = 'agUiState';
 
 export type AgUiStepEventKind = 'started' | 'finished';
 
@@ -52,15 +53,7 @@ export interface AgUiBridge {
   emit(event: AgUiStepEvent): void;
   emitToolCall(event: AgUiToolCallEvent): void;
   emitStateSnapshot(state: unknown): void;
-  // Shared per-run working state. Lives on the bridge (a single object shared
-  // across tool calls) because Mastra hands each tool a COPY of the
-  // RequestContext, so RequestContext writes do not propagate between tools.
-  getState(): unknown;
-  setState(state: unknown): void;
 }
-
-/** @deprecated Use {@link AgUiBridge} instead. Kept for source compatibility. */
-export type AgUiStepBridge = AgUiBridge;
 
 interface BridgeAwareRequestContext {
   set?(key: string, value: unknown): void;
@@ -90,19 +83,28 @@ export function getBridge(
     typeof (candidate as { emitToolCall?: unknown }).emitToolCall ===
       'function' &&
     typeof (candidate as { emitStateSnapshot?: unknown }).emitStateSnapshot ===
-      'function' &&
-    typeof (candidate as { setState?: unknown }).setState === 'function'
+      'function'
   ) {
     return candidate as AgUiBridge;
   }
   return undefined;
 }
 
-/** Alias of {@link getBridge}. */
-export const readBridge = getBridge;
+export function getAgUiState(
+  requestContext: RequestContext | undefined,
+): unknown {
+  const ctx = requestContext as unknown as
+    | BridgeAwareRequestContext
+    | undefined;
+  return ctx?.get?.(AG_UI_STATE_KEY);
+}
 
-/** @deprecated Use {@link attachBridge}. */
-export const attachStepBridge = attachBridge;
-
-/** @deprecated Use {@link getBridge}. */
-export const readStepBridge = getBridge;
+export function setAgUiState(
+  requestContext: RequestContext | undefined,
+  state: unknown,
+): void {
+  const ctx = requestContext as unknown as
+    | BridgeAwareRequestContext
+    | undefined;
+  ctx?.set?.(AG_UI_STATE_KEY, state);
+}

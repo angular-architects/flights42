@@ -1,7 +1,8 @@
-// The run's shared travel-plan state lives on the request-bound AG-UI bridge:
-// readPlan/getState, commitPlan/setState, and emitStateSnapshot streams it back
-// to the client. Bridge design and state wiring are documented in docs/bridge.md.
-import { readBridge } from '@internal/ag-ui-server';
+// The run's shared travel plan lives on the request-bound RequestContext
+// (seeded by the AG-UI adapter from RunAgentInput.state); commitPlan updates
+// it there and streams it back to the client via the bridge. Bridge design
+// and state wiring are documented in docs/bridge.md.
+import { getAgUiState, getBridge, setAgUiState } from '@internal/ag-ui-server';
 import type { RequestContext } from '@mastra/core/request-context';
 
 import type { PlanFlight, PlanHotel, TravelPlan } from './plan-schemas.js';
@@ -11,7 +12,7 @@ const EMPTY_PLAN: TravelPlan = { summary: '', flights: [], hotels: [] };
 export function readPlan(
   requestContext: RequestContext | undefined,
 ): TravelPlan {
-  const state = readBridge(requestContext)?.getState();
+  const state = getAgUiState(requestContext);
   if (!isTravelPlan(state)) {
     return EMPTY_PLAN;
   }
@@ -26,9 +27,8 @@ export function commitPlan(
     ...plan,
     hotels: orderHotelsByRoute(plan.hotels, plan.flights),
   };
-  const bridge = readBridge(requestContext);
-  bridge?.setState(ordered);
-  bridge?.emitStateSnapshot(ordered);
+  setAgUiState(requestContext, ordered);
+  getBridge(requestContext)?.emitStateSnapshot(ordered);
   return ordered;
 }
 
