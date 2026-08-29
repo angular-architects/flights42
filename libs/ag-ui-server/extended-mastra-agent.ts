@@ -222,15 +222,10 @@ interface ParsedStepEvent {
 }
 
 /**
- * Tries to interpret a Mastra stream chunk as a workflow step boundary event.
- *
- * Recognizes both:
- *  - Mastra's auto-emitted lifecycle chunks (`workflow-step-start`,
- *    `workflow-step-result`).
- *  - Our own custom progress chunks emitted via `writer.write({ type:
- *    'data-step-status', stepName, status })` from inside workflow steps.
- *
- * Returns null if the chunk is not a step event we can map to AG-UI.
+ * Tries to interpret a Mastra stream chunk as a workflow step boundary event
+ * (Mastra's auto-emitted lifecycle chunks `workflow-step-start` /
+ * `workflow-step-result`). Returns null if the chunk is not a step event we
+ * can map to AG-UI.
  */
 function parseWorkflowStepChunk(chunk: unknown): ParsedStepEvent | null {
   const record = asRecord(chunk);
@@ -255,17 +250,6 @@ function parseWorkflowStepChunk(chunk: unknown): ParsedStepEvent | null {
       getStringField(payload, 'id', 'stepName') ?? 'workflow-step';
     const stepCallId = getStringField(payload, 'stepCallId', 'id') ?? stepName;
     return { kind: 'finished', stepName, stepCallId };
-  }
-
-  if (type === 'data-step-status') {
-    // Custom progress chunk emitted from inside a workflow step via
-    // `writer.write({ type: 'data-step-status', stepName, status })`.
-    const stepName = getStringField(record, 'stepName');
-    const status = getStringField(record, 'status');
-    if (!stepName || (status !== 'started' && status !== 'finished')) {
-      return null;
-    }
-    return { kind: status, stepName, stepCallId: stepName };
   }
 
   return null;
@@ -383,11 +367,10 @@ export class ExtendedMastraAgent extends AbstractAgent {
   override run(input: RunAgentInput): ReturnType<AbstractAgent['run']> {
     return new Observable<BaseEvent>((observer) => {
       const initialMessageId = randomUUID();
-      // Dedup keyed by stepName: events can arrive via three independent
-      // paths (Mastra `workflow-step-*` chunks, our custom `data-step-status`
-      // chunks, and the per-request RequestContext bridge below). We collapse
-      // all of them onto stepName so each step produces exactly one
-      // STEP_STARTED + STEP_FINISHED on the wire.
+      // Dedup keyed by stepName: events can arrive via two independent paths
+      // (Mastra `workflow-step-*` chunks and the per-request RequestContext
+      // bridge below). We collapse both onto stepName so each step produces
+      // exactly one STEP_STARTED + STEP_FINISHED on the wire.
       const startedSteps = new Set<string>();
       const finishedSteps = new Set<string>();
 

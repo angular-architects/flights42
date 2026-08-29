@@ -1,6 +1,6 @@
 # CopilotKit 0.4.0 / Angular 22 / Mastra 1.63 upgrade plan
 
-Status: Phases A–D executed (see the migration log at the end); Phases E–F pending. Written 2026-08-29 from the published
+Status: Phases A–E executed (see the migration log at the end); Phase F pending. Written 2026-08-29 from the published
 npm tarballs and the `ng update` listing.
 Related docs: [copilot-migration.md](copilot-migration.md) (0.3.0 evaluation),
 [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md) (last executed
@@ -365,3 +365,39 @@ Delete, one commit each, re-running the Phase D scenarios after every step:
   (25), `ng lint` green.
 - Scripts: `tmp/regression.mjs` (travel planner + refinement),
   `tmp/dashboard.mjs`.
+
+### Phase E — executed 2026-08-29
+
+- `@ag-ui/mastra` removed. Its only use, `convertAGUIMessagesToMastra`, is
+  replaced by `libs/ag-ui-server/convert-messages.ts` (assistant/user/tool/
+  system/developer roles, multimodal user parts, tool-name lookup for tool
+  results whose call arrived in an earlier request). With it go the zod 3
+  copy and the `@copilotkit/runtime` peer/override.
+- Deleted from `ExtendedMastraAgent`: multimodal re-injection, Gemini
+  thought-signature cache, tool-name rehydration pass, the
+  `tool-call-approval` / `approveToolCall` / `declineToolCall` path
+  (`requireApproval` is unused; approvals are `suspend`-based). Interrupt ids
+  are now `suspend:<runId>:<toolCallId>`; the client's
+  `SERVER_INTERRUPT_REASONS` shrank to `tool_suspended`. `memory-store.ts`
+  keeps tool names only — still needed because `AppHttpAgent` (server memory
+  mode) sends a client tool's result without the assistant message that
+  carried the call.
+- Shared plan state moved from the bridge object to the `RequestContext`
+  (`AG_UI_STATE_KEY`, `getAgUiState` / `setAgUiState`); the bridge keeps
+  `emit`, `emitToolCall`, `emitStateSnapshot`. Verified in the browser that a
+  single run with add → remove → add hotel ends with exactly one hotel, i.e.
+  core 1.63 hands every tool the same context instance.
+- `sse.ts` and the deprecated bridge aliases removed.
+- Step propagation experiment (travel planner, events captured from the SSE
+  body): with `bridge.emit` disabled, **zero** `STEP_*` events reach the
+  client — neither Mastra's `workflow-step-*` chunks nor `data-step-status`
+  chunks written through the step `writer` cross the workflow-as-tool
+  boundary on core 1.63. The bridge stays; the dead `writer` path was removed
+  from `ai-server/src/mastra/workflows/bridge.ts` and the workflow, and the
+  `data-step-status` case from the adapter. `docs/bridge.md` updated.
+- Not done: the optional validate→retry loop in `renderA2uiTool` (item 8 of
+  the plan) — no observed failures in the regression runs, so it stays a
+  follow-up.
+- Verified: ticketing smoke test, travel planner + refinement (incl.
+  multi-tool state), dashboard cached/uncached; `tsc -p ai-server`, `ng build`,
+  `ng test` (25), `ng lint`.

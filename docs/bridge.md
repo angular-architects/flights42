@@ -119,13 +119,12 @@ as `findFlights` uses them like this:
 
 ```ts
 // ai-server/src/mastra/workflows/package-tour-workflow.ts
-execute: async ({ inputData, writer, requestContext }) => {
+execute: async ({ inputData, requestContext }) => {
   const ctx: StepProgressContext = {
-    writer,
     requestContext,
     stepName: 'findFlights',
   };
-  await reportStepStatus(ctx, 'findFlights', 'started');
+  reportStepStatus(ctx, 'findFlights', 'started');
 
   const legs = await Promise.all(
     inputData.flights.map(async (leg) => {
@@ -140,32 +139,28 @@ execute: async ({ inputData, writer, requestContext }) => {
     }),
   );
 
-  await reportStepStatus(ctx, 'findFlights', 'finished', {
+  reportStepStatus(ctx, 'findFlights', 'finished', {
     legCount: legs.length,
   });
   return { legs };
 },
 ```
 
-The helpers access the bridge — and, as a safety net, additionally report step
-boundaries through Mastra's regular `writer`:
+The helpers do nothing but read the bridge from the `RequestContext` and
+forward the event:
 
 ```ts
 // ai-server/src/mastra/workflows/bridge.ts
-export async function reportStepStatus(
+export function reportStepStatus(
   ctx: StepProgressContext,
   stepName: string,
   status: 'started' | 'finished',
   extras?: Record<string, unknown>,
-): Promise<void> {
-  const bridge = getBridge(ctx.requestContext);
-  bridge?.emit({ stepName, kind: status, details: extras });
-
-  await ctx.writer?.write({
-    type: 'data-step-status',
+): void {
+  getBridge(ctx.requestContext)?.emit({
     stepName,
-    status,
-    ...(extras ?? {}),
+    kind: status,
+    details: extras,
   });
 }
 
@@ -238,18 +233,23 @@ adapter — in a unit test, for instance — there simply is no bridge, and the
 reports fizzle out without consequence. Progress reporting is pure
 observation and never influences the planning logic.
 
-**Deliberate redundancy plus dedup.** One and the same step boundary can now
-reach the adapter via up to three paths:
+**Redundancy plus dedup.** One and the same step boundary can reach the
+adapter via two paths:
 
-1. Mastra's own `workflow-step-*` chunks,
-2. the custom `data-step-status` chunk written through the step's `writer`,
-3. the bridge.
+1. Mastra's own `workflow-step-*` chunks, which the adapter maps to AG-UI
+   step events whenever they show up on the agent stream,
+2. the bridge.
 
 The adapter therefore dedupes per `stepName`, so exactly one `STEP_STARTED`
 and one `STEP_FINISHED` per step arrive on the wire — regardless of which path
-works in a given setup. This double-tracking is not a wart but insurance:
-should future Mastra versions forward workflow internals reliably, the bridge
-silently becomes redundant instead of broken.
+works in a given setup. Verified on `@mastra/core` 1.63: with the bridge
+disabled, no step event reaches the client at all — neither the
+`workflow-step-*` chunks nor custom `data-*` chunks written through the step's
+`writer` survive the workflow-as-tool boundary. (An earlier version of the
+helpers additionally wrote a `data-step-status` chunk as a safety net; that
+path was dead and has been removed.) Should a future Mastra version forward
+workflow internals reliably, the bridge silently becomes redundant instead of
+broken.
 
 ## Arrival in the Client
 
