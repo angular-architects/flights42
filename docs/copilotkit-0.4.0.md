@@ -1,6 +1,6 @@
 # CopilotKit 0.4.0 / Angular 22 / Mastra 1.63 upgrade plan
 
-Status: Phases A–E executed (see the migration log at the end); Phase F pending. Written 2026-08-29 from the published
+Status: all phases executed on branch `copilotkit-v0.4.0` (see the migration log and verification results at the end). Written 2026-08-29 from the published
 npm tarballs and the `ng update` listing.
 Related docs: [copilot-migration.md](copilot-migration.md) (0.3.0 evaluation),
 [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md) (last executed
@@ -401,3 +401,38 @@ Delete, one commit each, re-running the Phase D scenarios after every step:
 - Verified: ticketing smoke test, travel planner + refinement (incl.
   multi-tool state), dashboard cached/uncached; `tsc -p ai-server`, `ng build`,
   `ng test` (25), `ng lint`.
+
+### Phase F — executed 2026-08-29
+
+- `vitest` / `@vitest/browser-playwright` / `@vitest/coverage-v8` 4.1.11 (the
+  three must be installed at one exact version — bumping one at a time hits
+  ERESOLVE against `@vitest/browser`'s exact peer; uninstall the family, then
+  reinstall), `jsdom` 30.0.1, `@copilotkit/aimock` 1.39.0, `prettier` 3.9.6,
+  `@a2ui/angular` 0.10.5, `@a2ui/web_core` 0.10.6, `hono` 4.13.5 (now a
+  direct dependency — `ai-server` imports `hono/streaming` itself; previously
+  it resolved through a hoisted transitive copy).
+- Tree: one `@ag-ui/client` (0.0.57), one `hono`; zod 3 copies remain only
+  under the `@ag-ui/*` and `@a2ui/*` packages (their own dependency), zod
+  4.4.3 once under `zod-to-json-schema`.
+- Verified: `ng build` ×3, `ng test` (25), `test:aimock` (3), `ng lint`,
+  `tsc -p ai-server`, `mcp-server:app:build`, ticketing smoke test and
+  dashboard against a restarted `mastra dev`.
+
+## Verification results (end state, 2026-08-29)
+
+- [x] `npm run build` for `flights`, `a2ui-demo`, `simple-client`
+- [x] `npm run test`, `npm run test:aimock`, `npm run lint`
+- [x] `npm run ai-server` starts; Studio lists all nine agents (`mcp-server`
+      not started — see MCP below)
+- [x] Chat: send, stop button during runs, markdown rendering
+- [x] Interrupts: `bookFlight` payment choice (credit card path)
+- [ ] Guardrails: not testable on this branch — no agent wires the guard
+      processors (guardrails chapter)
+- [x] Travel planner: `STEP_STARTED/FINISHED` and grouped in-step tool calls
+- [x] Travel refinement: live `STATE_SNAPSHOT` per plan mutation, multi-tool run
+- [ ] MCP Apps: not exercised (`USE_MCP` is `false` on this branch)
+- [x] A2UI: basic catalog (`renderA2uiTool` table) and custom catalog
+      (dashboard tiles); dashboard cached and uncached
+- [x] Inspector: mounts in dev, disabled in browser specs; production build
+      contains no launcher (verified by `isDevMode()` gating in the package)
+- [x] `npm ls @ag-ui/client zod hono` shows no unintended duplicates
