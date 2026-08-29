@@ -1,4 +1,3 @@
-import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 
 import { modelAdvancedTasks } from '../config.js';
@@ -13,7 +12,7 @@ export const planFinalizerAgent = new Agent({
     providerOptions: {
       openai: {
         reasoningEffort: 'high',
-      } as OpenAILanguageModelResponsesOptions,
+      },
     },
   },
 });

@@ -1,4 +1,3 @@
-import { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -36,7 +35,7 @@ export const travelRefinementAgent = new Agent({
     providerOptions: {
       openai: {
         reasoningEffort: 'high',
-      } as OpenAILanguageModelResponsesOptions,
+      },
     },
   },
   memory: new Memory(),

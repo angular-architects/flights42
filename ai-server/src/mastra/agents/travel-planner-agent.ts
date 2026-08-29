@@ -1,4 +1,3 @@
-import { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 
 import { model } from '../config.js';
@@ -15,7 +14,7 @@ export const travelPlannerAgent = new Agent({
     providerOptions: {
       openai: {
         reasoningEffort: 'medium',
-      } as OpenAILanguageModelResponsesOptions,
+      },
     },
   },
 });

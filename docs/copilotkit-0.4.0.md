@@ -1,6 +1,6 @@
 # CopilotKit 0.4.0 / Angular 22 / Mastra 1.63 upgrade plan
 
-Status: Phases A–C executed (see the migration log at the end); Phases D–F pending. Written 2026-08-29 from the published
+Status: Phases A–D executed (see the migration log at the end); Phases E–F pending. Written 2026-08-29 from the published
 npm tarballs and the `ng update` listing.
 Related docs: [copilot-migration.md](copilot-migration.md) (0.3.0 evaluation),
 [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md) (last executed
@@ -319,3 +319,49 @@ Delete, one commit each, re-running the Phase D scenarios after every step:
   the test document. `ng test` 25 passed, `ng lint` clean.
 - The Playwright scripts used for the smoke test live in `tmp/` (gitignored):
   `tmp/smoke.mjs`, `tmp/inspector.mjs`.
+
+### Phase D — executed 2026-08-29
+
+- `@mastra/core` 1.63.2, `@mastra/libsql` 1.22.2, `@mastra/memory` 1.28.1,
+  `@mastra/mcp` 1.17.2, `@mastra/client-js` 1.42.4, `@mastra/observability`
+  1.17.4, `@mastra/loggers` 1.3.0, `mastra` CLI 1.27.2, `zod` 4.5.2.
+- **`@ag-ui/mastra` stays at 1.0.0.** 1.1.2 imports `tokenUsageFromAiSdkUsage`
+  from `@ag-ui/core`, which only exists from 0.0.58 on, while
+  `@copilotkit/angular@0.4.0` pins `@ag-ui/core`/`client` to exactly 0.0.57.
+  npm cannot nest a peer dependency (`overrides` on `@ag-ui/mastra` →
+  ERESOLVE), and lifting the root to 0.0.59 would duplicate `@ag-ui/client` in
+  the browser bundle (`AppHttpAgent extends HttpAgent` would come from a
+  different copy than CopilotKit's). Consequence for Phase E: inline the
+  ~40-line `convertAGUIMessagesToMastra` into `libs/ag-ui-server` and drop
+  `@ag-ui/mastra` altogether (removes its zod 3 copy and the runtime peer).
+- `@ai-sdk/openai` removed from `package.json`. It was only imported for the
+  `OpenAILanguageModelResponsesOptions` cast on `providerOptions.openai`; v4's
+  type adds `serviceTier: 'fast'`, which Mastra's bundled provider type does
+  not accept, and the cast was never needed — `reasoningEffort` type-checks
+  against Mastra's own `providerOptions` (three files). Models are resolved
+  through Mastra's router (`openai/...`), not the AI SDK package.
+- `@copilotkit/runtime@1.63.1` was still in `package-lock.json` as a
+  `peer: true` entry from before the alias override existed; npm never
+  re-evaluated it. Removed the 27 lock entries + the folder by hand, `npm i`
+  then installed the alias (`empty-npm-package` under
+  `node_modules/@copilotkit/runtime`) and dropped 111 packages. `@copilotkit/core`
+  1.69.3 is now a direct devDependency because
+  `src/app/testing/tool-context.ts` imports `FrontendToolHandlerContext` from
+  it (previously satisfied by the runtime's hoisted 1.63.2).
+- `npm ls @ag-ui/client` shows a single 0.0.57; the `@ai-sdk/*` packages in
+  the tree are only Mastra's own bundled `provider-v5/v6/v7` aliases.
+- Verified with `mastra dev` 1.27.2 (`ai-server`) and `ng serve` in headless
+  Chromium: ticketing chat (`findBookedFlightsTool`, `bookFlight` suspend →
+  resume, `renderA2uiTool` → `a2ui-surface`), travel planner workflow
+  (`STEP_STARTED/FINISHED` for Flights/Hotels/Travel Plan, in-step
+  `searchFlights`/`findHotels` tool calls in the detail view, 2 flights + 1
+  hotel), travel refinement (`STATE_SNAPSHOT`: "Remove all hotels" → hotel
+  tiles 1 → 0), dashboard uncached (3 tiles incl. chart, 8 s) and cached
+  replay (21 ms). No console errors; the only server warning is LibSQL's
+  "does not support batch creating metrics". Not covered: MCP tools/MCP Apps
+  (`USE_MCP` is `false`) and tripwire (no agent on this branch wires the
+  guard processors — the guardrails chapter does).
+- `tsc -p ai-server` with core 1.63 is clean; `ng build` ×3, `ng test`
+  (25), `ng lint` green.
+- Scripts: `tmp/regression.mjs` (travel planner + refinement),
+  `tmp/dashboard.mjs`.
