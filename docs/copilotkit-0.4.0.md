@@ -1,7 +1,7 @@
 # CopilotKit 0.4.0 / Angular 22 / Mastra 1.63 upgrade plan
 
-Status: **plan only, nothing executed.** Written 2026-08-29 from the published
-npm tarballs and the `ng update` listing; no package was installed or run.
+Status: Phase A executed (see the migration log at the end); Phases B–F pending. Written 2026-08-29 from the published
+npm tarballs and the `ng update` listing.
 Related docs: [copilot-migration.md](copilot-migration.md) (0.3.0 evaluation),
 [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md) (last executed
 migration), [migration.md](migration.md) (Option 2: keep the flights shell),
@@ -235,3 +235,37 @@ Delete, one commit each, re-running the Phase D scenarios after every step:
 - Switching to `@copilotkit/runtime` or `registerCopilotKit`.
 - Upstream A2UI injection (`getA2UITools`, `a2ui-middleware`, Lit renderer).
 - Replacing `ExtendedMastraAgent` with `MastraAgent`.
+
+## Migration log
+
+### Phase A — executed 2026-08-29 on branch `copilotkit-v0.4.0`
+
+- `ng update @angular/cli@22 @angular/core@22 @angular/material@22 @ngrx/signals@22 angular-eslint@22 ngx-markdown@22 @angular-architects/native-federation@22 --force`
+  (`--force` needed for the Angular 21 peers of `@a2ui/angular` and
+  `@angular-architects/ngrx-toolkit`, and for `typescript-eslint` 8.47 vs
+  TS 6). Result: Angular 22.1.4/CLI 22.1.6, TypeScript 6.0.3, `@ngrx/signals`
+  and `@ngrx/operators` 22.0.0, `ng-packagr` 22.1.1; `typescript-eslint` bumped
+  to 8.68.0 afterwards.
+- `overrides` in `package.json` extended to `@angular/common` and
+  `@angular/platform-browser` for `@a2ui/angular` and the ngrx-toolkit — the
+  peer check also covers those two packages, not only `@angular/core`.
+- The `@ngrx/operators` migration collection crashed
+  (`20_0_0-rc_0-tap-response` is CJS in an ESM package); the packages were
+  already installed at that point and compile, so no manual migration was
+  needed.
+- v22 schematics: `ChangeDetectionStrategy.Eager` was added to 21 components
+  that did not declare a strategy, and `nullishCoalescingNotNullable` /
+  `optionalChainNotNullable` were suppressed in the three `tsconfig.app.json`
+  files. Both reverted: all 21 components are signal-based and now run with the
+  v22 OnPush default (which `@angular-eslint/prefer-on-push-component-change-detection`
+  22 enforces anyway), and the builds produce no diagnostics without the
+  suppressions.
+- `@angular-architects/native-federation` 22: `loadRemoteModule` now comes from
+  `@angular-architects/native-federation` instead of
+  `@softarc/native-federation-runtime` ([wrapper.ts](../src/app/domains/shared/ui-federation/wrapper.ts)).
+- Verified: `ng build` for `flights`, `a2ui-demo`, `simple-client`; `ng test`
+  (25 passed); `test:aimock` (3 passed); `ng lint`; `tsc -p ai-server` with
+  TS 6; `mcp-server:app:build`.
+- Observed for Phase D: `@copilotkit/runtime@1.63.1` is still installed as
+  the peer of `@ag-ui/mastra@1.0.0` — the alias override only takes effect
+  once `@ag-ui/mastra` itself is reinstalled.
