@@ -23,13 +23,12 @@ const findFlightsStep = createStep({
     'Loads flight candidates for every leg of the rough plan, restricted to the planned day.',
   inputSchema: roughPlanSchema,
   outputSchema: z.object({ legs: z.array(legSchema) }),
-  execute: async ({ inputData, writer, requestContext }) => {
+  execute: async ({ inputData, requestContext }) => {
     const ctx: StepProgressContext = {
-      writer,
       requestContext,
       stepName: 'findFlights',
     };
-    await reportStepStatus(ctx, 'findFlights', 'started');
+    reportStepStatus(ctx, 'findFlights', 'started');
 
     const legs = await Promise.all(
       inputData.flights.map(async (leg) => {
@@ -44,7 +43,7 @@ const findFlightsStep = createStep({
       }),
     );
 
-    await reportStepStatus(ctx, 'findFlights', 'finished', {
+    reportStepStatus(ctx, 'findFlights', 'finished', {
       legCount: legs.length,
     });
     return { legs };
@@ -57,13 +56,12 @@ const findHotelsStep = createStep({
     'Loads hotel options for every city of the rough plan (deterministic, no agent).',
   inputSchema: z.object({ legs: z.array(legSchema) }),
   outputSchema: loadedDataSchema,
-  execute: async ({ inputData, writer, requestContext }) => {
+  execute: async ({ inputData, requestContext }) => {
     const ctx: StepProgressContext = {
-      writer,
       requestContext,
       stepName: 'findHotels',
     };
-    await reportStepStatus(ctx, 'findHotels', 'started');
+    reportStepStatus(ctx, 'findHotels', 'started');
 
     const overnightCities = overnightCitiesFromLegs(inputData.legs);
 
@@ -73,7 +71,7 @@ const findHotelsStep = createStep({
       return { city, hotels };
     });
 
-    await reportStepStatus(ctx, 'findHotels', 'finished', {
+    reportStepStatus(ctx, 'findHotels', 'finished', {
       cityCount: destinations.length,
     });
     return { legs: inputData.legs, destinations };
@@ -86,9 +84,9 @@ const finalizeStep = createStep({
     'Lets an agent pick the concrete flights and hotels and build the final plan.',
   inputSchema: loadedDataSchema,
   outputSchema: finalPlanSchema,
-  execute: async ({ inputData, getInitData, writer, requestContext }) => {
-    const ctx: StepProgressContext = { writer, requestContext };
-    await reportStepStatus(ctx, 'finalize', 'started');
+  execute: async ({ inputData, getInitData, requestContext }) => {
+    const ctx: StepProgressContext = { requestContext };
+    reportStepStatus(ctx, 'finalize', 'started');
 
     const init = getInitData<z.infer<typeof roughPlanSchema>>();
 
@@ -112,7 +110,7 @@ const finalizeStep = createStep({
     const raw = result.object ?? { summary: '', flights: [], hotels: [] };
     const plan = createPlan(raw, inputData.legs, inputData.destinations);
 
-    await reportStepStatus(ctx, 'finalize', 'finished');
+    reportStepStatus(ctx, 'finalize', 'finished');
     return plan;
   },
 });

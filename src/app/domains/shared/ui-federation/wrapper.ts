@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, effect, ElementRef, inject, input } from '@angular/core';
-import { loadRemoteModule } from '@softarc/native-federation-runtime';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 
 export interface WrapperConfig {
   remoteName: string;

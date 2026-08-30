@@ -1,6 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 
-import { model } from '../config.js';
+import { defaultOptions, model } from '../config.js';
 import { checkinAgentPrompt } from './checkin-agent.prompt.js';
 
 export const checkinAgent = new Agent({
@@ -11,5 +11,5 @@ export const checkinAgent = new Agent({
   // AI-SDK `ImagePart` on a multipart user message (see fallback in
   // extended-mastra-agent.ts).
   model,
-  defaultOptions: { maxSteps: 3 },
+  defaultOptions: { ...defaultOptions, maxSteps: 3 },
 });

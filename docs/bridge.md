@@ -38,14 +38,16 @@ is request-bound, concurrent users cannot interfere with each other.
 
 The bridge itself is deliberately small, and it carries two kinds of signal. For
 progress it has `emit` (step boundaries) and `emitToolCall` (service calls); for
-shared state it has `getState` / `setState` (the run's working copy) and
-`emitStateSnapshot` (pushing that copy to the client). Two functions attach the
-bridge to the `RequestContext` (`attachBridge`) and retrieve it from there
-(`getBridge`, also exported as `readBridge`):
+shared state it has `emitStateSnapshot` (pushing the run's working copy to the
+client). The working copy itself is a plain entry on the same `RequestContext`
+(`AG_UI_STATE_KEY`, read and written via `getAgUiState` / `setAgUiState`). Two
+functions attach the bridge to the `RequestContext` (`attachBridge`) and
+retrieve it from there (`getBridge`):
 
 ```ts
 // libs/ag-ui-server/step-bridge.ts
 export const AG_UI_BRIDGE_KEY = 'agUiBridge';
+export const AG_UI_STATE_KEY = 'agUiState';
 
 export interface AgUiBridge {
   // Progress reporting
@@ -53,8 +55,6 @@ export interface AgUiBridge {
   emitToolCall(event: AgUiToolCallEvent): void;
 
   // Shared state
-  getState(): unknown;
-  setState(state: unknown): void;
   emitStateSnapshot(state: unknown): void;
 }
 
@@ -119,13 +119,12 @@ as `findFlights` uses them like this:
 
 ```ts
 // ai-server/src/mastra/workflows/package-tour-workflow.ts
-execute: async ({ inputData, writer, requestContext }) => {
+execute: async ({ inputData, requestContext }) => {
   const ctx: StepProgressContext = {
-    writer,
     requestContext,
     stepName: 'findFlights',
   };
-  await reportStepStatus(ctx, 'findFlights', 'started');
+  reportStepStatus(ctx, 'findFlights', 'started');
 
   const legs = await Promise.all(
     inputData.flights.map(async (leg) => {
@@ -140,32 +139,28 @@ execute: async ({ inputData, writer, requestContext }) => {
     }),
   );
 
-  await reportStepStatus(ctx, 'findFlights', 'finished', {
+  reportStepStatus(ctx, 'findFlights', 'finished', {
     legCount: legs.length,
   });
   return { legs };
 },
 ```
 
-The helpers access the bridge — and, as a safety net, additionally report step
-boundaries through Mastra's regular `writer`:
+The helpers do nothing but read the bridge from the `RequestContext` and
+forward the event:
 
 ```ts
 // ai-server/src/mastra/workflows/bridge.ts
-export async function reportStepStatus(
+export function reportStepStatus(
   ctx: StepProgressContext,
   stepName: string,
   status: 'started' | 'finished',
   extras?: Record<string, unknown>,
-): Promise<void> {
-  const bridge = getBridge(ctx.requestContext);
-  bridge?.emit({ stepName, kind: status, details: extras });
-
-  await ctx.writer?.write({
-    type: 'data-step-status',
+): void {
+  getBridge(ctx.requestContext)?.emit({
     stepName,
-    status,
-    ...(extras ?? {}),
+    kind: status,
+    details: extras,
   });
 }
 
@@ -182,25 +177,29 @@ export function reportToolCall(
 
 ## Shared State: The Run's Working Copy
 
-Progress is not the only thing that flows through the bridge. The same
-`RequestContext` attachment doubles as the run's shared-state store — this is how
-the Travel Planner's plan tools read and mutate the travel plan without any
-frontend round-trips. Three methods serve that role:
+Progress is not the only thing that flows through the `RequestContext`. It also
+carries the run's shared state — this is how the Travel Planner's plan tools
+read and mutate the travel plan without any frontend round-trips:
 
-- `getState` / `setState` read and replace the run's working copy of the state,
-- `emitStateSnapshot` streams that copy to the client as a `STATE_SNAPSHOT` event.
+- `getAgUiState` / `setAgUiState` read and replace the run's working copy,
+  stored under `AG_UI_STATE_KEY` on the `RequestContext`,
+- `emitStateSnapshot` on the bridge streams that copy to the client as a
+  `STATE_SNAPSHOT` event.
 
 The adapter seeds the working copy at the start of a run with the `state` field
 of the incoming `RunAgentInput` — whatever the client sent along. From there the
 plan tools own it: each reads the current plan, mutates it, and commits the
-result, so the next tool in the same run already sees the new state.
+result, so the next tool in the same run already sees the new state. This relies
+on Mastra handing every tool the _same_ `RequestContext` instance (guaranteed
+since `@mastra/core` 1.50; earlier versions passed a clone, which is why the
+state used to live on the bridge object instead).
 
 ```ts
 // ai-server/src/mastra/tools/plan/plan-store.ts
 export function readPlan(
   requestContext: RequestContext | undefined,
 ): TravelPlan {
-  const state = readBridge(requestContext)?.getState();
+  const state = getAgUiState(requestContext);
   return isTravelPlan(state) ? state : EMPTY_PLAN;
 }
 
@@ -212,16 +211,15 @@ export function commitPlan(
     ...plan,
     hotels: orderHotelsByRoute(plan.hotels, plan.flights),
   };
-  const bridge = readBridge(requestContext);
-  bridge?.setState(ordered);
-  bridge?.emitStateSnapshot(ordered); // fresh STATE_SNAPSHOT to the client
+  setAgUiState(requestContext, ordered);
+  getBridge(requestContext)?.emitStateSnapshot(ordered); // fresh STATE_SNAPSHOT
   return ordered;
 }
 ```
 
 Because every commit emits a snapshot, the client stays the source of truth: it
 receives a full plan after each change and sends it back in as `state` on the
-next run. The optional-access pattern (`bridge?.`) carries over from progress
+next run. The optional-access pattern (`?.`) carries over from progress
 reporting — without an adapter, `readPlan` simply falls back to `EMPTY_PLAN`.
 Unlike progress reporting, though, shared state is not pure observation: it is
 the data the tools operate on.
@@ -235,18 +233,23 @@ adapter — in a unit test, for instance — there simply is no bridge, and the
 reports fizzle out without consequence. Progress reporting is pure
 observation and never influences the planning logic.
 
-**Deliberate redundancy plus dedup.** One and the same step boundary can now
-reach the adapter via up to three paths:
+**Redundancy plus dedup.** One and the same step boundary can reach the
+adapter via two paths:
 
-1. Mastra's own `workflow-step-*` chunks,
-2. the custom `data-step-status` chunk written through the step's `writer`,
-3. the bridge.
+1. Mastra's own `workflow-step-*` chunks, which the adapter maps to AG-UI
+   step events whenever they show up on the agent stream,
+2. the bridge.
 
 The adapter therefore dedupes per `stepName`, so exactly one `STEP_STARTED`
 and one `STEP_FINISHED` per step arrive on the wire — regardless of which path
-works in a given setup. This double-tracking is not a wart but insurance:
-should future Mastra versions forward workflow internals reliably, the bridge
-silently becomes redundant instead of broken.
+works in a given setup. Verified on `@mastra/core` 1.63: with the bridge
+disabled, no step event reaches the client at all — neither the
+`workflow-step-*` chunks nor custom `data-*` chunks written through the step's
+`writer` survive the workflow-as-tool boundary. (An earlier version of the
+helpers additionally wrote a `data-step-status` chunk as a safety net; that
+path was dead and has been removed.) Should a future Mastra version forward
+workflow internals reliably, the bridge silently becomes redundant instead of
+broken.
 
 ## Arrival in the Client
 

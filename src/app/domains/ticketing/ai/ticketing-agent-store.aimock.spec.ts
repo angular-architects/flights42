@@ -66,7 +66,7 @@ describe('agent stores against the aimock AG-UI server', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideCopilotKit({})],
+      providers: [provideCopilotKit({ enableInspector: false })],
     });
   });
 

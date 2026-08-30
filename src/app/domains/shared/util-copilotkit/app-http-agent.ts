@@ -7,7 +7,7 @@ export interface AppHttpAgentOptions {
   useServerMemory?: boolean;
 }
 
-const SERVER_INTERRUPT_REASONS = new Set(['human_approval', 'tool_suspended']);
+const SERVER_INTERRUPT_REASONS = new Set(['tool_suspended']);
 
 export class AppHttpAgent extends HttpAgent {
   private readonly sentMessageIds = new Set<string>();
