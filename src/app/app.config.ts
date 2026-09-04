@@ -27,6 +27,7 @@ export const appConfig: ApplicationConfig = {
     provideCopilotKit({
       defaultToolRendering: true,
       renderActivityMessages: [a2uiActivityRendererConfig],
+      enableInspector: false,
     }),
     provideMCPApps(mcpAppsConfig),
 
