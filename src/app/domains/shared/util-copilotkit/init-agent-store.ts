@@ -10,6 +10,8 @@ import {
   CopilotKit,
   type FrontendToolConfig,
   type HumanInTheLoopConfig,
+  registerComponent,
+  type RegisterComponentConfig,
   registerFrontendTool,
   registerHumanInTheLoop,
   registerRenderToolCall,
@@ -32,6 +34,8 @@ export interface InitAgentStoreConfig {
   toolCallRenderer?: readonly RenderToolCallConfig<any>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   humanInTheLoop?: readonly HumanInTheLoopConfig<any>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  components?: readonly RegisterComponentConfig<any>[];
   forwardedProps?: () => Record<string, unknown>;
   state?: () => unknown;
   useServerMemory?: boolean;
@@ -92,6 +96,10 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
 
   for (const tool of config.humanInTheLoop ?? []) {
     registerHumanInTheLoop({ ...tool, agentId: config.agentId });
+  }
+
+  for (const component of config.components ?? []) {
+    registerComponent({ ...component, agentId: config.agentId });
   }
 }
 

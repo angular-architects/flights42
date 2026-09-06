@@ -1,6 +1,7 @@
 import {
   type FrontendToolConfig,
   type HumanInTheLoopConfig,
+  type RegisterComponentConfig,
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
@@ -9,6 +10,16 @@ const TERMINAL_TOOL_HINT =
   `afterwards. Do all data gathering and other tool calls BEFORE it, and emit ` +
   `it (together with any other end-of-turn widgets) as the LAST tool calls of ` +
   `the turn.`;
+
+function withTerminalHint(description: string | undefined): string {
+  if (!description) {
+    return TERMINAL_TOOL_HINT.trimStart();
+  }
+  if (description.includes(TERMINAL_TOOL_HINT)) {
+    return description;
+  }
+  return description + TERMINAL_TOOL_HINT;
+}
 
 /**
  * Identity helper for a browser-executed frontend tool. Keeps schema, name,
@@ -21,13 +32,22 @@ const TERMINAL_TOOL_HINT =
 export function createFrontendTool<Args extends Record<string, unknown>>(
   tool: FrontendToolConfig<Args>,
 ): FrontendToolConfig<Args> {
-  if (
-    tool.followUp === false &&
-    !tool.description.includes(TERMINAL_TOOL_HINT)
-  ) {
-    return { ...tool, description: tool.description + TERMINAL_TOOL_HINT };
+  if (tool.followUp === false) {
+    return { ...tool, description: withTerminalHint(tool.description) };
   }
   return tool;
+}
+
+export function createComponentTool<Args extends Record<string, unknown>>(
+  component: RegisterComponentConfig<Args>,
+): RegisterComponentConfig<Args> {
+  if (component.followUp === false) {
+    return {
+      ...component,
+      description: withTerminalHint(component.description),
+    };
+  }
+  return component;
 }
 
 /**

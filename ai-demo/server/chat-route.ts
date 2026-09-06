@@ -1,15 +1,19 @@
 import type { RunAgentInput } from '@ag-ui/core';
-import { MastraAgent } from '@ag-ui/mastra';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 import { concatMap, lastValueFrom } from 'rxjs';
+
+import { getExtendedLocalAgent } from '../../libs/ag-ui-server/index.js';
 
 export async function chatRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
   const input = (await c.req.json()) as RunAgentInput;
-  const agent = c.get('mastra').getAgent('weatherAgent');
-  const aguiAgent = new MastraAgent({ agent, resourceId: input.threadId });
+  const aguiAgent = getExtendedLocalAgent({
+    mastra: c.get('mastra'),
+    agentId: 'weatherAgent',
+    resourceId: input.threadId,
+  });
 
   return streamSSE(c, async (sse) => {
     const send = (data: unknown): Promise<void> =>

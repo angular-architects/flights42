@@ -220,6 +220,70 @@ export class ProductSearchToolCallViewComponent implements ToolRenderer<SearchPr
 - Anzeige von Tool-Ergebnissen
 - fachliche Darstellung eines bereits ausgeführten Backend-Tools
 
+## 4. `registerComponent` für reine Anzeige-Komponenten (CopilotKit 0.5)
+
+Seit `@copilotkit/angular` 0.5.0 gibt es einen vierten Fall: Die Komponente
+_ist_ das Tool. `registerComponent` registriert ein Frontend-Tool ohne
+`handler`. Der Agent bekommt Name, Beschreibung und Parameter wie bei
+`registerFrontendTool`; ruft er das Tool auf, wird nur die Komponente
+gerendert. Der Core schreibt ein leeres Tool-Result in den Thread, es läuft
+kein Anwendungscode. Auf Agent- bzw. Serverseite ist nichts zu ergänzen.
+
+Das ersetzt das Muster aus Fall 2 mit dem Durchreiche-`handler`
+(`handler: async (args) => JSON.stringify(args)`).
+
+```ts
+registerComponent({
+  name: 'destinationInfoCard',
+  description: 'Shows a compact info card about a destination city.',
+  parameters: z.object({
+    city: z.string(),
+    country: z.string(),
+    summary: z.string(),
+    highlights: z.array(z.string()).max(4),
+  }),
+  component: DestinationInfoCard,
+  followUp: false,
+});
+```
+
+Die Komponente ist ein gewöhnlicher `ToolRenderer` und liest
+`toolCall().args`:
+
+```ts
+@Component({
+  selector: 'app-destination-info-card',
+  template: `
+    @let info = toolCall().args;
+    @if (info.city) {
+      <h2>{{ info.city }}</h2>
+      <p>{{ info.country }}</p>
+      <p>{{ info.summary }}</p>
+    }
+  `,
+})
+export class DestinationInfoCard implements ToolRenderer<DestinationInfoArgs> {
+  readonly toolCall = input.required<AngularToolCall<DestinationInfoArgs>>();
+}
+```
+
+In diesem Repo läuft die Registrierung über `initAgentStore({ components })`
+(siehe `ticketing-agent-store.ts`); `createComponentTool` in
+`tool-definition.ts` hält Schema und Komponente typisiert zusammen und hängt
+für `followUp: false` denselben Hinweis an die Beschreibung wie
+`createFrontendTool`. Das Beispiel ist `destination-info-card.ts` im
+Ticketing-Domain-UI.
+
+Wann `registerComponent`, wann weiterhin `registerFrontendTool`:
+
+```text
+Nur anzeigen, kein Anwendungscode
+→ registerComponent
+
+Anzeigen UND etwas ausführen (Service-Call, State ändern, navigieren)
+→ registerFrontendTool mit component
+```
+
 ## Entscheidungsregel
 
 Die Unterscheidung lässt sich auf eine einfache Regel reduzieren:
@@ -230,6 +294,9 @@ Soll das LLM ein Browser-Tool kennen und aufrufen?
 
 Soll das LLM eine Komponente auswählen können?
 → registerFrontendTool mit component
+
+Soll das LLM eine Komponente nur anzeigen, ohne Anwendungscode?
+→ registerComponent
 
 Soll ein bereits existierender Tool Call visualisiert werden?
 → registerRenderToolCall
@@ -243,6 +310,9 @@ registerFrontendTool
 
 registerFrontendTool + component
 = Tool wird dem LLM bekannt gemacht und zusätzlich als UI gerendert.
+
+registerComponent
+= Komponente wird dem LLM als Tool bekannt gemacht und nur gerendert.
 
 registerRenderToolCall
 = bestehender Tool Call wird nur gerendert.

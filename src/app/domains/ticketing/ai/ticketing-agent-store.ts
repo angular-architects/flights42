@@ -9,6 +9,7 @@ import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget'
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
+import { destinationInfoCard } from '../ui/destination-info-card';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
 import { bookFlightActionCard } from './action-cards/book-flight-action-card';
@@ -65,6 +66,7 @@ export function injectTicketingAgentStore() {
     toolCallRenderer: USE_ACTION_CARDS
       ? [bookFlightActionCard, cancelFlightActionCard]
       : [],
+    components: [destinationInfoCard],
   });
 
   return injectAgentStore(TICKETING_AGENT_ID);
