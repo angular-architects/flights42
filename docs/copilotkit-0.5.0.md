@@ -8,7 +8,7 @@ at the end). Written 2026-09-04 from the GitHub release notes
 Target branch: `copilotkit-v0.5.0` (current).
 Related docs: [copilotkit-0.4.0.md](copilotkit-0.4.0.md) (last executed
 migration), [client-tools-and-components.md](client-tools-and-components.md),
-[bridge.md](bridge.md).
+`bridge.md` (deleted 2026-09-07; `git show 23bb6183:docs/bridge.md`).
 
 ## What 0.5.x contains
 

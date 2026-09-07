@@ -1,4 +1,4 @@
-import { randomUUID } from '@ag-ui/client';
+import { HttpAgent, randomUUID } from '@ag-ui/client';
 import { type RunAgentInput } from '@ag-ui/core';
 import { type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -11,7 +11,6 @@ import {
 
 import { aguiSseResponse, assistantTextRun } from '../../../testing/agui-mock';
 import { sendMessage } from '../../shared/util-copilotkit/agent-store-helper';
-import { AppHttpAgent } from '../../shared/util-copilotkit/app-http-agent';
 
 const TICKETING_AGENT_ID = 'ticketingAgent';
 const AG_UI_URL = 'http://localhost:3001/ag-ui/ticketingAgent';
@@ -47,7 +46,7 @@ function createAguiMock(reply: string): AguiMock {
 function provideTicketingStore(mock: AguiMock): Signal<AgentStore> {
   const copilotKit = TestBed.inject(CopilotKit);
 
-  const agent = new AppHttpAgent({
+  const agent = new HttpAgent({
     agentId: TICKETING_AGENT_ID,
     url: AG_UI_URL,
     threadId: randomUUID(),

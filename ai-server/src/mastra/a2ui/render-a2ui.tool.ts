@@ -2,6 +2,7 @@ import {
   type A2uiMessage,
   A2uiMessageListWrapperSchema,
 } from '@a2ui/web_core/v0_9';
+import { A2UI_OPERATIONS_KEY } from '@ag-ui/a2ui-middleware';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
@@ -16,6 +17,9 @@ type ComponentEntry = Record<string, unknown> & {
   child?: unknown;
   children?: unknown;
 };
+
+const SINGLE_CHILD_COMPONENTS = new Set(['Card', 'Button', 'Modal']);
+const MULTI_CHILD_COMPONENTS = new Set(['Row', 'Column', 'List']);
 
 function getMessageSurfaceId(message: A2uiMessage): string {
   if ('createSurface' in message) {
@@ -53,12 +57,6 @@ function collectReferencedChildIds(components: ComponentEntry[]): string[] {
   }
   return ids;
 }
-
-// The wire schema (`AnyComponentSchema`) is a passthrough, so a Card carrying a
-// `children` array parses fine yet renders empty — the v0.9 renderer reads only
-// `child`. These sets let us reject that mismatch so the model self-corrects.
-const SINGLE_CHILD_COMPONENTS = new Set(['Card', 'Button', 'Modal']);
-const MULTI_CHILD_COMPONENTS = new Set(['Row', 'Column', 'List']);
 
 function validateChildShape(messages: A2uiMessage[]): void {
   const updateComponentsMessages = messages.filter(
@@ -113,14 +111,35 @@ function validateReferentialIntegrity(messages: A2uiMessage[]): void {
       }
     }
 
-    const referenced = collectReferencedChildIds(components);
-    for (const referencedId of referenced) {
+    for (const referencedId of collectReferencedChildIds(components)) {
       if (!definedIds.has(referencedId)) {
         throw new Error(
           `renderA2uiTool: component id "${referencedId}" is referenced via child/children but is not defined in updateComponents.components`,
         );
       }
     }
+  }
+}
+
+function parseMessages(inputData: unknown): A2uiMessage[] {
+  try {
+    const parsed = A2uiMessageListWrapperSchema.parse(inputData) as {
+      messages: A2uiMessage[];
+    };
+    return parsed.messages;
+  } catch (err) {
+    const issues = (err as { issues?: unknown }).issues;
+    if (Array.isArray(issues)) {
+      const summary = issues
+        .slice(0, 5)
+        .map((issue: { path?: unknown[]; message?: string }) => {
+          const path = (issue.path ?? []).join('.') || '<root>';
+          return `${path}: ${issue.message ?? 'invalid'}`;
+        })
+        .join('; ');
+      throw new Error(`renderA2uiTool: schema validation failed — ${summary}`);
+    }
+    throw err;
   }
 }
 
@@ -153,11 +172,6 @@ export const renderA2uiTool = createTool({
     - Bind dynamic values via \`{ path: "/..." }\` and provide the data through
       \`updateDataModel\`.
   `,
-  // A loose shape is exposed to the model/tool runtime here; the strict A2UI
-  // schema is then applied inside `execute` via `A2uiMessageListWrapperSchema.parse(...)`.
-  // This keeps defensive validation without triggering deep generic
-  // instantiation of the full (recursive) A2UI wrapper schema inside
-  // `createTool`'s generics.
   inputSchema: z.object({
     messages: z
       .array(z.record(z.string(), z.unknown()))
@@ -166,25 +180,7 @@ export const renderA2uiTool = createTool({
       ),
   }),
   execute: async (inputData: unknown) => {
-    let parsed: { messages: A2uiMessage[] };
-    try {
-      parsed = A2uiMessageListWrapperSchema.parse(inputData) as {
-        messages: A2uiMessage[];
-      };
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        const issues = err.issues
-          .slice(0, 5)
-          .map((issue) => {
-            const path = issue.path.join('.') || '<root>';
-            return `${path}: ${issue.message}`;
-          })
-          .join('; ');
-        throw new Error(`renderA2uiTool: schema validation failed — ${issues}`);
-      }
-      throw err;
-    }
-    const messages = parsed.messages;
+    const messages = parseMessages(inputData);
 
     if (messages.length === 0) {
       throw new Error('renderA2uiTool: messages array must not be empty');
@@ -230,6 +226,6 @@ export const renderA2uiTool = createTool({
     validateChildShape(messages);
     validateReferentialIntegrity(messages);
 
-    return { surfaceId, messages };
+    return { surfaceId, [A2UI_OPERATIONS_KEY]: messages };
   },
 });

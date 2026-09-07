@@ -18,11 +18,16 @@ export const planHotelSchema = z.object({
   city: z.string().describe('City the hotel is located in'),
 });
 
+export const travelPlanSchema = z.object({
+  summary: z.string().describe('Short summary of the trip'),
+  flights: z
+    .array(planFlightSchema)
+    .describe('The complete list of flights, in travel order'),
+  hotels: z
+    .array(planHotelSchema)
+    .describe('The complete list of hotels, one per overnight city'),
+});
+
 export type PlanFlight = z.infer<typeof planFlightSchema>;
 export type PlanHotel = z.infer<typeof planHotelSchema>;
-
-export interface TravelPlan {
-  summary: string;
-  flights: PlanFlight[];
-  hotels: PlanHotel[];
-}
+export type TravelPlan = z.infer<typeof travelPlanSchema>;

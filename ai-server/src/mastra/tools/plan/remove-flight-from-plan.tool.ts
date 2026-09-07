@@ -10,12 +10,12 @@ export const removeFlightFromPlanTool = createTool({
   inputSchema: z.object({
     flightId: z.number().describe('Id of the flight to remove from the plan'),
   }),
-  execute: async (args, { requestContext }) => {
-    const plan = readPlan(requestContext);
+  execute: async (args, context) => {
+    const plan = await readPlan(context);
     const flights = plan.flights.filter(
       (flight) => flight.id !== args.flightId,
     );
-    commitPlan(requestContext, { ...plan, flights });
+    await commitPlan(context, { ...plan, flights });
     return { removed: args.flightId };
   },
 });

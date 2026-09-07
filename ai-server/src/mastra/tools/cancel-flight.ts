@@ -1,7 +1,7 @@
+import { USE_APPROVAL } from '@flights42/feature-flags';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../libs/feature-flags/feature-flags.js';
 import {
   fetchFlight,
   isBooked,

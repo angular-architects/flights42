@@ -19,7 +19,9 @@ interface SuspendPayload {
 }
 
 interface InterruptMetadata {
-  suspendPayload?: SuspendPayload;
+  mastra?: {
+    suspendPayload?: SuspendPayload;
+  };
 }
 
 interface TextPart {
@@ -94,19 +96,17 @@ export class ChatMessages {
 }
 
 function toMessageViews(messages: Message[]): ChatMessageView[] {
-  return messages.map(
-    (message): ChatMessageView => ({
-      id: message.id,
-      variant: message.role === 'user' ? 'user' : 'assistant',
-      avatar: message.role === 'user' ? '💬' : '🤖',
-      text: toMessageText(message),
-      activity:
-        message.role === 'activity'
-          ? { message, isSurface: message.activityType === 'a2ui-surface' }
-          : null,
-      toolCalls: toToolCallViews(message),
-    }),
-  );
+  return messages.map((message): ChatMessageView => ({
+    id: message.id,
+    variant: message.role === 'user' ? 'user' : 'assistant',
+    avatar: message.role === 'user' ? '💬' : '🤖',
+    text: toMessageText(message),
+    activity:
+      message.role === 'activity'
+        ? { message, isSurface: message.activityType === 'a2ui-surface' }
+        : null,
+    toolCalls: toToolCallViews(message),
+  }));
 }
 
 function toToolCallViews(message: Message): ChatToolCallView[] {
@@ -150,7 +150,7 @@ function toInterruptModels(
 
 function toInterruptModel(interrupt: Interrupt): InterruptModel {
   const metadata = interrupt.metadata as InterruptMetadata | undefined;
-  const suspendPayload = metadata?.suspendPayload;
+  const suspendPayload = metadata?.mastra?.suspendPayload;
 
   const options = Array.isArray(suspendPayload?.options)
     ? (suspendPayload.options as InterruptOption[])

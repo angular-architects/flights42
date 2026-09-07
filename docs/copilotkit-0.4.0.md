@@ -5,7 +5,7 @@ npm tarballs and the `ng update` listing.
 Related docs: [copilot-migration.md](copilot-migration.md) (0.3.0 evaluation),
 [copilotkit-0.3.0-changelog.md](copilotkit-0.3.0-changelog.md) (last executed
 migration), [migration.md](migration.md) (Option 2: keep the flights shell),
-[bridge.md](bridge.md) (workflow step bridge).
+`bridge.md` (deleted 2026-09-07; `git show 23bb6183:docs/bridge.md`) (workflow step bridge).
 
 ## Decisions already taken
 
@@ -205,7 +205,7 @@ Delete, one commit each, re-running the Phase D scenarios after every step:
 7. Test whether core 1.63 forwards `workflow-step-*` chunks from a
    workflow-as-tool reliably; if yes, drop `data-step-status` and
    `reportStepStatus`'s writer path in `ai-server/src/mastra/workflows/bridge.ts`
-   and update [bridge.md](bridge.md).
+   and update `bridge.md` (deleted 2026-09-07; `git show 23bb6183:docs/bridge.md`).
 8. Optional: bounded validate→retry loop in `renderA2uiTool` (the only point
    where the upstream A2UI tool is ahead).
 

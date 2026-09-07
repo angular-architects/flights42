@@ -1,7 +1,7 @@
 // aimock is an HTTP mock server, so this spec runs in Node (not the browser
 // runner): `npm run test:aimock`. It still goes through the CopilotKit runtime
 // and the Agent Store, exactly like the other seams.
-import { randomUUID } from '@ag-ui/client';
+import { HttpAgent, randomUUID } from '@ag-ui/client';
 import { type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AGUIMock, buildStateUpdate } from '@copilotkit/aimock/agui';
@@ -13,7 +13,6 @@ import {
 } from '@copilotkit/angular';
 
 import { sendMessage } from '../../shared/util-copilotkit/agent-store-helper';
-import { AppHttpAgent } from '../../shared/util-copilotkit/app-http-agent';
 
 const TICKETING_AGENT_ID = 'ticketingAgent';
 const REFINEMENT_AGENT_ID = 'travelRefinementAgent';
@@ -21,7 +20,7 @@ const REFINEMENT_AGENT_ID = 'travelRefinementAgent';
 function setupStore(agentId: string, url: string): Signal<AgentStore> {
   const copilotKit = TestBed.inject(CopilotKit);
 
-  const agent = new AppHttpAgent({ agentId, url, threadId: randomUUID() });
+  const agent = new HttpAgent({ agentId, url, threadId: randomUUID() });
 
   copilotKit.updateRuntime({
     selfManagedAgents: {

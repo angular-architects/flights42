@@ -3,7 +3,7 @@ import { type UserMessage } from '@ag-ui/core';
 import { type Signal } from '@angular/core';
 import { type AgentStore, CopilotKit, type Message } from '@copilotkit/angular';
 
-import { AppHttpAgent } from './app-http-agent';
+import { clearSentHistory } from './agent-middlewares';
 
 export type SendMessageInput = string | UserMessage['content'];
 
@@ -57,7 +57,5 @@ export function reset(store: Signal<AgentStore>): void {
   agent.abortRun();
   agent.messages = [];
   agent.threadId = randomUUID();
-  if (agent instanceof AppHttpAgent) {
-    agent.clearSentHistory();
-  }
+  clearSentHistory(agent);
 }

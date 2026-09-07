@@ -1,5 +1,4 @@
 import { Agent } from '@mastra/core/agent';
-import { Memory } from '@mastra/memory';
 
 import { defaultOptions, modelAdvancedTasks } from '../config.js';
 import { findHotelsTool } from '../tools/find-hotels.js';
@@ -11,6 +10,7 @@ import {
   removeHotelFromPlanTool,
   replaceFlightInPlanTool,
   setTravelPlanTool,
+  travelPlanMemory,
 } from '../tools/plan/index.js';
 import { searchFlightsTool } from '../tools/search-flights.js';
 import { travelRefinementAgentPrompt } from './travel-refinement-agent.prompt.js';
@@ -39,5 +39,5 @@ export const travelRefinementAgent = new Agent({
       },
     },
   },
-  memory: new Memory(),
+  memory: travelPlanMemory,
 });

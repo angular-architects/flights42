@@ -50,7 +50,6 @@ export function createExampleFromJsonSchema(schema: JsonSchema): unknown {
     if (schema['format'] === 'date-time') {
       return '2026-04-10T09:30:00.000Z';
     }
-
     return 'example';
   }
 
@@ -59,7 +58,6 @@ export function createExampleFromJsonSchema(schema: JsonSchema): unknown {
     if (typeof minimum === 'number') {
       return minimum;
     }
-
     return 1;
   }
 

@@ -1,10 +1,7 @@
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
+import { USE_ACTION_CARDS, USE_MCP } from '@flights42/feature-flags';
 
-import {
-  USE_ACTION_CARDS,
-  USE_MCP,
-} from '../../../../../libs/feature-flags/feature-flags';
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -14,6 +11,7 @@ import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
 import { bookFlightActionCard } from './action-cards/book-flight-action-card';
 import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
+import { a2uiEventContract } from './actions/a2ui-event-contract';
 import { addPlanStepTool } from './tools/add-plan-step.tool';
 import { clearPlanTool } from './tools/clear-plan.tool';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
@@ -54,6 +52,7 @@ export function injectTicketingAgentStore() {
     url: inject(ConfigService).agUiUrl,
     useServerMemory: true,
     forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
+    context: [a2uiEventContract],
     frontendTools: [
       findFlightsTool,
       getLoadedFlightsTool,

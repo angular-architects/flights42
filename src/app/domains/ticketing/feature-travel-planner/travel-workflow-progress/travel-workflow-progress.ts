@@ -7,11 +7,14 @@ import {
 } from '@angular/core';
 import { type Message } from '@copilotkit/angular';
 
+import { readBackgroundTaskProgress } from '../../../shared/util-copilotkit/activity/background-task';
 import { injectWidgetToolNames } from '../../../shared/util-copilotkit/widget-tool-names';
 import {
   buildPipeline,
   formatToolArgsValue,
   type PipelineStep,
+  selectBackgroundTask,
+  selectServiceCalls,
   selectVisibleToolCalls,
   type WorkflowToolCall,
 } from './travel-workflow-progress.helpers';
@@ -31,19 +34,27 @@ import {
 export class TravelWorkflowProgress {
   readonly messages = input.required<Message[]>();
   readonly loading = input.required<boolean>();
-  readonly startedSteps = input.required<ReadonlySet<string>>();
-  readonly finishedSteps = input.required<ReadonlySet<string>>();
   readonly hasWidgets = input.required<boolean>();
 
   private readonly widgetToolNames = injectWidgetToolNames();
 
-  protected readonly toolCalls = computed<WorkflowToolCall[]>(() =>
-    selectVisibleToolCalls(this.messages(), this.widgetToolNames()),
+  private readonly progress = computed(() =>
+    readBackgroundTaskProgress(selectBackgroundTask(this.messages())),
   );
 
-  protected readonly stepPipeline = computed<PipelineStep[]>(() =>
-    buildPipeline(this.startedSteps(), this.finishedSteps(), this.loading()),
-  );
+  protected readonly toolCalls = computed<WorkflowToolCall[]>(() => [
+    ...selectVisibleToolCalls(this.messages(), this.widgetToolNames()),
+    ...selectServiceCalls(this.progress()),
+  ]);
+
+  protected readonly stepPipeline = computed<PipelineStep[]>(() => {
+    const progress = this.progress();
+    return buildPipeline(
+      progress.startedSteps,
+      progress.finishedSteps,
+      this.loading(),
+    );
+  });
 
   protected readonly showTracker = computed(
     () => this.loading() || this.hasWidgets() || this.toolCalls().length > 0,

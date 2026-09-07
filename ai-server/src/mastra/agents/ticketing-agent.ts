@@ -1,25 +1,23 @@
-import {
-  addCustomCatalogInstructions,
-  renderA2uiTool,
-} from '@internal/ag-ui-server';
+import type { MCPClientConfig } from '@ag-ui/mcp-apps-middleware';
+import { USE_MCP } from '@flights42/feature-flags';
 import { Agent } from '@mastra/core/agent';
-import { MCPClient } from '@mastra/mcp';
 import { Memory } from '@mastra/memory';
 
-import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
+import { addCustomCatalogInstructions } from '../a2ui/add-custom-catalog-instructions.js';
+import { renderA2uiTool } from '../a2ui/render-a2ui.tool.js';
 import { defaultOptions, model } from '../config.js';
+import { agUiRouteConfig } from '../routes/ag-ui-route-config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
 import { hotelAgent } from './hotel-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
-const hotelsMcpTools = USE_MCP
-  ? await new MCPClient({
-      id: 'hotels-mcp-client',
-      servers: { hotels: { url: new URL('http://127.0.0.1:3002/mcp') } },
-    }).listTools()
-  : {};
+const HOTELS_MCP_SERVER: MCPClientConfig = {
+  type: 'http',
+  url: 'http://127.0.0.1:3002/mcp',
+  serverId: 'hotels',
+};
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
@@ -34,8 +32,12 @@ export const ticketingAgent = new Agent({
     bookFlightTool,
     cancelFlightTool,
     renderA2uiTool,
-    ...hotelsMcpTools,
   },
   agents: USE_MCP ? {} : { hotelAgent },
   memory: new Memory(),
 });
+
+agUiRouteConfig[ticketingAgent.id] = {
+  mcpServers: USE_MCP ? [HOTELS_MCP_SERVER] : [],
+  a2ui: true,
+};

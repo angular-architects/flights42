@@ -16,12 +16,12 @@ export const replaceFlightInPlanTool = createTool({
       ),
     flight: planFlightSchema.describe('The new flight to use instead'),
   }),
-  execute: async (args, { requestContext }) => {
-    const plan = readPlan(requestContext);
+  execute: async (args, context) => {
+    const plan = await readPlan(context);
     const flights = plan.flights.map((flight) =>
       flight.id === args.oldFlightId ? args.flight : flight,
     );
-    commitPlan(requestContext, { ...plan, flights });
+    await commitPlan(context, { ...plan, flights });
     return { replaced: args.oldFlightId, with: args.flight.id };
   },
 });

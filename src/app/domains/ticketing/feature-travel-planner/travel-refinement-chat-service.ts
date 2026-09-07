@@ -25,11 +25,17 @@ export class TravelRefinementChatService {
 
   constructor() {
     effect(() => {
-      // The agent starts out with `{}` as its state, so only states that
-      // actually carry a plan are forwarded to the store.
-      const state = this.store().state() as TravelPlan | undefined;
-      if (state?.flights) {
+      const state = this.store().state();
+      if (isCompletePlan(state)) {
         this.planStore.setPlan(state);
+      }
+    });
+
+    effect(() => {
+      const plan = this.planStore.plan();
+      const agent = this.store().agent;
+      if (JSON.stringify(agent.state) !== JSON.stringify(plan)) {
+        agent.setState(plan);
       }
     });
   }
@@ -50,6 +56,32 @@ export class TravelRefinementChatService {
       addDeveloperMessage(this.store, preamble);
     }
   }
+}
+
+function isCompletePlan(state: unknown): state is TravelPlan {
+  if (!state || typeof state !== 'object') {
+    return false;
+  }
+  const { flights, hotels } = state as Partial<TravelPlan>;
+  return (
+    Array.isArray(flights) &&
+    Array.isArray(hotels) &&
+    flights.every(
+      (flight) =>
+        typeof flight.id === 'number' &&
+        typeof flight.from === 'string' &&
+        typeof flight.to === 'string' &&
+        typeof flight.delay === 'number' &&
+        !Number.isNaN(Date.parse(flight.date)),
+    ) &&
+    hotels.every(
+      (hotel) =>
+        typeof hotel.id === 'string' &&
+        typeof hotel.name === 'string' &&
+        typeof hotel.city === 'string' &&
+        typeof hotel.stars === 'number',
+    )
+  );
 }
 
 function buildPreferencePreamble(preferences: string): string | undefined {

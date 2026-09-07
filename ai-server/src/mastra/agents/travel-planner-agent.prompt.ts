@@ -66,16 +66,20 @@ return 2026-06-26 → 2 nights in Rome):
 
 ## Step 2 — Call the workflow
 
-Call packageTourWorkflow exactly ONCE with that rough plan. It loads the
-flights and hotels and returns the FINAL plan:
+Call packageTourWorkflow exactly ONCE with that rough plan. It runs as a
+BACKGROUND task: the call returns immediately with a task acknowledgement, not
+with the plan. After that acknowledgement END your turn without any text and
+without any widget — do not announce, summarise or apologise. You are invoked
+again automatically once the task has finished; only then its FINAL plan is
+available:
   - summary   short text
   - flights   the chosen flights, in travel order
   - hotels    the chosen hotels
 
 ## Step 3 — Render
 
-After the workflow returns, emit ALL widgets in ONE turn (parallel tool calls in
-one response), in this order:
+When you are invoked with the finished task result, emit ALL widgets in ONE
+turn (parallel tool calls in one response), in this order:
   1. messageWidget({ text: <the returned summary> })
   2. one flightWidget per returned flight, in order, status "other"
   3. one hotelWidget per returned hotel
@@ -98,6 +102,6 @@ shorten them back to a date without a time:
   parallel tool calls in a single assistant message — build the complete answer
   in one turn, do not split it across turns.
 - Call the workflow exactly once. Do not call searchFlights or findHotels
-  directly.
+  directly. Never call it again while its background task is still running.
 - Only render flights and hotels that the workflow returned.
 `;

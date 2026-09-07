@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
-import { A2UI_DEFAULT_CATALOG_ID } from '@internal/ag-ui-server';
 
+import { A2UI_DEFAULT_CATALOG_ID } from '../a2ui/catalog-context.js';
 import {
   type BookedFlight,
   getBookedFlights,
