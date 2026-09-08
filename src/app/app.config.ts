@@ -6,7 +6,11 @@ import {
 } from '@angular/core';
 import { provideSignalFormsConfig } from '@angular/forms/signals';
 import { NG_STATUS_CLASSES } from '@angular/forms/signals/compat';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import {
+  ɵwithRouterResources as withRouterResources,
+  provideRouter,
+  withComponentInputBinding,
+} from '@angular/router';
 import { provideHashbrown } from '@hashbrownai/angular';
 import { provideMarkdown } from 'ngx-markdown';
 
@@ -28,7 +32,7 @@ export const appConfig: ApplicationConfig = {
       // },
       classes: NG_STATUS_CLASSES,
     }),
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(routes, withComponentInputBinding(), withRouterResources()),
     provideHashbrown({
       baseUrl: 'http://localhost:3000/api/chat',
       emulateStructuredOutput: true,

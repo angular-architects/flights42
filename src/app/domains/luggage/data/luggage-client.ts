@@ -1,4 +1,4 @@
-import { resource, Service } from '@angular/core';
+import { resource, Service, Signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
 import { Luggage } from './luggage';
@@ -15,6 +15,20 @@ export class LuggageClient {
         return this.getLuggage();
       },
       defaultValue: [],
+    });
+  }
+
+  // No defaultValue: without nonBlocking() in the route the Router would wait
+  // for this Resource, just like for a Resolver
+  findLuggageById(id: Signal<number>) {
+    return resource({
+      params: id,
+      loader: async ({ params: id }) => {
+        // Slow on purpose: shows that a non-blocking resource lets the
+        // router activate the route before the data has arrived
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return this.getLuggage().find((item) => item.id === id);
+      },
     });
   }
 

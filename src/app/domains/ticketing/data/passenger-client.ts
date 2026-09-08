@@ -1,4 +1,8 @@
-import { HttpClient, httpResource } from '@angular/common/http';
+import {
+  HttpClient,
+  httpResource,
+  HttpResourceRef,
+} from '@angular/common/http';
 import { inject, Service, Signal } from '@angular/core';
 import {
   httpMutation,
@@ -59,18 +63,36 @@ export class PassengerClient {
     return this.http.get<Passenger>(url, { headers, params });
   }
 
-  findPassengerResourceById(id: Signal<number>) {
+  findPassengerResourceById(
+    id: Signal<number>,
+    options?: { withDefaultValue?: true },
+  ): HttpResourceRef<Passenger>;
+  findPassengerResourceById(
+    id: Signal<number>,
+    options: { withDefaultValue: false },
+  ): HttpResourceRef<Passenger | undefined>;
+  findPassengerResourceById(
+    id: Signal<number>,
+    options: { withDefaultValue?: boolean } = {},
+  ) {
+    const { withDefaultValue = true } = options;
+
+    const defaultValue = withDefaultValue ? initPassenger : undefined;
+
     return httpResource<Passenger>(
-      () => ({
-        url: `${this.configService.baseUrl}/passenger`,
-        headers: {
-          Accept: 'application/json',
-        },
-        params: {
-          id: id(),
-        },
-      }),
-      { defaultValue: initPassenger },
+      () =>
+        id() === 0
+          ? undefined
+          : {
+              url: `${this.configService.baseUrl}/passenger`,
+              headers: {
+                Accept: 'application/json',
+              },
+              params: {
+                id: id(),
+              },
+            },
+      { defaultValue },
     );
   }
 

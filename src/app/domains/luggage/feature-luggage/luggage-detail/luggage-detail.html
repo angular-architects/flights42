@@ -1,0 +1,44 @@
+<h1>Luggage Detail</h1>
+
+@let resource = luggage();
+@let item = resource.value();
+
+@if (resource.isLoading()) {
+  <p>Loading luggage …</p>
+} @else if (resource.error()) {
+  <p>Luggage could not be loaded.</p>
+} @else if (item) {
+  <form>
+    <div>
+      <label for="luggage-id">ID</label>
+      <input [value]="item.id" id="luggage-id" type="number" readonly />
+    </div>
+
+    <div>
+      <label for="luggage-passengerName">Passenger</label>
+      <input [value]="item.passengerName" id="luggage-passengerName" readonly />
+    </div>
+
+    <div>
+      <label for="luggage-weight">Weight (kg)</label>
+      <input [value]="item.weight" id="luggage-weight" type="number" readonly />
+    </div>
+
+    <div>
+      <label for="luggage-destination">Destination</label>
+      <input
+        [value]="item.destination | appCity: 'short'"
+        id="luggage-destination"
+        readonly />
+    </div>
+
+    <div>
+      <label for="luggage-status">Status</label>
+      <input [value]="item.status" id="luggage-status" readonly />
+    </div>
+  </form>
+}
+
+<p class="mt-40">
+  <a routerLink="/luggage">Back to overview</a>
+</p>

@@ -5,7 +5,7 @@ import {
   ResolveFn,
   RouterStateSnapshot,
 } from '@angular/router';
-import { delay, filter, map, take } from 'rxjs';
+import { filter, map, take } from 'rxjs';
 
 import { Passenger } from '../../data/passenger';
 import { PassengerDetailStore } from './passenger-detail-store';

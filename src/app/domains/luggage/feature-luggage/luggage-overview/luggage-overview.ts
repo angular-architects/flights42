@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { injectDispatch } from '@ngrx/signals/events';
 
 import { LuggageCard } from '../luggage-card/luggage-card';
@@ -6,7 +7,7 @@ import { luggageEvents, LuggageStore } from './luggage-store';
 
 @Component({
   selector: 'app-luggage',
-  imports: [LuggageCard],
+  imports: [LuggageCard, RouterLink],
   templateUrl: './luggage-overview.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { About } from './shell/about/about';
 import { Home } from './shell/home/home';
+import { NotFound } from './shell/not-found/not-found';
 
 export const routes: Routes = [
   {
@@ -34,9 +35,9 @@ export const routes: Routes = [
   },
   {
     path: 'luggage',
-    loadComponent: () =>
-      import('./domains/luggage/feature-luggage/luggage-overview/luggage-overview').then(
-        (m) => m.LuggageOverview,
+    loadChildren: () =>
+      import('./domains/luggage/feature-luggage/luggage.routes').then(
+        (m) => m.luggageRoutes,
       ),
   },
   {
@@ -49,6 +50,10 @@ export const routes: Routes = [
   {
     path: 'about',
     component: About,
+  },
+  {
+    path: 'not-found',
+    component: NotFound,
   },
   {
     path: '**',

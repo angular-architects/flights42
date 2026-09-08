@@ -8,9 +8,8 @@ import { AdvancedFlightEdit } from './feature-booking/advanced-flight-edit/advan
 import { BookingNavigation } from './feature-booking/booking-navigation';
 import { FlightEdit } from './feature-booking/flight-edit/flight-edit';
 import { FlightSearch } from './feature-booking/flight-search/flight-search';
-// import { FlightStore } from './feature-booking/flight-search/flight-store';
 import { PassengerEdit } from './feature-booking/passenger-edit/passenger-edit';
-import { passengerResolver } from './feature-booking/passenger-edit/passenger-resolver';
+import { createPassengerResource } from './feature-booking/passenger-edit/passenger-resource';
 import { PassengerSearch } from './feature-booking/passenger-search/passenger-search';
 import { ProtoFlightEdit } from './feature-booking/proto-flight-edit/proto-flight-edit';
 import { ReactiveFlightSearch } from './feature-booking/reactive-flight-search/reactive-flight-search';
@@ -65,9 +64,31 @@ export const bookingRoutes: Routes = [
       {
         path: 'passenger-edit/:id',
         component: PassengerEdit,
-        resolve: {
-          passenger: passengerResolver,
-        },
+
+        // a) Resolver
+        // resolve: {
+        //   passenger: passengerResolver,
+        // },
+
+        // b) StoreRouterResource
+        // resources: (ctx) => ({
+        //   passenger: createStorePassengerResource(ctx.params),
+        // }),
+
+        // c) SimpleRouterResource
+        // resources: (ctx) => ({
+        //   passenger: createSimplePassengerResource(ctx.params),
+        // }),
+
+        // d) RouterResource redirecting to /not-found via RedirectCommand
+        resources: (ctx) => ({
+          passenger: createPassengerResource(ctx.params),
+        }),
+
+        // e) SharedRouterResource: the store hands out its own resource
+        // resources: (ctx) => ({
+        //   passenger: createSharedPassengerResource(ctx.params),
+        // }),
       },
       {
         path: 'summary',

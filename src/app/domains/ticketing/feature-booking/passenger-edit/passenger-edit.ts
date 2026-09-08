@@ -8,6 +8,7 @@ import {
   linkedSignal,
 } from '@angular/core';
 import { form, FormField, submit } from '@angular/forms/signals';
+import { ActivatedRoute } from '@angular/router';
 
 import { FormComponent } from '../../../shared/util-common/exit.guard';
 import { extractError } from '../../../shared/util-common/extract-error';
@@ -24,9 +25,13 @@ import { PassengerDetailStore } from './passenger-detail-store';
 export class PassengerEdit implements FormComponent {
   private readonly store = inject(PassengerDetailStore);
 
+  // The underlying Router Resource; undefined when the resolver variant is active
+  private readonly passengerResource =
+    inject(ActivatedRoute).resources?.['passenger'];
+
   protected readonly id = input.required<number>();
 
-  // Resolved by the passengerResolver
+  // Provided by the passengerResolver or by one of the Router Resources
   protected readonly passenger = input.required<Passenger>();
 
   protected readonly passengerModel = linkedSignal(this.passenger);
@@ -40,6 +45,11 @@ export class PassengerEdit implements FormComponent {
 
   isDirty(): boolean {
     return this.passengerForm().dirty();
+  }
+
+  protected reload(): void {
+    // Reloads only this resource without renavigating the route
+    this.passengerResource?.reload();
   }
 
   protected async save(): Promise<void> {
