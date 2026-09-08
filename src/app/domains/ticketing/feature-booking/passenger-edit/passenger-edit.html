@@ -42,10 +42,11 @@
 
     <div>
       <label for="passenger-status">Passenger Status</label>
+
       <select [formField]="passengerForm.passengerStatus" id="passenger-status">
-        <option value="A">Status A</option>
-        <option value="B">Status B</option>
-        <option value="C">Status C</option>
+        <option value="Bronze">Bronze</option>
+        <option value="Silver">Silver</option>
+        <option value="Gold">Gold</option>
       </select>
       @if (passengerForm.passengerStatus().invalid()) {
         <div>{{ passengerForm.passengerStatus().errors() | json }}</div>

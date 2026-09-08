@@ -5,8 +5,9 @@ import {
   ResolveFn,
   RouterStateSnapshot,
 } from '@angular/router';
-import { filter, take } from 'rxjs';
+import { delay, filter, map, take } from 'rxjs';
 
+import { Passenger } from '../../data/passenger';
 import { PassengerDetailStore } from './passenger-detail-store';
 
 // export const passengerResolver: ResolveFn<Passenger> = (
@@ -18,7 +19,7 @@ import { PassengerDetailStore } from './passenger-detail-store';
 //   return passengerService.findById(id);
 // };
 
-export const passengerResolver: ResolveFn<unknown> = (
+export const passengerResolver: ResolveFn<Passenger> = (
   route: ActivatedRouteSnapshot,
   _state: RouterStateSnapshot,
 ) => {
@@ -29,6 +30,7 @@ export const passengerResolver: ResolveFn<unknown> = (
   return toObservable(passengerStore.passengerStatus).pipe(
     filter((status) => status !== 'loading'),
     take(1),
+    map(() => passengerStore.passengerValue()),
     // delay(2000)
   );
 };
