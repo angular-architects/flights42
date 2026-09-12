@@ -8,6 +8,9 @@ import {
 } from '../a2ui/render-a2ui.tool.js';
 import { withA2uiInstructions } from '../a2ui/with-a2ui-instructions.js';
 import { defaultOptions, model } from '../config.js';
+import { blockedWordsGuard } from '../processors/blocked-words-guard.js';
+import { offTopicGuard } from '../processors/off-topic-guard.js';
+import { promptInjectionGuard } from '../processors/prompt-injection-guard.js';
 import { agUiRouteConfig } from '../routes/ag-ui-route-config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
@@ -28,6 +31,7 @@ export const ticketingAgent = new Agent({
     [RENDER_A2UI_TOOL_NAME]: renderA2uiTool,
   },
   agents: { hotelAgent },
+  // inputProcessors: [blockedWordsGuard, offTopicGuard, promptInjectionGuard],
   memory: new Memory(),
 });
 
