@@ -1,4 +1,3 @@
-import { BASIC_COMPONENTS } from '@a2ui/angular/v0_9';
 import { type Context } from '@ag-ui/core';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -43,17 +42,13 @@ function toInlineComponentSchema(
 }
 
 export function catalogToContextEntry(catalog: A2uiCustomCatalog): Context {
-  const descriptors: CatalogComponentDescriptor[] = [
-    ...BASIC_COMPONENTS.map((component) => ({
-      name: component.name,
-      schema: component.schema as unknown,
-    })),
-    ...catalog.components.map((component) => ({
+  const descriptors: CatalogComponentDescriptor[] = catalog.components.map(
+    (component) => ({
       name: component.name,
       description: component.description,
       schema: component.schema,
-    })),
-  ];
+    }),
+  );
 
   const components = Object.fromEntries(
     descriptors.map((descriptor) => [

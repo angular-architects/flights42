@@ -8,8 +8,9 @@ export const checkinAgent = new Agent({
   name: 'Flights42 Check-in Assistant',
   instructions: checkinAgentPrompt,
   // Must be a vision-capable model. The user's ticket image arrives as an
-  // AI-SDK `ImagePart` on a multipart user message (see fallback in
-  // extended-mastra-agent.ts).
+  // AG-UI image part on a multipart user message, which the stock adapter's
+  // `convertAGUIMessagesToMastra` (`@ag-ui/mastra`) maps to an AI-SDK
+  // `ImagePart`.
   model,
   defaultOptions: { ...defaultOptions, maxSteps: 3 },
 });

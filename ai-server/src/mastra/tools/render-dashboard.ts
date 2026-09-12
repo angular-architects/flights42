@@ -5,12 +5,10 @@ import { dashboardSpecSchema } from '../dashboard-dsl/dashboard-spec.js';
 export const RENDER_DASHBOARD_TOOL_NAME = 'renderDashboard';
 
 // Pure schema-only tool. The LLM emits exactly one `renderDashboard`
-// call whose args are the dashboard DSL spec; the route handler
+// call whose args are the dashboard DSL spec; the dashboard route handler
 // intercepts those args, deterministically compiles the spec, and
 // emits the resulting A2UI surface itself. The tool execute returns a
-// minimal acknowledgement so Mastra's auto-snapshot path
-// (`extractA2uiSurfacePayload`) does not produce an `a2ui-surface`
-// `ACTIVITY_SNAPSHOT` and the LLM's tool-result message stays small.
+// minimal acknowledgement so the LLM's tool-result message stays small.
 export const renderDashboardTool = createTool({
   id: RENDER_DASHBOARD_TOOL_NAME,
   description: `
