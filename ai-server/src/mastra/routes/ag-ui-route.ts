@@ -9,6 +9,8 @@ import {
   toAgUiAgent,
 } from './route-utils.js';
 
+const TRIPWIRE_MESSAGE = 'Sorry, I cannot help with this topic.';
+
 export async function agUiRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
@@ -42,6 +44,10 @@ export async function agUiRouteHandler(
     threadId: input.threadId,
     requestContext,
     resumeCommand,
+    adjustments: {
+      abortSignal: c.req.raw.signal,
+      tripwireMessage: TRIPWIRE_MESSAGE,
+    },
   });
   const runInput = resumeCommand ? { ...input, resume: undefined } : input;
 
