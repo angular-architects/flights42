@@ -1,5 +1,4 @@
 import type { MCPClientConfig } from '@ag-ui/mcp-apps-middleware';
-import { USE_MCP } from '@flights42/feature-flags';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -10,7 +9,6 @@ import { agUiRouteConfig } from '../routes/ag-ui-route-config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
-import { hotelAgent } from './hotel-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
 const HOTELS_MCP_SERVER: MCPClientConfig = {
@@ -33,11 +31,10 @@ export const ticketingAgent = new Agent({
     cancelFlightTool,
     renderA2uiTool,
   },
-  agents: USE_MCP ? {} : { hotelAgent },
   memory: new Memory(),
 });
 
 agUiRouteConfig[ticketingAgent.id] = {
-  mcpServers: USE_MCP ? [HOTELS_MCP_SERVER] : [],
+  mcpServers: [HOTELS_MCP_SERVER],
   a2ui: true,
 };
