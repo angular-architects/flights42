@@ -568,3 +568,39 @@ are applied in place, matching the stock middleware's progressive
 
 Server-log noise: `[MastraAgent] Failed to compute new-message diff …
 No thread found` on the first run of every thread (draft #6).
+
+## Addendum (2026-09-12) — workshop base: tripwire text, abort signal, catalog trimming
+
+Done on `AGU-solution` after fast-forwarding it to `copilotkit-v0.5.0-stock`
+(the eight `AGU-*` starter branches were re-cut on top; see the workshop
+site's `workshops/AGU/Labs/_context.md`). Two more contained workarounds on
+public APIs, in the spirit of the hybrid addendum above — each removable once
+its upstream fix lands:
+
+- **Tripwire, draft #1 (PR #2664) — `withRunAdjustments` in
+  `routes/route-utils.ts`.** The stock chunk processor drops Mastra's
+  `tripwire` chunk, so a guardrail abort ended as an empty run (the
+  guardrails chapter wires the processors). The route now wraps the Mastra
+  agent's `stream()`: the returned `MastraModelOutput` is proxied and its
+  `fullStream` piped through a `TransformStream` that turns a `tripwire`
+  chunk into a `text-start` / `text-delta` / `text-end` triple carrying the
+  route's `tripwireMessage` (`string | (reason) => string`, set in
+  `ag-ui-route.ts`). Verified live against `mastra dev`: blocked-words and
+  off-topic (`'block'`) guards answer with the fixed refusal text as an
+  ordinary assistant message; the prompt-injection `'rewrite'` guard still
+  serves the flight part of a mixed prompt.
+- **Abort signal.** The stock adapter never passes an `abortSignal`, so a
+  closed SSE no longer aborted the Mastra run (Phase A log above). The same
+  wrapper spreads `c.req.raw.signal` into the `agent.stream(...)` options
+  (`AgentExecutionOptionsBase.abortSignal`), from where Mastra forwards it to
+  the model call and to the tools' `ToolExecutionContext.abortSignal`.
+  Verified live: a client that disconnected 4 s into a booking whose tool
+  sleeps 6 s left the booking unexecuted; the same request without the
+  disconnect booked the flight.
+- **Catalog context entry trimmed.** `catalog-context.ts` (client) no longer
+  inlines the `BASIC_COMPONENTS` schemas (~53 kB per request); only the
+  custom components are sent. `catalogToPromptSection` skipped the basic
+  entries anyway, and the dashboard route reads only the catalog id.
+- **Runtime artifacts untracked.** `.nx/workspace-data/*`, `flights42.db*`
+  and `ai-server/src/mastra/flights42.db` are gitignored; they changed on
+  every `mastra dev` run and dirtied the tree during branch switches.

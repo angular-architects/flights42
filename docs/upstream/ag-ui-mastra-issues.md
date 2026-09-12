@@ -35,6 +35,12 @@ Proposal: map `tripwire` to a `TEXT_MESSAGE_*` sequence carrying either
 string` on `MastraAgentConfig`, then finish the run normally. Alternative:
 emit `RUN_ERROR` with `code: 'tripwire'`.
 
+Local workaround until the PR ships: `withRunAdjustments` in
+`ai-server/src/mastra/routes/route-utils.ts` pipes the Mastra `fullStream`
+through a `TransformStream` that rewrites the `tripwire` chunk into text
+chunks carrying the route's `tripwireMessage`. Remove once `@ag-ui/mastra`
+contains the fix.
+
 ## 2. `reasoning-delta` is always routed to `REASONING_*` — Issue #2666
 
 Some providers stream the visible answer as `reasoning-delta` (observed with
