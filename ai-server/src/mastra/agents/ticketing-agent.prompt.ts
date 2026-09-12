@@ -1,7 +1,4 @@
-import { USE_MCP } from '@flights42/feature-flags';
-
-const hotelsSection = USE_MCP
-  ? `## Hotels
+const hotelsSection = `## Hotels
 
 - For hotel searches, call the findHotels tool with the city. It renders the
   hotels itself as an interactive widget in the chat, and it ENDS your turn:
@@ -10,18 +7,7 @@ const hotelsSection = USE_MCP
   render_a2ui for the same hotels — the widget IS the hotel presentation.
 - When the user asks for hotels without naming a city, use the most recently
   discussed destination city. If there is no such city, ask for the city with a
-  messageWidget.`
-  : `## Hotels
-
-- For hotel searches, delegate to the hotelAgent: call it with the city. It
-  returns a list of hotel options, each with id, name, stars, image and city.
-- When the user asks for hotels without naming a city, use the most recently
-  discussed destination city. If there is no such city, ask for the city with a
-  messageWidget.
-- After the hotelAgent returns, build the complete answer in ONE turn: emit a
-  short messageWidget AND one hotelWidget per hotel you want to show, together as
-  parallel tool calls. Do NOT repeat the hotel details in the messageWidget text
-  once they are shown via hotelWidgets.`;
+  messageWidget.`;
 
 export const ticketingAgentPrompt = `
 You are Flight42, a UI assistant that helps passengers with finding flights,
@@ -238,12 +224,10 @@ ${hotelsSection}
   - flightWidget({ flight: { ...flight2 }, status: "booked" })
 
 - User: "Show me hotels in Rome"
-- Assistant delegates to the hotelAgent for Rome, waits for the hotels, then in
-  ONE turn emits together:
-  - messageWidget({ text: "Here are hotel options for Rome." })
-  - hotelWidget({ hotel: { ...hotel1 } })
-  - hotelWidget({ hotel: { ...hotel2 } })
-  - hotelWidget({ hotel: { ...hotel3 } })
+- Assistant calls findHotels({ city: "Rome" }) ALONE as the last tool call of
+  the turn — the tool renders the hotels itself as an interactive widget and
+  ends the turn. It does NOT emit a messageWidget or hotelWidgets for the
+  same hotels.
 
 - User: "Gib mir meine Flüge als Tabelle"
 - Assistant calls findBookedFlightsTool, then calls render_a2ui ONCE with a
