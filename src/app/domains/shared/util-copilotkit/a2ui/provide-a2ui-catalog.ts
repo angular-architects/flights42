@@ -73,13 +73,13 @@ function toFunctionImplementation(
  * BASIC_FUNCTIONS) is wired into the renderer; no catalog descriptor is
  * forwarded to the agent.
  *
- * With a descriptor a `BasicCatalogBase` (auto-merging `BASIC_FUNCTIONS`) is
- * built, registered at `A2UI_RENDERER_CONFIG`, and the descriptor is stored
- * at `A2UI_CUSTOM_CATALOG` so `initAgentStore` can forward catalog metadata
- * to each registered agent via `connectAgentContext`. Set
- * `options.sendCatalogDescription: false` to store (and thus forward) only
- * the catalog id (recommended for production with a trusted server-side
- * registry).
+ * With a descriptor a `BasicCatalogBase` (with `BASIC_FUNCTIONS` plus the
+ * catalog's own functions) is built, registered at `A2UI_RENDERER_CONFIG`,
+ * and the descriptor is stored at `A2UI_CUSTOM_CATALOG` so `initAgentStore`
+ * can forward catalog metadata to each registered agent via
+ * `connectAgentContext`. Set `options.sendCatalogDescription: false` to
+ * store (and thus forward) only the catalog id (recommended for production
+ * with a trusted server-side registry).
  */
 export function provideA2uiCatalog(
   catalog?: A2uiCustomCatalog,

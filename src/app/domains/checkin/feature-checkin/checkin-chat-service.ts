@@ -1,7 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { CopilotKit } from '@copilotkit/angular';
 
-import { sendMessage } from '../../shared/util-copilotkit/agent-store-helper';
+import {
+  reset,
+  sendMessage,
+} from '../../shared/util-copilotkit/agent-store-helper';
 import { injectCheckinAgentStore } from './checkin-agent-store';
 import { CheckinTicketStore } from './checkin-ticket-store';
 
@@ -23,7 +26,7 @@ export class CheckinChatService {
 
   // No memory: every uploaded ticket is a fresh extraction. Server memory is
   // disabled on the agent store so previous threads can't leak into this
-  // stateless flow.
+  // stateless flow, and the client transcript is reset before each upload.
   readonly chat = injectCheckinAgentStore();
 
   /**
@@ -47,6 +50,7 @@ export class CheckinChatService {
       const { base64, mimeType } = await this.fileToBase64Image(file);
       this.ticketStore.setStatus('analyzing');
 
+      reset(this.chat);
       await sendMessage(this.copilotKit, this.chat, [
         {
           type: 'text',
