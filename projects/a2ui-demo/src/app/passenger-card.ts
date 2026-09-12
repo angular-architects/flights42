@@ -51,7 +51,7 @@ export function createSurfaceMessages(
             id: 'details',
             component: 'Row',
             children: ['labels-column', 'values-column'],
-            align: 'flex-start',
+            align: 'start',
           },
           {
             id: 'labels-column',
