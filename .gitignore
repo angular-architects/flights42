@@ -59,3 +59,9 @@ ai-server/src/**/*.js
 ai-server/tsconfig.tsbuildinfo
 
 agent/src/mastra/public
+
+# Nx daemon cache and the LibSQL store `mastra dev` writes at runtime
+.nx/
+flights42.db
+flights42.db-*
+ai-server/src/mastra/flights42.db
