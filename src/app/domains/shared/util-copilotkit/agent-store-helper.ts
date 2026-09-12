@@ -55,7 +55,7 @@ export function stop(store: Signal<AgentStore>): void {
 export function reset(store: Signal<AgentStore>): void {
   const agent = store().agent;
   agent.abortRun();
-  agent.messages = [];
+  agent.setMessages([]);
   agent.threadId = randomUUID();
   clearSentHistory(agent);
 }

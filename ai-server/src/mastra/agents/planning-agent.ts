@@ -14,6 +14,5 @@ export const planningAgent = new Agent({
   tools: {
     findBookedFlightsTool,
   },
-  // Shares the ticketing conversation thread (same client HttpAgent + threadId).
   memory: new Memory(),
 });

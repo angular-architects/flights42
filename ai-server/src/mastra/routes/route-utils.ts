@@ -7,11 +7,6 @@ import type { RequestContext } from '@mastra/core/request-context';
 
 import { agUiRouteConfig } from './ag-ui-route-config.js';
 
-export interface AgUiForwardedProps {
-  agentMode?: unknown;
-  __proxiedMCPRequest?: unknown;
-}
-
 export interface ResumeCommand {
   runId: string;
   toolCallId: string;
@@ -23,24 +18,6 @@ type StreamOptions = AgentExecutionOptionsBase<unknown> & {
   structuredOutput?: never;
 };
 type ResumeStreamOptions = Parameters<Agent['resumeStream']>[1];
-
-export function resolveAgentId(
-  agentId: string,
-  forwardedProps: unknown,
-): string {
-  const props = forwardedProps as AgUiForwardedProps | undefined;
-  // Don't switch to plan mode for MCP Apps
-  if (props?.__proxiedMCPRequest) {
-    return agentId;
-  }
-  if (props?.agentMode === 'plan') {
-    return 'planningAgent';
-  }
-  if (props?.agentMode === 'execution') {
-    return 'ticketingAgent';
-  }
-  return agentId;
-}
 
 const middlewareCache = new Map<string, readonly Middleware[]>();
 

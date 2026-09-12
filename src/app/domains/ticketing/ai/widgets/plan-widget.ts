@@ -5,28 +5,23 @@ import {
   inject,
   input,
 } from '@angular/core';
-import {
-  type AngularToolCall,
-  CopilotKit,
-  type ToolRenderer,
-} from '@copilotkit/angular';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
-import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
-import { sendDeveloperMessage } from '../../../shared/util-copilotkit/agent-store-helper';
-import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
-import { PlanStep } from '../plan/plan-schemas';
+import {
+  createFrontendTool,
+  createRenderToolCall,
+} from '../../../shared/util-copilotkit/tool-definition';
+import { PLAN_WIDGET_TOOL_NAME, PlanHandoff } from '../plan/plan-handoff';
+import {
+  PlanCardArgs,
+  planCardArgsSchema,
+  PlanSnapshot,
+  PlanStep,
+} from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
 
 const planWidgetSchema = z.object({});
-
-type PlanWidgetArgs = z.infer<typeof planWidgetSchema>;
-
-interface PlanSnapshot {
-  title: string;
-  steps: PlanStep[];
-}
 
 @Component({
   selector: 'app-plan-widget',
@@ -60,27 +55,31 @@ interface PlanSnapshot {
           </ol>
         }
 
-        <div class="plan-actions">
-          <button
-            type="button"
-            class="execute-btn"
-            [disabled]="snapshot.steps.length === 0"
-            (click)="execute()">
-            Execute
-          </button>
-        </div>
+        @if (!handoff()) {
+          <div class="plan-actions">
+            <button
+              type="button"
+              class="execute-btn"
+              [disabled]="snapshot.steps.length === 0"
+              (click)="execute()">
+              Execute
+            </button>
+          </div>
+        }
       </div>
     }
   `,
   styleUrls: ['./plan-widget.css'],
 })
-export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
-  private readonly chatRegistry = inject(ChatRegistry);
-  private readonly agentMode = inject(AgentModeService);
-  private readonly copilotKit = inject(CopilotKit);
+export class PlanWidget implements ToolRenderer<PlanCardArgs> {
   private readonly store = inject(PlanStore);
+  private readonly planHandoff = inject(PlanHandoff);
 
-  readonly toolCall = input.required<AngularToolCall<PlanWidgetArgs>>();
+  readonly toolCall = input.required<AngularToolCall<PlanCardArgs>>();
+
+  protected readonly handoff = computed(
+    () => this.toolCall().args.steps !== undefined,
+  );
 
   // The plan lives in a mutable store; each rendered card must freeze the plan
   // as it was the moment its tool call finished. Snapshot once (skipping the
@@ -91,13 +90,17 @@ export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
     if (this.frozen) {
       return this.frozen;
     }
-    if (this.toolCall().status === 'in-progress') {
+    const call = this.toolCall();
+    if (call.status === 'in-progress') {
       return null;
     }
-    this.frozen = {
-      title: this.store.title(),
-      steps: this.store.steps().map((step) => ({ ...step })),
-    };
+    this.frozen =
+      call.args.steps !== undefined
+        ? { title: call.args.title ?? '', steps: call.args.steps }
+        : {
+            title: this.store.title(),
+            steps: this.store.steps().map((step) => ({ ...step })),
+          };
     return this.frozen;
   });
 
@@ -112,52 +115,16 @@ export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
   }
 
   protected execute(): void {
-    const steps = this.plan()?.steps ?? [];
-    if (steps.length === 0) {
+    const snapshot = this.plan();
+    if (!snapshot || snapshot.steps.length === 0) {
       return;
     }
-    const store = this.chatRegistry.store;
-    if (!store) {
-      return;
-    }
-    this.agentMode.mode.set('execution');
-    void sendDeveloperMessage(
-      this.copilotKit,
-      store,
-      this.buildExecutionMessage(steps),
-    );
-  }
-
-  private verbForAction(action: PlanStep['action']): string {
-    if (action === 'book') {
-      return 'Book';
-    }
-    if (action === 'cancel') {
-      return 'Cancel';
-    }
-    return 'Do';
-  }
-
-  private buildExecutionMessage(steps: PlanStep[]): string {
-    const lines = steps
-      .map((step, index) => {
-        const verb = this.verbForAction(step.action);
-        const flight = step.flightId != null ? ` flight ${step.flightId}` : '';
-        return `${index + 1}. ${verb}${flight} — ${step.description}`;
-      })
-      .join('\n');
-
-    return `Execute the following plan now. Perform ALL ${steps.length} steps, in
-            EXACTLY this order, one after another — do not reorder, skip, merge,
-            add, or stop early. After each step's confirmation, immediately
-            continue with the next step until every step is done:
-
-              ${lines}`;
+    void this.planHandoff.execute(snapshot);
   }
 }
 
-export const planWidget = createFrontendTool({
-  name: 'planWidget',
+export const planWidget = createFrontendTool<PlanCardArgs>({
+  name: PLAN_WIDGET_TOOL_NAME,
   description: `
     Renders the current co-plan. The plan itself is held in the client-side
     PlanStore and edited through the plan tools (setPlan, addPlanStep,
@@ -172,4 +139,10 @@ export const planWidget = createFrontendTool({
   component: PlanWidget,
   followUp: false,
   handler: async () => ({ shown: true }),
+});
+
+export const planHandoffCard = createRenderToolCall({
+  name: PLAN_WIDGET_TOOL_NAME,
+  args: planCardArgsSchema,
+  component: PlanWidget,
 });

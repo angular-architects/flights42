@@ -78,7 +78,7 @@ export class SentFilterMiddleware extends Middleware {
     this.sentMessageIds.clear();
   }
 
-  private markSent(messages: readonly { id: string }[]): void {
+  markSent(messages: readonly { id: string }[]): void {
     for (const message of messages) {
       this.sentMessageIds.add(message.id);
     }
@@ -214,4 +214,11 @@ export function attachSentFilter(agent: AbstractAgent): void {
 
 export function clearSentHistory(agent: AbstractAgent): void {
   sentFilters.get(agent)?.clear();
+}
+
+export function markMessagesSent(
+  agent: AbstractAgent,
+  messages: readonly { id: string }[],
+): void {
+  sentFilters.get(agent)?.markSent(messages);
 }

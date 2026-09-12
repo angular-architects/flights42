@@ -28,6 +28,17 @@ export const planStepInputSchema = z.object({
 export type PlanStepInput = z.infer<typeof planStepInputSchema>;
 
 /** A step as it lives in the store: an input step plus its stable id. */
-export interface PlanStep extends PlanStepInput {
-  id: string;
-}
+export const planStepSchema = planStepInputSchema.extend({ id: z.string() });
+
+export type PlanStep = z.infer<typeof planStepSchema>;
+
+export const planSnapshotSchema = z.object({
+  title: z.string(),
+  steps: z.array(planStepSchema),
+});
+
+export type PlanSnapshot = z.infer<typeof planSnapshotSchema>;
+
+export const planCardArgsSchema = planSnapshotSchema.partial();
+
+export type PlanCardArgs = z.infer<typeof planCardArgsSchema>;

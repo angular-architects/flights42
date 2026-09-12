@@ -3,7 +3,6 @@ import { injectAgentStore } from '@copilotkit/angular';
 import { USE_ACTION_CARDS, USE_MCP } from '@flights42/feature-flags';
 
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
-import { AgentModeService } from '../../shared/util-common/agent-mode-service';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { destinationInfoCard } from '../ui/destination-info-card';
@@ -12,46 +11,23 @@ import { hotelWidget } from '../ui/hotel-widget';
 import { bookFlightActionCard } from './action-cards/book-flight-action-card';
 import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
 import { a2uiEventContract } from './actions/a2ui-event-contract';
-import { addPlanStepTool } from './tools/add-plan-step.tool';
-import { clearPlanTool } from './tools/clear-plan.tool';
+import { TICKETING_AGENT_ID } from './agent-ids';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
 import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
-import { getPlanTool } from './tools/get-plan.tool';
-import { movePlanStepTool } from './tools/move-plan-step.tool';
-import { removePlanStepTool } from './tools/remove-plan-step.tool';
-import { reversePlanTool } from './tools/reverse-plan.tool';
-import { setPlanTool } from './tools/set-plan.tool';
-import { swapPlanStepsTool } from './tools/swap-plan-steps.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
-import { updatePlanStepTool } from './tools/update-plan-step.tool';
-import { planWidget } from './widgets/plan-widget';
-
-export const TICKETING_AGENT_ID = 'ticketingAgent';
-
-const planTools = [
-  getPlanTool,
-  setPlanTool,
-  addPlanStepTool,
-  removePlanStepTool,
-  updatePlanStepTool,
-  movePlanStepTool,
-  swapPlanStepsTool,
-  reversePlanTool,
-  clearPlanTool,
-];
+import { planHandoffCard } from './widgets/plan-widget';
 
 const widgets = USE_MCP
-  ? [messageWidget, flightWidget, planWidget]
-  : [messageWidget, flightWidget, hotelWidget, planWidget];
+  ? [messageWidget, flightWidget]
+  : [messageWidget, flightWidget, hotelWidget];
 
 export function injectTicketingAgentStore() {
   initAgentStore({
     agentId: TICKETING_AGENT_ID,
-    url: inject(ConfigService).agUiUrl,
+    url: inject(ConfigService).agUiUrlFor(TICKETING_AGENT_ID),
     useServerMemory: true,
-    forwardedProps: () => ({ agentMode: inject(AgentModeService).mode() }),
     context: [a2uiEventContract],
     frontendTools: [
       findFlightsTool,
@@ -59,12 +35,14 @@ export function injectTicketingAgentStore() {
       toggleFlightSelectionTool,
       getCurrentBasketTool,
       displayFlightDetailTool,
-      ...planTools,
       ...widgets,
     ],
-    toolCallRenderer: USE_ACTION_CARDS
-      ? [bookFlightActionCard, cancelFlightActionCard]
-      : [],
+    toolCallRenderer: [
+      ...(USE_ACTION_CARDS
+        ? [bookFlightActionCard, cancelFlightActionCard]
+        : []),
+      planHandoffCard,
+    ],
     components: [destinationInfoCard],
   });
 

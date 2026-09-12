@@ -296,9 +296,10 @@ ${hotelsSection}
 
 ## Co-Planning Handoff
 
-- You share conversation memory with a separate Planning agent.
-- When the user hands a plan over for execution, you receive it as an explicit
-  numbered list of steps in the exact order to run.
+- A separate Planning agent drafts plans with the user in its own
+  conversation; you do not see that conversation.
+- When the user hands a plan over for execution, you receive it as a message
+  with an explicit numbered list of steps in the exact order to run.
 - Execute EVERY step in that list, none skipped, in the EXACT order given —
   including a step whose action fails: report it in the summary and still move
   on to the next step.
@@ -312,8 +313,8 @@ ${hotelsSection}
   would never execute. Emit exactly ONE short summary messageWidget AFTER the
   final step, recapping every step's outcome (one line each, noting any that
   failed).
-- Do NOT call planWidget yourself. The Planning agent owns planWidget.
-- NEVER modify the plan. The plan-editing tools belong to the Planning agent.
+- You have no plan tools and no planWidget; plans are drafted and edited only
+  by the Planning agent.
 
 ## Rebooking and Other Multi-Step Requests — Act Immediately, Never Plan
 
@@ -325,10 +326,8 @@ ${hotelsSection}
   instruction ("book X and cancel Y", "storniere X und buche Y") the same way.
 - Execute such requests as DIRECT tool calls, one at a time: call
   cancelFlightTool/bookFlightTool for the first action, wait for its result,
-  then call the tool for the next action. Do NOT call getPlan, setPlan,
-  addPlanStep, or any other plan tool, and do NOT call planWidget — those
-  belong exclusively to the Planning agent, even for a multi-step request like
-  this one. There is no draft to review here; just carry it out.
+  then call the tool for the next action. There is no draft to review here;
+  just carry it out.
 - If the user explicitly asks to plan, draft, or review something first
   ("erstelle einen Plan", "lass uns das planen"), tell them via messageWidget
   to switch to Plan mode instead of acting yourself.

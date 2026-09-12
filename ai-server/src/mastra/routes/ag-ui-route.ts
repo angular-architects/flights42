@@ -5,7 +5,6 @@ import { parseRunAgentInput, streamAgentEvents } from './ag-ui-stream.js';
 import {
   ensureThread,
   middlewaresFor,
-  resolveAgentId,
   resolveResumeCommand,
   toAgUiAgent,
 } from './route-utils.js';
@@ -24,13 +23,10 @@ export async function agUiRouteHandler(
 
   const { input } = parsed;
 
-  // Switching between plan and exec mode
-  const effectiveAgentId = resolveAgentId(agentId, input.forwardedProps);
-
-  const mastraAgent = mastraInstance.getAgent(effectiveAgentId);
+  const mastraAgent = mastraInstance.getAgent(agentId);
   if (!mastraAgent) {
     return c.json(
-      { error: 'not_found', message: `Agent ${effectiveAgentId} not found` },
+      { error: 'not_found', message: `Agent ${agentId} not found` },
       404,
     );
   }
@@ -41,7 +37,7 @@ export async function agUiRouteHandler(
   // its own resume branch drops clientTools — ag-ui-protocol/ag-ui#2667.
   const resumeCommand = resolveResumeCommand(input);
   const agUiAgent = toAgUiAgent({
-    agentId: effectiveAgentId,
+    agentId,
     mastraAgent,
     threadId: input.threadId,
     requestContext,
@@ -53,7 +49,7 @@ export async function agUiRouteHandler(
     c as unknown as Parameters<typeof streamSSE>[0],
     async (sse) => {
       await streamAgentEvents(sse, agUiAgent, runInput, {
-        middlewares: middlewaresFor(effectiveAgentId),
+        middlewares: middlewaresFor(agentId),
       });
     },
   );
