@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
-import { USE_ACTION_CARDS, USE_MCP } from '@flights42/feature-flags';
+import { USE_ACTION_CARDS } from '@flights42/feature-flags';
 
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
@@ -19,9 +19,7 @@ import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 import { planHandoffCard } from './widgets/plan-widget';
 
-const widgets = USE_MCP
-  ? [messageWidget, flightWidget]
-  : [messageWidget, flightWidget, hotelWidget];
+const widgets = [messageWidget, flightWidget, hotelWidget];
 
 export function injectTicketingAgentStore() {
   initAgentStore({
