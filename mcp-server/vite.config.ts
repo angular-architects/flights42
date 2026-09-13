@@ -14,6 +14,15 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: resolve(currentDir, 'index.html'),
+      onwarn(warning, warn) {
+        if (
+          warning.code === 'INVALID_ANNOTATION' &&
+          warning.id?.includes('/node_modules/zod/')
+        ) {
+          return;
+        }
+        warn(warning);
+      },
     },
   },
 });

@@ -1,4 +1,8 @@
-import type { MCPClientConfig } from '@ag-ui/mcp-apps-middleware';
+import { A2UIMiddleware } from '@ag-ui/a2ui-middleware';
+import {
+  MCPAppsMiddleware,
+  type MCPClientConfig,
+} from '@ag-ui/mcp-apps-middleware';
 import { USE_MCP } from '@flights42/feature-flags';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
@@ -37,7 +41,13 @@ export const ticketingAgent = new Agent({
   memory: new Memory(),
 });
 
+const MCP_APPS_MIDDLEWARES = USE_MCP
+  ? [new MCPAppsMiddleware({ mcpServers: [HOTELS_MCP_SERVER] })]
+  : [];
+
 agUiRouteConfig[ticketingAgent.id] = {
-  mcpServers: USE_MCP ? [HOTELS_MCP_SERVER] : [],
-  a2ui: true,
+  middlewares: [
+    ...MCP_APPS_MIDDLEWARES,
+    new A2UIMiddleware({ injectA2UITool: false }),
+  ],
 };
