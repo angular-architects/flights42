@@ -32,6 +32,7 @@ export const appConfig: ApplicationConfig = {
     provideMCPApps(mcpAppsConfig),
 
     provideA2uiCatalog(customCatalog),
+
     provideMarkdownRenderer(async (markdown) =>
       marked.parse(String(markdown ?? '')),
     ),

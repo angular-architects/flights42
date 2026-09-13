@@ -18,8 +18,7 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
-import { catalogToContextEntry } from './a2ui/catalog-context';
-import { A2UI_CUSTOM_CATALOG } from './a2ui/provide-a2ui-catalog';
+import { A2UI_CATALOG_CONTEXT } from './a2ui/provide-a2ui-catalog';
 import {
   attachSentFilter,
   developerMessagesAsUser,
@@ -104,11 +103,10 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
 }
 
 function connectCatalogContext(agentId: string): void {
-  const catalog = inject(A2UI_CUSTOM_CATALOG, { optional: true });
-  if (!catalog) {
+  const entry = inject(A2UI_CATALOG_CONTEXT, { optional: true });
+  if (!entry) {
     return;
   }
 
-  const entry = catalogToContextEntry(catalog);
   connectAgentContext(() => ({ ...entry, agentIds: [agentId] }) as Context);
 }

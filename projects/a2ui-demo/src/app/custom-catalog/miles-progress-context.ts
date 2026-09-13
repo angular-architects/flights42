@@ -1,7 +1,6 @@
-import type { BoundProperty } from '@a2ui/angular/v0_9';
 import { z } from 'zod/v3';
 
-import { initialProperty } from './utils';
+import { binding, type BoundProps, initialProperty } from './utils';
 
 export const passengerSchema = z.object({
   id: z.number(),
@@ -12,9 +11,15 @@ export const passengerSchema = z.object({
 
 export type Passenger = z.infer<typeof passengerSchema>;
 
-export interface MilesProgressContext {
-  passenger: BoundProperty<Passenger>;
-}
+export const milesProgressSchema = z
+  .object({
+    passenger: binding(passengerSchema),
+  })
+  .strict();
+
+export type MilesProgressContext = BoundProps<
+  z.infer<typeof milesProgressSchema>
+>;
 
 export const initialPassenger: Passenger = {
   id: 0,

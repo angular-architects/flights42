@@ -1,5 +1,6 @@
 import {
   A2uiRendererService,
+  BasicCatalog,
   provideMarkdownRenderer,
 } from '@a2ui/angular/v0_9';
 import type { ActivityMessage } from '@ag-ui/client';
@@ -77,7 +78,7 @@ describe('CopilotActivity', () => {
           enableInspector: false,
           renderActivityMessages: [a2uiActivityRendererConfig],
         }),
-        provideA2uiCatalog(),
+        provideA2uiCatalog(new BasicCatalog()),
         provideMarkdownRenderer(async (markdown) => markdown),
         {
           provide: ErrorHandler,

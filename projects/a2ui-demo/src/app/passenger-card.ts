@@ -1,13 +1,7 @@
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 
 import { customCatalog } from './custom-catalog/custom-catalog';
-
-export interface Passenger {
-  id: number;
-  firstName: string;
-  lastName: string;
-  bonusMiles: number;
-}
+import type { Passenger } from './custom-catalog/miles-progress-context';
 
 export function createSurfaceMessages(
   surfaceId: string,

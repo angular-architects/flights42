@@ -4,7 +4,7 @@ import { z } from 'zod/v3';
 
 import {
   binding,
-  type ContextFromSchema,
+  type BoundProps,
 } from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
 
 export const ticketWidgetSchema = z
@@ -17,7 +17,9 @@ export const ticketWidgetSchema = z
   })
   .strict();
 
-export type TicketWidgetContext = ContextFromSchema<typeof ticketWidgetSchema>;
+export type TicketWidgetContext = BoundProps<
+  z.infer<typeof ticketWidgetSchema>
+>;
 
 function initialProperty<T>(value: T): BoundProperty<T> {
   return {
@@ -32,5 +34,5 @@ export const initialTicketContext: TicketWidgetContext = {
   from: initialProperty(''),
   to: initialProperty(''),
   date: initialProperty(''),
-  delay: initialProperty(0),
+  delay: initialProperty<number | undefined>(0),
 };

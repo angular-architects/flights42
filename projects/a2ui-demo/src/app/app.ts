@@ -7,7 +7,8 @@ import {
   inject,
 } from '@angular/core';
 
-import { createSurfaceMessages, type Passenger } from './passenger-card';
+import type { Passenger } from './custom-catalog/miles-progress-context';
+import { createSurfaceMessages } from './passenger-card';
 
 @Component({
   selector: 'app-root',

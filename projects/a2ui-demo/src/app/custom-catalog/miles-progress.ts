@@ -6,7 +6,6 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { z } from 'zod/v3';
 
 import {
   calcNextThreshold,
@@ -16,9 +15,8 @@ import {
 import {
   initialContext,
   MilesProgressContext,
-  passengerSchema,
+  milesProgressSchema,
 } from './miles-progress-context';
-import { binding } from './utils';
 
 @Component({
   selector: 'app-miles-progress',
@@ -56,12 +54,6 @@ export class MilesProgress {
     calcProgressPercent(this.nextThreshold(), this.passenger().bonusMiles),
   );
 }
-
-const milesProgressSchema = z
-  .object({
-    passenger: binding(passengerSchema),
-  })
-  .strict();
 
 export const milesProgressEntry = {
   name: 'MilesProgress',

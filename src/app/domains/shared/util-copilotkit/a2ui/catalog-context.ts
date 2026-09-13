@@ -1,7 +1,10 @@
+import {
+  type AngularCatalog,
+  type AngularComponentImplementation,
+  BASIC_COMPONENTS,
+} from '@a2ui/angular/v0_9';
 import { type Context } from '@ag-ui/core';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-
-import { type A2uiCustomCatalog } from './types';
 
 export const A2UI_SCHEMA_CONTEXT_DESCRIPTION =
   'A2UI Component Schema — available components for generating UI surfaces. Use these component names and properties when creating A2UI operations.';
@@ -9,30 +12,27 @@ export const A2UI_SCHEMA_CONTEXT_DESCRIPTION =
 type JsonSchema = Record<string, unknown>;
 type ZodSchemaArg = Parameters<typeof zodToJsonSchema>[0];
 
-interface CatalogComponentDescriptor {
-  name: string;
-  description?: string;
-  schema: unknown;
-}
+const basicComponentNames = new Set(
+  BASIC_COMPONENTS.map((component) => component.name),
+);
 
 function toInlineComponentSchema(
-  descriptor: CatalogComponentDescriptor,
+  component: AngularComponentImplementation,
 ): JsonSchema {
-  const json = zodToJsonSchema(descriptor.schema as ZodSchemaArg, {
+  const json = zodToJsonSchema(component.schema as unknown as ZodSchemaArg, {
     target: 'jsonSchema2019-09',
   }) as JsonSchema;
   const properties = (json['properties'] ?? {}) as JsonSchema;
   const required = (json['required'] ?? []) as string[];
+  const description = component.schema.description;
 
   return {
     allOf: [
       { $ref: 'common_types.json#/$defs/ComponentCommon' },
       {
-        ...(descriptor.description
-          ? { description: descriptor.description }
-          : {}),
+        ...(description ? { description } : {}),
         properties: {
-          component: { const: descriptor.name },
+          component: { const: component.name },
           ...properties,
         },
         required: ['component', ...required],
@@ -41,20 +41,11 @@ function toInlineComponentSchema(
   };
 }
 
-export function catalogToContextEntry(catalog: A2uiCustomCatalog): Context {
-  const descriptors: CatalogComponentDescriptor[] = catalog.components.map(
-    (component) => ({
-      name: component.name,
-      description: component.description,
-      schema: component.schema,
-    }),
-  );
-
+export function catalogToContextEntry(catalog: AngularCatalog): Context {
   const components = Object.fromEntries(
-    descriptors.map((descriptor) => [
-      descriptor.name,
-      toInlineComponentSchema(descriptor),
-    ]),
+    [...catalog.components.values()]
+      .filter((component) => !basicComponentNames.has(component.name))
+      .map((component) => [component.name, toInlineComponentSchema(component)]),
   );
 
   return {
