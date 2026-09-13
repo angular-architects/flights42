@@ -1,13 +1,10 @@
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
-import { USE_ACTION_CARDS } from '@flights42/feature-flags';
 
 import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget';
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
-import { bookFlightActionCard } from './action-cards/book-flight-action-card';
-import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
 import { TICKETING_AGENT_ID } from './agent-ids';
 import { checkInTool } from './tools/check-in.tool';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
@@ -17,10 +14,6 @@ import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 
 const widgets = [messageWidget, flightWidget];
-
-const actionCards = USE_ACTION_CARDS
-  ? [bookFlightActionCard, cancelFlightActionCard]
-  : [];
 
 export function injectTicketingAgentStore() {
   initAgentStore({
@@ -35,7 +28,6 @@ export function injectTicketingAgentStore() {
       displayFlightDetailTool,
       checkInTool,
     ],
-    toolCallRenderer: [...actionCards],
     components: widgets,
   });
 
