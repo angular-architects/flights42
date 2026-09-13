@@ -271,8 +271,12 @@ In diesem Repo läuft die Registrierung über `initAgentStore({ components })`
 (siehe `ticketing-agent-store.ts`); `createComponentTool` in
 `tool-definition.ts` hält Schema und Komponente typisiert zusammen und hängt
 für `followUp: false` denselben Hinweis an die Beschreibung wie
-`createFrontendTool`. Das Beispiel ist `destination-info-card.ts` im
-Ticketing-Domain-UI.
+`createFrontendTool`. Alle Widgets des Repos sind so registriert:
+`messageWidget`, `flightWidget`, `hotelWidget` und `planWidget` (seit
+2026-09-13 ohne den früheren Durchreiche-`handler`
+`async () => ({ shown: true })`) sowie `destinationInfoCard`. Ein
+`createFrontendTool` mit `component` bleibt den Tools vorbehalten, die
+zusätzlich Anwendungscode ausführen.
 
 Wann `registerComponent`, wann weiterhin `registerFrontendTool`:
 

@@ -2,10 +2,11 @@ import { computed, inject, type Signal } from '@angular/core';
 import { CopilotKit } from '@copilotkit/angular';
 
 /**
- * Names of the registered frontend tools that bring their own renderer, i.e.
- * the widgets. Tools without a component fall through to CopilotKit's built-in
- * default tool card (`defaultToolRendering`), so a set component identifies a
- * widget.
+ * Names of the registered client tools that bring their own renderer, i.e. the
+ * widgets: components registered via `registerComponent` and frontend tools
+ * with a `component`. Tools without a component fall through to CopilotKit's
+ * built-in default tool card (`defaultToolRendering`), so a set component
+ * identifies a widget.
  */
 export function injectWidgetToolNames(): Signal<ReadonlySet<string>> {
   const copilotKit = inject(CopilotKit);

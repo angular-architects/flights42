@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createFrontendTool } from '../../shared/util-copilotkit/tool-definition';
+import { createComponentTool } from '../../shared/util-copilotkit/tool-definition';
 import { HotelCard } from './hotel-card';
 
 const hotelSchema = z.object({
@@ -41,7 +41,7 @@ export class HotelWidget implements ToolRenderer<HotelWidgetArgs> {
   readonly toolCall = input.required<AngularToolCall<HotelWidgetArgs>>();
 }
 
-export const hotelWidget = createFrontendTool({
+export const hotelWidget = createComponentTool({
   name: 'hotelWidget',
   description: `
     Display card for a single hotel proposal (name, stars, image, city).
@@ -51,5 +51,4 @@ export const hotelWidget = createFrontendTool({
   parameters: hotelWidgetSchema,
   component: HotelWidget,
   followUp: false,
-  handler: async () => ({ shown: true }),
 });

@@ -9,7 +9,7 @@ import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
 import {
-  createFrontendTool,
+  createComponentTool,
   createRenderToolCall,
 } from '../../../shared/util-copilotkit/tool-definition';
 import { PLAN_WIDGET_TOOL_NAME, PlanHandoff } from '../plan/plan-handoff';
@@ -123,7 +123,7 @@ export class PlanWidget implements ToolRenderer<PlanCardArgs> {
   }
 }
 
-export const planWidget = createFrontendTool<PlanCardArgs>({
+export const planWidget = createComponentTool<PlanCardArgs>({
   name: PLAN_WIDGET_TOOL_NAME,
   description: `
     Renders the current co-plan. The plan itself is held in the client-side
@@ -138,7 +138,6 @@ export const planWidget = createFrontendTool<PlanCardArgs>({
   parameters: planWidgetSchema,
   component: PlanWidget,
   followUp: false,
-  handler: async () => ({ shown: true }),
 });
 
 export const planHandoffCard = createRenderToolCall({

@@ -8,7 +8,7 @@ import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { MarkdownComponent } from 'ngx-markdown';
 import { z } from 'zod';
 
-import { createFrontendTool } from '../../util-copilotkit/tool-definition';
+import { createComponentTool } from '../../util-copilotkit/tool-definition';
 
 const messageWidgetSchema = z.object({
   text: z.string().describe('Markdown-formatted text to show to the user'),
@@ -33,7 +33,7 @@ export class MessageWidget implements ToolRenderer<MessageWidgetArgs> {
   protected readonly text = computed(() => this.toolCall().args.text ?? '');
 }
 
-export const messageWidget = createFrontendTool({
+export const messageWidget = createComponentTool({
   name: 'messageWidget',
   description: `
     Renders a textual message to the user as Markdown.
@@ -43,5 +43,4 @@ export const messageWidget = createFrontendTool({
   parameters: messageWidgetSchema,
   component: MessageWidget,
   followUp: false,
-  handler: async () => ({ shown: true }),
 });

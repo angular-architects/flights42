@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createFrontendTool } from '../../shared/util-copilotkit/tool-definition';
+import { createComponentTool } from '../../shared/util-copilotkit/tool-definition';
 import { FlightStore } from '../data/flight-store';
 import { FlightCard } from './flight-card/flight-card';
 
@@ -85,7 +85,7 @@ export class FlightWidget implements ToolRenderer<FlightWidgetArgs> {
   }
 }
 
-export const flightWidget = createFrontendTool({
+export const flightWidget = createComponentTool({
   name: 'flightWidget',
   description: `
     Interactive card displaying one concrete flight.
@@ -96,5 +96,4 @@ export const flightWidget = createFrontendTool({
   parameters: flightWidgetSchema,
   component: FlightWidget,
   followUp: false,
-  handler: async () => ({ shown: true }),
 });

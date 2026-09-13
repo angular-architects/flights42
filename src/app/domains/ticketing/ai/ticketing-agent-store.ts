@@ -33,7 +33,6 @@ export function injectTicketingAgentStore() {
       toggleFlightSelectionTool,
       getCurrentBasketTool,
       displayFlightDetailTool,
-      ...widgets,
     ],
     toolCallRenderer: [
       ...(USE_ACTION_CARDS
@@ -41,7 +40,7 @@ export function injectTicketingAgentStore() {
         : []),
       planHandoffCard,
     ],
-    components: [destinationInfoCard],
+    components: [...widgets, destinationInfoCard],
   });
 
   return injectAgentStore(TICKETING_AGENT_ID);

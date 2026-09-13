@@ -38,6 +38,14 @@ export function createFrontendTool<Args extends Record<string, unknown>>(
   return tool;
 }
 
+/**
+ * Identity helper for a display-only component the agent can call to render
+ * it (registered via `registerComponent`): no handler, the tool call only
+ * shows the `component`. Gives the component args full type inference from
+ * the Zod `parameters` schema. Like `createFrontendTool`, it extends the
+ * description with the terminal hint when the component opts out of a
+ * follow-up turn (`followUp: false`).
+ */
 export function createComponentTool<Args extends Record<string, unknown>>(
   component: RegisterComponentConfig<Args>,
 ): RegisterComponentConfig<Args> {

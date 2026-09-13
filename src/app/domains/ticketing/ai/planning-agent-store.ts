@@ -41,9 +41,8 @@ export function injectPlanningAgentStore() {
       getLoadedFlightsTool,
       getCurrentBasketTool,
       ...planTools,
-      messageWidget,
-      planWidget,
     ],
+    components: [messageWidget, planWidget],
   });
 
   return injectAgentStore(PLANNING_AGENT_ID);

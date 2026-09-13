@@ -16,7 +16,7 @@ export function injectTravelRefinementAgentStore() {
     agentId: TRAVEL_REFINEMENT_AGENT_ID,
     url: inject(ConfigService).agUiUrlFor(TRAVEL_REFINEMENT_AGENT_ID),
     useServerMemory: true,
-    frontendTools: [...widgets],
+    components: [...widgets],
   });
 
   return injectAgentStore(TRAVEL_REFINEMENT_AGENT_ID);
