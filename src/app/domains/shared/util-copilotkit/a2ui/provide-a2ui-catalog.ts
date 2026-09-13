@@ -1,11 +1,9 @@
 import {
-  A2UI_RENDERER_CONFIG,
-  A2uiRendererService,
   type AngularComponentImplementation,
   BASIC_FUNCTIONS,
   BasicCatalog,
   BasicCatalogBase,
-  type RendererConfiguration,
+  provideA2Ui,
 } from '@a2ui/angular/v0_9';
 import type { FunctionImplementation } from '@a2ui/web_core/v0_9';
 import {
@@ -74,9 +72,9 @@ function toFunctionImplementation(
  * forwarded to the agent.
  *
  * With a descriptor a `BasicCatalogBase` (with `BASIC_FUNCTIONS` plus the
- * catalog's own functions) is built, registered at `A2UI_RENDERER_CONFIG`,
- * and the descriptor is stored at `A2UI_CUSTOM_CATALOG` so `initAgentStore`
- * can forward catalog metadata to each registered agent via
+ * catalog's own functions) is built, handed to the renderer via
+ * `provideA2Ui`, and the descriptor is stored at `A2UI_CUSTOM_CATALOG` so
+ * `initAgentStore` can forward catalog metadata to each registered agent via
  * `connectAgentContext`. Set `options.sendCatalogDescription: false` to
  * store (and thus forward) only the catalog id (recommended for production
  * with a trusted server-side registry).
@@ -86,15 +84,7 @@ export function provideA2uiCatalog(
   options?: ProvideA2uiCatalogOptions,
 ): EnvironmentProviders {
   if (!catalog) {
-    return makeEnvironmentProviders([
-      {
-        provide: A2UI_RENDERER_CONFIG,
-        useFactory: (): RendererConfiguration => ({
-          catalogs: [inject(BasicCatalog)],
-        }),
-      },
-      A2uiRendererService,
-    ]);
+    return provideA2Ui(() => ({ catalogs: [inject(BasicCatalog)] }));
   }
 
   const { sendCatalogDescription = true } = options ?? {};
@@ -108,10 +98,6 @@ export function provideA2uiCatalog(
     ],
   });
 
-  const rendererConfig: RendererConfiguration = {
-    catalogs: [rendererCatalog],
-  };
-
   // When the description must not leave the client, we strip components and
   // functions from the descriptor stored at the token. The renderer keeps the
   // full catalog above, so local rendering is unaffected.
@@ -121,7 +107,6 @@ export function provideA2uiCatalog(
 
   return makeEnvironmentProviders([
     { provide: A2UI_CUSTOM_CATALOG, useValue: storedCatalog },
-    { provide: A2UI_RENDERER_CONFIG, useValue: rendererConfig },
-    A2uiRendererService,
+    provideA2Ui({ catalogs: [rendererCatalog] }),
   ]);
 }
