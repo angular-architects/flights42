@@ -1,21 +1,10 @@
 import type { RunAgentInput } from '@ag-ui/core';
 import { MastraAgent } from '@ag-ui/mastra';
-import type { Agent } from '@mastra/core/agent';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 import { concatMap, lastValueFrom } from 'rxjs';
 
-async function ensureThread(agent: Agent, threadId: string): Promise<void> {
-  const memory = await agent.getMemory();
-  if (!memory) {
-    return;
-  }
-  const thread = await memory.getThreadById({ threadId });
-  if (thread) {
-    return;
-  }
-  await memory.createThread({ threadId, resourceId: threadId });
-}
+import { ensureThread } from './utils.js';
 
 export async function chatRouteHandler(
   c: ContextWithMastra,
