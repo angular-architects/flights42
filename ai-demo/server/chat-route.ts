@@ -1,13 +1,31 @@
 import type { RunAgentInput } from '@ag-ui/core';
 import { MastraAgent } from '@ag-ui/mastra';
+import type { Agent } from '@mastra/core/agent';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 import { concatMap, lastValueFrom } from 'rxjs';
+
+async function ensureThread(agent: Agent, threadId: string): Promise<void> {
+  const memory = await agent.getMemory();
+  if (!memory) {
+    return;
+  }
+  const thread = await memory.getThreadById({ threadId });
+  if (thread) {
+    return;
+  }
+  await memory.createThread({ threadId, resourceId: threadId });
+}
 
 export async function chatRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
   const input = (await c.req.json()) as RunAgentInput;
+
+  // Avoids the adapter's "No thread found" warning on a thread's first run;
+  // remove once https://github.com/ag-ui-protocol/ag-ui/pull/2662 has shipped.
+  await ensureThread(c.get('mastra').getAgent('weatherAgent'), input.threadId);
+
   const aguiAgent = MastraAgent.getLocalAgent({
     mastra: c.get('mastra'),
     agentId: 'weatherAgent',

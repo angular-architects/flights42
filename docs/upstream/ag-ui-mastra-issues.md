@@ -98,7 +98,8 @@ Proposal: treat a missing thread as "no stored messages" without logging.
 Local workaround until the PR ships: `ensureThread` in
 `ai-server/src/mastra/routes/route-utils.ts` creates the thread (resource id =
 thread id, matching the adapter's `resourceId`) before the run, so `recall()`
-finds it. Remove once `@ag-ui/mastra` contains the fix.
+finds it. The standalone `ai-demo/server/chat-route.ts` carries its own copy.
+Remove both once `@ag-ui/mastra` contains the fix.
 
 ## 7. Thread-scoped working memory cannot be seeded on a new thread — PR #2663
 
