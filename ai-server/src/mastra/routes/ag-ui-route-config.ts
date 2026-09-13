@@ -1,8 +1,7 @@
-import type { MCPClientConfig } from '@ag-ui/mcp-apps-middleware';
+import type { Middleware } from '@ag-ui/client';
 
 export interface AgUiRouteConfig {
-  mcpServers?: readonly MCPClientConfig[];
-  a2ui?: boolean;
+  middlewares?: readonly Middleware[];
   untilIdle?: boolean;
 }
 

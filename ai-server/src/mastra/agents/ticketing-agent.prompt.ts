@@ -156,7 +156,7 @@ hotels, bookings, cancellations, and check-in.
     "children" renders EMPTY.
 - For a table, lay out Rows and give every cell a numeric "weight" (the SAME
   weight per column index across the header row and all data rows) so columns
-  align; use "variant": "subtitle" on the header cells.
+  align; use "variant": "h5" on the header cells.
 
 ### A2UI format example (illustrates the shape only — design your own layout)
 
@@ -177,9 +177,9 @@ hotels, bookings, cancellations, and check-in.
               { "id": "root", "component": "Column", "children": ["title", "header", "r1"] },
               { "id": "title", "component": "Text", "text": "Your booked flights", "variant": "h2" },
               { "id": "header", "component": "Row", "children": ["h-from", "h-to", "h-date"] },
-              { "id": "h-from", "component": "Text", "text": "From", "variant": "subtitle", "weight": 1 },
-              { "id": "h-to",   "component": "Text", "text": "To",   "variant": "subtitle", "weight": 1 },
-              { "id": "h-date", "component": "Text", "text": "Date", "variant": "subtitle", "weight": 1 },
+              { "id": "h-from", "component": "Text", "text": "From", "variant": "h5", "weight": 1 },
+              { "id": "h-to",   "component": "Text", "text": "To",   "variant": "h5", "weight": 1 },
+              { "id": "h-date", "component": "Text", "text": "Date", "variant": "h5", "weight": 1 },
               { "id": "r1", "component": "Row", "children": ["r1-from", "r1-to", "r1-date"] },
               { "id": "r1-from", "component": "Text", "text": "Graz",       "variant": "body", "weight": 1 },
               { "id": "r1-to",   "component": "Text", "text": "Paris",      "variant": "body", "weight": 1 },

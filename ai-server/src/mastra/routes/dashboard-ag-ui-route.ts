@@ -26,12 +26,12 @@ import {
   dashboardSpecSchema,
 } from '../dashboard-dsl/dashboard-spec.js';
 import { RENDER_DASHBOARD_TOOL_NAME } from '../tools/render-dashboard.js';
+import { streamAgentEvents } from './ag-ui-stream.js';
 import {
   parseRunAgentInput,
   type SseWriter,
-  streamAgentEvents,
-} from './ag-ui-stream.js';
-import { withoutMemoryArgs } from './route-utils.js';
+  withoutMemoryArgs,
+} from './route-utils.js';
 
 const DASHBOARD_AGENT_ID = 'dashboardAgent';
 
@@ -79,6 +79,9 @@ export async function dashboardAgUiRouteHandler(
     agent: withoutMemoryArgs(mastraInstance.getAgent(DASHBOARD_AGENT_ID)),
     resourceId: DASHBOARD_AGENT_ID,
     requestContext,
+    threadId: input.threadId,
+    initialMessages: input.messages,
+    initialState: input.state,
   });
 
   // `c` is typed against @mastra/core's bundled hono, which is structurally

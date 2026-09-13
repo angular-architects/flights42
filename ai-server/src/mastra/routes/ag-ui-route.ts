@@ -1,10 +1,10 @@
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
-import { parseRunAgentInput, streamAgentEvents } from './ag-ui-stream.js';
+import { streamAgentEvents } from './ag-ui-stream.js';
 import {
   ensureThread,
-  middlewaresFor,
+  parseRunAgentInput,
   resolveResumeCommand,
   toAgUiAgent,
 } from './route-utils.js';
@@ -33,15 +33,18 @@ export async function agUiRouteHandler(
     );
   }
 
+  // Avoids the adapter's "No thread found" warning on a thread's first run;
+  // remove once ag-ui-protocol/ag-ui#2662 has shipped.
   await ensureThread(mastraAgent, input.threadId);
 
   // Resume takes the adapter's normal path (proxied agent, `resume` stripped):
   // its own resume branch drops clientTools — ag-ui-protocol/ag-ui#2667.
   const resumeCommand = resolveResumeCommand(input);
+
   const agUiAgent = toAgUiAgent({
     agentId,
     mastraAgent,
-    threadId: input.threadId,
+    input,
     requestContext,
     resumeCommand,
     adjustments: {
@@ -54,9 +57,7 @@ export async function agUiRouteHandler(
   return streamSSE(
     c as unknown as Parameters<typeof streamSSE>[0],
     async (sse) => {
-      await streamAgentEvents(sse, agUiAgent, runInput, {
-        middlewares: middlewaresFor(agentId),
-      });
+      await streamAgentEvents(sse, agUiAgent, runInput);
     },
   );
 }

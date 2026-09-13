@@ -968,7 +968,7 @@ function headerText(id: string, label: string): Component {
     id,
     component: 'Text',
     text: label,
-    variant: 'subtitle',
+    variant: 'h5',
     weight: 1,
   };
 }

@@ -1,12 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { TransformStream } from 'node:stream/web';
 
-import { A2UIMiddleware } from '@ag-ui/a2ui-middleware';
-import type { Middleware, RunAgentInput } from '@ag-ui/client';
+import type { RunAgentInput } from '@ag-ui/client';
 import { MastraAgent as AgUiAgent } from '@ag-ui/mastra';
-import { MCPAppsMiddleware } from '@ag-ui/mcp-apps-middleware';
 import type { Agent, AgentExecutionOptionsBase } from '@mastra/core/agent';
 import type { RequestContext } from '@mastra/core/request-context';
+import type { ContextWithMastra } from '@mastra/core/server';
 import type { ChunkType, MastraModelOutput } from '@mastra/core/stream';
 
 import { agUiRouteConfig } from './ag-ui-route-config.js';
@@ -32,25 +31,43 @@ type ResumeStreamOptions = Parameters<Agent['resumeStream']>[1];
 
 type ChunkStreamOutput = Pick<MastraModelOutput<undefined>, 'fullStream'>;
 
-const middlewareCache = new Map<string, readonly Middleware[]>();
+export interface SseWriter {
+  writeSSE(message: { data: string }): Promise<void>;
+}
 
-export function middlewaresFor(agentId: string): readonly Middleware[] {
-  const cached = middlewareCache.get(agentId);
-  if (cached) {
-    return cached;
+export type ParseRunAgentInputResult =
+  { ok: true; input: RunAgentInput } | { ok: false; response: Response };
+
+export async function parseRunAgentInput(
+  c: ContextWithMastra,
+): Promise<ParseRunAgentInputResult> {
+  let input: RunAgentInput;
+  try {
+    input = (await c.req.json()) as RunAgentInput;
+  } catch {
+    return {
+      ok: false,
+      response: c.json(
+        { error: 'invalid_request', message: 'Invalid JSON body' },
+        400,
+      ),
+    };
   }
-  const config = agUiRouteConfig[agentId] ?? {};
-  const middlewares: Middleware[] = [];
-  if (config.mcpServers && config.mcpServers.length > 0) {
-    middlewares.push(
-      new MCPAppsMiddleware({ mcpServers: [...config.mcpServers] }),
-    );
+
+  if (!input?.threadId || !input?.runId || !Array.isArray(input.messages)) {
+    return {
+      ok: false,
+      response: c.json(
+        {
+          error: 'invalid_request',
+          message: 'Missing threadId, runId, or messages',
+        },
+        400,
+      ),
+    };
   }
-  if (config.a2ui) {
-    middlewares.push(new A2UIMiddleware({ injectA2UITool: false }));
-  }
-  middlewareCache.set(agentId, middlewares);
-  return middlewares;
+
+  return { ok: true, input };
 }
 
 export function resolveResumeCommand(
@@ -189,7 +206,7 @@ export async function ensureThread(
 export interface AgUiAgentOptions {
   agentId: string;
   mastraAgent: Agent;
-  threadId: string;
+  input: RunAgentInput;
   requestContext: RequestContext;
   resumeCommand: ResumeCommand | null;
   adjustments?: RunAdjustments;
@@ -198,12 +215,12 @@ export interface AgUiAgentOptions {
 export function toAgUiAgent({
   agentId,
   mastraAgent,
-  threadId,
+  input,
   requestContext,
   resumeCommand,
   adjustments,
 }: AgUiAgentOptions): AgUiAgent {
-  const { untilIdle } = agUiRouteConfig[agentId] ?? {};
+  const { untilIdle, middlewares = [] } = agUiRouteConfig[agentId] ?? {};
   const base = withoutMemoryArgs(mastraAgent);
   const agent = withRunAdjustments(
     resumeCommand ? resumingAgent(base, resumeCommand) : base,
@@ -212,8 +229,11 @@ export function toAgUiAgent({
   return new AgUiAgent({
     agentId,
     agent,
-    resourceId: threadId,
+    resourceId: input.threadId,
     requestContext,
+    threadId: input.threadId,
+    initialMessages: input.messages,
+    initialState: input.state,
     ...(untilIdle ? { untilIdle: true } : {}),
-  });
+  }).use(...middlewares);
 }

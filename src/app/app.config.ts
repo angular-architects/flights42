@@ -29,6 +29,7 @@ export const appConfig: ApplicationConfig = {
       renderActivityMessages: [a2uiActivityRendererConfig],
       enableInspector: false,
     }),
+
     provideMCPApps(mcpAppsConfig),
 
     provideA2uiCatalog(customCatalog),
