@@ -10,7 +10,6 @@ import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
 import { bookFlightActionCard } from './action-cards/book-flight-action-card';
 import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
-import { a2uiEventContract } from './actions/a2ui-event-contract';
 import { TICKETING_AGENT_ID } from './agent-ids';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
@@ -28,7 +27,6 @@ export function injectTicketingAgentStore() {
     agentId: TICKETING_AGENT_ID,
     url: inject(ConfigService).agUiUrlFor(TICKETING_AGENT_ID),
     useServerMemory: true,
-    context: [a2uiEventContract],
     frontendTools: [
       findFlightsTool,
       getLoadedFlightsTool,
