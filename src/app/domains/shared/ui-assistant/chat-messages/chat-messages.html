@@ -21,28 +21,6 @@
   -->
 }
 
-@for (interrupt of interrupts(); track interrupt.id) {
-  <article class="msg assistant">
-    <div class="avatar">🤖</div>
-    <div>
-      <div class="bubble">
-        <p class="interrupt-message">{{ interrupt.message }}</p>
-        <div class="interrupt-actions">
-          @for (option of interrupt.options; track $index) {
-            <button
-              type="button"
-              class="btn btn-default"
-              (click)="resolveInterrupt(interrupt.id, option.payload)">
-              {{ option.label }}
-            </button>
-          }
-        </div>
-      </div>
-      <div class="meta"></div>
-    </div>
-  </article>
-}
-
 @if (pending()) {
   <article class="msg assistant">
     <div class="avatar">🤖</div>
