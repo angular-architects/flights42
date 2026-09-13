@@ -6,7 +6,10 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideCopilotKit } from '@copilotkit/angular';
-import { provideMCPApps } from '@copilotkit/angular/mcp-apps';
+import {
+  mcpAppsActivityRendererConfig,
+  provideMCPApps,
+} from '@copilotkit/angular/mcp-apps';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
@@ -22,6 +25,7 @@ export const appConfig: ApplicationConfig = {
 
     provideCopilotKit({
       defaultToolRendering: true,
+      renderActivityMessages: [mcpAppsActivityRendererConfig],
       enableInspector: false,
       a2ui: { catalog: customCatalog, includeSchema: false },
     }),
