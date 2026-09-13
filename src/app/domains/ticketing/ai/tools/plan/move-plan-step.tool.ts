@@ -1,8 +1,8 @@
 import { inject } from '@angular/core';
 import { z } from 'zod';
 
-import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
-import { PlanStore } from '../plan/plan-store';
+import { createFrontendTool } from '../../../../shared/util-copilotkit/tool-definition';
+import { PlanStore } from '../../plan/plan-store';
 
 export const movePlanStepTool = createFrontendTool({
   name: 'movePlanStep',
