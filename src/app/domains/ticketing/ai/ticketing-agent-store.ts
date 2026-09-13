@@ -12,8 +12,6 @@ import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 
-const widgets = [messageWidget, flightWidget];
-
 export function injectTicketingAgentStore() {
   initAgentStore({
     agentId: TICKETING_AGENT_ID,
@@ -26,7 +24,7 @@ export function injectTicketingAgentStore() {
       getCurrentBasketTool,
       displayFlightDetailTool,
     ],
-    components: widgets,
+    components: [messageWidget, flightWidget],
   });
 
   return injectAgentStore(TICKETING_AGENT_ID);
