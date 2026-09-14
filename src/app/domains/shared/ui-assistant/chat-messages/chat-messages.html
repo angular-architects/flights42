@@ -9,16 +9,33 @@
 </article>
 
 @for (message of messageViews(); track message.id) {
-  <!--
-  TODO: If we have message.text, display it in a message bubble
-  with the markdown component
-  -->
+  @if (message.text) {
+    <article class="msg {{ message.variant }}">
+      <div class="avatar">{{ message.avatar }}</div>
+      <div>
+        <div class="bubble">
+          <markdown [data]="message.text"></markdown>
+        </div>
+        <div class="meta"></div>
+      </div>
+    </article>
+  }
 
-  <!--
-  TODO: Display each tool call in message.toolCalls in its own
-  message bubble using the copilot-render-tool-calls component
-  (this is also how widgets like the flight cards are rendered)
-  -->
+  @for (call of message.toolCalls; track call.id) {
+    <article class="msg {{ message.variant }}">
+      <div class="avatar">{{ message.avatar }}</div>
+      <div>
+        <div class="bubble">
+          <copilot-render-tool-calls
+            [message]="call.message"
+            [messages]="messages()"
+            [agentId]="agentId()"
+            [isLoading]="pending()" />
+        </div>
+        <div class="meta"></div>
+      </div>
+    </article>
+  }
 }
 
 @if (pending()) {
