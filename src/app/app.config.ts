@@ -21,7 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideCopilotKit({
       defaultToolRendering: true,
       enableInspector: false,
-      // TODO: Enable A2UI rendering with the custom catalog
+      a2ui: { catalog: customCatalog, includeSchema: false },
     }),
 
     provideMarkdown(),
