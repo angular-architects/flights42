@@ -13,6 +13,9 @@ import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 
 export function injectTicketingAgentStore() {
+  // registerFrontendTool(...)
+  // registerComponent(...)
+
   initAgentStore({
     agentId: TICKETING_AGENT_ID,
     url: inject(ConfigService).agUiUrlFor(TICKETING_AGENT_ID),
