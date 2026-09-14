@@ -5,8 +5,7 @@ import { ticketingExtraComponents } from './ticketing-extra-components';
 
 export const customCatalog = createAngularCatalog(
   ticketingExtraComponents,
-  // TODO: map the name TicketWidget to our TicketWidget component
-  {},
+  { TicketWidget },
   {
     catalogId: 'https://example.com/catalogs/flights42-a2ui-demo',
     includeBasicCatalog: true,
