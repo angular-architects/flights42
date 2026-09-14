@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
 
@@ -19,8 +18,7 @@ export function injectTravelRefinementAgentStore() {
     url: inject(ConfigService).agUiUrlFor(TRAVEL_REFINEMENT_AGENT_ID),
     useServerMemory: true,
     components: [...widgets],
-    // TODO: Start with the initialTravelPlan as the agent's state
-    //       (initialState)
+    initialState: initialTravelPlan,
   });
 
   return injectAgentStore(TRAVEL_REFINEMENT_AGENT_ID);
