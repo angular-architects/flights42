@@ -85,9 +85,7 @@ export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
     if (this.planSnapshot.steps.length === 0) {
       return;
     }
-
-    // TODO: Hand the planSnapshot over for execution
-    //       (void this.planHandoff.execute)
+    void this.planHandoff.execute(this.planSnapshot);
   }
 }
 

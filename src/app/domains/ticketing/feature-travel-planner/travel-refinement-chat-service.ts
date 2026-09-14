@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
@@ -26,9 +25,9 @@ export class TravelRefinementChatService {
   public reset(): void {
     reset(this.agentStore);
     const preamble = buildPreferencePreamble(this.requestStore.preferences());
-
-    // TODO: If there is a preamble, add it as a developer message
-    //       (addDeveloperMessage with agentStore and preamble)
+    if (preamble) {
+      addDeveloperMessage(this.agentStore, preamble);
+    }
   }
 }
 
