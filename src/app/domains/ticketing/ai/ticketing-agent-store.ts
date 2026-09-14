@@ -14,8 +14,6 @@ import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 
-const widgets = [messageWidget, flightWidget, hotelWidget];
-
 export function injectTicketingAgentStore() {
   initAgentStore({
     agentId: TICKETING_AGENT_ID,
@@ -31,7 +29,7 @@ export function injectTicketingAgentStore() {
     // TODO: Add the action cards for bookFlight and cancelFlight
     //       to the toolCallRenderer list
     toolCallRenderer: [],
-    components: [...widgets, destinationInfoCard],
+    components: [messageWidget, flightWidget, hotelWidget, destinationInfoCard],
   });
 
   return injectAgentStore(TICKETING_AGENT_ID);
