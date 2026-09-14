@@ -1,15 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   ChangeDetectionStrategy,
   Component,
   inject,
   input,
-  signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
-import { unknown, z } from 'zod';
+import { z } from 'zod';
 
 import { createComponentTool } from '../../shared/util-copilotkit/tool-definition';
 import { FlightStore } from '../data/flight-store';
@@ -30,13 +27,10 @@ const flightSchema = z.object({
 });
 
 const flightWidgetSchema = z.object({
-  // TODO: describe the widget inputs (flight and status)
-  // HINT: use the above declared flightSchema
-  //       and a zod-based enum with the possible
-  //       states 'booked', 'other', and 'none'
+  flight: flightSchema,
+  status: z.enum(['booked', 'other', 'none']).describe('Status of the flight'),
 });
 
-// TODO: Infer typescript type FlightWidgetArgs from flightWidgetSchema
 type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
 
 @Component({
@@ -77,15 +71,10 @@ type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
     }
   `,
 })
-export class FlightWidget {
-  // TODO: Implement implements ToolRenderer<FlightWidgetArgs>
-
+export class FlightWidget implements ToolRenderer<FlightWidgetArgs> {
   private readonly store = inject(FlightStore);
 
-  // TODO: Get tool call from copilot kit
-  readonly toolCall = signal<any>({});
-
-  // TODO: Find out, how the toolCall object is used in the template
+  readonly toolCall = input.required<AngularToolCall<FlightWidgetArgs>>();
 
   protected isSelected(id: number): boolean {
     return this.store.basket()[id];
@@ -104,9 +93,7 @@ export const flightWidget = createComponentTool({
     For booked flights use status: "booked"; for search/current flights use status: "other".
     Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.
   `,
-  // TODO: register the flightWidgetSchema from above here (i/o z.object)
-  parameters: z.object(),
-  // TODO: register our FlightWidget here
-  component: {} as any,
+  parameters: flightWidgetSchema,
+  component: FlightWidget,
   followUp: false,
 });
