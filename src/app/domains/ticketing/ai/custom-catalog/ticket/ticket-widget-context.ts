@@ -4,9 +4,11 @@ import { binding } from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
 
 export const ticketWidgetSchema = z
   .object({
-    // TODO: describe the widget's props: ticketId (string or number),
-    //       from, to, date (strings), and an optional delay (number)
-    // HINT: wrap each value schema in the binding helper imported above
+    ticketId: binding(z.union([z.string(), z.number()])),
+    from: binding(z.string()),
+    to: binding(z.string()),
+    date: binding(z.string()),
+    delay: binding(z.number()).optional(),
   })
   .strict();
 
