@@ -1,10 +1,11 @@
 # A2UI simplification with stock building blocks
 
-Status: proposal, not executed. Written 2026-09-14 from a source-level
-analysis of the installed packages (`@ag-ui/mastra` 1.1.2,
-`@ag-ui/a2ui-middleware` 0.0.10, `@ag-ui/a2ui-toolkit` 0.0.4,
-`@copilotkit/shared` 1.70.1, `@a2ui/web_core` 0.10.6). Nothing in this
-document has been verified at runtime.
+Status: implemented 2026-09-14 as an uncommitted working-tree change and
+smoke-tested against the local dev server (results in "Verification").
+Written 2026-09-14 from a source-level analysis of the installed packages
+(`@ag-ui/mastra` 1.1.2, `@ag-ui/a2ui-middleware` 0.0.10,
+`@ag-ui/a2ui-toolkit` 0.0.4, `@copilotkit/shared` 1.70.1, `@a2ui/web_core`
+0.10.6).
 Related docs: [stock-adapter-migration.md](stock-adapter-migration.md)
 (phase D, variants A/B, draft #8),
 [upstream/ag-ui-mastra-issues.md](upstream/ag-ui-mastra-issues.md) (#2669).
@@ -269,6 +270,11 @@ Roughly −450 lines, no additional LLM call, no additional payload. If the
 readable custom section is kept, `catalog-context.ts` and
 `schema-example.ts` stay (~−290 instead).
 
+Actual after implementation: `ticketing-agent.prompt.ts` 253,
+`render-a2ui.tool.ts` 100, `catalog-context.ts` 39,
+`with-a2ui-instructions.ts` 26, `schema-example.ts` deleted;
+`git diff --stat` reports 137 insertions and 604 deletions.
+
 ## Implementation steps
 
 1. Add `"@ag-ui/a2ui-toolkit": "0.0.4"` as a direct dependency in the root
@@ -282,18 +288,30 @@ readable custom section is kept, `catalog-context.ts` and
 6. Run the linter with `--fix`.
 7. Smoke-test (next section) and record the results in this document.
 
+Steps 1–7 are done (2026-09-14, uncommitted).
+
 ## Verification
 
-| Scenario                                      | Pass criterion                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------------- |
-| "Gib mir meine Flüge als Tabelle"             | One surface, rows contain the booked flights, columns aligned.                  |
-| Booked flights as cards                       | Cards render content (Card → `child` → Column).                                 |
-| Flight search without from/to                 | One Card form; typed values arrive in `a2ui_form_response`; `findFlights` runs. |
-| Check-in button on a booked flight            | `checkIn` fires with a numeric `flightId`.                                      |
-| Custom catalog component requested explicitly | The custom component is used with valid props.                                  |
-| Validation error (e.g. unseeded binding)      | Model retries with the error text; no broken surface is painted.                |
-| Plain question ("Did I book Paris?")          | Widgets as before, no A2UI surface.                                             |
-| Dashboard                                     | Unchanged.                                                                      |
+Run on 2026-09-14 against `mastra dev` (bundle with the new code) through an
+HTTP client that mimics the Angular app: the custom-catalog context entry
+(`TicketWidget` only), the client tools `messageWidget`, `flightWidget`,
+`findFlights`, `getLoadedFlights`, server memory (only new messages per run).
+Booked flights at the time: 1 (Graz → Hamburg), 2 (Hamburg → Graz), 50
+(Wien → Klagenfurt), 516 (Graz → Paris).
+
+| Scenario                                      | Pass criterion                                                                  | Result                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| "Gib mir meine Flüge als Tabelle"             | One surface, rows contain the booked flights, columns aligned.                  | Pass. `findBookedFlightsTool`, then one `render_a2ui` call; header Row plus one Row per booked flight, cells share weights 1/2/3/1 per column, header cells `h5`. `createSurface.catalogId` is the client catalog id.                                                                                                                      |
+| Booked flights as cards                       | Cards render content (Card → `child` → Column).                                 | Pass. `List` template over `/flights` with Card → `child` → Column; data delivered via `updateDataModel` at `/`.                                                                                                                                                                                                                           |
+| Flight search without from/to                 | One Card form; typed values arrive in `a2ui_form_response`; `findFlights` runs. | Pass. Root Card with two TextFields bound to `/form/from` and `/form/to`, both seeded via `data`; the `submitAnswer` context references the same paths. The `a2ui_form_response` led to `findFlights({ from: "Graz", to: "Hamburg" })`, then one short `messageWidget`.                                                                    |
+| Check-in button on a booked flight            | `checkIn` fires with a numeric `flightId`.                                      | Pass. One Button per row with `{ "event": { "name": "checkIn", "context": { "flightId": <number> } } }` for ids 1, 2, 50, 516.                                                                                                                                                                                                             |
+| Custom catalog component requested explicitly | The custom component is used with valid props.                                  | Pass. "Zeig mir mein Ticket für Flug 50" → `TicketWidget` with `ticketId: 50`, `from`, `to`, ISO `date`, `delay: 30`, placed as a direct child of the root Column after a heading.                                                                                                                                                         |
+| Validation error (e.g. unseeded binding)      | Model retries with the error text; no broken surface is painted.                | Pass (provoked with a test prompt asking for an unseeded binding and no `root`). First call rejected with `unresolved_binding` and `no_root`; the model retried with seeded `data` and a `root`; only the valid surface was painted. The rejected call has no `TOOL_CALL_RESULT` event in the AG-UI stream (adapter behaviour, unchanged). |
+| Plain question ("Did I book Paris?")          | Widgets as before, no A2UI surface.                                             | Pass. `messageWidget` plus `flightWidget` (516, `booked`), no surface.                                                                                                                                                                                                                                                                     |
+| Dashboard                                     | Unchanged.                                                                      | Pass. `renderDashboard` compiled with the client catalog id, no `RUN_ERROR`.                                                                                                                                                                                                                                                               |
+
+Not tried: the optional server-side validation catalog and the readable
+custom section (both still open, see "Risks and open questions").
 
 ## Risks and open questions
 

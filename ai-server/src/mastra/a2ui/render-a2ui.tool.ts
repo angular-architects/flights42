@@ -1,231 +1,100 @@
 import {
-  type A2uiMessage,
-  A2uiMessageListWrapperSchema,
-} from '@a2ui/web_core/v0_9';
-import { A2UI_OPERATIONS_KEY } from '@ag-ui/a2ui-middleware';
+  A2UI_OPERATIONS_KEY,
+  assembleOps,
+  formatValidationErrors,
+  validateA2UIComponents,
+} from '@ag-ui/a2ui-toolkit';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-export const RENDER_A2UI_TOOL_NAME = 'renderA2uiTool';
+import {
+  A2UI_DEFAULT_CATALOG_ID,
+  readAgUiContext,
+  readCatalogId,
+} from './catalog-context.js';
 
-type CreateSurfaceMsg = Extract<A2uiMessage, { createSurface: unknown }>;
-type UpdateComponentsMsg = Extract<A2uiMessage, { updateComponents: unknown }>;
+export const RENDER_A2UI_TOOL_NAME = 'render_a2ui';
 
-type ComponentEntry = Record<string, unknown> & {
-  id?: unknown;
-  component?: unknown;
-  child?: unknown;
-  children?: unknown;
-};
+export const renderA2uiInputSchema = z.object({
+  surfaceId: z
+    .string()
+    .describe('Unique id for the surface, e.g. "booked-flights-table".'),
+  components: z
+    .array(z.record(z.string(), z.unknown()))
+    .describe(
+      'Flat A2UI v0.9 component array. Exactly one entry must have id "root".',
+    ),
+  data: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe(
+      'Initial surface data model for { "path": "/..." } bindings (forms, lists).',
+    ),
+});
+export type RenderA2uiInput = z.infer<typeof renderA2uiInputSchema>;
+
+type ComponentEntry = Record<string, unknown>;
 
 const SINGLE_CHILD_COMPONENTS = new Set(['Card', 'Button', 'Modal']);
 const MULTI_CHILD_COMPONENTS = new Set(['Row', 'Column', 'List']);
 
-function getMessageSurfaceId(message: A2uiMessage): string {
-  if ('createSurface' in message) {
-    return message.createSurface.surfaceId;
-  }
-  if ('updateComponents' in message) {
-    return message.updateComponents.surfaceId;
-  }
-  if ('updateDataModel' in message) {
-    return message.updateDataModel.surfaceId;
-  }
-  if ('deleteSurface' in message) {
-    return message.deleteSurface.surfaceId;
-  }
-  throw new Error(
-    'renderA2uiTool: encountered message without recognizable type',
-  );
-}
-
-function collectReferencedChildIds(components: ComponentEntry[]): string[] {
-  const ids: string[] = [];
+function childShapeErrors(components: ComponentEntry[]): string[] {
+  const errors: string[] = [];
   for (const component of components) {
-    const child = component['child'];
-    if (typeof child === 'string') {
-      ids.push(child);
+    const name = component['component'];
+    if (typeof name !== 'string') {
+      continue;
     }
-    const children = component['children'];
-    if (Array.isArray(children)) {
-      for (const entry of children) {
-        if (typeof entry === 'string') {
-          ids.push(entry);
-        }
-      }
+    const id =
+      typeof component['id'] === 'string' ? component['id'] : '<unknown>';
+    if (
+      SINGLE_CHILD_COMPONENTS.has(name) &&
+      Array.isArray(component['children'])
+    ) {
+      errors.push(
+        `- [child_shape] components[id=${id}]: ${name} uses "children", but ${name} takes a SINGLE "child" (one component id). To show multiple elements, wrap them in a Column or Row and set that container's id as "child".`,
+      );
     }
-  }
-  return ids;
-}
-
-function validateChildShape(messages: A2uiMessage[]): void {
-  const updateComponentsMessages = messages.filter(
-    (m): m is UpdateComponentsMsg => 'updateComponents' in m,
-  );
-
-  for (const message of updateComponentsMessages) {
-    const components = message.updateComponents.components as ComponentEntry[];
-    for (const component of components) {
-      const name = component['component'];
-      if (typeof name !== 'string') {
-        continue;
-      }
-
-      const id =
-        typeof component['id'] === 'string' ? component['id'] : '<unknown>';
-
-      if (
-        SINGLE_CHILD_COMPONENTS.has(name) &&
-        Array.isArray(component['children'])
-      ) {
-        throw new Error(
-          `renderA2uiTool: component "${id}" (${name}) uses "children", but ${name} takes a SINGLE "child" (one component id). To show multiple elements, wrap them in a Column or Row and set that container's id as "child".`,
-        );
-      }
-
-      if (
-        MULTI_CHILD_COMPONENTS.has(name) &&
-        typeof component['child'] === 'string'
-      ) {
-        throw new Error(
-          `renderA2uiTool: component "${id}" (${name}) uses "child", but ${name} takes a "children" array of component ids.`,
-        );
-      }
+    if (
+      MULTI_CHILD_COMPONENTS.has(name) &&
+      typeof component['child'] === 'string'
+    ) {
+      errors.push(
+        `- [child_shape] components[id=${id}]: ${name} uses "child", but ${name} takes a "children" array of component ids.`,
+      );
     }
   }
-}
-
-function validateReferentialIntegrity(messages: A2uiMessage[]): void {
-  const updateComponentsMessages = messages.filter(
-    (m): m is UpdateComponentsMsg => 'updateComponents' in m,
-  );
-
-  for (const message of updateComponentsMessages) {
-    const components = message.updateComponents.components as ComponentEntry[];
-
-    const definedIds = new Set<string>();
-    for (const component of components) {
-      const id = component['id'];
-      if (typeof id === 'string') {
-        definedIds.add(id);
-      }
-    }
-
-    for (const referencedId of collectReferencedChildIds(components)) {
-      if (!definedIds.has(referencedId)) {
-        throw new Error(
-          `renderA2uiTool: component id "${referencedId}" is referenced via child/children but is not defined in updateComponents.components`,
-        );
-      }
-    }
-  }
-}
-
-function parseMessages(inputData: unknown): A2uiMessage[] {
-  try {
-    const parsed = A2uiMessageListWrapperSchema.parse(inputData) as {
-      messages: A2uiMessage[];
-    };
-    return parsed.messages;
-  } catch (err) {
-    const issues = (err as { issues?: unknown }).issues;
-    if (Array.isArray(issues)) {
-      const summary = issues
-        .slice(0, 5)
-        .map((issue: { path?: unknown[]; message?: string }) => {
-          const path = (issue.path ?? []).join('.') || '<root>';
-          return `${path}: ${issue.message ?? 'invalid'}`;
-        })
-        .join('; ');
-      throw new Error(`renderA2uiTool: schema validation failed — ${summary}`);
-    }
-    throw err;
-  }
+  return errors;
 }
 
 export const renderA2uiTool = createTool({
   id: RENDER_A2UI_TOOL_NAME,
-  description: `
-    Render the final answer to the user as an A2UI surface.
-
-    Input is a wrapper object of the shape \`{ messages: A2uiMessage[] }\` containing a
-    complete, self-contained sequence of A2UI v0.9 messages for a single surface. The
-    sequence MUST contain:
-      1) exactly one \`createSurface\` message with a fresh \`surfaceId\` (any unique string)
-         and the \`catalogId\` given in the system instructions.
-      2) exactly one \`updateComponents\` message for the same \`surfaceId\`. Its \`components\`
-         array MUST define an entry with \`id: "root"\` of component type \`Column\` whose
-         \`children\` list the top-level blocks of the answer.
-      3) any number of \`updateDataModel\` messages for the same \`surfaceId\` to supply the
-         values bound via \`{ path: "/..." }\` references inside the components.
-
-    Rules:
-    - All messages MUST use \`version: "v0.9"\` and share the same \`surfaceId\`.
-    - Every id referenced via \`child\` / \`children\` MUST be defined in the same
-      \`updateComponents.components\` array.
-    - Any component from the A2UI basic catalog may be used (Column, Row, Card, Text,
-      Button, TextField, CheckBox, Image, ...).
-    - Container nesting: Row, Column and List take a \`children\` ARRAY of ids. Card,
-      Button and Modal take a SINGLE \`child\` (one id), NOT \`children\` — to place
-      several elements in a Card, wrap them in a Column/Row and pass that container
-      id as the Card \`child\`. A Card with \`children\` renders EMPTY.
-    - Bind dynamic values via \`{ path: "/..." }\` and provide the data through
-      \`updateDataModel\`.
-  `,
-  inputSchema: z.object({
-    messages: z
-      .array(z.record(z.string(), z.unknown()))
-      .describe(
-        'Ordered list of A2UI v0.9 messages for a single surface (createSurface, updateComponents, updateDataModel).',
+  description:
+    'Render a custom A2UI surface. Follow the A2UI Protocol Instructions in the system prompt.',
+  inputSchema: renderA2uiInputSchema,
+  execute: async ({ surfaceId, components, data }, context) => {
+    const report = [
+      formatValidationErrors(
+        validateA2UIComponents({ components, data }).errors,
       ),
-  }),
-  execute: async (inputData: unknown) => {
-    const messages = parseMessages(inputData);
-
-    if (messages.length === 0) {
-      throw new Error('renderA2uiTool: messages array must not be empty');
+      ...childShapeErrors(components),
+    ]
+      .filter((line) => line.length > 0)
+      .join('\n');
+    if (report.length > 0) {
+      throw new Error(`${RENDER_A2UI_TOOL_NAME}: invalid surface\n${report}`);
     }
 
-    const createSurfaceMessages = messages.filter(
-      (m): m is CreateSurfaceMsg => 'createSurface' in m,
-    );
-    if (createSurfaceMessages.length !== 1) {
-      throw new Error(
-        `renderA2uiTool: expected exactly one createSurface message, got ${createSurfaceMessages.length}`,
-      );
-    }
-
-    const updateComponentsMessages = messages.filter(
-      (m): m is UpdateComponentsMsg => 'updateComponents' in m,
-    );
-    if (updateComponentsMessages.length !== 1) {
-      throw new Error(
-        `renderA2uiTool: expected exactly one updateComponents message, got ${updateComponentsMessages.length}`,
-      );
-    }
-
-    const surfaceId = createSurfaceMessages[0].createSurface.surfaceId;
-    for (const message of messages) {
-      if (getMessageSurfaceId(message) !== surfaceId) {
-        throw new Error(
-          `renderA2uiTool: all messages must share the same surfaceId (expected "${surfaceId}")`,
-        );
-      }
-    }
-
-    const rootDefined = (
-      updateComponentsMessages[0].updateComponents
-        .components as ComponentEntry[]
-    ).some((component) => component['id'] === 'root');
-    if (!rootDefined) {
-      throw new Error(
-        'renderA2uiTool: updateComponents.components must define a component with id "root"',
-      );
-    }
-
-    validateChildShape(messages);
-    validateReferentialIntegrity(messages);
-
-    return { surfaceId, [A2UI_OPERATIONS_KEY]: messages };
+    const catalogId =
+      readCatalogId(readAgUiContext(context.requestContext)) ??
+      A2UI_DEFAULT_CATALOG_ID;
+    const operations = assembleOps({
+      intent: 'create',
+      surfaceId,
+      catalogId,
+      components,
+      data,
+    });
+    return { surfaceId, [A2UI_OPERATIONS_KEY]: operations };
   },
 });
