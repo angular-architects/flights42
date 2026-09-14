@@ -12,9 +12,7 @@ export const ticketFlightSchema = z.object({
 
 export const ticketWidgetSchema = z
   .object({
-    // TODO: describe the widget's prop flight
-    // HINT: use the above declared ticketFlightSchema and wrap it
-    //       in the binding helper imported above
+    flight: binding(ticketFlightSchema),
   })
   .strict();
 
