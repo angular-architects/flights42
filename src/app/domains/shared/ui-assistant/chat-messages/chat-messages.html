@@ -8,22 +8,22 @@
   </div>
 </article>
 
-@for (view of views(); track view.id) {
-  @if (view.text) {
-    <article class="msg {{ view.variant }}">
-      <div class="avatar">{{ view.avatar }}</div>
+@for (message of messageViews(); track message.id) {
+  @if (message.text) {
+    <article class="msg {{ message.variant }}">
+      <div class="avatar">{{ message.avatar }}</div>
       <div>
         <div class="bubble">
-          <markdown [data]="view.text"></markdown>
+          <markdown [data]="message.text"></markdown>
         </div>
         <div class="meta"></div>
       </div>
     </article>
   }
 
-  @for (call of view.toolCalls; track call.id) {
-    <article class="msg {{ view.variant }}">
-      <div class="avatar">{{ view.avatar }}</div>
+  @for (call of message.toolCalls; track call.id) {
+    <article class="msg {{ message.variant }}">
+      <div class="avatar">{{ message.avatar }}</div>
       <div>
         <div class="bubble">
           <copilot-render-tool-calls
@@ -37,10 +37,10 @@
     </article>
   }
 
-  @if (view.activity) {
-    @let activity = view.activity;
-    <article class="msg {{ view.variant }}">
-      <div class="avatar">{{ view.avatar }}</div>
+  @if (message.activity) {
+    @let activity = message.activity;
+    <article class="msg {{ message.variant }}">
+      <div class="avatar">{{ message.avatar }}</div>
       <div>
         <div class="bubble" [class.bubble--a2ui]="activity.isSurface">
           <app-copilot-activity

@@ -80,7 +80,9 @@ export class ChatMessages {
 
   private readonly resolvedInterruptId = signal<string | null>(null);
 
-  protected readonly views = computed(() => toMessageViews(this.messages()));
+  protected readonly messageViews = computed(() =>
+    toMessageViews(this.messages()),
+  );
 
   protected readonly interrupts = computed(() =>
     toInterruptModels(this.pendingInterrupts(), this.resolvedInterruptId()),
