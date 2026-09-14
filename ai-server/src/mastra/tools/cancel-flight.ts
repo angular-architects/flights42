@@ -62,7 +62,7 @@ export const cancelFlightTool = createTool({
     const resumeData = context?.agent?.resumeData;
     const suspend = context?.agent?.suspend;
 
-    if (resumeData?.approved === false) {
+    if (resumeData && !resumeData.approved) {
       return {
         ok: false as const,
         result: `Cancellation of flight ${flightId} was cancelled by the user.`,
@@ -80,7 +80,7 @@ export const cancelFlightTool = createTool({
 
     const flight = await fetchFlight(flightId).catch(() => null);
 
-    if (USE_APPROVAL && resumeData?.approved !== true) {
+    if (USE_APPROVAL && !resumeData) {
       const flightContext = flight
         ? ` from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}`
         : '';
