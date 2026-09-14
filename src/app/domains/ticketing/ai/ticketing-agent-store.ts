@@ -7,6 +7,8 @@ import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { destinationInfoCard } from '../ui/destination-info-card';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
+import { bookFlightActionCard } from './action-cards/book-flight-action-card';
+import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
 import { TICKETING_AGENT_ID } from './agent-ids';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
@@ -26,9 +28,7 @@ export function injectTicketingAgentStore() {
       getCurrentBasketTool,
       displayFlightDetailTool,
     ],
-    // TODO: Add the action cards for bookFlight and cancelFlight
-    //       to the toolCallRenderer list
-    toolCallRenderer: [],
+    toolCallRenderer: [bookFlightActionCard, cancelFlightActionCard],
     components: [messageWidget, flightWidget, hotelWidget, destinationInfoCard],
   });
 
