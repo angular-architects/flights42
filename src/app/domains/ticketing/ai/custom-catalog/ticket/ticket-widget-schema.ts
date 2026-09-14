@@ -15,9 +15,7 @@ export const ticketSchema = z.object({
 
 export const ticketWidgetSchema = z
   .object({
-    // TODO: describe the widget's prop ticket
-    // HINT: use the above declared ticketSchema and wrap it
-    //       in the binding helper imported above
+    ticket: binding(ticketSchema),
   })
   .strict();
 
