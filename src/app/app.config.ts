@@ -13,6 +13,7 @@ import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
+import { a2uiActivityRendererConfig } from './domains/shared/util-copilotkit/a2ui/a2ui-activity-renderer';
 import { provideA2uiCatalog } from './domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
 import { mcpAppsConfig } from './mcp-apps.config';
@@ -25,8 +26,7 @@ export const appConfig: ApplicationConfig = {
 
     provideCopilotKit({
       defaultToolRendering: true,
-      // TODO: Register the A2UI activity renderer
-      renderActivityMessages: [],
+      renderActivityMessages: [a2uiActivityRendererConfig],
       enableInspector: false,
     }),
 
