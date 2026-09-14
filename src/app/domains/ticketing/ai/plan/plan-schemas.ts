@@ -38,7 +38,3 @@ export const planSnapshotSchema = z.object({
 });
 
 export type PlanSnapshot = z.infer<typeof planSnapshotSchema>;
-
-export const planCardArgsSchema = planSnapshotSchema.partial();
-
-export type PlanCardArgs = z.infer<typeof planCardArgsSchema>;

@@ -8,20 +8,16 @@ import {
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import {
-  createComponentTool,
-  createRenderToolCall,
-} from '../../../shared/util-copilotkit/tool-definition';
-import { PLAN_WIDGET_TOOL_NAME, PlanHandoff } from '../plan/plan-handoff';
-import {
-  PlanCardArgs,
-  planCardArgsSchema,
-  PlanSnapshot,
-  PlanStep,
-} from '../plan/plan-schemas';
+import { createComponentTool } from '../../../shared/util-copilotkit/tool-definition';
+import { PlanHandoff } from '../plan/plan-handoff';
+import { PlanSnapshot, PlanStep } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
 
+const PLAN_WIDGET_TOOL_NAME = 'planWidget';
+
 const planWidgetSchema = z.object({});
+
+type PlanWidgetArgs = z.infer<typeof planWidgetSchema>;
 
 @Component({
   selector: 'app-plan-widget',
@@ -55,31 +51,25 @@ const planWidgetSchema = z.object({});
           </ol>
         }
 
-        @if (!handoff()) {
-          <div class="plan-actions">
-            <button
-              type="button"
-              class="execute-btn"
-              [disabled]="snapshot.steps.length === 0"
-              (click)="execute()">
-              Execute
-            </button>
-          </div>
-        }
+        <div class="plan-actions">
+          <button
+            type="button"
+            class="execute-btn"
+            [disabled]="snapshot.steps.length === 0"
+            (click)="execute()">
+            Execute
+          </button>
+        </div>
       </div>
     }
   `,
   styleUrls: ['./plan-widget.css'],
 })
-export class PlanWidget implements ToolRenderer<PlanCardArgs> {
+export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
   private readonly store = inject(PlanStore);
   private readonly planHandoff = inject(PlanHandoff);
 
-  readonly toolCall = input.required<AngularToolCall<PlanCardArgs>>();
-
-  protected readonly handoff = computed(
-    () => this.toolCall().args.steps !== undefined,
-  );
+  readonly toolCall = input.required<AngularToolCall<PlanWidgetArgs>>();
 
   // The plan lives in a mutable store; each rendered card must freeze the plan
   // as it was the moment its tool call finished. Snapshot once (skipping the
@@ -90,17 +80,13 @@ export class PlanWidget implements ToolRenderer<PlanCardArgs> {
     if (this.frozen) {
       return this.frozen;
     }
-    const call = this.toolCall();
-    if (call.status === 'in-progress') {
+    if (this.toolCall().status === 'in-progress') {
       return null;
     }
-    this.frozen =
-      call.args.steps !== undefined
-        ? { title: call.args.title ?? '', steps: call.args.steps }
-        : {
-            title: this.store.title(),
-            steps: this.store.steps().map((step) => ({ ...step })),
-          };
+    this.frozen = {
+      title: this.store.title(),
+      steps: this.store.steps().map((step) => ({ ...step })),
+    };
     return this.frozen;
   });
 
@@ -123,7 +109,7 @@ export class PlanWidget implements ToolRenderer<PlanCardArgs> {
   }
 }
 
-export const planWidget = createComponentTool<PlanCardArgs>({
+export const planWidget = createComponentTool<PlanWidgetArgs>({
   name: PLAN_WIDGET_TOOL_NAME,
   description: `
     Renders the current co-plan. The plan itself is held in the client-side
@@ -138,10 +124,4 @@ export const planWidget = createComponentTool<PlanCardArgs>({
   parameters: planWidgetSchema,
   component: PlanWidget,
   followUp: false,
-});
-
-export const planHandoffCard = createRenderToolCall({
-  name: PLAN_WIDGET_TOOL_NAME,
-  args: planCardArgsSchema,
-  component: PlanWidget,
 });

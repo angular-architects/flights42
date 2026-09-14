@@ -16,11 +16,14 @@ import { findFlightsTool } from './tools/find-flights.tool';
 import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
-import { planHandoffCard } from './widgets/plan-widget';
 
 const widgets = USE_MCP
   ? [messageWidget, flightWidget]
   : [messageWidget, flightWidget, hotelWidget];
+
+const actionCards = USE_ACTION_CARDS
+  ? [bookFlightActionCard, cancelFlightActionCard]
+  : [];
 
 export function injectTicketingAgentStore() {
   initAgentStore({
@@ -34,12 +37,7 @@ export function injectTicketingAgentStore() {
       getCurrentBasketTool,
       displayFlightDetailTool,
     ],
-    toolCallRenderer: [
-      ...(USE_ACTION_CARDS
-        ? [bookFlightActionCard, cancelFlightActionCard]
-        : []),
-      planHandoffCard,
-    ],
+    toolCallRenderer: [...actionCards],
     components: [...widgets, destinationInfoCard],
   });
 
