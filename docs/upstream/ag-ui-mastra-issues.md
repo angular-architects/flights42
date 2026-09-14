@@ -86,6 +86,13 @@ Proposal: either emit the `TOOL_CALL_*` triple on resume before the result,
 or document that HITL rendering for suspendable Mastra tools must use the
 interrupt payload instead of the tool call.
 
+Closed upstream 2026-09-11 (completed). With `@ag-ui/mastra` 1.1.4 installed
+the resume path replays `TOOL_CALL_START/ARGS/END` for the resumed call
+before its `TOOL_CALL_RESULT` (observed 2026-09-14); the client-side
+`ResumedToolCallMiddleware`, which synthesized that triple, was removed the
+same day. The initial run still carries no tool call for the suspended tool,
+so HITL rendering there keeps using the interrupt payload.
+
 ## 6. `selectNewMessages` warns on every first run of a thread — PR #2662
 
 `memory.recall()` throws `No thread found with id …` for a thread that does

@@ -141,8 +141,7 @@ can be registered directly.
 [{ ...HOTELS_MCP_SERVER, agentId: 'ticketingAgent' }] } })`; `untilIdle`
    from `agUiRouteConfig` into each agent's config; mount the handler.
 5. Client: `agUiUrlFor(id)` → `<base>/agent/<id>/run`; client middlewares
-   (`SentFilterMiddleware`, `developerMessagesAsUser`,
-   `ResumedToolCallMiddleware`) stay as they are.
+   (`SentFilterMiddleware`, `developerMessagesAsUser`) stay as they are.
 6. Decide the dashboard route (keep vs middleware).
 7. Smoke: book/cancel card approval → `messageWidget` follows; plan handoff
    plan → execution; MCP hotels; A2UI form round trip; travel refinement

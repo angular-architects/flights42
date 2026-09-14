@@ -502,7 +502,9 @@ Each piece is removable once its upstream fix lands.
   `registerRenderToolCall` renderers see the call. Attached after the
   sent-filter so the synthesized messages are marked sent and never re-sent
   (Mastra memory holds the canonical copies). Mastra-specific by design:
-  `toolName`/`args` exist nowhere else on the wire.
+  `toolName`/`args` exist nowhere else on the wire. Removed 2026-09-14: with
+  `@ag-ui/mastra` 1.1.4 the adapter replays the triple itself on resume
+  (#2668), so the middleware only duplicated `TOOL_CALL_START`.
 - **A2UI table, draft #8 — variant B.** `renderA2uiTool` (v0.9 message
   contract, validation as before) returns `{ surfaceId, a2ui_operations }`;
   `A2UIMiddleware({ injectA2UITool: false })` in the route paints the

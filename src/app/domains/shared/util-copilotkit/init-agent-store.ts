@@ -23,7 +23,6 @@ import {
   attachSentFilter,
   developerMessagesAsUser,
   forwardedPropsMiddleware,
-  ResumedToolCallMiddleware,
 } from './agent-middlewares';
 
 export interface InitAgentStoreConfig {
@@ -65,7 +64,6 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   if (config.useServerMemory) {
     attachSentFilter(httpAgent);
   }
-  httpAgent.use(new ResumedToolCallMiddleware());
 
   connectCatalogContext(config.agentId);
 
