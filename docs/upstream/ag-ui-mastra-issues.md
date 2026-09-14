@@ -35,11 +35,10 @@ Proposal: map `tripwire` to a `TEXT_MESSAGE_*` sequence carrying either
 string` on `MastraAgentConfig`, then finish the run normally. Alternative:
 emit `RUN_ERROR` with `code: 'tripwire'`.
 
-Local workaround until the PR ships: `withRunAdjustments` in
-`ai-server/src/mastra/routes/route-utils.ts` pipes the Mastra `fullStream`
-through a `TransformStream` that rewrites the `tripwire` chunk into text
-chunks carrying the route's `tripwireMessage`. Remove once `@ag-ui/mastra`
-contains the fix.
+Released in `@ag-ui/mastra` 1.1.4 (2026-09-14): the adapter emits
+`payload.reason` (or "The response was blocked by a processor.") as text. The
+local `tripwireMessage` rewrite in `route-utils.ts` was removed the same day;
+a custom wording now belongs in the processor's `abort(reason)`.
 
 ## 2. `reasoning-delta` is always routed to `REASONING_*` — Issue #2666
 
@@ -95,12 +94,9 @@ The warning is expected noise on every new conversation.
 
 Proposal: treat a missing thread as "no stored messages" without logging.
 
-Local workaround until the PR ships: `ensureThread` in
-`ai-server/src/mastra/routes/route-utils.ts` creates the thread (resource id =
-thread id, matching the adapter's `resourceId`) before the run, so `recall()`
-finds it. The standalone demo server carries its own copy in
-`ai-demo/server/utils.ts` (called from `chat-route.ts`).
-Remove both once `@ag-ui/mastra` contains the fix.
+Released in `@ag-ui/mastra` 1.1.4 (2026-09-14). The local `ensureThread`
+workaround in `route-utils.ts` and its copy in `ai-demo/server/utils.ts` were
+removed the same day.
 
 ## 7. Thread-scoped working memory cannot be seeded on a new thread — PR #2663
 

@@ -98,10 +98,12 @@ envelope.
 
 The adapter buffers a server tool's `tool-call` chunk and emits
 `TOOL_CALL_START/ARGS/END` with the complete args. Live start events for
-server tools are opt-in via #2403 (merged 2026-09-14, not released; latest
-`@ag-ui/mastra` is 1.1.3 from 2026-09-08). The middleware's streaming path
-would therefore bring no progressive rendering today, and it would paint the
-surface from the args before our `execute` validation has run.
+server tools are opt-in via #2403, released in `@ag-ui/mastra` 1.1.4 as
+`streamServerToolCalls` (installed 2026-09-14, left off: a streamed call
+cannot be retracted, which makes the option unsuitable for the suspending
+book/cancel tools). The middleware's streaming path would therefore bring no
+progressive rendering today, and it would paint the surface from the args
+before our `execute` validation has run.
 
 ## Target design: flat variant B on stock building blocks
 
@@ -244,7 +246,7 @@ new A2UIMiddleware({ injectA2UITool: false, a2uiToolNames: [] });
 streaming path for our tool. Disable it: server tool args arrive complete
 anyway (see findings), and the streaming path would paint before `execute`
 validates. The result envelope keeps painting the surface as today.
-Revisit after #2403 is released.
+Revisit if `streamServerToolCalls` (#2403, in 1.1.4) is ever enabled.
 
 ### 5. Unchanged
 
@@ -329,8 +331,9 @@ custom section (both still open, see "Risks and open questions").
 
 ## Later: stock `generate_a2ui` (variant A)
 
-Preconditions: #2669 fixed and released; #2691 released (a resumed run gets
-the auto-injected A2UI toolset — needed after book/cancel approvals).
+Preconditions: #2669 fixed and released. #2691 (a resumed run gets the
+auto-injected A2UI toolset — needed after book/cancel approvals) shipped in
+`@ag-ui/mastra` 1.1.4 and is installed since 2026-09-14.
 
 Then:
 
@@ -350,12 +353,13 @@ Then:
 
 ## Upstream status (2026-09-14)
 
-| Item  | Topic                                                      | State                         |
-| ----- | ---------------------------------------------------------- | ----------------------------- |
-| #2669 | `generate_a2ui` gets no data on `create` (ours)            | Open, no PR, nobody assigned  |
-| #2691 | Resumed run gets the tools of the run it continues (#2667) | Merged 2026-09-14, unreleased |
-| #2662 | No warning when recall fails on a new thread (ours)        | Merged 2026-09-14, unreleased |
-| #2403 | Opt-in live `TOOL_CALL_START` for server tools             | Merged 2026-09-14, unreleased |
+| Item  | Topic                                                      | State                        |
+| ----- | ---------------------------------------------------------- | ---------------------------- |
+| #2669 | `generate_a2ui` gets no data on `create` (ours)            | Open, no PR, nobody assigned |
+| #2691 | Resumed run gets the tools of the run it continues (#2667) | Released in 1.1.4, installed |
+| #2662 | No warning when recall fails on a new thread (ours)        | Released in 1.1.4, installed |
+| #2403 | Opt-in live `TOOL_CALL_START` for server tools             | Released in 1.1.4, left off  |
 
-Once #2691 and #2662 ship, `resolveResumeCommand`/the resuming proxy and
-`ensureThread` in `routes/ag-ui-route.ts` can go as well (separate change).
+`@ag-ui/mastra` 1.1.4 (published 2026-09-14) is installed since 2026-09-14.
+`resolveResumeCommand`, the resuming proxy and `ensureThread` were removed
+from `routes/route-utils.ts` and `routes/ag-ui-route.ts` the same day.
