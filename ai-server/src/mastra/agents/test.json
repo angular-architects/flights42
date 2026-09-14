@@ -1,0 +1,228 @@
+{
+  "type": "ACTIVITY_SNAPSHOT",
+  "messageId": "a2ui-surface-call_d3iS6tUkquyaVIIbYz88YTFa",
+  "activityType": "a2ui-surface",
+  "content": {
+    "a2ui_operations": [
+      {
+        "version": "v0.9",
+        "createSurface": {
+          "surfaceId": "srf-booked-flights-table-1",
+          "catalogId": "https://example.com/catalogs/flights42-a2ui-demo"
+        }
+      },
+      {
+        "version": "v0.9",
+        "updateComponents": {
+          "surfaceId": "srf-booked-flights-table-1",
+          "components": [
+            {
+              "component": "Column",
+              "id": "root",
+              "children": ["title", "header", "row1", "row2", "row3", "row4"]
+            },
+            {
+              "component": "Text",
+              "id": "title",
+              "text": "Meine gebuchten Flüge",
+              "variant": "h2"
+            },
+            {
+              "component": "Row",
+              "id": "header",
+              "children": ["h-id", "h-from", "h-to", "h-date", "h-delay"]
+            },
+            {
+              "component": "Text",
+              "id": "h-id",
+              "weight": 1,
+              "text": "Flug",
+              "variant": "h5"
+            },
+            {
+              "component": "Text",
+              "id": "h-from",
+              "weight": 2,
+              "text": "Von",
+              "variant": "h5"
+            },
+            {
+              "component": "Text",
+              "id": "h-to",
+              "weight": 2,
+              "text": "Nach",
+              "variant": "h5"
+            },
+            {
+              "component": "Text",
+              "id": "h-date",
+              "weight": 3,
+              "text": "Datum und Uhrzeit",
+              "variant": "h5"
+            },
+            {
+              "component": "Text",
+              "id": "h-delay",
+              "weight": 2,
+              "text": "Verspätung",
+              "variant": "h5"
+            },
+            {
+              "component": "Row",
+              "id": "row1",
+              "children": ["r1-id", "r1-from", "r1-to", "r1-date", "r1-delay"]
+            },
+            { "component": "Text", "id": "r1-id", "weight": 1, "text": "1" },
+            {
+              "component": "Text",
+              "id": "r1-from",
+              "weight": 2,
+              "text": "Graz"
+            },
+            {
+              "component": "Text",
+              "id": "r1-to",
+              "weight": 2,
+              "text": "Hamburg"
+            },
+            {
+              "component": "Text",
+              "id": "r1-date",
+              "weight": 3,
+              "text": "23.09.2026, 08:30"
+            },
+            {
+              "component": "Text",
+              "id": "r1-delay",
+              "weight": 2,
+              "text": "0 Min."
+            },
+            {
+              "component": "Row",
+              "id": "row2",
+              "children": ["r2-id", "r2-from", "r2-to", "r2-date", "r2-delay"]
+            },
+            { "component": "Text", "id": "r2-id", "weight": 1, "text": "2" },
+            {
+              "component": "Text",
+              "id": "r2-from",
+              "weight": 2,
+              "text": "Hamburg"
+            },
+            { "component": "Text", "id": "r2-to", "weight": 2, "text": "Graz" },
+            {
+              "component": "Text",
+              "id": "r2-date",
+              "weight": 3,
+              "text": "23.09.2026, 15:45"
+            },
+            {
+              "component": "Text",
+              "id": "r2-delay",
+              "weight": 2,
+              "text": "0 Min."
+            },
+            {
+              "component": "Row",
+              "id": "row3",
+              "children": ["r3-id", "r3-from", "r3-to", "r3-date", "r3-delay"]
+            },
+            { "component": "Text", "id": "r3-id", "weight": 1, "text": "50" },
+            {
+              "component": "Text",
+              "id": "r3-from",
+              "weight": 2,
+              "text": "Wien"
+            },
+            {
+              "component": "Text",
+              "id": "r3-to",
+              "weight": 2,
+              "text": "Klagenfurt"
+            },
+            {
+              "component": "Text",
+              "id": "r3-date",
+              "weight": 3,
+              "text": "27.09.2026, 15:40"
+            },
+            {
+              "component": "Text",
+              "id": "r3-delay",
+              "weight": 2,
+              "text": "30 Min."
+            },
+            {
+              "component": "Row",
+              "id": "row4",
+              "children": ["r4-id", "r4-from", "r4-to", "r4-date", "r4-delay"]
+            },
+            { "component": "Text", "id": "r4-id", "weight": 1, "text": "516" },
+            {
+              "component": "Text",
+              "id": "r4-from",
+              "weight": 2,
+              "text": "Graz"
+            },
+            {
+              "component": "Text",
+              "id": "r4-to",
+              "weight": 2,
+              "text": "Paris"
+            },
+            {
+              "component": "Text",
+              "id": "r4-date",
+              "weight": 3,
+              "text": "24.09.2026, 15:40"
+            },
+            {
+              "component": "Text",
+              "id": "r4-delay",
+              "weight": 2,
+              "text": "0 Min."
+            }
+          ]
+        }
+      },
+      {
+        "version": "v0.9",
+        "updateDataModel": {
+          "surfaceId": "srf-booked-flights-table-1",
+          "path": "/flights",
+          "value": [
+            {
+              "id": 1,
+              "from": "Graz",
+              "to": "Hamburg",
+              "date": "2026-09-23T08:30:00.000Z",
+              "delay": 0
+            },
+            {
+              "id": 2,
+              "from": "Hamburg",
+              "to": "Graz",
+              "date": "2026-09-23T15:45:00.000Z",
+              "delay": 0
+            },
+            {
+              "id": 50,
+              "from": "Wien",
+              "to": "Klagenfurt",
+              "date": "2026-09-27T15:40:00.000Z",
+              "delay": 30
+            },
+            {
+              "id": 516,
+              "from": "Graz",
+              "to": "Paris",
+              "date": "2026-09-24T15:40:00.000Z",
+              "delay": 0
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "replace": true
+}
