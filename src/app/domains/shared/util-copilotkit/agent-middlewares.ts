@@ -4,16 +4,10 @@ import {
   EventType,
   Middleware,
   type MiddlewareFunction,
-  randomUUID,
   type RunAgentInput,
 } from '@ag-ui/client';
-import {
-  type Interrupt,
-  type Message,
-  type RunFinishedEvent,
-  type ToolCallResultEvent,
-} from '@ag-ui/core';
-import { from, map, mergeMap, type Observable, of, tap } from 'rxjs';
+import { type Message } from '@ag-ui/core';
+import { map, type Observable, tap } from 'rxjs';
 
 function isProxiedMcpRequest(input: RunAgentInput): boolean {
   return Boolean(
@@ -104,105 +98,6 @@ export const developerMessagesAsUser: MiddlewareFunction = (input, next) =>
         : message,
     ),
   });
-
-interface SuspendedToolCall {
-  toolCallId: string;
-  toolName: string;
-  args: unknown;
-}
-
-interface MastraInterruptMetadata {
-  mastra?: {
-    toolName?: unknown;
-    args?: unknown;
-  };
-}
-
-function toSuspendedToolCall(interrupt: Interrupt): SuspendedToolCall | null {
-  const mastra = (interrupt.metadata as MastraInterruptMetadata | undefined)
-    ?.mastra;
-  if (!interrupt.toolCallId || typeof mastra?.toolName !== 'string') {
-    return null;
-  }
-  return {
-    toolCallId: interrupt.toolCallId,
-    toolName: mastra.toolName,
-    args: mastra.args,
-  };
-}
-
-function toolCallEvents(call: SuspendedToolCall): BaseEvent[] {
-  return [
-    {
-      type: EventType.TOOL_CALL_START,
-      toolCallId: call.toolCallId,
-      toolCallName: call.toolName,
-      parentMessageId: randomUUID(),
-    },
-    {
-      type: EventType.TOOL_CALL_ARGS,
-      toolCallId: call.toolCallId,
-      delta: JSON.stringify(call.args ?? {}),
-    },
-    { type: EventType.TOOL_CALL_END, toolCallId: call.toolCallId },
-  ] as BaseEvent[];
-}
-
-export class ResumedToolCallMiddleware extends Middleware {
-  private readonly suspendedCalls = new Map<string, SuspendedToolCall>();
-
-  override run(
-    input: RunAgentInput,
-    next: AbstractAgent,
-  ): Observable<BaseEvent> {
-    const resumedCalls = this.takeResumedCalls(input);
-
-    return next.run(input).pipe(
-      mergeMap((event) => {
-        if (event.type === EventType.RUN_FINISHED) {
-          this.rememberSuspendedCalls(event as RunFinishedEvent);
-          return of(event);
-        }
-        if (event.type === EventType.TOOL_CALL_RESULT) {
-          const call = resumedCalls.get(
-            (event as ToolCallResultEvent).toolCallId,
-          );
-          if (call) {
-            resumedCalls.delete(call.toolCallId);
-            return from([...toolCallEvents(call), event]);
-          }
-        }
-        return of(event);
-      }),
-    );
-  }
-
-  private takeResumedCalls(
-    input: RunAgentInput,
-  ): Map<string, SuspendedToolCall> {
-    const resumed = new Map<string, SuspendedToolCall>();
-    for (const entry of input.resume ?? []) {
-      const call = this.suspendedCalls.get(entry.interruptId);
-      this.suspendedCalls.delete(entry.interruptId);
-      if (call && entry.status === 'resolved') {
-        resumed.set(call.toolCallId, call);
-      }
-    }
-    return resumed;
-  }
-
-  private rememberSuspendedCalls(event: RunFinishedEvent): void {
-    if (event.outcome?.type !== 'interrupt') {
-      return;
-    }
-    for (const interrupt of event.outcome.interrupts) {
-      const call = toSuspendedToolCall(interrupt);
-      if (call) {
-        this.suspendedCalls.set(interrupt.id, call);
-      }
-    }
-  }
-}
 
 const sentFilters = new WeakMap<AbstractAgent, SentFilterMiddleware>();
 

@@ -1,8 +1,9 @@
 # CopilotKit server runtime (deferred migration)
 
-Status: assessed 2026-09-12, **deferred** until upstream PR
+Status: assessed 2026-09-12, **deferred**. The upstream precondition, PR
 [#2691](https://github.com/ag-ui-protocol/ag-ui/pull/2691) (fixes issue
-#2667) is released. Nothing in the repo has been changed for this yet.
+#2667), shipped in `@ag-ui/mastra` 1.1.4 and is installed since 2026-09-14;
+the migration itself has not been started.
 Precondition executed the same day: plan and execution mode are two client
 stores (`planning-agent-store.ts`, `ticketing-agent-store.ts`), each with
 its own `HttpAgent` and thread; the server route no longer switches agents
@@ -59,17 +60,12 @@ changes (`ConfigService.agUiUrlFor`).
 ## What still has to be solved
 
 1. **Resume drops `clientTools`, `toolsets`, `untilIdle`** (issue #2667).
-   Our route works around it with `resumingAgent` + stripping `resume` from
-   the input (`route-utils.ts`). The runtime has no hook for this: hooks are
-   request-level, the agents factory sees only the raw `Request`.
-   Fix in flight: PR #2691 (NathanTarbert, 2026-09-08, CI green, review
-   required, "Fixes #2667"). `@ag-ui/mastra` 1.1.3 (2026-09-08) does **not**
-   contain it (resume options still `toolCallId`, `runId`, `memory`,
-   `requestContext`). Preview build:
-   `npm i https://pkg.pr.new/ag-ui-protocol/ag-ui/@ag-ui/mastra@2691`.
-2. **`ensureThread` before the run** — needed while our PRs #2662 (no warn
-   on recall failure) and #2663 (thread-scoped working memory seeded on
-   first turn) are open.
+   Resolved: PR #2691 shipped in `@ag-ui/mastra` 1.1.4 (2026-09-14) and is
+   installed; the `resumingAgent` proxy and the `resume` stripping were
+   removed from `route-utils.ts` and `ag-ui-route.ts` the same day.
+2. **`ensureThread` before the run** — resolved: #2662 (no warn on recall
+   failure) and #2663 (thread-scoped working memory seeded on first turn)
+   shipped in 1.1.4; `ensureThread` was removed on 2026-09-14.
 3. **`MastraAgent.clone()`** is `new MastraAgent(this.config)` plus headers.
    It neither preserves a subclass nor `use()`-attached middlewares, and
    `config` is `private`. A subclass must keep its own config copy and
@@ -128,13 +124,14 @@ export class ResumableMastraAgent extends MastraAgent {
 | Removed: `ag-ui-route.ts`, `middlewaresFor`, `toAgUiAgent`                  | ~100  |
 | `ag-ui-stream.ts` — only if the dashboard route moves too                   | 129   |
 
-After #2691 is released the resume part disappears (~12 lines left). After
-#2662/#2663 the subclass is unnecessary.
+With 1.1.4 installed (#2691, #2662, #2663) the resume part and `ensureThread`
+are gone, so the subclass is unnecessary; the runtime's stock `MastraAgent`
+can be registered directly.
 
 ## Steps when resuming
 
-1. Check merge and release state of #2691, #2662, #2663; drop the matching
-   parts of the subclass.
+1. Done 2026-09-14: #2691, #2662, #2663 are released (1.1.4) and installed;
+   no subclass is needed.
 2. Remove the `@copilotkit/runtime` stub override; decide on
    `legacy-peer-deps` vs overrides (see the 2026-08-02 notes in the
    `copilotkit-demo` project: `overrides.openai=^6`).
@@ -144,8 +141,7 @@ After #2691 is released the resume part disappears (~12 lines left). After
 [{ ...HOTELS_MCP_SERVER, agentId: 'ticketingAgent' }] } })`; `untilIdle`
    from `agUiRouteConfig` into each agent's config; mount the handler.
 5. Client: `agUiUrlFor(id)` → `<base>/agent/<id>/run`; client middlewares
-   (`SentFilterMiddleware`, `developerMessagesAsUser`,
-   `ResumedToolCallMiddleware`) stay as they are.
+   (`SentFilterMiddleware`, `developerMessagesAsUser`) stay as they are.
 6. Decide the dashboard route (keep vs middleware).
 7. Smoke: book/cancel card approval → `messageWidget` follows; plan handoff
    plan → execution; MCP hotels; A2UI form round trip; travel refinement
