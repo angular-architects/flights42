@@ -11,7 +11,9 @@ const hotelSchema = z.object({
   stars: z.number().int().min(1).max(5).describe('Star rating from 1 to 5.'),
   imageUrl: z
     .string()
-    .describe('Absolute or app-relative URL to a hotel image.'),
+    .describe(
+      'Hotel image URL copied verbatim from the hotel data (e.g. "/assets/hotels/grand-palace.svg"). Never invent or rewrite it.',
+    ),
   city: z.string().describe('City the hotel is located in.'),
 });
 

@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
 
 import { defaultOptions, model } from '../config.js';
 import { findHotelsTool } from '../tools/find-hotels.js';
@@ -13,4 +14,5 @@ export const hotelAgent = new Agent({
   tools: {
     findHotelsTool,
   },
+  memory: new Memory(),
 });
