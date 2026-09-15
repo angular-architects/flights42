@@ -29,7 +29,6 @@ interface TextPart {
 }
 
 interface InterruptOption {
-  id: string;
   label: string;
   payload: Record<string, unknown>;
 }
@@ -46,8 +45,8 @@ export interface ResumeInterruptEvent {
 }
 
 const DEFAULT_INTERRUPT_OPTIONS: InterruptOption[] = [
-  { id: 'accept', label: 'Accept', payload: { approved: true } },
-  { id: 'decline', label: 'Decline', payload: { approved: false } },
+  { label: 'Accept', payload: { approved: true } },
+  { label: 'Decline', payload: { approved: false } },
 ];
 
 interface ChatActivityView {

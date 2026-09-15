@@ -1,6 +1,6 @@
 # Interrupt options for `bookFlight` and `cancelFlight`
 
-Decision record written 2026-09-15. No code has been changed yet; this
+Decision record written 2026-09-15 and implemented the same day. This
 document describes the agreed target shape and the reasoning behind it.
 
 Related: [upstream/ag-ui-mastra-issues.md](upstream/ag-ui-mastra-issues.md)
@@ -19,7 +19,7 @@ miles`, `Cancel`, `Accept`, `Decline`) are defined by the tools on the server
 - The option shape is trimmed to `label` and `payload`. The fields `id` and
   `variant` are removed. The button loop tracks by `$index`.
 
-## Current wiring
+## Wiring before the change
 
 Both tools suspend with a payload that carries the question and the choices.
 `bookFlight` in

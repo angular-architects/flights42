@@ -60,7 +60,7 @@
       <div class="bubble">
         <p class="interrupt-message">{{ interrupt.message }}</p>
         <div class="interrupt-actions">
-          @for (option of interrupt.options; track option.id) {
+          @for (option of interrupt.options; track $index) {
             <button
               type="button"
               class="btn btn-default"

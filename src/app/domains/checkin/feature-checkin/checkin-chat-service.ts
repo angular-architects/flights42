@@ -51,6 +51,7 @@ export class CheckinChatService {
       this.ticketStore.setStatus('analyzing');
 
       reset(this.chat);
+
       await sendMessage(this.copilotKit, this.chat, [
         {
           type: 'text',

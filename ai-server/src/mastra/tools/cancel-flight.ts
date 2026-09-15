@@ -34,10 +34,8 @@ const resultSchema = z.union([
 
 // Generic option descriptor the client renders as a choice button.
 const suspendOptionSchema = z.object({
-  id: z.string(),
   label: z.string(),
   payload: z.record(z.string(), z.unknown()),
-  variant: z.enum(['primary', 'default', 'danger']).optional(),
 });
 
 export const cancelFlightTool = createTool({
@@ -91,18 +89,8 @@ export const cancelFlightTool = createTool({
         flight,
         message: `Cancel flight ${flightId}${flightContext}?`,
         options: [
-          {
-            id: 'accept',
-            label: 'Accept',
-            payload: { approved: true },
-            variant: 'default',
-          },
-          {
-            id: 'decline',
-            label: 'Decline',
-            payload: { approved: false },
-            variant: 'default',
-          },
+          { label: 'Accept', payload: { approved: true } },
+          { label: 'Decline', payload: { approved: false } },
         ],
       });
       return {
