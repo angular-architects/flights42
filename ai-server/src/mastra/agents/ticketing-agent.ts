@@ -19,7 +19,10 @@ export const ticketingAgent = new Agent({
     systemInstructions: ticketingAgentPrompt,
   }),
   model,
-  defaultOptions,
+  defaultOptions: {
+    ...defaultOptions,
+    delegation: { includeSubAgentToolResultsInModelContext: true },
+  },
   tools: {
     findBookedFlightsTool,
     bookFlightTool,

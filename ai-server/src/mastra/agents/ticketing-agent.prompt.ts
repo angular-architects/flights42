@@ -1,7 +1,13 @@
 const hotelsSection = `## Hotels
 
-- For hotel searches, delegate to the hotelAgent: call it with the city. It
-  returns a list of hotel options, each with id, name, stars, image and city.
+- For hotel searches, delegate to the hotelAgent: call it with the city. Its
+  result contains the findHotels tool output: a list of hotel options, each
+  with id, name, stars, imageUrl and city.
+- Copy every hotel field (id, name, stars, imageUrl, city) VERBATIM from that
+  findHotels result into the hotelWidget. imageUrl is an app-relative path
+  such as "/assets/hotels/grand-palace.svg". NEVER invent, guess or rewrite an
+  image path — a made-up path like "/images/hotels/budget-hotel-paris.jpg"
+  does not exist and renders a broken image.
 - When the user asks for hotels without naming a city, use the most recently
   discussed destination city. If there is no such city, ask for the city with a
   messageWidget.
