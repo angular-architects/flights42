@@ -10,6 +10,7 @@ type StreamMessages = Parameters<Agent['stream']>[0];
 type StreamOptions = AgentExecutionOptionsBase<unknown> & {
   structuredOutput?: never;
 };
+type ResumeOptions = StreamOptions & { toolCallId?: string };
 
 export interface SseWriter {
   writeSSE(message: { data: string }): Promise<void>;
@@ -50,11 +51,14 @@ export async function parseRunAgentInput(
   return { ok: true, input };
 }
 
-function withStream(agent: Agent, stream: unknown): Agent {
+function withOverrides(
+  agent: Agent,
+  overrides: Record<string, unknown>,
+): Agent {
   return new Proxy(agent, {
     get(target, property) {
-      if (property === 'stream') {
-        return stream;
+      if (typeof property === 'string' && property in overrides) {
+        return overrides[property];
       }
       const value = Reflect.get(target, property, target);
       return typeof value === 'function' ? value.bind(target) : value;
@@ -68,13 +72,15 @@ export function withoutMemoryArgs(agent: Agent): Agent {
   }
   const stream = (messages: StreamMessages, options?: StreamOptions) =>
     agent.stream(messages, { ...options, memory: undefined });
-  return withStream(agent, stream);
+  return withOverrides(agent, { stream });
 }
 
 export function withAbortSignal(agent: Agent, abortSignal: AbortSignal): Agent {
   const stream = (messages: StreamMessages, options?: StreamOptions) =>
     agent.stream(messages, { ...options, abortSignal });
-  return withStream(agent, stream);
+  const resumeStream = (resumeData: unknown, options: ResumeOptions) =>
+    agent.resumeStream(resumeData, { ...options, abortSignal });
+  return withOverrides(agent, { stream, resumeStream });
 }
 
 export interface AgUiAgentOptions {
