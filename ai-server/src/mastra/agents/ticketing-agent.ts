@@ -20,7 +20,10 @@ export const ticketingAgent = new Agent({
   name: 'Flight42 Ticketing Assistant',
   instructions: withA2uiInstructions(ticketingAgentPrompt),
   model,
-  defaultOptions,
+  defaultOptions: {
+    ...defaultOptions,
+    delegation: { includeSubAgentToolResultsInModelContext: true },
+  },
   tools: {
     findBookedFlightsTool,
     bookFlightTool,
