@@ -20,3 +20,8 @@ ng serve -o
 
 3. Define model to use in your `config.ts`
 4. Start Angular solution: `ng serve -o`
+
+## Working with Coding Agents
+
+The agent setup (instructions, skills, hooks, MCP servers, tickets and AFK runs
+with Sandcastle) is described in [docs/ai-setup.md](docs/ai-setup.md).

@@ -1,0 +1,11 @@
+{
+  "verify-on-stop": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node scripts/hooks/antigravity-stop-hook.mjs",
+        "timeout": 600
+      }
+    ]
+  }
+}

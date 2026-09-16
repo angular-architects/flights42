@@ -11,5 +11,13 @@
     "src/app/domains/shared/signals/delegated-signal.spec.ts",
     "src/app/domains/ticketing/feature-booking/flight-search/flight-store.spec.ts"
   ],
-  "exclude": ["src/**/*.spec.ts"]
+  "exclude": ["src/**/*.spec.ts"],
+  "angularCompilerOptions": {
+    "extendedDiagnostics": {
+      "checks": {
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
+      }
+    }
+  }
 }

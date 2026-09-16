@@ -1,14 +1,15 @@
-import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, rmSync, writeFileSync } from 'node:fs';
 
 import { doNotEditWarning } from './utils.mjs';
 
-// Hooks are NOT synced: every coding agent has its own entry point (config
-// location, schema and hook I/O protocol). They are hand-maintained per
-// platform in `.claude/settings.json` and `.cursor/hooks.json`. The only thing
-// shared is the logic itself (`scripts/run-checks.mjs`), which each platform's
-// hook script calls.
+// `.agents/skills/` is the single source of truth for skills. Codex and
+// Google Antigravity read that folder natively; Claude Code expects
+// `.claude/skills/`, so the folder is mirrored there.
+//
+// Nothing else is synced. Hooks and MCP servers are configured per tool by
+// hand (`.claude/settings.json` + `.mcp.json`, `.codex/hooks.json` +
+// `.codex/config.toml`, `.agents/hooks.json`), see `docs/ai-setup.md`.
 
-// Skills: .agents/skills -> .claude/skills
 rmSync('.claude/skills', { recursive: true, force: true });
 cpSync('.agents/skills', '.claude/skills', { recursive: true });
 writeFileSync(
@@ -16,19 +17,4 @@ writeFileSync(
   doNotEditWarning('this directory', '`.agents/skills/`'),
 );
 
-// MCP: .agents/mcp.json -> .mcp.json (Claude) and .cursor/mcp.json (Cursor)
-const mcp = readFileSync('.agents/mcp.json', 'utf8');
-writeFileSync('.mcp.json', mcp);
-writeFileSync(
-  '.mcp.DO_NOT_EDIT.txt',
-  doNotEditWarning('`.mcp.json`', '`.agents/mcp.json`'),
-);
-writeFileSync('.cursor/mcp.json', mcp);
-writeFileSync(
-  '.cursor/mcp.DO_NOT_EDIT.txt',
-  doNotEditWarning('`.cursor/mcp.json`', '`.agents/mcp.json`'),
-);
-
-console.log(
-  '[sync] agent config updated (.claude/skills, .mcp.json, .cursor/mcp.json)',
-);
+console.log('[sync] .agents/skills -> .claude/skills');

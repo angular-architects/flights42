@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-hook.mjs",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}

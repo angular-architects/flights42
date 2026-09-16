@@ -1,8 +1,0 @@
----
-alwaysApply: true
----
-
-Always follow the guidelines defined in the `AGENTS.md` file in the project root.
-It is the authoritative source for coding standards, conventions, and best practices.
-In case of conflicts, the rules in `AGENTS.md` take precedence.
-

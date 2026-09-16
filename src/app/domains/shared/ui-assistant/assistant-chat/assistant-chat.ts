@@ -1,5 +1,6 @@
 import {
   afterEveryRender,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   inject,
@@ -17,6 +18,7 @@ import { ChatRegistry } from '../chat-registry';
   selector: 'app-assistant-chat',
   imports: [FormsModule, ChatMessages],
   templateUrl: './assistant-chat.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./assistant-chat.css'],
 })
 export class AssistantChat {
@@ -30,11 +32,13 @@ export class AssistantChat {
   protected readonly panelVisible = signal(false);
   protected readonly message = signal('');
 
-  protected chat: UiChatResourceRef<Chat.AnyTool> | null = null;
+  protected readonly chatRef = signal<UiChatResourceRef<Chat.AnyTool> | null>(
+    null,
+  );
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
-      this.chat = chatInfo.chat;
+      this.chatRef.set(chatInfo.chat);
     });
 
     afterEveryRender(() => {
@@ -59,6 +63,6 @@ export class AssistantChat {
   protected submit() {
     const message = this.message();
     this.message.set('');
-    this.chat?.sendMessage({ role: 'user', content: message });
+    this.chatRef()?.sendMessage({ role: 'user', content: message });
   }
 }

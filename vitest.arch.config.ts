@@ -1,9 +1,10 @@
 import { defineConfig } from 'vitest/config';
 
 /**
- * The architecture tests run with tsarch, which parses the TypeScript project
- * via the compiler API and the file system. They therefore need a Node
- * environment and cannot run in the browser-based `ng test` setup.
+ * The architecture tests run with ArchUnitTS, which parses the TypeScript
+ * project via the compiler API and the file system. They therefore need a
+ * Node environment and cannot run in the browser-based `ng test` setup.
+ * ArchUnitTS extends the global `expect` on import, hence `globals: true`.
  */
 export default defineConfig({
   test: {

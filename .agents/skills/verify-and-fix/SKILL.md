@@ -1,6 +1,6 @@
 ---
 name: verify-and-fix
-description: Runs the full local quality checks (ng lint incl. Sheriff boundaries, tsarch architecture rules, browser unit tests, production build) and fixes any problems found. Use when the user asks to verify, run the full checks, run the full ci-checks, or make the work merge-ready, typically after several changes have been made.
+description: Runs the full local quality checks (ng lint incl. Sheriff boundaries, ArchUnitTS architecture rules, browser unit tests, production build) and fixes any problems found. Use when the user asks to verify, run the full checks, run the full ci-checks, or make the work merge-ready, typically after several changes have been made.
 disable-model-invocation: true
 ---
 

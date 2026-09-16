@@ -1,9 +1,15 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { MinValidationError, ValidationError } from '@angular/forms/signals';
 
 @Component({
   selector: 'app-validation-errors-pane',
   imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './validation-errors-pane.html',
 })
 export class ValidationErrorsPane {

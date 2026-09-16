@@ -1,0 +1,15 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "*.npmjs.org",
+        "demo.angulararchitects.io"
+      ],
+      "allowLocalBinding": true
+    }
+  }
+}

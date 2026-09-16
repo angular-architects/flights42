@@ -3,8 +3,8 @@ npx lint-staged
 
 ng lint
 
-# Update the Claude mirror of the agent config when sources changed
-if git diff --cached --name-only | grep -qE '^(\.agents/skills/|\.cursor/mcp\.json$|AGENTS\.md$)'; then
+# Update the Claude mirror of the skills when the source changed
+if git diff --cached --name-only | grep -qE '^\.agents/skills/'; then
   npm run sync:agent-config
-  git add .claude/skills .mcp.json
+  git add .claude/skills
 fi

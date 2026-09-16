@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { TabRegistry } from './tab-registry';
 
@@ -23,6 +23,7 @@ import { TabRegistry } from './tab-registry';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     .pane {
       display: flex;

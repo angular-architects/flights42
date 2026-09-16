@@ -1,0 +1,13 @@
+# Project-level Codex configuration. Codex merges it with ~/.codex/config.toml
+# once the project is trusted. Hooks live in `.codex/hooks.json`.
+#
+# MCP servers are configured per tool by hand (Claude Code: `.mcp.json`,
+# Antigravity: IDE settings), see docs/ai-setup.md.
+
+[mcp_servers.angular-cli]
+command = "npx"
+args = ["-y", "@angular/cli", "mcp"]
+
+# Start with `npx @softarc/detective` before use.
+[mcp_servers.detective]
+url = "http://localhost:3334/mcp"

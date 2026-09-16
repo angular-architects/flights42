@@ -10,6 +10,18 @@ File-name suffixes carry architectural meaning (see `docs/architecture-state-man
 
 Do not bypass documented domain boundaries. Prefer small, focused changes.
 
+## Context Files
+
+Every domain (`src/app/domains/<domain>/`) and every feature (`feature-<name>/`) has a `context.md` with the language, boundaries, invariants and gotchas of that area. What goes in and what stays out is defined in `docs/context-files.md`.
+
+- Before changing code in a domain or feature, read its `context.md` — the domain file first, then the feature file.
+- When a change introduces or sharpens a domain term, update the affected `context.md` in the same change.
+- When a domain or feature has no `context.md` yet, create one from the template in `docs/context-files.md`.
+
+## Tickets
+
+Work items live in `tickets/` as Markdown files (see `tickets/README.md`). A ticket's `## Decisions` section is binding: implement what it says and do not re-open decided questions. Open questions are resolved with the `refine-ticket` skill before implementation starts.
+
 ## Comments
 
 - Write all code comments and inline documentation in English, regardless of the conversation language

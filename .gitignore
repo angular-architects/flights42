@@ -46,3 +46,12 @@ Thumbs.db
 flights42.db
 flights42.db-shm
 flights42.db-wal
+
+# Per-developer Claude Code settings
+.claude/settings.local.json
+
+# Sandcastle runtime data (worktrees, logs, patches, tokens)
+.sandcastle/worktrees
+.sandcastle/logs
+.sandcastle/patches
+.sandcastle/.env
