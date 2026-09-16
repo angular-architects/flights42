@@ -12,7 +12,7 @@ status: draft
 
 # <Title>
 
-## Goal
+## Story
 
 <Who wants what and why — one paragraph.>
 
@@ -28,6 +28,9 @@ status: draft
 
 - **<topic>**: <chosen answer>. <one-line rationale>
 ```
+
+A new ticket has no `## Decisions` section. `refine-ticket` adds it with the
+first recorded decision.
 
 `status` is one of:
 
