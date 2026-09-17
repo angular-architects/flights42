@@ -8,12 +8,10 @@ import { noSandbox } from '@ai-hero/sandcastle/sandboxes/no-sandbox';
 
 // Implements `ready` tickets from `tickets/` AFK with Sandcastle.
 //
-// Sandcastle's own container sandbox is not used (`noSandbox()`): the agent
-// runs on the host in a git worktree on the branch `ticket/<slug>`. Isolation
-// comes from Claude Code's built-in OS sandbox instead. It is enabled through
-// `.sandcastle/claude-settings.json`, which is copied into the worktree as
-// `.claude/settings.local.json`, so every shell command the agent runs is
-// confined to that worktree.
+// No sandbox is used (`noSandbox()`): the agent runs directly on the host in a
+// git worktree on the branch `ticket/<slug>`, with `bypassPermissions` and
+// without Claude Code's OS sandbox. That sandbox blocks the browser tests of
+// `npm run verify` (Chromium cannot start), so it is off in this setup.
 //
 // Usage:
 //   npm run tickets                          # every ticket with status: ready
@@ -22,7 +20,6 @@ import { noSandbox } from '@ai-hero/sandcastle/sandboxes/no-sandbox';
 
 const TICKETS_DIR = 'tickets';
 const PROMPT_FILE = '.sandcastle/implement-ticket.md';
-const CLAUDE_SETTINGS = '.sandcastle/claude-settings.json';
 const DEFAULT_MODEL = 'claude-opus-5';
 const MAX_ITERATIONS = 3;
 
@@ -75,9 +72,6 @@ for (const ticket of tickets) {
         onWorktreeReady: [
           {
             command: `ln -s ${quote(join(hostRoot, 'node_modules'))} node_modules`,
-          },
-          {
-            command: `mkdir -p .claude && cp ${quote(join(hostRoot, CLAUDE_SETTINGS))} .claude/settings.local.json`,
           },
         ],
       },

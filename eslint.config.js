@@ -40,6 +40,8 @@ module.exports = defineConfig([
           varsIgnorePattern: '^_',
         },
       ],
+      // Hard nesting limit from the code quality rules in AGENTS.md.
+      'max-depth': ['error', 2],
     },
   },
   {

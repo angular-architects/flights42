@@ -22,9 +22,19 @@ Every domain (`src/app/domains/<domain>/`) and every feature (`feature-<name>/`)
 
 Work items live in `tickets/` as Markdown files (see `tickets/README.md`). A ticket's `## Decisions` section is binding: implement what it says and do not re-open decided questions. Open questions are resolved with the `refine-ticket` skill before implementation starts.
 
+`## Decisions` belongs to the user: only write an entry there with the user's answer. Choices you make on your own go under `## Assumptions`; they are not binding until the user confirms them.
+
 ## Comments
 
 - Write all code comments and inline documentation in English, regardless of the conversation language
+
+## Code Quality
+
+These rules apply to every change and are checked again in review (`code-quality-review` skill).
+
+- **Single Level of Abstraction (SLAP)**: a function either orchestrates — it calls well-named steps — or implements one concrete mechanic. Never mix both in the same function.
+- **Helper functions are nameable domain concepts**: name a helper after what it means in the domain (e.g. `isBookable(flight)`), not after its mechanics (`processData`, `handleItems`, `helper`). If no domain name fits, the split is wrong.
+- **Hard nesting limit of 2**: blocks inside a function are nested at most two levels deep (enforced by ESLint `max-depth`). Reduce nesting with early returns or by extracting a named step.
 
 ## TypeScript Best Practices
 

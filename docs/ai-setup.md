@@ -23,7 +23,7 @@ which are loaded on demand.
   `.claude/skills/`.
 - `angular-developer` and `angular-new-app` come from `angular/skills`
   (tracked in `skills-lock.json`); the others are project skills:
-  `architecture-review`, `domain-boundaries-review`,
+  `architecture-review`, `code-quality-review`, `domain-boundaries-review`,
   `forensic-architecture-review`, `verify-and-fix`, `refine-ticket`.
 
 ![Skill sync](ai-config-sync.png)
@@ -80,18 +80,23 @@ Work items live in `tickets/` (format and flow in `tickets/README.md`):
    `## Decisions`; the ticket becomes `ready`.
 3. `npm run tickets` implements every `ready` ticket AFK with
    [Sandcastle](https://github.com/mattpocock/sandcastle): one Claude Code run
-   per ticket, in its own git worktree on the branch `ticket/<slug>`. Review the
-   branch and merge it.
+   per ticket, in its own git worktree on the branch `ticket/<slug>`. The run
+   starts from the last commit, so commit the ticket first.
+4. The agent never writes `## Decisions`. Choices the ticket leaves open go
+   under `## Assumptions`; a question the docs reserve for the user (new
+   domain, published API, Sheriff change, ...) stops the run with an entry
+   under `## Open questions` and `status: draft`.
+5. Review the branch, settle its assumptions or open questions with
+   `refine-ticket`, and merge it.
 
-Sandcastle's own container sandbox is not used (`noSandbox()`). Instead the
-runner enables Claude Code's built-in OS sandbox for the run by copying
-`.sandcastle/claude-settings.json` into the worktree as
-`.claude/settings.local.json`: every shell command is confined to the
-worktree, network access is limited to the listed domains, and unsandboxed
-retries are disabled. Inside that boundary the agent runs with
-`bypassPermissions`, so it never waits for approval.
+The run is not sandboxed: Sandcastle's container sandbox is not used
+(`noSandbox()`) and Claude Code's OS sandbox is off. The agent runs directly
+on the host with `bypassPermissions`, so it never waits for approval and has
+the same file and network access as your user. Claude Code's OS sandbox is
+not an option here because it keeps Chromium from starting, so the browser
+tests of `npm run verify` cannot pass inside it. Only start runs for tickets
+you trust.
 
 Options: `--ticket <file>` (one ticket regardless of status), `--model <id>`
 (or `SANDCASTLE_MODEL`), `--rerun` (ignore an existing branch).
-Requirements: Claude Code CLI logged in, macOS (Seatbelt) or Linux
-(bubblewrap + socat) for the sandbox.
+Requirements: Claude Code CLI logged in.

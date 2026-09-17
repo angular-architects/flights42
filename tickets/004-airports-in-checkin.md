@@ -1,5 +1,5 @@
 ---
-status: draft
+status: ready
 ---
 
 # Use airports in check-in

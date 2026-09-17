@@ -151,19 +151,43 @@ the affected `context.md` — that is how the context files grow.
 three iterations, and leaves the branch for review. Prompt template:
 `.sandcastle/implement-ticket.md`.
 
-**Sandboxing decision.** Sandcastle's Docker/Podman sandbox is not used
-(`noSandbox()`). Instead the runner copies `.sandcastle/claude-settings.json`
-into the worktree as `.claude/settings.local.json`, which turns on Claude
-Code's own OS sandbox: writes confined to the worktree, network limited to an
-allow-list, unsandboxed retries disabled. Inside that boundary the agent runs
-with `permissionMode: 'bypassPermissions'` so it never waits for approval.
-`node_modules` is symlinked from the host, so `npm run verify` and the Stop
-hook work inside the worktree without a second install.
+**Sandboxing decision.** No sandbox: Sandcastle's Docker/Podman sandbox is
+not used (`noSandbox()`), and Claude Code's OS sandbox is off. The agent runs
+on the host with `permissionMode: 'bypassPermissions'` so it never waits for
+approval. `node_modules` is symlinked from the host, so `npm run verify` and
+the Stop hook work inside the worktree without a second install. A container
+sandbox is shown in a separate demo.
 
-**Limits.** Claude's sandbox restricts writes and network, not reads.
-Requires the Claude CLI to be logged in and macOS or Linux with bubblewrap.
-Only the no-ticket path was executed; a full model run has not been tried
-yet.
+**What went wrong.** The first version turned on Claude Code's OS sandbox
+(a `.sandcastle/claude-settings.json` copied into the worktree as
+`.claude/settings.local.json`). The first real run (tickets 002–004) showed
+that it cannot work with this repo:
+
+- `ng test` never ran. Vite could not write its dependency cache into the
+  symlinked `node_modules` (outside the worktree, so `EPERM`), and even with
+  a writable cache, Seatbelt kept Chromium from starting
+  (`bootstrap_check_in … Permission denied (1100)`).
+- Since the prompt only allows the completion signal with a green
+  `npm run verify`, every ticket used all three iterations; iterations 2 and 3
+  only re-checked finished work.
+- The sandbox only covered shell commands. Through the Write/Edit tools the
+  agents still wrote outside the worktree (into `~/.claude`), and shell
+  commands could read files outside the worktree.
+
+Making the sandbox more permissive would not have helped: write access to
+the whole workspace fixes the cache but not Chromium, and it opens
+`.git/hooks`, `node_modules` and the runner itself, all of which later run
+unsandboxed on the host.
+
+**Agent decisions.** The first prompt let the agent record its own choices
+under `## Decisions` with the suffix "(decided by agent)". That made them
+binding for later runs without the user ever confirming them, and it let the
+agent for ticket 004 publish a ticketing API and change the Sheriff
+configuration — both reserved for the user by
+`docs/architecture-boundaries.md`. Its entry sat between five harmless ones.
+Now `## Decisions` holds only user answers; agent choices go under
+`## Assumptions`, which `refine-ticket` turns into questions, and a question
+reserved for the user stops the run under `## Open questions`.
 
 ## 7. Things to verify manually
 

@@ -32,6 +32,7 @@ consistently.
 - anything the code or configuration already states plainly (file lists,
   imports, route tables)
 - implementation decisions — they belong into a ticket's `## Decisions`
+  (answered by the user) or `## Assumptions` (chosen by an agent)
 
 ## Style
 
