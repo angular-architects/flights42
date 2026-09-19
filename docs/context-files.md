@@ -30,13 +30,13 @@ consistently.
 
 - how-tos, code samples, step lists, framework documentation
 - anything the code or configuration already states plainly (file lists,
-  imports, route tables)
+  imports, route tables, a term whose meaning is just its type definition)
 - implementation decisions — they belong into a ticket's `## Decisions`
   (answered by the user) or `## Assumptions` (chosen by an agent)
 
 ## Style
 
-- short: aim for under 40 lines, one line per term
+- terse: aim for under 30 lines, one line per term, fragments over prose
 - one meaning per term; a term that means two things is a finding — split it
 - write for someone who has never seen the code
 - update inline: when a conversation resolves a term, write it down in the same

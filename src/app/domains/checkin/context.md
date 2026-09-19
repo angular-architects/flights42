@@ -1,34 +1,25 @@
 # Check-in
 
-Check-in confirms that a passenger holding a ticket will take the flight and
-captures the passenger's contact data.
+Confirms that a ticket holder takes the flight and captures their contact data.
 
 ## Language
 
-- **Ticket id**: identifies the booked flight; arrives as the `ticketId` route
-  parameter (the demo falls back to 123456).
-- **Passenger info**: first name, last name, e-mail, address (street, zip
-  code, city, country) and phone number; the phone number is stored without
-  the "+43" prefix, which is added for display.
-- **Conditions accepted**: the passenger's consent flag; part of every
-  check-in.
-- **Check-in info**: ticket id + conditions accepted + passenger info — the
-  payload of a check-in.
-- **Expert mode**: a route-bound input (`expertMode`) that accepts "true" or
-  "1" and unlocks additional fields.
+- **Ticket id**: the booked flight; `ticketId` route param, demo fallback 123456.
+- **Check-in info**: ticket id + consent flag + passenger info (name, e-mail,
+  address, phone).
+- **Expert mode**: route input `expertMode` ("true"/"1"), unlocks extra
+  fields.
 
 ## Boundaries
 
-- Check-in has no data access yet; `data/internal/` (confirmations,
-  validation) is reserved and still empty.
-- Check-in must not import ticketing internals. After a successful check-in
-  it navigates to `/next-flights`; it does not render ticketing components.
+- No data access yet; `data/internal/` reserved and empty.
+- No ticketing internals; navigates to `/next-flights` on success.
 
 ## Gotchas
 
-- The page deliberately mixes Signal Forms with reactive forms through the
-  compat layer (`compatForm`, `SignalFormControl`) to show interoperability.
-  Do not "clean this up".
-- After the first render, focus moves to the first empty input.
-- The check-in itself only opens a confirmation dialog; nothing is sent to a
-  server.
+- The phone number is stored without the "+43" prefix, added only for
+  display.
+- Signal Forms are mixed with reactive forms via the compat layer on purpose
+  — do not clean up.
+- Focus moves to the first empty input after the first render.
+- Check-in only opens a confirmation dialog; nothing is sent to a server.
