@@ -2,13 +2,17 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 
 ## Architecture
 
-Before changing application or library code, read `docs/architecture-boundaries.md` and apply the architecture rules.
+Before adding components, data access services or helpers, read `docs/architecture-boundaries.md` and apply the architecture rules.
+
+When renaming or moving files, also read `docs/architecture-state-management.md`: file-name suffixes carry architectural meaning, so a rename across suffixes is a re-classification, not a cosmetic change.
 
 If the change touches state management, also read `docs/architecture-state-management.md` when it exists.
 
-File-name suffixes carry architectural meaning (see `docs/architecture-state-management.md`). Renaming or moving a file across suffixes is a re-classification, not a cosmetic change — verify it against those rules first.
-
 Do not bypass documented domain boundaries. Prefer small, focused changes.
+
+The architecture rules themselves belong to the user. Never change and never propose a change to `docs/architecture-boundaries.md`, `docs/architecture-state-management.md` or the fitness tests in `arch/` — not even as one option among others to choose from. Such a change happens only when the user explicitly demands it.
+
+If a task cannot be implemented within the current rules, stop and report the conflict; do not adapt the rules to make the task fit. In a ticket, record the conflict under `## Open questions` and leave the code unchanged.
 
 ## Context Files
 
