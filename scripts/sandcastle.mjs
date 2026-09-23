@@ -7,7 +7,9 @@ import process from 'node:process';
 import { claudeCode, run } from '@ai-hero/sandcastle';
 import { noSandbox } from '@ai-hero/sandcastle/sandboxes/no-sandbox';
 
-// Implements `ready` tickets from `tickets/` AFK with Sandcastle.
+// Implements `ready` tickets from `tickets/` AFK with Sandcastle, all in
+// parallel. Every run branches from the current HEAD, not from the branch of
+// a ticket it builds on.
 //
 // No sandbox is used (`noSandbox()`): the agent runs directly on the host in a
 // git worktree on the branch `ticket/<slug>`, with `bypassPermissions` and
@@ -50,17 +52,37 @@ if (tickets.length === 0) {
   process.exit(0);
 }
 
-for (const ticket of tickets) {
+await Promise.all(tickets.map(implementTicket));
+
+/**
+ * @param {Ticket} ticket
+ * @returns {Promise<void>}
+ */
+async function implementTicket(ticket) {
   const branch = `ticket/${ticket.slug}`;
 
   if (!rerun && branchExists(branch)) {
     console.log(`Skipping ${ticket.path}: branch ${branch} exists (--rerun).`);
-    continue;
+    return;
   }
 
-  console.log(`\n=== ${ticket.path} -> ${branch} (${model}) ===`);
+  console.log(`=== ${ticket.path} -> ${branch} (${model}) ===`);
 
-  const result = await run({
+  try {
+    const result = await runAgent(ticket, branch);
+    reportResult(ticket, result);
+  } catch (error) {
+    console.error(`[${ticket.slug}] failed:`, error);
+    process.exitCode = 1;
+  }
+}
+
+/**
+ * @param {Ticket} ticket
+ * @param {string} branch
+ */
+function runAgent(ticket, branch) {
+  return run({
     name: ticket.slug,
     agent: claudeCode(model, { permissionMode: 'bypassPermissions' }),
     sandbox: noSandbox(),
@@ -79,18 +101,27 @@ for (const ticket of tickets) {
       },
     },
   });
+}
 
+/**
+ * @param {Ticket} ticket
+ * @param {Awaited<ReturnType<typeof runAgent>>} result
+ */
+function reportResult(ticket, result) {
+  const prefix = `[${ticket.slug}]`;
   const outcome = result.completionSignal
     ? 'completed'
     : 'stopped without completion signal';
   console.log(
-    `${outcome}: ${result.commits.length} commit(s) on ${result.branch}`,
+    `${prefix} ${outcome}: ${result.commits.length} commit(s) on ${result.branch}`,
   );
   if (result.logFilePath) {
-    console.log(`log: ${result.logFilePath}`);
+    console.log(`${prefix} log: ${result.logFilePath}`);
   }
   if (result.preservedWorktreePath) {
-    console.log(`uncommitted changes left in ${result.preservedWorktreePath}`);
+    console.log(
+      `${prefix} uncommitted changes left in ${result.preservedWorktreePath}`,
+    );
   }
 }
 

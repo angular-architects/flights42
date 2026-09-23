@@ -1,5 +1,5 @@
 ---
-status: ready
+status: draft
 ---
 
 # Share the airport store

@@ -80,8 +80,10 @@ Work items live in `tickets/` (format and status in `tickets/README.md`):
    `## Decisions`; the ticket becomes `ready`.
 3. `npm run sandcastle` implements every `ready` ticket AFK with
    [Sandcastle](https://github.com/mattpocock/sandcastle): one Claude Code run
-   per ticket, in its own git worktree on the branch `ticket/<slug>`. The run
-   starts from the last commit, so commit the ticket first. Implementing a
+   per ticket, all in parallel, each in its own git worktree on the branch
+   `ticket/<slug>`. Every run starts from the last commit, so commit the
+   ticket first; a ticket that builds on another one needs its own run once
+   the other is merged. Implementing a
    ticket interactively works the same way; only the AFK parts below differ.
 4. Review the branch:
    - The run stopped with `## Open questions` (`status: draft` again): settle
