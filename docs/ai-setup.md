@@ -72,7 +72,7 @@ A rule whose pattern matches no file fails instead of passing silently.
 
 ## Tickets and AFK runs
 
-Work items live in `tickets/` (format and flow in `tickets/README.md`):
+Work items live in `tickets/` (format and rules in `docs/tickets.md`):
 
 1. Write a ticket with `status: draft`.
 2. The `refine-ticket` skill checks it against the code, asks the open
@@ -81,13 +81,14 @@ Work items live in `tickets/` (format and flow in `tickets/README.md`):
 3. `npm run tickets` implements every `ready` ticket AFK with
    [Sandcastle](https://github.com/mattpocock/sandcastle): one Claude Code run
    per ticket, in its own git worktree on the branch `ticket/<slug>`. The run
-   starts from the last commit, so commit the ticket first.
-4. The agent never writes `## Decisions`. Choices the ticket leaves open go
-   under `## Assumptions`; a question the docs reserve for the user (new
-   domain, published API, Sheriff change, ...) stops the run with an entry
-   under `## Open questions` and `status: draft`.
-5. Review the branch, settle its assumptions or open questions with
-   `refine-ticket`, and merge it.
+   starts from the last commit, so commit the ticket first. Implementing a
+   ticket interactively works the same way; only the AFK parts below differ.
+4. Review the branch:
+   - The run stopped with `## Open questions` (`status: draft` again): settle
+     them with `refine-ticket` and start the run again with `--rerun`.
+   - Otherwise go through `## Assumptions` with `refine-ticket`: confirmed
+     entries move to `## Decisions`, rejected ones need a change on the branch.
+5. Merge, and set `status: done` if the agent has not done so already.
 
 The run is not sandboxed: Sandcastle's container sandbox is not used
 (`noSandbox()`) and Claude Code's OS sandbox is off. The agent runs directly

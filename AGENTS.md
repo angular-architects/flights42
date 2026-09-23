@@ -24,9 +24,9 @@ Every domain (`src/app/domains/<domain>/`) and every feature (`feature-<name>/`)
 
 ## Tickets
 
-Work items live in `tickets/` as Markdown files (see `tickets/README.md`). A ticket's `## Decisions` section is binding: implement what it says and do not re-open decided questions. Open questions are resolved with the `refine-ticket` skill before implementation starts.
+Work items live in `tickets/`. Before implementing one, read `docs/tickets.md`.
 
-`## Decisions` belongs to the user: only write an entry there with the user's answer. Choices you make on your own go under `## Assumptions`; they are not binding until the user confirms them.
+`## Decisions` is binding and belongs to the user — never write an entry there yourself. Your own choices go under `## Assumptions`; they are not binding until the user confirms them.
 
 ## Comments
 
