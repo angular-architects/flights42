@@ -78,7 +78,7 @@ Work items live in `tickets/` (format and rules in `docs/tickets.md`):
 2. The `refine-ticket` skill checks it against the code, asks the open
    questions with answer options and records the answers under
    `## Decisions`; the ticket becomes `ready`.
-3. `npm run tickets` implements every `ready` ticket AFK with
+3. `npm run sandcastle` implements every `ready` ticket AFK with
    [Sandcastle](https://github.com/mattpocock/sandcastle): one Claude Code run
    per ticket, in its own git worktree on the branch `ticket/<slug>`. The run
    starts from the last commit, so commit the ticket first. Implementing a

@@ -145,8 +145,8 @@ the affected `context.md` — that is how the context files grow.
 
 ## 6. Sandcastle for AFK runs
 
-**What.** `@ai-hero/sandcastle` 0.12. `npm run tickets`
-(`scripts/run-tickets.mts`) picks every ticket with `status: ready` from
+**What.** `@ai-hero/sandcastle` 0.12. `npm run sandcastle`
+(`scripts/sandcastle.mjs`) picks every ticket with `status: ready` from
 `tickets/`, runs Claude Code in a git worktree on `ticket/<slug>` with up to
 three iterations, and leaves the branch for review. Prompt template:
 `.sandcastle/implement-ticket.md`.
