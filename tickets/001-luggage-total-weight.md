@@ -1,5 +1,5 @@
 ---
-status: draft
+status: ready
 ---
 
 # Show the total weight of the selected luggage

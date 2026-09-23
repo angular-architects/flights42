@@ -1,5 +1,5 @@
 ---
-status: draft
+status: ready
 ---
 
 # Add airport management
