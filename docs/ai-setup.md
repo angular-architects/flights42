@@ -72,7 +72,7 @@ A rule whose pattern matches no file fails instead of passing silently.
 
 ## Tickets and AFK runs
 
-Work items live in `tickets/` (format and rules in `docs/tickets.md`):
+Work items live in `tickets/` (format and status in `tickets/README.md`):
 
 1. Write a ticket with `status: draft`.
 2. The `refine-ticket` skill checks it against the code, asks the open

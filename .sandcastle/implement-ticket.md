@@ -13,6 +13,8 @@ Ticket file: `{{TICKET_PATH}}`
 
 - Follow `AGENTS.md`. Read the `context.md` of every domain and feature you
   touch before changing code there.
+- This run is AFK: there is nobody to ask. Where you would otherwise ask the
+  user, apply the two rules below instead.
 - The ticket's `## Decisions` are binding and belong to the user. Never add,
   change or remove entries there.
 - If the docs reserve a question for the user (for example a new domain, a
@@ -24,8 +26,10 @@ Ticket file: `{{TICKET_PATH}}`
 - For every other material question the ticket leaves open, choose the most
   conservative option that satisfies the acceptance criteria and record it
   under `## Assumptions` (after `## Decisions`), one entry per choice:
-  `- **<topic>**: <chosen option>. <one-line reason>`. Assumptions are not
-  binding; the user confirms or rejects them in the review.
+  `- **<topic>**: <chosen option>. <one-line reason>`. Record exactly what you
+  would otherwise have asked the user: a choice too small to ask about is too
+  small to record. Assumptions are not binding; the user confirms or rejects
+  them in the review.
 - Keep the change small and inside the affected domain. Do not touch other
   tickets.
 - Follow the `## Code Quality` rules in `AGENTS.md`. Before the last code

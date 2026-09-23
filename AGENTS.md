@@ -12,7 +12,7 @@ Do not bypass documented domain boundaries. Prefer small, focused changes.
 
 The architecture rules themselves belong to the user. Never change and never propose a change to `docs/architecture-boundaries.md`, `docs/architecture-state-management.md` or the fitness tests in `arch/` — not even as one option among others to choose from. Such a change happens only when the user explicitly demands it.
 
-If a task cannot be implemented within the current rules, stop and report the conflict; do not adapt the rules to make the task fit. In a ticket, record the conflict under `## Open questions` and leave the code unchanged.
+If a task cannot be implemented within the current rules, stop and report the conflict; do not adapt the rules to make the task fit. Leave the code unchanged and ask the user.
 
 ## Context Files
 
@@ -24,9 +24,7 @@ Every domain (`src/app/domains/<domain>/`) and every feature (`feature-<name>/`)
 
 ## Tickets
 
-Work items live in `tickets/`. Before implementing one, read `docs/tickets.md`.
-
-`## Decisions` is binding and belongs to the user — never write an entry there yourself. Your own choices go under `## Assumptions`; they are not binding until the user confirms them.
+Work items live in `tickets/`. Before implementing one, read `tickets/README.md`. Never write into a ticket's `## Decisions` — that section belongs to the user.
 
 ## Comments
 
