@@ -78,28 +78,32 @@ Work items live in `tickets/` (format and status in `tickets/README.md`):
 2. The `refine-ticket` skill checks it against the code, asks the open
    questions with answer options and records the answers under
    `## Decisions`; the ticket becomes `ready`.
-3. `npm run sandcastle` implements every `ready` ticket AFK with
-   [Sandcastle](https://github.com/mattpocock/sandcastle): one Claude Code run
-   per ticket, all in parallel, each in its own git worktree on the branch
-   `ticket/<slug>`. Every run starts from the last commit, so commit the
-   ticket first; a ticket that builds on another one needs its own run once
-   the other is merged. Implementing a
-   ticket interactively works the same way; only the AFK parts below differ.
-4. Review the branch:
-   - The run stopped with `## Open questions` (`status: draft` again): settle
-     them with `refine-ticket` and start the run again with `--rerun`.
-   - Otherwise go through `## Assumptions` with `refine-ticket`: confirmed
-     entries move to `## Decisions`, rejected ones need a change on the branch.
-5. Merge, and set `status: done` if the agent has not done so already.
+3. `npm run sandcastle` implements every `ready` ticket AFK with the
+   `parallel-planner` template of
+   [Sandcastle](https://github.com/mattpocock/sandcastle)
+   (`.sandcastle/main.mjs`), in up to ten rounds:
+   - A planner run picks the tickets that do not depend on another open one.
+   - One Claude Code run per picked ticket implements it, in parallel, each in
+     its own git worktree on `sandcastle/issue-<number>`, starting from the
+     last commit.
+   - A merge run merges every branch with commits into the current branch,
+     runs `npm run verify` and sets the tickets to `status: done`.
+
+   Tickets that build on others are picked up in a later round. The issue
+   tracker is `scripts/tickets.mjs` (`list`, `view`, `close`).
+
+4. Review the merged result on the current branch.
+
+Commit everything first, including the tickets: the implementers start from
+the last commit, while the planner and merge runs work directly in your
+working directory.
 
 The run is not sandboxed: Sandcastle's container sandbox is not used
-(`noSandbox()`) and Claude Code's OS sandbox is off. The agent runs directly
-on the host with `bypassPermissions`, so it never waits for approval and has
-the same file and network access as your user. Claude Code's OS sandbox is
-not an option here because it keeps Chromium from starting, so the browser
+(`noSandbox()`) and Claude Code's OS sandbox is off. Every agent runs directly
+on the host without permission checks, so it never waits for approval and
+has the same file and network access as your user. Claude Code's OS sandbox
+is not an option here because it keeps Chromium from starting, so the browser
 tests of `npm run verify` cannot pass inside it. Only start runs for tickets
 you trust.
 
-Options: `--ticket <file>` (one ticket regardless of status), `--model <id>`
-(or `SANDCASTLE_MODEL`), `--rerun` (ignore an existing branch).
 Requirements: Claude Code CLI logged in.
