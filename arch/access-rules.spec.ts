@@ -30,7 +30,7 @@ describe('architecture: suffix-based access rules', () => {
   it('only smart components may access a store (locality and ai excepted)', async () => {
     // Coordinators are a dedicated service layer that may combine several stores.
     const rule = projectFiles(TS_CONFIG)
-      .inPath(APP, { except: [SMART, AI_LAYER, STORE, COORDINATOR] })
+      .inPath(APP, { except: [SMART, AI_LAYER, COORDINATOR] })
       .shouldNot()
       .dependOnFiles()
       .withName(STORE);

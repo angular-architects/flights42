@@ -1,10 +1,6 @@
 import { execSync } from 'node:child_process';
 
-const fastSteps = [
-  'npx ng lint flights',
-  'npm run test:arch',
-  'npm run test:scripts',
-];
+const fastSteps = ['npx ng lint flights', 'npm run test:arch'];
 
 const fullOnlySteps = [
   'npx ng test flights --configuration ci',

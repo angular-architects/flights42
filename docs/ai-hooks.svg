@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="910" height="380" viewBox="0 0 910 380" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="910" height="380" fill="#ffffff"/>
+
+  <!-- ===================== EDGES: config -> adapter (runs) ===================== -->
+  <line x1="270" y1="70" x2="326" y2="108" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="270" y1="160" x2="326" y2="132" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="270" y1="290" x2="326" y2="290" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- ===================== EDGES: adapter -> shared (delegates) ===================== -->
+  <line x1="564" y1="120" x2="620" y2="180" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="590" y1="290" x2="620" y2="212" stroke="#555" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- ===================== AGENT NAMES ===================== -->
+  <text x="155" y="38" text-anchor="middle" fill="#1565c0" font-size="16" font-weight="bold">Claude Code</text>
+  <text x="155" y="215" text-anchor="middle" fill="#212121" font-size="16" font-weight="bold">Codex</text>
+  <text x="155" y="345" text-anchor="middle" fill="#00897b" font-size="16" font-weight="bold">Antigravity</text>
+
+  <!-- ===================== PER-PLATFORM CONFIG FILES ===================== -->
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="40" y="48" width="230" height="44" rx="2" fill="#fffbf0" stroke="#1565c0" stroke-width="1.8" stroke-dasharray="5,3"/>
+    <text x="155" y="75" text-anchor="middle" fill="#111">.claude/settings.json</text>
+
+    <rect x="40" y="138" width="230" height="44" rx="2" fill="#fffbf0" stroke="#212121" stroke-width="1.8" stroke-dasharray="5,3"/>
+    <text x="155" y="165" text-anchor="middle" fill="#111">.codex/hooks.json</text>
+
+    <rect x="40" y="268" width="230" height="44" rx="2" fill="#fffbf0" stroke="#00897b" stroke-width="1.8" stroke-dasharray="5,3"/>
+    <text x="155" y="295" text-anchor="middle" fill="#111">.agents/hooks.json</text>
+  </g>
+
+  <!-- ===================== ADAPTERS ===================== -->
+  <text x="447" y="88" text-anchor="middle" fill="#777" font-size="12" font-style="italic">&#171; adapter: exit 2 + stderr &#187;</text>
+  <text x="460" y="255" text-anchor="middle" fill="#777" font-size="12" font-style="italic">&#171; adapter: JSON decision on stdout &#187;</text>
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="330" y="98" width="234" height="44" rx="2" fill="#ffffff" stroke="#1565c0" stroke-width="1.8"/>
+    <text x="447" y="125" text-anchor="middle" fill="#111">stop-hook.mjs</text>
+
+    <rect x="330" y="268" width="260" height="44" rx="2" fill="#ffffff" stroke="#00897b" stroke-width="1.8"/>
+    <text x="460" y="295" text-anchor="middle" fill="#111">antigravity-stop-hook.mjs</text>
+  </g>
+
+  <!-- ===================== SHARED / GENERAL ===================== -->
+  <g font-family="Menlo, Consolas, monospace" font-size="13">
+    <rect x="624" y="168" width="250" height="50" rx="2" fill="#eef7ee" stroke="#2e7d32" stroke-width="2"/>
+    <text x="749" y="188" text-anchor="middle" fill="#111" font-weight="bold">run-checks.mjs</text>
+    <text x="749" y="206" text-anchor="middle" fill="#2e7d32" font-size="11" font-style="italic" font-family="Helvetica, Arial, sans-serif">&#171; shared / general &#187;</text>
+  </g>
+
+  <!-- ===================== EDGE LABELS ===================== -->
+  <g font-size="11" font-style="italic" text-anchor="middle"
+     style="paint-order:stroke; stroke:#ffffff; stroke-width:3px; stroke-linejoin:round;">
+    <text x="298" y="82" fill="#555">runs</text>
+    <text x="298" y="152" fill="#555">runs</text>
+    <text x="298" y="282" fill="#555">runs</text>
+    <text x="600" y="142" fill="#555">delegates</text>
+    <text x="580" y="256" fill="#555">delegates</text>
+  </g>
+</svg>
