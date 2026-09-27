@@ -1,7 +1,7 @@
 import { resource, Service, Signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
-import { Luggage } from './luggage';
+import { initLuggage, Luggage } from './luggage';
 
 @Service()
 export class LuggageClient {
@@ -18,8 +18,6 @@ export class LuggageClient {
     });
   }
 
-  // No defaultValue: without nonBlocking() in the route the Router would wait
-  // for this Resource, just like for a Resolver
   findLuggageById(id: Signal<number>) {
     return resource({
       params: id,
@@ -29,6 +27,7 @@ export class LuggageClient {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         return this.getLuggage().find((item) => item.id === id);
       },
+      defaultValue: initLuggage,
     });
   }
 

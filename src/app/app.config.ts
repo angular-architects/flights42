@@ -7,9 +7,9 @@ import {
 import { provideSignalFormsConfig } from '@angular/forms/signals';
 import { NG_STATUS_CLASSES } from '@angular/forms/signals/compat';
 import {
-  ɵwithRouterResources as withRouterResources,
   provideRouter,
   withComponentInputBinding,
+  withRouterResources,
 } from '@angular/router';
 import { provideHashbrown } from '@hashbrownai/angular';
 import { provideMarkdown } from 'ngx-markdown';

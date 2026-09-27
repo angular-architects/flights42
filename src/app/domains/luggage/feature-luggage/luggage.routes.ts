@@ -1,4 +1,4 @@
-import { ɵnonBlocking as nonBlocking, Routes } from '@angular/router';
+import { nonBlocking, Routes } from '@angular/router';
 
 import { LuggageDetail } from './luggage-detail/luggage-detail';
 import { createLuggageResource } from './luggage-detail/luggage-resource';
