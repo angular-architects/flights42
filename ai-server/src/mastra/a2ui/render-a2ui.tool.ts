@@ -67,7 +67,7 @@ function childShapeErrors(components: ComponentEntry[]): string[] {
   return errors;
 }
 
-export const renderA2uiTool = createTool({
+export const render_a2ui = createTool({
   id: RENDER_A2UI_TOOL_NAME,
   description:
     'Render a custom A2UI surface. Follow the A2UI Protocol Instructions in the system prompt.',

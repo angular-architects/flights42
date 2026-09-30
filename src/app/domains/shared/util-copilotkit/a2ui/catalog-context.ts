@@ -50,6 +50,6 @@ export function catalogToContextEntry(catalog: AngularCatalog): Context {
 
   return {
     description: A2UI_SCHEMA_CONTEXT_DESCRIPTION,
-    value: JSON.stringify({ catalogId: catalog.id, components }),
+    value: JSON.stringify({ catalogId: catalog.id, components }, null, 2),
   };
 }

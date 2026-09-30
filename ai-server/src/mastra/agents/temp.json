@@ -1,0 +1,204 @@
+{
+  "type": "ACTIVITY_SNAPSHOT",
+  "messageId": "a2ui-surface-call_GwlqVD3X2xjuQx8a3sZXSfMd",
+  "activityType": "a2ui-surface",
+  "content": {
+    "a2ui_operations": [
+      {
+        "version": "v0.9",
+        "createSurface": {
+          "surfaceId": "booked-flights-compact-table",
+          "catalogId": "https://example.com/catalogs/flights42-a2ui-demo"
+        }
+      },
+      {
+        "version": "v0.9",
+        "updateComponents": {
+          "surfaceId": "booked-flights-compact-table",
+          "components": [
+            {
+              "id": "root",
+              "component": "Column",
+              "children": ["header", "row-1", "row-2", "row-50", "row-516"]
+            },
+            {
+              "id": "header",
+              "component": "Row",
+              "children": ["h-id", "h-route", "h-date", "h-time", "h-delay"]
+            },
+            {
+              "id": "h-id",
+              "component": "Text",
+              "text": "Nr.",
+              "variant": "h5",
+              "weight": 1
+            },
+            {
+              "id": "h-route",
+              "component": "Text",
+              "text": "Strecke",
+              "variant": "h5",
+              "weight": 2
+            },
+            {
+              "id": "h-date",
+              "component": "Text",
+              "text": "Datum",
+              "variant": "h5",
+              "weight": 1
+            },
+            {
+              "id": "h-time",
+              "component": "Text",
+              "text": "Zeit",
+              "variant": "h5",
+              "weight": 1
+            },
+            {
+              "id": "h-delay",
+              "component": "Text",
+              "text": "",
+              "variant": "h5",
+              "weight": 1
+            },
+            {
+              "id": "row-1",
+              "component": "Row",
+              "children": [
+                "r1-id",
+                "r1-route",
+                "r1-date",
+                "r1-time",
+                "r1-delay"
+              ]
+            },
+            { "id": "r1-id", "component": "Text", "text": "1", "weight": 1 },
+            {
+              "id": "r1-route",
+              "component": "Text",
+              "text": "Graz → Hamburg",
+              "weight": 2
+            },
+            {
+              "id": "r1-date",
+              "component": "Text",
+              "text": "09.10.2026",
+              "weight": 1
+            },
+            {
+              "id": "r1-time",
+              "component": "Text",
+              "text": "08:30",
+              "weight": 1
+            },
+            { "id": "r1-delay", "component": "Text", "text": "", "weight": 1 },
+            {
+              "id": "row-2",
+              "component": "Row",
+              "children": [
+                "r2-id",
+                "r2-route",
+                "r2-date",
+                "r2-time",
+                "r2-delay"
+              ]
+            },
+            { "id": "r2-id", "component": "Text", "text": "2", "weight": 1 },
+            {
+              "id": "r2-route",
+              "component": "Text",
+              "text": "Hamburg → Graz",
+              "weight": 2
+            },
+            {
+              "id": "r2-date",
+              "component": "Text",
+              "text": "09.10.2026",
+              "weight": 1
+            },
+            {
+              "id": "r2-time",
+              "component": "Text",
+              "text": "15:45",
+              "weight": 1
+            },
+            { "id": "r2-delay", "component": "Text", "text": "", "weight": 1 },
+            {
+              "id": "row-50",
+              "component": "Row",
+              "children": [
+                "r50-id",
+                "r50-route",
+                "r50-date",
+                "r50-time",
+                "r50-delay"
+              ]
+            },
+            { "id": "r50-id", "component": "Text", "text": "50", "weight": 1 },
+            {
+              "id": "r50-route",
+              "component": "Text",
+              "text": "Wien → Klagenfurt",
+              "weight": 2
+            },
+            {
+              "id": "r50-date",
+              "component": "Text",
+              "text": "13.10.2026",
+              "weight": 1
+            },
+            {
+              "id": "r50-time",
+              "component": "Text",
+              "text": "15:40",
+              "weight": 1
+            },
+            {
+              "id": "r50-delay",
+              "component": "Icon",
+              "name": "warning",
+              "weight": 1
+            },
+            {
+              "id": "row-516",
+              "component": "Row",
+              "children": [
+                "r516-id",
+                "r516-route",
+                "r516-date",
+                "r516-time",
+                "r516-delay"
+              ]
+            },
+            {
+              "id": "r516-id",
+              "component": "Text",
+              "text": "516",
+              "weight": 1
+            },
+            {
+              "id": "r516-route",
+              "component": "Text",
+              "text": "Graz → Paris",
+              "weight": 2
+            },
+            {
+              "id": "r516-date",
+              "component": "Text",
+              "text": "10.10.2026",
+              "weight": 1
+            },
+            {
+              "id": "r516-time",
+              "component": "Text",
+              "text": "15:40",
+              "weight": 1
+            },
+            { "id": "r516-delay", "component": "Text", "text": "", "weight": 1 }
+          ]
+        }
+      }
+    ]
+  },
+  "replace": true
+}

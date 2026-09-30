@@ -5,7 +5,6 @@ import { messageWidget } from '../../shared/ui-assistant/widgets/message-widget'
 import { ConfigService } from '../../shared/util-common/config-service';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
-import { hotelWidget } from '../ui/hotel-widget';
 import { TICKETING_AGENT_ID } from './agent-ids';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
@@ -25,7 +24,7 @@ export function injectTicketingAgentStore() {
       getCurrentBasketTool,
       displayFlightDetailTool,
     ],
-    components: [messageWidget, flightWidget, hotelWidget],
+    components: [messageWidget, flightWidget],
   });
 
   return injectAgentStore(TICKETING_AGENT_ID);

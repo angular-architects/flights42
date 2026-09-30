@@ -58,6 +58,8 @@ interface TileBuildResult {
   dataOps: A2uiMessage[];
 }
 
+const DISPLAY_DSL = true;
+
 /**
  * Deterministically compiles a dashboard spec into a complete A2UI v0.9
  * surface (`createSurface` + `updateComponents` + `updateDataModel`).
@@ -75,6 +77,9 @@ export async function compileDashboard(
   spec: DashboardSpec,
   options: CompileDashboardOptions = {},
 ): Promise<CompiledDashboard> {
+  if (DISPLAY_DSL) {
+    console.log('DSL', spec);
+  }
   const dataSteps: DataStep[] = [];
   const data = await fetchAllDashboardData(spec, dataSteps);
   return assembleDashboard(spec, data, options, dataSteps);

@@ -1,0 +1,131 @@
+// AG-UI
+{
+  "type": "ACTIVITY_SNAPSHOT",
+  "messageId": "a2ui-surface-call_lQC3n52dQfyQzfSb5qSC0oSI",
+  "activityType": "a2ui-surface",
+  "content": {
+    // A2UI
+    "a2ui_operations": [
+      {
+        "version": "v0.9",
+        "createSurface": {
+          "surfaceId": "upcoming-flights-table",
+          "catalogId": "https://example.com/catalogs/flights42-a2ui-demo"
+        }
+      },
+      {
+        "version": "v0.9",
+        "updateComponents": {
+          "surfaceId": "upcoming-flights-table",
+          "components": [
+            {
+              "id": "root",
+              "component": "Column",
+              "children": [
+                "title",
+                "header-row",
+                "row-1",
+                "row-2",
+                "row-3",
+                "row-4"
+              ]
+            },
+            {
+              "id": "title",
+              "component": "Text",
+              "text": "Upcoming flights"
+            },
+            {
+              "id": "header-row",
+              "component": "Row",
+              "children": ["header-date", "header-route"]
+            },
+            {
+              "id": "header-date",
+              "component": "Text",
+              "text": "Date",
+              "variant": "h5",
+              "weight": 1
+            },
+            {
+              "id": "header-route",
+              "component": "Text",
+              "text": "Route",
+              "variant": "h5",
+              "weight": 2
+            },
+            {
+              "id": "row-1",
+              "component": "Row",
+              "children": ["date-1", "route-1"]
+            },
+            {
+              "id": "date-1",
+              "component": "Text",
+              "text": "Oct 9, 08:30",
+              "weight": 1
+            },
+            {
+              "id": "route-1",
+              "component": "Text",
+              "text": "Graz → Hamburg",
+              "weight": 2
+            },
+            {
+              "id": "row-2",
+              "component": "Row",
+              "children": ["date-2", "route-2"]
+            },
+            {
+              "id": "date-2",
+              "component": "Text",
+              "text": "Oct 9, 15:45",
+              "weight": 1
+            },
+            {
+              "id": "route-2",
+              "component": "Text",
+              "text": "Hamburg → Graz",
+              "weight": 2
+            },
+            {
+              "id": "row-3",
+              "component": "Row",
+              "children": ["date-3", "route-3"]
+            },
+            {
+              "id": "date-3",
+              "component": "Text",
+              "text": "Oct 10, 15:40",
+              "weight": 1
+            },
+            {
+              "id": "route-3",
+              "component": "Text",
+              "text": "Graz → Paris",
+              "weight": 2
+            },
+            {
+              "id": "row-4",
+              "component": "Row",
+              "children": ["date-4", "route-4"]
+            },
+            {
+              "id": "date-4",
+              "component": "Text",
+              "text": "Oct 13, 15:40",
+              "weight": 1
+            },
+            {
+              "id": "route-4",
+              "component": "Text",
+              "text": "Wien → Klagenfurt",
+              "weight": 2
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "replace": true
+}
