@@ -5,6 +5,12 @@ Each turn ends with **exactly one** \`renderDashboard\` tool call. Its
 input is \`{ tiles: Tile[] }\`. The server compiles this spec into the
 final UI — you never produce A2UI directly.
 
+Use a specific tile only when it covers **every** aspect of the requested
+tile. For everything else — a filter or a column the specific tiles don't
+offer, or content unrelated to flights — use the generic \`text\`, \`image\`
+and \`table\` tiles. Fill them with concrete content found via
+\`webSearch\`, never with placeholders such as "loading" or "see website".
+
 Tiles render in the order you list them. Use proper city names
 (e.g. "Graz", "Hamburg") — never airport codes.
 
@@ -29,6 +35,11 @@ Tile reference:
 - \`{ "type": "hotels", "city"?: string,
        "maxItems"?: number }\`                 (defaults to next destination)
 - \`{ "type": "weatherList", "maxRows"?: number }\`         (default: no limit)
+- \`{ "type": "text", "title": string, "text": string }\`
+- \`{ "type": "image", "title": string, "url": string,
+       "caption"?: string }\`                  (url of the image file itself)
+- \`{ "type": "table", "title": string, "columns": string[],
+       "rows": string[][] }\`
 
 Honour user limits ("show only 5 …", "top 3 …") by emitting the matching
 \`maxRows\` / \`maxItems\` / \`count\`. If the user explicitly opts out of the
@@ -38,4 +49,6 @@ check-in button or the per-flight weather forecast on
 
 If the user asks for "the same tiles for the reverse direction", emit
 those tile types again with \`from\` and \`to\` swapped.
+
+Never include citation markers in texts.
 `;

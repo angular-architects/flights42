@@ -22,6 +22,7 @@ const A2UI_VERSION = 'v0.9' as const;
 // per-tile overrides.
 const DEFAULT_FLIGHT_TABLE_MAX_ROWS = 30;
 const FALLBACK_CITY = 'Hamburg';
+const IMAGE_CHECK_TIMEOUT_MS = 5000;
 
 type Component = Record<string, unknown> & {
   id: string;
@@ -50,6 +51,7 @@ export interface CompiledDashboard {
 interface DashboardData {
   bookedFlights: BookedFlight[];
   flightsByRoute: Map<string, FlightRecord[]>;
+  availableImages: Set<string>;
 }
 
 interface TileBuildResult {
@@ -122,6 +124,16 @@ async function fetchAllDashboardData(
       dataSteps.push({ name: 'findBookedFlights', args: {} }) - 1;
   }
 
+  const imageUrls = [
+    ...new Set(
+      spec.tiles.flatMap((tile) => (tile.type === 'image' ? [tile.url] : [])),
+    ),
+  ];
+  const imageStepIndices = imageUrls.map(
+    (url) => dataSteps.push({ name: 'checkImage', args: { url } }) - 1,
+  );
+  const imageChecks = Promise.all(imageUrls.map((url) => isImageUrl(url)));
+
   const [bookedFlights, ...flightLists] = await Promise.all([
     needsBookedFlights ? getBookedFlights() : Promise.resolve([]),
     ...routeList.map((key) => {
@@ -142,7 +154,30 @@ async function fetchAllDashboardData(
     flightsByRoute.set(key, flightLists[idx] ?? []);
   });
 
-  return { bookedFlights, flightsByRoute };
+  const imageResults = await imageChecks;
+  const availableImages = new Set<string>();
+  imageStepIndices.forEach((stepIdx, i) => {
+    dataSteps[stepIdx].result = { isImage: imageResults[i] };
+    if (imageResults[i]) {
+      availableImages.add(imageUrls[i]);
+    }
+  });
+
+  return { bookedFlights, flightsByRoute, availableImages };
+}
+
+async function isImageUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(IMAGE_CHECK_TIMEOUT_MS),
+    });
+    await response.body?.cancel();
+    const contentType = response.headers.get('content-type') ?? '';
+    return response.ok && contentType.startsWith('image/');
+  } catch {
+    return false;
+  }
 }
 
 function assembleDashboard(
@@ -214,6 +249,12 @@ function buildTile(
       return buildHotels(idx, tile, data, surfaceId, dataSteps);
     case 'weatherList':
       return buildWeatherList(idx, tile, data, surfaceId, dataSteps);
+    case 'text':
+      return buildTextTile(idx, tile, surfaceId);
+    case 'image':
+      return buildImageTile(idx, tile, data, surfaceId);
+    case 'table':
+      return buildTableTile(idx, tile, surfaceId);
   }
 }
 
@@ -847,6 +888,131 @@ function buildWeatherList(
   );
 
   return { rootChildren: [cardId], components, dataOps };
+}
+
+function buildTextTile(
+  idx: number,
+  tile: Extract<DashboardTile, { type: 'text' }>,
+  surfaceId: string,
+): TileBuildResult {
+  const cardId = tileId(idx, 'card');
+  const bodyId = tileId(idx, 'body');
+  const titleId = tileId(idx, 'title');
+  const textId = tileId(idx, 'text');
+  return {
+    rootChildren: [cardId],
+    components: [
+      { id: cardId, component: 'Card', child: bodyId },
+      { id: bodyId, component: 'Column', children: [titleId, textId] },
+      { id: titleId, component: 'Text', text: tile.title, variant: 'h2' },
+      {
+        id: textId,
+        component: 'Text',
+        text: { path: pathFor(idx, 'text') },
+        variant: 'body',
+      },
+    ],
+    dataOps: [dataOp(surfaceId, tilePath(idx), { text: tile.text })],
+  };
+}
+
+function buildImageTile(
+  idx: number,
+  tile: Extract<DashboardTile, { type: 'image' }>,
+  data: DashboardData,
+  surfaceId: string,
+): TileBuildResult {
+  const cardId = tileId(idx, 'card');
+  const bodyId = tileId(idx, 'body');
+  const titleId = tileId(idx, 'title');
+  const contentId = tileId(idx, 'content');
+  const captionId = tileId(idx, 'caption');
+  const isImage = data.availableImages.has(tile.url);
+
+  const children = [titleId, contentId];
+  const components: Component[] = [
+    { id: cardId, component: 'Card', child: bodyId },
+    { id: bodyId, component: 'Column', children },
+    { id: titleId, component: 'Text', text: tile.title, variant: 'h2' },
+    isImage
+      ? {
+          id: contentId,
+          component: 'Image',
+          url: { path: pathFor(idx, 'url') },
+          fit: 'contain',
+        }
+      : {
+          id: contentId,
+          component: 'Text',
+          text: { path: pathFor(idx, 'missing') },
+          variant: 'body',
+        },
+  ];
+
+  if (tile.caption) {
+    children.push(captionId);
+    components.push({
+      id: captionId,
+      component: 'Text',
+      text: { path: pathFor(idx, 'caption') },
+      variant: 'caption',
+    });
+  }
+
+  return {
+    rootChildren: [cardId],
+    components,
+    dataOps: [
+      dataOp(surfaceId, tilePath(idx), {
+        url: tile.url,
+        missing: `Image not available: ${tile.url}`,
+        caption: tile.caption ?? '',
+      }),
+    ],
+  };
+}
+
+function buildTableTile(
+  idx: number,
+  tile: Extract<DashboardTile, { type: 'table' }>,
+  surfaceId: string,
+): TileBuildResult {
+  const cardId = tileId(idx, 'card');
+  const bodyId = tileId(idx, 'body');
+  const titleId = tileId(idx, 'title');
+  const hdrId = tileId(idx, 'hdr');
+  const headerCellIds = tile.columns.map((_, c) => `${hdrId}-c${c}`);
+
+  const rowIds: string[] = [];
+  const components: Component[] = [
+    { id: hdrId, component: 'Row', align: 'stretch', children: headerCellIds },
+    ...tile.columns.map((label, c) => headerText(headerCellIds[c], label)),
+  ];
+
+  const rows = tile.rows.map((row) => tile.columns.map((_, c) => row[c] ?? ''));
+  rows.forEach((_, j) => {
+    const rowId = `${tileId(idx, 'r')}${j}`;
+    rowIds.push(rowId);
+    const cellIds = tile.columns.map((_, c) => `${rowId}-c${c}`);
+    components.push(
+      { id: rowId, component: 'Row', align: 'stretch', children: cellIds },
+      ...cellIds.map((cellId, c) =>
+        cellText(cellId, pathFor(idx, `rows/${j}/${c}`)),
+      ),
+    );
+  });
+
+  components.unshift(
+    { id: cardId, component: 'Card', child: bodyId },
+    { id: bodyId, component: 'Column', children: [titleId, hdrId, ...rowIds] },
+    { id: titleId, component: 'Text', text: tile.title, variant: 'h2' },
+  );
+
+  return {
+    rootChildren: [cardId],
+    components,
+    dataOps: [dataOp(surfaceId, tilePath(idx), { rows })],
+  };
 }
 
 function imageRowList(args: {

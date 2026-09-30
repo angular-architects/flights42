@@ -89,6 +89,27 @@ export const dashboardTileSchema = z.discriminatedUnion('type', [
         'Maximum number of destination forecasts to list. Defaults to no limit.',
       ),
   }),
+  z.object({
+    type: z.literal('text'),
+    title: z.string(),
+    text: z.string(),
+  }),
+  z.object({
+    type: z.literal('image'),
+    title: z.string(),
+    url: z
+      .string()
+      .describe('URL of the image file itself, not of a web page.'),
+    caption: z.string().nullish(),
+  }),
+  z.object({
+    type: z.literal('table'),
+    title: z.string(),
+    columns: z.array(z.string()).min(1),
+    rows: z
+      .array(z.array(z.string()))
+      .describe('One array of cell texts per row, in column order.'),
+  }),
 ]);
 
 export const dashboardSpecSchema = z.object({

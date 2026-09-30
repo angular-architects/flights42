@@ -1,3 +1,4 @@
+import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 
 import { model } from '../config.js';
@@ -12,7 +13,10 @@ export const dashboardAgent = new Agent({
   name: 'Flight42 Dashboard Composer',
   instructions: dashboardAgentPrompt,
   model,
-  tools: { [RENDER_DASHBOARD_TOOL_NAME]: renderDashboardTool },
+  tools: {
+    [RENDER_DASHBOARD_TOOL_NAME]: renderDashboardTool,
+    webSearch: openai.tools.webSearch(),
+  },
   defaultOptions: { maxSteps: 1 },
   // memory: new Memory(),
 });
