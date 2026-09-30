@@ -16,5 +16,5 @@ import { Luggage } from '../../data/luggage';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LuggageDetail {
-  readonly luggage = input.required<Resource<Luggage | undefined>>();
+  readonly luggage = input.required<Resource<Luggage>>();
 }

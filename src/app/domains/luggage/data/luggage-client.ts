@@ -25,7 +25,11 @@ export class LuggageClient {
         // Slow on purpose: shows that a non-blocking resource lets the
         // router activate the route before the data has arrived
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        return this.getLuggage().find((item) => item.id === id);
+        const luggage = this.getLuggage().find((item) => item.id === id);
+        if (!luggage) {
+          throw new Error(`Luggage ${id} not found`);
+        }
+        return luggage;
       },
       defaultValue: initLuggage,
     });

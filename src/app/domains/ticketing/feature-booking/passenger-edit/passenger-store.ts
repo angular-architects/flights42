@@ -20,10 +20,8 @@ export const PassengerStore = signalStore(
   }),
 
   withProps((store) => {
-    // No default value: a resource that already has a value does not block
     const _passenger = inject(PassengerClient).findPassengerResourceById(
       store.passengerId,
-      { withDefaultValue: false },
     );
 
     // Members starting with _ are private in NgRx Signals
