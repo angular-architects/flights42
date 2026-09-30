@@ -47,6 +47,8 @@ module.exports = defineConfig([
   },
   {
     files: ['**/*.html'],
+    // Temporary: angular-eslint 22.5 bundles compiler 22.1, which can't parse @boundary
+    ignores: ['**/luggage-detail/luggage-detail.html'],
     extends: [
       angular.configs.templateRecommended,
       angular.configs.templateAccessibility,
