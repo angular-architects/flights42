@@ -7,7 +7,8 @@ interface CheckInActionContext {
 }
 
 export function checkInAction(action: A2uiClientAction): void {
-  const router = inject(Router);
-  const context = action.context as CheckInActionContext;
-  router.navigate(['/checkin', { ticketId: context.flightId }]);
+  // TODO: Navigate to the check-in page:
+  //       1. Get the flightId from the action context
+  //       2. Navigate to /checkin and pass the flightId as the
+  //          matrix parameter ticketId
 }
