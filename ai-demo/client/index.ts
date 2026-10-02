@@ -45,7 +45,7 @@ function logEvent(event: BaseEvent): void {
 }
 
 async function main(): Promise<void> {
-  console.log(`AI-Demo client → ${baseUrl}/chat  (SHOW_RAW=${SHOW_DETAILS})`);
+  console.log(`AI-Demo client → ${baseUrl}/chat  (details=${SHOW_DETAILS})`);
   console.log('Ask about the weather in a city. Type "exit" to quit.');
 
   for (;;) {

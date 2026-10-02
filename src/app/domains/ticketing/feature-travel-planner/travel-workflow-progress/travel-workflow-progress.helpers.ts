@@ -1,5 +1,12 @@
 import { type Message } from '@copilotkit/angular';
 
+import {
+  BACKGROUND_TASK_ACTIVITY_TYPE,
+  type BackgroundTaskContent,
+  backgroundTaskContentSchema,
+  type BackgroundTaskProgress,
+} from '../../../shared/util-copilotkit/activity/background-task';
+
 export const PIPELINE_STEPS = [
   { id: 'findFlights', label: 'Flights' },
   { id: 'findHotels', label: 'Hotels' },
@@ -43,6 +50,33 @@ export function selectVisibleToolCalls(
       args: parseToolArguments(toolCall.function.arguments),
       status: resolved.has(toolCall.id) ? 'complete' : 'pending',
     }));
+}
+
+export function selectBackgroundTask(
+  messages: readonly Message[],
+): BackgroundTaskContent | undefined {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index];
+    if (
+      message.role === 'activity' &&
+      message.activityType === BACKGROUND_TASK_ACTIVITY_TYPE
+    ) {
+      const parsed = backgroundTaskContentSchema.safeParse(message.content);
+      return parsed.success ? parsed.data : undefined;
+    }
+  }
+  return undefined;
+}
+
+export function selectServiceCalls(
+  progress: BackgroundTaskProgress,
+): WorkflowToolCall[] {
+  return progress.serviceCalls.map((call, index) => ({
+    id: `${call.step}-${call.tool}-${index}`,
+    name: `${call.tool} (${call.step})`,
+    args: call.args,
+    status: 'complete',
+  }));
 }
 
 /** Ids of the tool calls whose result has already arrived. */

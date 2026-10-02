@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createFrontendTool } from '../../shared/util-copilotkit/tool-definition';
+import { createComponentTool } from '../../shared/util-copilotkit/tool-definition';
 import { HotelCard } from './hotel-card';
 
 const hotelSchema = z.object({
@@ -11,7 +11,9 @@ const hotelSchema = z.object({
   stars: z.number().int().min(1).max(5).describe('Star rating from 1 to 5.'),
   imageUrl: z
     .string()
-    .describe('Absolute or app-relative URL to a hotel image.'),
+    .describe(
+      'Hotel image URL copied verbatim from the hotel data (e.g. "/assets/hotels/grand-palace.svg"). Never invent or rewrite it.',
+    ),
   city: z.string().describe('City the hotel is located in.'),
 });
 
@@ -41,7 +43,7 @@ export class HotelWidget implements ToolRenderer<HotelWidgetArgs> {
   readonly toolCall = input.required<AngularToolCall<HotelWidgetArgs>>();
 }
 
-export const hotelWidget = createFrontendTool({
+export const hotelWidget = createComponentTool({
   name: 'hotelWidget',
   description: `
     Display card for a single hotel proposal (name, stars, image, city).
@@ -51,5 +53,4 @@ export const hotelWidget = createFrontendTool({
   parameters: hotelWidgetSchema,
   component: HotelWidget,
   followUp: false,
-  handler: async () => ({ shown: true }),
 });

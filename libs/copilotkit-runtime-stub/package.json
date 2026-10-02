@@ -1,0 +1,6 @@
+{
+  "name": "@copilotkit/runtime",
+  "version": "1.70.1",
+  "private": true,
+  "description": "Empty stand-in for the @copilotkit/runtime peer of @ag-ui/mastra. The ai-server serves AG-UI through its own Hono route and never imports the runtime; installing the real package would pull ~45 dependencies with conflicting zod peers."
+}

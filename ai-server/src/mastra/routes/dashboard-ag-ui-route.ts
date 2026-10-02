@@ -1,16 +1,15 @@
+import { A2UI_OPERATIONS_KEY } from '@ag-ui/a2ui-middleware';
 import {
   type BaseEvent,
   EventType,
   randomUUID,
   type RunAgentInput,
 } from '@ag-ui/client';
-import {
-  extractCatalogId,
-  getExtendedLocalAgent,
-} from '@internal/ag-ui-server';
+import { MastraAgent as AgUiAgent } from '@ag-ui/mastra';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
+import { readCatalogId } from '../a2ui/catalog-context.js';
 import {
   computeDashboardRequestHash,
   type DashboardCacheEntry,
@@ -27,11 +26,12 @@ import {
   dashboardSpecSchema,
 } from '../dashboard-dsl/dashboard-spec.js';
 import { RENDER_DASHBOARD_TOOL_NAME } from '../tools/render-dashboard.js';
+import { streamAgentEvents } from './ag-ui-stream.js';
 import {
   parseRunAgentInput,
   type SseWriter,
-  streamAgentEvents,
-} from './ag-ui-stream.js';
+  withoutMemoryArgs,
+} from './route-utils.js';
 
 const DASHBOARD_AGENT_ID = 'dashboardAgent';
 
@@ -74,11 +74,14 @@ export async function dashboardAgUiRouteHandler(
     }
   }
 
-  const agent = getExtendedLocalAgent({
-    mastra: mastraInstance,
+  const agUiAgent = new AgUiAgent({
     agentId: DASHBOARD_AGENT_ID,
+    agent: withoutMemoryArgs(mastraInstance.getAgent(DASHBOARD_AGENT_ID)),
     resourceId: DASHBOARD_AGENT_ID,
     requestContext,
+    threadId: input.threadId,
+    initialMessages: input.messages,
+    initialState: input.state,
   });
 
   // `c` is typed against @mastra/core's bundled hono, which is structurally
@@ -90,7 +93,7 @@ export async function dashboardAgUiRouteHandler(
       let argsBuffer = '';
       let capturedSpec: DashboardSpec | undefined;
 
-      await streamAgentEvents(sse, agent, input, {
+      await streamAgentEvents(sse, agUiAgent, input, {
         onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
           const e = event as BaseEvent & {
             toolCallId?: string;
@@ -123,7 +126,7 @@ export async function dashboardAgUiRouteHandler(
           ) {
             const { events, spec } = await handleRenderToolCallEnd(
               argsBuffer,
-              extractCatalogId(input.context) ?? undefined,
+              readCatalogId(input.context),
             );
             if (spec) {
               capturedSpec = spec;
@@ -182,7 +185,7 @@ async function streamCachedDashboard(
   let compiled: CompiledDashboard;
   try {
     compiled = await compileDashboard(spec, {
-      catalogId: extractCatalogId(input.context) ?? undefined,
+      catalogId: readCatalogId(input.context),
     });
   } catch (err) {
     await emitFrame(
@@ -229,7 +232,7 @@ function emitCompiledDashboardEvents(compiled: CompiledDashboard): BaseEvent[] {
     messageId: compiled.surfaceId,
     activityType: 'a2ui-surface',
     content: {
-      operations: [...compiled.structural, ...compiled.dataModel],
+      [A2UI_OPERATIONS_KEY]: [...compiled.structural, ...compiled.dataModel],
     },
   } as unknown as BaseEvent);
   return events;

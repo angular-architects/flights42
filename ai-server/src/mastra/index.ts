@@ -2,11 +2,7 @@ import { Mastra } from '@mastra/core/mastra';
 import { registerApiRoute } from '@mastra/core/server';
 import { LibSQLStore } from '@mastra/libsql';
 import { PinoLogger } from '@mastra/loggers';
-import {
-  DefaultExporter,
-  Observability,
-  SensitiveDataFilter,
-} from '@mastra/observability';
+import { Observability, SensitiveDataFilter } from '@mastra/observability';
 
 import { checkinAgent } from './agents/checkin-agent.js';
 import { dashboardAgent } from './agents/dashboard-agent.js';
@@ -26,6 +22,7 @@ import {
 import { getChartHandler } from './routes/charts-route.js';
 import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
 import { getDashboardImageHandler } from './routes/images-route.js';
+import { SpansOnlyExporter } from './spans-only-exporter.js';
 import { packageTourWorkflow } from './workflows/package-tour-workflow.js';
 
 export const mastra = new Mastra({
@@ -45,6 +42,7 @@ export const mastra = new Mastra({
     id: 'flights42-storage',
     url: 'file:./flights42.db',
   }),
+  backgroundTasks: { enabled: true },
   logger: new PinoLogger({
     name: 'Flights42',
     level: 'info',
@@ -57,7 +55,8 @@ export const mastra = new Mastra({
     configs: {
       default: {
         serviceName: 'flights42',
-        exporters: [new DefaultExporter({ strategy: 'realtime' })],
+        exporters: [new SpansOnlyExporter({ strategy: 'realtime' })],
+        logging: { enabled: false },
         spanOutputProcessors: [new SensitiveDataFilter()],
       },
     },

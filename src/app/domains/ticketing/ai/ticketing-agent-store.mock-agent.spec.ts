@@ -56,7 +56,7 @@ function provideTicketingStore(): Signal<AgentStore> {
 describe('ticketing-agent-store (mocked HttpAgent)', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideCopilotKit({})],
+      providers: [provideCopilotKit({ enableInspector: false })],
     });
   });
 

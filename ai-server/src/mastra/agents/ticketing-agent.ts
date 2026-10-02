@@ -1,40 +1,54 @@
+import { A2UIMiddleware } from '@ag-ui/a2ui-middleware';
 import {
-  addCustomCatalogInstructions,
-  renderA2uiTool,
-} from '@internal/ag-ui-server';
+  MCPAppsMiddleware,
+  type MCPClientConfig,
+} from '@ag-ui/mcp-apps-middleware';
+import { USE_MCP } from '@flights42/feature-flags';
 import { Agent } from '@mastra/core/agent';
-import { MCPClient } from '@mastra/mcp';
 import { Memory } from '@mastra/memory';
 
-import { USE_MCP } from '../../../../libs/feature-flags/feature-flags.js';
-import { model } from '../config.js';
+import { render_a2ui } from '../a2ui/render-a2ui.tool.js';
+import { withA2uiInstructions } from '../a2ui/with-a2ui-instructions.js';
+import { defaultOptions, model } from '../config.js';
+import { agUiRouteConfig } from '../routes/ag-ui-route-config.js';
 import { bookFlightTool } from '../tools/book-flight.js';
 import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
 import { hotelAgent } from './hotel-agent.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
-const hotelsMcpTools = USE_MCP
-  ? await new MCPClient({
-      id: 'hotels-mcp-client',
-      servers: { hotels: { url: new URL('http://127.0.0.1:3002/mcp') } },
-    }).listTools()
-  : {};
+const HOTELS_MCP_SERVER: MCPClientConfig = {
+  type: 'http',
+  url: 'http://127.0.0.1:3002/mcp',
+  serverId: 'hotels',
+};
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
   name: 'Flight42 Ticketing Assistant',
-  instructions: addCustomCatalogInstructions({
-    systemInstructions: ticketingAgentPrompt,
-  }),
+  instructions: withA2uiInstructions(ticketingAgentPrompt),
   model,
+  defaultOptions: {
+    ...defaultOptions,
+    delegation: { includeSubAgentToolResultsInModelContext: true },
+  },
   tools: {
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
-    renderA2uiTool,
-    ...hotelsMcpTools,
+    render_a2ui,
   },
   agents: USE_MCP ? {} : { hotelAgent },
   memory: new Memory(),
 });
+
+const MCP_APPS_MIDDLEWARES = USE_MCP
+  ? [new MCPAppsMiddleware({ mcpServers: [HOTELS_MCP_SERVER] })]
+  : [];
+
+agUiRouteConfig[ticketingAgent.id] = {
+  middlewares: [
+    ...MCP_APPS_MIDDLEWARES,
+    new A2UIMiddleware({ injectA2UITool: false, a2uiToolNames: [] }),
+  ],
+};

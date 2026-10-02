@@ -11,15 +11,15 @@ export const addFlightToPlanTool = createTool({
   inputSchema: z.object({
     flight: planFlightSchema.describe('The flight to add to the plan'),
   }),
-  execute: async (args, { requestContext }) => {
-    const plan = readPlan(requestContext);
+  execute: async (args, context) => {
+    const plan = await readPlan(context);
     const exists = plan.flights.some((flight) => flight.id === args.flight.id);
     const flights = exists
       ? plan.flights.map((flight) =>
           flight.id === args.flight.id ? args.flight : flight,
         )
       : [...plan.flights, args.flight];
-    commitPlan(requestContext, { ...plan, flights });
+    await commitPlan(context, { ...plan, flights });
     return { added: args.flight.id };
   },
 });

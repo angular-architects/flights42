@@ -1,44 +1,55 @@
+import {
+  type AngularCatalog,
+  type AngularComponentImplementation,
+  BASIC_COMPONENTS,
+} from '@a2ui/angular/v0_9';
 import { type Context } from '@ag-ui/core';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import { type A2uiCustomCatalog } from './types';
+export const A2UI_SCHEMA_CONTEXT_DESCRIPTION =
+  'A2UI Component Schema — available components for generating UI surfaces. Use these component names and properties when creating A2UI operations.';
 
-/**
- * Description of the AG-UI context entry that carries the custom catalog. The
- * server matches on this exact string to extract it, so it must stay in sync
- * with `catalogToPromptSection` in `@internal/ag-ui-server`.
- */
-export const A2UI_CATALOG_CONTEXT_DESCRIPTION = 'A2UI Custom Catalog';
+type JsonSchema = Record<string, unknown>;
+type ZodSchemaArg = Parameters<typeof zodToJsonSchema>[0];
 
-/**
- * Serializes a custom catalog into an AG-UI context entry so the agent's server
- * can adopt the catalog id and list the custom component names, descriptions
- * and prop schemas in its system prompt (see `addCustomCatalogInstructions`).
- * The prop schemas are emitted as JSON Schema (`$refStrategy: 'none'` keeps
- * them inline so the server's example generator can read them without
- * resolving `$ref`). A catalog without components still yields an entry so the
- * server always receives the id.
- */
-export function catalogIdToContextEntry(catalogId: string): Context {
+const basicComponentNames = new Set(
+  BASIC_COMPONENTS.map((component) => component.name),
+);
+
+function toInlineComponentSchema(
+  component: AngularComponentImplementation,
+): JsonSchema {
+  const json = zodToJsonSchema(component.schema as unknown as ZodSchemaArg, {
+    target: 'jsonSchema2019-09',
+  }) as JsonSchema;
+  const properties = (json['properties'] ?? {}) as JsonSchema;
+  const required = (json['required'] ?? []) as string[];
+  const description = component.schema.description;
+
   return {
-    description: A2UI_CATALOG_CONTEXT_DESCRIPTION,
-    value: JSON.stringify({ catalogId, components: {} }),
+    allOf: [
+      { $ref: 'common_types.json#/$defs/ComponentCommon' },
+      {
+        ...(description ? { description } : {}),
+        properties: {
+          component: { const: component.name },
+          ...properties,
+        },
+        required: ['component', ...required],
+      },
+    ],
   };
 }
 
-export function catalogToContextEntry(catalog: A2uiCustomCatalog): Context {
+export function catalogToContextEntry(catalog: AngularCatalog): Context {
   const components = Object.fromEntries(
-    catalog.components.map((component) => [
-      component.name,
-      {
-        description: component.description,
-        schema: zodToJsonSchema(component.schema, { $refStrategy: 'none' }),
-      },
-    ]),
+    [...catalog.components.values()]
+      .filter((component) => !basicComponentNames.has(component.name))
+      .map((component) => [component.name, toInlineComponentSchema(component)]),
   );
 
   return {
-    description: A2UI_CATALOG_CONTEXT_DESCRIPTION,
-    value: JSON.stringify({ catalogId: catalog.id, components }),
+    description: A2UI_SCHEMA_CONTEXT_DESCRIPTION,
+    value: JSON.stringify({ catalogId: catalog.id, components }, null, 2),
   };
 }

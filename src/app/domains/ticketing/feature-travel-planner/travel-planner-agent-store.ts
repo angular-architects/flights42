@@ -13,7 +13,7 @@ export function injectTravelPlannerAgentStore() {
   initAgentStore({
     agentId: AGENT_ID,
     url: inject(ConfigService).agUiUrlFor(AGENT_ID),
-    frontendTools: [messageWidget, flightWidget, hotelWidget],
+    components: [messageWidget, flightWidget, hotelWidget],
   });
 
   return injectAgentStore(AGENT_ID);

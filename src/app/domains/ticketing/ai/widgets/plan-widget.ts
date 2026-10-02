@@ -5,28 +5,19 @@ import {
   inject,
   input,
 } from '@angular/core';
-import {
-  type AngularToolCall,
-  CopilotKit,
-  type ToolRenderer,
-} from '@copilotkit/angular';
+import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { ChatRegistry } from '../../../shared/ui-assistant/chat-registry';
-import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
-import { sendDeveloperMessage } from '../../../shared/util-copilotkit/agent-store-helper';
-import { createFrontendTool } from '../../../shared/util-copilotkit/tool-definition';
-import { PlanStep } from '../plan/plan-schemas';
+import { createComponentTool } from '../../../shared/util-copilotkit/tool-definition';
+import { PlanHandoff } from '../plan/plan-handoff';
+import { PlanSnapshot, PlanStep } from '../plan/plan-schemas';
 import { PlanStore } from '../plan/plan-store';
+
+const PLAN_WIDGET_TOOL_NAME = 'planWidget';
 
 const planWidgetSchema = z.object({});
 
 type PlanWidgetArgs = z.infer<typeof planWidgetSchema>;
-
-interface PlanSnapshot {
-  title: string;
-  steps: PlanStep[];
-}
 
 @Component({
   selector: 'app-plan-widget',
@@ -75,10 +66,8 @@ interface PlanSnapshot {
   styleUrls: ['./plan-widget.css'],
 })
 export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
-  private readonly chatRegistry = inject(ChatRegistry);
-  private readonly agentMode = inject(AgentModeService);
-  private readonly copilotKit = inject(CopilotKit);
   private readonly store = inject(PlanStore);
+  private readonly planHandoff = inject(PlanHandoff);
 
   readonly toolCall = input.required<AngularToolCall<PlanWidgetArgs>>();
 
@@ -112,52 +101,16 @@ export class PlanWidget implements ToolRenderer<PlanWidgetArgs> {
   }
 
   protected execute(): void {
-    const steps = this.plan()?.steps ?? [];
-    if (steps.length === 0) {
+    const snapshot = this.plan();
+    if (!snapshot || snapshot.steps.length === 0) {
       return;
     }
-    const store = this.chatRegistry.store;
-    if (!store) {
-      return;
-    }
-    this.agentMode.mode.set('execution');
-    void sendDeveloperMessage(
-      this.copilotKit,
-      store,
-      this.buildExecutionMessage(steps),
-    );
-  }
-
-  private verbForAction(action: PlanStep['action']): string {
-    if (action === 'book') {
-      return 'Book';
-    }
-    if (action === 'cancel') {
-      return 'Cancel';
-    }
-    return 'Do';
-  }
-
-  private buildExecutionMessage(steps: PlanStep[]): string {
-    const lines = steps
-      .map((step, index) => {
-        const verb = this.verbForAction(step.action);
-        const flight = step.flightId != null ? ` flight ${step.flightId}` : '';
-        return `${index + 1}. ${verb}${flight} — ${step.description}`;
-      })
-      .join('\n');
-
-    return `Execute the following plan now. Perform ALL ${steps.length} steps, in
-            EXACTLY this order, one after another — do not reorder, skip, merge,
-            add, or stop early. After each step's confirmation, immediately
-            continue with the next step until every step is done:
-
-              ${lines}`;
+    void this.planHandoff.execute(snapshot);
   }
 }
 
-export const planWidget = createFrontendTool({
-  name: 'planWidget',
+export const planWidget = createComponentTool<PlanWidgetArgs>({
+  name: PLAN_WIDGET_TOOL_NAME,
   description: `
     Renders the current co-plan. The plan itself is held in the client-side
     PlanStore and edited through the plan tools (setPlan, addPlanStep,
@@ -171,5 +124,4 @@ export const planWidget = createFrontendTool({
   parameters: planWidgetSchema,
   component: PlanWidget,
   followUp: false,
-  handler: async () => ({ shown: true }),
 });

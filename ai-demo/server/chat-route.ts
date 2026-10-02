@@ -8,8 +8,12 @@ export async function chatRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
   const input = (await c.req.json()) as RunAgentInput;
-  const agent = c.get('mastra').getAgent('weatherAgent');
-  const aguiAgent = new MastraAgent({ agent, resourceId: input.threadId });
+
+  const aguiAgent = MastraAgent.getLocalAgent({
+    mastra: c.get('mastra'),
+    agentId: 'weatherAgent',
+    resourceId: input.threadId,
+  });
 
   return streamSSE(c, async (sse) => {
     const send = (data: unknown): Promise<void> =>

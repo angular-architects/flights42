@@ -18,6 +18,7 @@ export const config: SheriffConfig = {
     },
 
     'libs/<name>': ['lib:<name>'],
+    'feature-flags': ['lib:feature-flags'],
 
     'src/app/testing': ['testing'],
   },

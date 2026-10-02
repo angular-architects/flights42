@@ -1,4 +1,4 @@
-import { randomUUID } from '@ag-ui/client';
+import { HttpAgent, randomUUID } from '@ag-ui/client';
 import { type Context } from '@ag-ui/core';
 import {
   EnvironmentInjector,
@@ -10,18 +10,20 @@ import {
   CopilotKit,
   type FrontendToolConfig,
   type HumanInTheLoopConfig,
+  registerComponent,
+  type RegisterComponentConfig,
   registerFrontendTool,
   registerHumanInTheLoop,
   registerRenderToolCall,
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
+import { A2UI_CATALOG_CONTEXT } from './a2ui/provide-a2ui-catalog';
 import {
-  catalogIdToContextEntry,
-  catalogToContextEntry,
-} from './a2ui/catalog-context';
-import { A2UI_CUSTOM_CATALOG } from './a2ui/provide-a2ui-catalog';
-import { AppHttpAgent } from './app-http-agent';
+  attachSentFilter,
+  developerMessagesAsUser,
+  forwardedPropsMiddleware,
+} from './agent-middlewares';
 
 export interface InitAgentStoreConfig {
   agentId: string;
@@ -32,15 +34,11 @@ export interface InitAgentStoreConfig {
   toolCallRenderer?: readonly RenderToolCallConfig<any>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   humanInTheLoop?: readonly HumanInTheLoopConfig<any>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  components?: readonly RegisterComponentConfig<any>[];
+  context?: readonly Context[];
   forwardedProps?: () => Record<string, unknown>;
-  state?: () => unknown;
   useServerMemory?: boolean;
-  /**
-   * Forward only the catalog id instead of the full descriptor. For agents
-   * that never render custom components themselves but must still know which
-   * catalog the surfaces belong to.
-   */
-  catalogIdOnly?: boolean;
 }
 
 export function initAgentStore(config: InitAgentStoreConfig): void {
@@ -53,24 +51,27 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
       ? runInInjectionContext(envInjector, () => config.forwardedProps!())
       : {};
 
-  const stateFor = (): unknown =>
-    config.state
-      ? runInInjectionContext(envInjector, () => config.state!())
-      : undefined;
-
-  const agentConfig = {
+  const httpAgent = new HttpAgent({
     agentId: config.agentId,
     url: config.url,
     threadId: randomUUID(),
-  };
-
-  const httpAgent = new AppHttpAgent(agentConfig, {
-    forwardedProps: forwardedPropsFor,
-    state: config.state ? stateFor : undefined,
-    useServerMemory: config.useServerMemory,
   });
 
-  connectCatalogContext(config.agentId, config.catalogIdOnly ?? false);
+  httpAgent.use(
+    forwardedPropsMiddleware(forwardedPropsFor),
+    developerMessagesAsUser,
+  );
+  if (config.useServerMemory) {
+    attachSentFilter(httpAgent);
+  }
+
+  connectCatalogContext(config.agentId);
+
+  for (const entry of config.context ?? []) {
+    connectAgentContext(
+      () => ({ ...entry, agentIds: [config.agentId] }) as Context,
+    );
+  }
 
   copilotKit.updateRuntime({
     selfManagedAgents: {
@@ -93,17 +94,17 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   for (const tool of config.humanInTheLoop ?? []) {
     registerHumanInTheLoop({ ...tool, agentId: config.agentId });
   }
+
+  for (const component of config.components ?? []) {
+    registerComponent({ ...component, agentId: config.agentId });
+  }
 }
 
-function connectCatalogContext(agentId: string, idOnly: boolean): void {
-  const catalog = inject(A2UI_CUSTOM_CATALOG, { optional: true });
-  if (!catalog) {
+function connectCatalogContext(agentId: string): void {
+  const entry = inject(A2UI_CATALOG_CONTEXT, { optional: true });
+  if (!entry) {
     return;
   }
-
-  const entry = idOnly
-    ? catalogIdToContextEntry(catalog.id)
-    : catalogToContextEntry(catalog);
 
   connectAgentContext(() => ({ ...entry, agentIds: [agentId] }) as Context);
 }

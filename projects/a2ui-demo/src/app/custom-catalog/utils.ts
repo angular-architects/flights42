@@ -10,6 +10,10 @@ export function binding<T extends z.ZodTypeAny>(schema: T) {
   return z.union([schema, z.object({ path: z.string() }).strict()]);
 }
 
+export type BoundProps<T> = {
+  [K in keyof T]: BoundProperty<Exclude<T[K], { path: string }>>;
+};
+
 export function initialProperty<T>(value: T): BoundProperty<T> {
   return {
     value: signal(value).asReadonly(),

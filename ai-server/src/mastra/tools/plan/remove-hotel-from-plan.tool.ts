@@ -10,10 +10,10 @@ export const removeHotelFromPlanTool = createTool({
   inputSchema: z.object({
     hotelId: z.string().describe('Id of the hotel to remove from the plan'),
   }),
-  execute: async (args, { requestContext }) => {
-    const plan = readPlan(requestContext);
+  execute: async (args, context) => {
+    const plan = await readPlan(context);
     const hotels = plan.hotels.filter((hotel) => hotel.id !== args.hotelId);
-    commitPlan(requestContext, { ...plan, hotels });
+    await commitPlan(context, { ...plan, hotels });
     return { removed: args.hotelId };
   },
 });

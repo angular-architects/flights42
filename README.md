@@ -45,3 +45,46 @@ Ideas for questions:
 - Did I already book for Paris?
 - Show me hotel there
 - Show me hotels in London
+
+## Mini-Applications
+
+Besides the flight application, the repository contains small stand-alone
+demos. Each one isolates a single concept and can be started on its own.
+
+### AG-UI SDK Demo
+
+Plain AG-UI SDK without an agent framework and without a language model: the
+agent hardcodes its AG-UI events, the client logs every received event.
+Deliberately without HTTP -- the client talks to the agent in-process, so the
+focus stays on the messages:
+
+```bash
+npm run ag-ui-simple:client
+```
+
+A second agent demonstrates client-side tools: it requests the client tool
+`showWeather` in its first run and answers with text once the client has sent
+back the tool result:
+
+```bash
+npm run ag-ui-simple:client-tools
+```
+
+No API key and no server needed -- the agents emit prepared events. HTTP and
+server-sent events come into play with the Mastra demo below.
+
+### Mastra + AG-UI Demo
+
+A real Mastra agent with a weather tool behind an AG-UI endpoint, plus a
+command-line client. Needs an API key:
+
+```bash
+npm run ai-demo-server
+npm run ai-demo-client          # or ai-demo-client:details to log every AG-UI event
+```
+
+The matching minimal Angular client with CopilotKit:
+
+```bash
+npm run simple-client
+```

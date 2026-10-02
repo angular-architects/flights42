@@ -1,6 +1,10 @@
 import { type Interrupt } from '@ag-ui/core';
-import { Component, computed, input, output, signal } from '@angular/core';
-import { type Message, RenderToolCalls } from '@copilotkit/angular';
+import { Component, computed, input, signal } from '@angular/core';
+import {
+  injectInterrupt,
+  type Message,
+  RenderToolCalls,
+} from '@copilotkit/angular';
 import { MarkdownComponent } from 'ngx-markdown';
 
 import { CopilotActivity } from '../../util-copilotkit/activity/copilot-activity';
@@ -19,7 +23,9 @@ interface SuspendPayload {
 }
 
 interface InterruptMetadata {
-  suspendPayload?: SuspendPayload;
+  mastra?: {
+    suspendPayload?: SuspendPayload;
+  };
 }
 
 interface TextPart {
@@ -27,7 +33,6 @@ interface TextPart {
 }
 
 interface InterruptOption {
-  id: string;
   label: string;
   payload: Record<string, unknown>;
 }
@@ -38,14 +43,9 @@ interface InterruptModel {
   options: InterruptOption[];
 }
 
-export interface ResumeInterruptEvent {
-  interruptId: string;
-  payload: Record<string, unknown>;
-}
-
 const DEFAULT_INTERRUPT_OPTIONS: InterruptOption[] = [
-  { id: 'accept', label: 'Accept', payload: { approved: true } },
-  { id: 'decline', label: 'Decline', payload: { approved: false } },
+  { label: 'Accept', payload: { approved: true } },
+  { label: 'Decline', payload: { approved: false } },
 ];
 
 interface ChatActivityView {
@@ -73,40 +73,45 @@ export class ChatMessages {
   readonly agentId = input.required<string>();
   readonly pending = input<boolean>(false);
   readonly greeting = input<string>('Hi! How can I help you?');
-  readonly pendingInterrupts = input<Interrupt[]>([]);
-  readonly resumeInterrupt = output<ResumeInterruptEvent>();
 
+  private readonly interruptController = injectInterrupt(this.agentId);
   private readonly resolvedInterruptId = signal<string | null>(null);
 
-  protected readonly views = computed(() => toMessageViews(this.messages()));
-
-  protected readonly interrupts = computed(() =>
-    toInterruptModels(this.pendingInterrupts(), this.resolvedInterruptId()),
+  protected readonly messageViews = computed(() =>
+    toMessageViews(this.messages()),
   );
 
-  protected resolveInterrupt(
+  protected readonly interrupts = computed(() => {
+    if (this.pending()) {
+      return [];
+    }
+    return toInterruptModels(
+      [...this.interruptController.interrupts()],
+      this.resolvedInterruptId(),
+    );
+  });
+
+  protected async resolveInterrupt(
     interruptId: string,
     payload: Record<string, unknown>,
-  ): void {
+  ): Promise<void> {
     this.resolvedInterruptId.set(interruptId);
-    this.resumeInterrupt.emit({ interruptId, payload });
+    await this.interruptController.resolve(payload, interruptId);
   }
 }
 
 function toMessageViews(messages: Message[]): ChatMessageView[] {
-  return messages.map(
-    (message): ChatMessageView => ({
-      id: message.id,
-      variant: message.role === 'user' ? 'user' : 'assistant',
-      avatar: message.role === 'user' ? '💬' : '🤖',
-      text: toMessageText(message),
-      activity:
-        message.role === 'activity'
-          ? { message, isSurface: message.activityType === 'a2ui-surface' }
-          : null,
-      toolCalls: toToolCallViews(message),
-    }),
-  );
+  return messages.map((message): ChatMessageView => ({
+    id: message.id,
+    variant: message.role === 'user' ? 'user' : 'assistant',
+    avatar: message.role === 'user' ? '💬' : '🤖',
+    text: toMessageText(message),
+    activity:
+      message.role === 'activity'
+        ? { message, isSurface: message.activityType === 'a2ui-surface' }
+        : null,
+    toolCalls: toToolCallViews(message),
+  }));
 }
 
 function toToolCallViews(message: Message): ChatToolCallView[] {
@@ -150,7 +155,7 @@ function toInterruptModels(
 
 function toInterruptModel(interrupt: Interrupt): InterruptModel {
   const metadata = interrupt.metadata as InterruptMetadata | undefined;
-  const suspendPayload = metadata?.suspendPayload;
+  const suspendPayload = metadata?.mastra?.suspendPayload;
 
   const options = Array.isArray(suspendPayload?.options)
     ? (suspendPayload.options as InterruptOption[])

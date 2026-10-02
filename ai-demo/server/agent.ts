@@ -1,3 +1,4 @@
+import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -13,7 +14,7 @@ export const weatherAgent = new Agent({
     look it up. Then answer in one short, natural sentence that mentions the
     condition and the temperature in degrees Celsius.
     `,
-  model: 'openai/gpt-5.6-luna',
+  model: openai('gpt-5.6-luna'),
   tools: { getWeather: weatherTool },
   memory: new Memory(),
 });

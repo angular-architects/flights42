@@ -1,5 +1,6 @@
 import {
   A2uiRendererService,
+  BasicCatalog,
   provideMarkdownRenderer,
 } from '@a2ui/angular/v0_9';
 import { NgComponentOutlet } from '@angular/common';
@@ -70,7 +71,7 @@ describe('A2uiActivityRenderer', () => {
   it('renders a SECOND A2UI surface appended after the first (via ngComponentOutlet)', async () => {
     TestBed.configureTestingModule({
       providers: [
-        provideA2uiCatalog(),
+        provideA2uiCatalog(new BasicCatalog()),
         provideMarkdownRenderer(async (markdown) => markdown),
       ],
     });
@@ -100,7 +101,7 @@ describe('A2uiActivityRenderer', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        provideA2uiCatalog(),
+        provideA2uiCatalog(new BasicCatalog()),
         provideMarkdownRenderer(async (markdown) => markdown),
         {
           provide: ErrorHandler,

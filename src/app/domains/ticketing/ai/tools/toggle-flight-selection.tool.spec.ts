@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { type FrontendToolConfig } from '@copilotkit/angular';
 
 import { makeToolContext } from '../../../../testing/tool-context';
 import { FlightStore } from '../../data/flight-store';
@@ -7,6 +8,18 @@ import { getCurrentBasketTool } from './get-current-basket.tool';
 import { toggleFlightSelectionTool } from './toggle-flight-selection.tool';
 
 const toolContext = makeToolContext();
+
+function handlerOf<Args extends Record<string, unknown>>(
+  tool: FrontendToolConfig<Args>,
+): NonNullable<FrontendToolConfig<Args>['handler']> {
+  if (!tool.handler) {
+    throw new Error(`${tool.name} has no handler`);
+  }
+  return tool.handler;
+}
+
+const toggleFlightSelection = handlerOf(toggleFlightSelectionTool);
+const getCurrentBasket = handlerOf(getCurrentBasketTool);
 
 describe('toggle-flight-selection.tool', () => {
   let basket: ReturnType<typeof signal<Record<number, boolean>>>;
@@ -28,10 +41,7 @@ describe('toggle-flight-selection.tool', () => {
 
   it('selects a flight and reports the new selection state', async () => {
     const result = await TestBed.runInInjectionContext(() =>
-      toggleFlightSelectionTool.handler(
-        { flightId: 3, selected: true },
-        toolContext,
-      ),
+      toggleFlightSelection({ flightId: 3, selected: true }, toolContext),
     );
 
     expect(result).toEqual({ selected: true });
@@ -42,10 +52,7 @@ describe('toggle-flight-selection.tool', () => {
     basket.set({ 3: true });
 
     const result = await TestBed.runInInjectionContext(() =>
-      toggleFlightSelectionTool.handler(
-        { flightId: 3, selected: false },
-        toolContext,
-      ),
+      toggleFlightSelection({ flightId: 3, selected: false }, toolContext),
     );
 
     expect(result).toEqual({ selected: false });
@@ -54,14 +61,11 @@ describe('toggle-flight-selection.tool', () => {
 
   it('exposes the selection to the read-only getCurrentBasket tool', async () => {
     await TestBed.runInInjectionContext(() =>
-      toggleFlightSelectionTool.handler(
-        { flightId: 42, selected: true },
-        toolContext,
-      ),
+      toggleFlightSelection({ flightId: 42, selected: true }, toolContext),
     );
 
     const currentBasket = await TestBed.runInInjectionContext(() =>
-      getCurrentBasketTool.handler({}, toolContext),
+      getCurrentBasket({}, toolContext),
     );
 
     expect(currentBasket).toEqual({ 42: true });

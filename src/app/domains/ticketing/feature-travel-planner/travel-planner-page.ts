@@ -12,7 +12,6 @@ import { addDays, format } from 'date-fns';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { featureFlags } from '../../shared/util-common/feature-flags';
-import { injectAgentStepTracker } from '../../shared/util-copilotkit/agent-step-tracker';
 import {
   reset,
   sendMessage,
@@ -93,8 +92,6 @@ export class TravelPlannerPage {
     () => this.flightWidgets().length + this.hotelWidgets().length,
   );
 
-  protected readonly stepTracker = injectAgentStepTracker(this.chat);
-
   protected readonly errorMessage = computed<string | null>(() => null);
 
   /** True between starting a generation and syncing its result into the store. */
@@ -145,7 +142,6 @@ export class TravelPlannerPage {
     }
 
     reset(this.chat);
-    this.stepTracker.reset();
     this.planStore.clear();
     this.awaitingPlan.set(true);
 

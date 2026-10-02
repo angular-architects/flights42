@@ -1,47 +1,13 @@
-import {
-  getServerHash,
-  MCPAppsMiddleware,
-  type MCPClientConfig,
-} from '@ag-ui/mcp-apps-middleware';
-import { getExtendedLocalAgent } from '@internal/ag-ui-server';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
-import { INTERNAL_PLAN_TOOL_NAMES } from '../tools/plan/index.js';
-import { parseRunAgentInput, streamAgentEvents } from './ag-ui-stream.js';
-
-interface AgUiForwardedProps {
-  agentMode?: unknown;
-  __proxiedMCPRequest?: unknown;
-}
-
-const HIDDEN_TOOLS: Record<string, readonly string[]> = {
-  travelRefinementAgent: INTERNAL_PLAN_TOOL_NAMES,
-};
-
-const HOTELS_MCP_SERVER: MCPClientConfig = {
-  type: 'http',
-  url: 'http://127.0.0.1:3002/mcp',
-  serverId: 'hotels',
-};
-
-const mcpAppsProxy = new MCPAppsMiddleware({
-  mcpServers: [HOTELS_MCP_SERVER],
-});
-
-const MCP_APPS_SERVER_HASHES: Readonly<Record<string, string>> = {
-  [HOTELS_MCP_SERVER.serverId ?? 'hotels']: getServerHash(HOTELS_MCP_SERVER),
-};
-
-function isProxiedMcpRequest(forwardedProps: unknown): boolean {
-  const props = forwardedProps as AgUiForwardedProps | undefined;
-  return Boolean(props?.__proxiedMCPRequest);
-}
+import { streamAgentEvents } from './ag-ui-stream.js';
+import { parseRunAgentInput, toAgUiAgent } from './route-utils.js';
 
 export async function agUiRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
-  const agentId = c.req.param('agentId');
+  const agentId = c.req.param('agentId') ?? '';
   const mastraInstance = c.get('mastra');
   const requestContext = c.get('requestContext');
 
@@ -50,41 +16,28 @@ export async function agUiRouteHandler(
     return parsed.response;
   }
 
-  const forwardedProps = parsed.input.forwardedProps as
-    | AgUiForwardedProps
-    | undefined;
-  const mode = forwardedProps?.agentMode;
-  let effectiveAgentId: string;
-  if (mode === 'plan') {
-    effectiveAgentId = 'planningAgent';
-  } else if (mode === 'execution') {
-    effectiveAgentId = 'ticketingAgent';
-  } else {
-    effectiveAgentId = agentId ?? '';
+  const { input } = parsed;
+
+  const mastraAgent = mastraInstance.getAgent(agentId);
+  if (!mastraAgent) {
+    return c.json(
+      { error: 'not_found', message: `Agent ${agentId} not found` },
+      404,
+    );
   }
 
-  const agent = getExtendedLocalAgent({
-    mastra: mastraInstance,
-    agentId: effectiveAgentId,
-    resourceId: parsed.input.threadId,
+  const agUiAgent = toAgUiAgent({
+    agentId,
+    mastraAgent,
+    input,
     requestContext,
-    tripwireMessage: 'Sorry, I cannot help with this topic.',
-    hiddenToolNames: HIDDEN_TOOLS[effectiveAgentId],
-    mcpAppsServerHashes: MCP_APPS_SERVER_HASHES,
+    abortSignal: c.req.raw.signal,
   });
 
-  agent.setAbortSignal(c.req.raw.signal);
-
-  const middleware = isProxiedMcpRequest(parsed.input.forwardedProps)
-    ? mcpAppsProxy
-    : undefined;
-
-  // `c` is typed against @mastra/core's bundled hono, which is structurally
-  // incompatible with the project's hono `Context` that `streamSSE` expects.
   return streamSSE(
     c as unknown as Parameters<typeof streamSSE>[0],
     async (sse) => {
-      await streamAgentEvents(sse, agent, parsed.input, { middleware });
+      await streamAgentEvents(sse, agUiAgent, input);
     },
   );
 }

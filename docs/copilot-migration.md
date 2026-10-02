@@ -8,7 +8,7 @@ and lists what we could do differently or better. No code has been changed.
 
 Related project docs: [copilot-eval.md](copilot-eval.md) (original evaluation),
 [migration.md](migration.md) (Option 2 decision: keep the flights shell),
-[bridge.md](bridge.md) (workflow step bridge).
+`bridge.md` (deleted 2026-09-07; `git show 23bb6183:docs/bridge.md`) (workflow step bridge).
 
 ## TL;DR
 
@@ -61,7 +61,7 @@ Summary of the current posture (details in the referenced files):
   by server-side Mastra plan tools through the AG-UI bridge, and streams back
   as `STATE_SNAPSHOT` into `store().state()`. See
   [Discussions D8](#d8-shared-state-after-the-copilotkit-state-merge) and
-  [bridge.md](bridge.md).
+  `bridge.md` (deleted 2026-09-07; `git show 23bb6183:docs/bridge.md`).
 
 ## 2. Interrupts and human-in-the-loop
 
@@ -719,7 +719,7 @@ mirrors `store().state()` into `TravelPlanStore` via an effect. Internal plan
 tools are additionally suppressed on the wire (`hiddenToolNames` in
 [extended-mastra-agent.ts](../libs/ag-ui-server/extended-mastra-agent.ts)),
 since the snapshot already conveys their outcome. Details in
-[bridge.md](bridge.md).
+`bridge.md` (deleted 2026-09-07; `git show 23bb6183:docs/bridge.md`).
 
 **Assessment against the new docs:**
 

@@ -98,7 +98,7 @@
       class="code-details-toggle"
       [attr.aria-expanded]="showCodeDetails()"
       (click)="toggleCodeDetails()">
-      {{ showCodeDetails() ? 'Details ausblenden' : 'Details' }}
+      {{ showCodeDetails() ? 'Hide details' : 'Details' }}
     </button>
 
     @if (showCodeDetails()) {
@@ -106,7 +106,7 @@
         <pre class="code-details-block"><code>{{ code }}</code></pre>
       } @else {
         <p class="code-details-empty">
-          Kein generierter JavaScript-Code für diesen Run gefunden.
+          No generated JavaScript code found for this run.
         </p>
       }
     }

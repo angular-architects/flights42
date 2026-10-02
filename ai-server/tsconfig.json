@@ -14,13 +14,8 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "paths": {
-      "@internal/ag-ui-server": ["../libs/ag-ui-server/index.ts"],
-      "@internal/ag-ui-server/*": ["../libs/ag-ui-server/*"]
+      "@flights42/feature-flags": ["../feature-flags/feature-flags.ts"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "../libs/ag-ui-server/**/*.ts",
-    "../libs/feature-flags/**/*.ts"
-  ]
+  "include": ["src/**/*.ts", "../feature-flags/**/*.ts"]
 }

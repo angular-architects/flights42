@@ -1,7 +1,8 @@
-import { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
 
-import { model } from '../config.js';
+import { defaultOptions, model } from '../config.js';
+import { agUiRouteConfig } from '../routes/ag-ui-route-config.js';
 import { packageTourWorkflow } from '../workflows/package-tour-workflow.js';
 import { travelPlannerAgentPrompt } from './travel-planner-agent.prompt.js';
 
@@ -11,11 +12,20 @@ export const travelPlannerAgent = new Agent({
   instructions: travelPlannerAgentPrompt,
   model,
   workflows: { packageTourWorkflow },
+  memory: new Memory(),
+  backgroundTasks: {
+    tools: {
+      packageTourWorkflow: { enabled: true, timeoutMs: 600_000 },
+    },
+  },
   defaultOptions: {
     providerOptions: {
       openai: {
+        ...defaultOptions.providerOptions.openai,
         reasoningEffort: 'medium',
-      } as OpenAILanguageModelResponsesOptions,
+      },
     },
   },
 });
+
+agUiRouteConfig[travelPlannerAgent.id] = { untilIdle: true };

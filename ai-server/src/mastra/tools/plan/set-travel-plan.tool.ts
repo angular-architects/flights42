@@ -28,9 +28,9 @@ export const setTravelPlanTool = createTool({
       .array(planHotelSchema)
       .describe('The complete list of hotels, one per overnight city.'),
   }),
-  execute: async (args, { requestContext }) => {
-    const current = readPlan(requestContext);
-    commitPlan(requestContext, {
+  execute: async (args, context) => {
+    const current = await readPlan(context);
+    await commitPlan(context, {
       summary: args.summary ?? current.summary,
       flights: args.flights,
       hotels: args.hotels,

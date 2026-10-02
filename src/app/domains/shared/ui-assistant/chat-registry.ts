@@ -1,10 +1,9 @@
 import { Injectable, type Signal } from '@angular/core';
-import { type AgentStore, type InterruptController } from '@copilotkit/angular';
+import { type AgentStore } from '@copilotkit/angular';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 export interface ChatConfig {
   store: Signal<AgentStore>;
-  interrupts: InterruptController;
   /** Greeting shown as the first assistant message. Undefined = component default. */
   greeting?: string;
   showModeSelector?: boolean;

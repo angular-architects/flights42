@@ -7,12 +7,12 @@ export const getTravelPlanTool = createTool({
   id: 'getTravelPlan',
   description: `
     Returns the current travel plan: { summary, flights, hotels }. Each flight has
-    id, from, to, date (ISO) and delay; each hotel has id, name, stars, city.
-    The current plan is also provided to you as data above the conversation — use
-    this tool mainly to VERIFY the plan after you changed it.
+    id, from, to, date (ISO) and delay; each hotel has id, name, stars, imageUrl, city.
+    The plan shown above the conversation is a snapshot from the start of your turn —
+    call this tool to see the current state after you changed the plan, and to verify it.
   `.trim(),
   inputSchema: z.object({}),
-  execute: async (_args, { requestContext }) => {
-    return readPlan(requestContext);
+  execute: async (_args, context) => {
+    return readPlan(context);
   },
 });

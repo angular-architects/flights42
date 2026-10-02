@@ -1,5 +1,6 @@
 import {
   A2uiRendererService,
+  BasicCatalog,
   provideMarkdownRenderer,
 } from '@a2ui/angular/v0_9';
 import type { ActivityMessage } from '@ag-ui/client';
@@ -74,9 +75,10 @@ describe('CopilotActivity', () => {
     TestBed.configureTestingModule({
       providers: [
         provideCopilotKit({
+          enableInspector: false,
           renderActivityMessages: [a2uiActivityRendererConfig],
         }),
-        provideA2uiCatalog(),
+        provideA2uiCatalog(new BasicCatalog()),
         provideMarkdownRenderer(async (markdown) => markdown),
         {
           provide: ErrorHandler,
@@ -102,7 +104,7 @@ describe('CopilotActivity', () => {
     expect(fixture.nativeElement.textContent).toContain('hi surf-1');
   });
 
-  it('builds a surface once: later snapshots for it are not applied', async () => {
+  it('applies later snapshots for the same surface in place', async () => {
     const renderer = TestBed.inject(A2uiRendererService);
     const fixture = TestBed.createComponent(HostComponent);
     const host = fixture.componentInstance;
@@ -116,7 +118,7 @@ describe('CopilotActivity', () => {
 
     expect(errors).toEqual([]);
     expect(renderer.surfaceGroup.getSurface('surf-1')).toBeDefined();
-    expect(fixture.nativeElement.textContent).toContain('hi surf-1');
+    expect(fixture.nativeElement.textContent).toContain('updated surf-1');
   });
 
   it('builds a new surface when the activity carries a different one', async () => {

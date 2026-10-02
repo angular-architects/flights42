@@ -14,15 +14,22 @@ export const planHotelSchema = z.object({
   stars: z.number().int().min(1).max(5).describe('Star rating from 1 to 5'),
   imageUrl: z
     .string()
-    .describe('Absolute or app-relative URL to a hotel image'),
+    .describe(
+      'Hotel image URL copied verbatim from the findHotels result (e.g. "/assets/hotels/grand-palace.svg"). Never invent or rewrite it.',
+    ),
   city: z.string().describe('City the hotel is located in'),
+});
+
+export const travelPlanSchema = z.object({
+  summary: z.string().describe('Short summary of the trip'),
+  flights: z
+    .array(planFlightSchema)
+    .describe('The complete list of flights, in travel order'),
+  hotels: z
+    .array(planHotelSchema)
+    .describe('The complete list of hotels, one per overnight city'),
 });
 
 export type PlanFlight = z.infer<typeof planFlightSchema>;
 export type PlanHotel = z.infer<typeof planHotelSchema>;
-
-export interface TravelPlan {
-  summary: string;
-  flights: PlanFlight[];
-  hotels: PlanHotel[];
-}
+export type TravelPlan = z.infer<typeof travelPlanSchema>;

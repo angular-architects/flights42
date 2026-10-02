@@ -1,35 +1,64 @@
-// The run's shared travel-plan state lives on the request-bound AG-UI bridge:
-// readPlan/getState, commitPlan/setState, and emitStateSnapshot streams it back
-// to the client. Bridge design and state wiring are documented in docs/bridge.md.
-import { readBridge } from '@internal/ag-ui-server';
-import type { RequestContext } from '@mastra/core/request-context';
-
+import { travelPlanMemory } from './plan-memory.js';
 import type { PlanFlight, PlanHotel, TravelPlan } from './plan-schemas.js';
+
+export interface PlanToolContext {
+  agent?: {
+    threadId?: string;
+    resourceId?: string;
+  };
+}
+
+interface PlanScope {
+  threadId: string;
+  resourceId: string;
+}
 
 const EMPTY_PLAN: TravelPlan = { summary: '', flights: [], hotels: [] };
 
-export function readPlan(
-  requestContext: RequestContext | undefined,
-): TravelPlan {
-  const state = readBridge(requestContext)?.getState();
-  if (!isTravelPlan(state)) {
-    return EMPTY_PLAN;
-  }
-  return state;
+export async function readPlan(context: PlanToolContext): Promise<TravelPlan> {
+  const { threadId, resourceId } = requireScope(context);
+  const raw = await travelPlanMemory.getWorkingMemory({ threadId, resourceId });
+  return parsePlan(raw);
 }
 
-export function commitPlan(
-  requestContext: RequestContext | undefined,
+export async function commitPlan(
+  context: PlanToolContext,
   plan: TravelPlan,
-): TravelPlan {
+): Promise<TravelPlan> {
+  const { threadId, resourceId } = requireScope(context);
   const ordered: TravelPlan = {
     ...plan,
     hotels: orderHotelsByRoute(plan.hotels, plan.flights),
   };
-  const bridge = readBridge(requestContext);
-  bridge?.setState(ordered);
-  bridge?.emitStateSnapshot(ordered);
+  await travelPlanMemory.updateWorkingMemory({
+    threadId,
+    resourceId,
+    workingMemory: JSON.stringify(ordered),
+  });
   return ordered;
+}
+
+function requireScope(context: PlanToolContext): PlanScope {
+  const threadId = context.agent?.threadId;
+  const resourceId = context.agent?.resourceId;
+  if (!threadId || !resourceId) {
+    throw new Error(
+      'Plan tools require an agent run with a thread id and a resource id',
+    );
+  }
+  return { threadId, resourceId };
+}
+
+function parsePlan(raw: string | null): TravelPlan {
+  if (!raw) {
+    return EMPTY_PLAN;
+  }
+  try {
+    const value: unknown = JSON.parse(raw);
+    return isTravelPlan(value) ? value : EMPTY_PLAN;
+  } catch {
+    return EMPTY_PLAN;
+  }
 }
 
 function isTravelPlan(value: unknown): value is TravelPlan {
@@ -41,9 +70,6 @@ function isTravelPlan(value: unknown): value is TravelPlan {
   );
 }
 
-// Hotels are ranked by the first flight leg that arrives in their city; hotels
-// in a town that is not a flight destination keep their relative order after
-// the matched ones (stable sort).
 function orderHotelsByRoute(
   hotels: PlanHotel[],
   flights: PlanFlight[],

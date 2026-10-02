@@ -1,7 +1,7 @@
+import { USE_APPROVAL } from '@flights42/feature-flags';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../libs/feature-flags/feature-flags.js';
 import {
   fetchFlight,
   isBooked,
@@ -34,10 +34,8 @@ const resultSchema = z.union([
 
 // Generic option descriptor the client renders as a choice button.
 const suspendOptionSchema = z.object({
-  id: z.string(),
   label: z.string(),
   payload: z.record(z.string(), z.unknown()),
-  variant: z.enum(['primary', 'default', 'danger']).optional(),
 });
 
 export const cancelFlightTool = createTool({
@@ -62,7 +60,7 @@ export const cancelFlightTool = createTool({
     const resumeData = context?.agent?.resumeData;
     const suspend = context?.agent?.suspend;
 
-    if (resumeData?.approved === false) {
+    if (resumeData && !resumeData.approved) {
       return {
         ok: false as const,
         result: `Cancellation of flight ${flightId} was cancelled by the user.`,
@@ -80,7 +78,7 @@ export const cancelFlightTool = createTool({
 
     const flight = await fetchFlight(flightId).catch(() => null);
 
-    if (USE_APPROVAL && resumeData?.approved !== true) {
+    if (USE_APPROVAL && !resumeData) {
       const flightContext = flight
         ? ` from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}`
         : '';
@@ -91,18 +89,8 @@ export const cancelFlightTool = createTool({
         flight,
         message: `Cancel flight ${flightId}${flightContext}?`,
         options: [
-          {
-            id: 'accept',
-            label: 'Accept',
-            payload: { approved: true },
-            variant: 'default',
-          },
-          {
-            id: 'decline',
-            label: 'Decline',
-            payload: { approved: false },
-            variant: 'default',
-          },
+          { label: 'Accept', payload: { approved: true } },
+          { label: 'Decline', payload: { approved: false } },
         ],
       });
       return {

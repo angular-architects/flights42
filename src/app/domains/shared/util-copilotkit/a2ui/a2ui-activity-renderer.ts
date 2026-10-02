@@ -12,31 +12,40 @@ import {
 } from '@angular/core';
 import {
   type ActivityRenderer,
+  CopilotA2UIRecovery,
   type RenderActivityMessageConfig,
 } from '@copilotkit/angular';
 import { z } from 'zod';
 
-export const a2uiSurfaceContentSchema = z.object({
-  operations: z.array(z.custom<A2uiMessage>()),
-});
+const a2uiOperationsSchema = z.array(z.custom<A2uiMessage>());
+
+export const a2uiSurfaceContentSchema = z
+  .object({
+    a2ui_operations: a2uiOperationsSchema.optional(),
+    operations: a2uiOperationsSchema.optional(),
+    status: z.enum(['building', 'retrying', 'failed']).optional(),
+  })
+  .passthrough();
 
 export type A2uiSurfaceContent = z.infer<typeof a2uiSurfaceContentSchema>;
 
-/**
- * CopilotKit activity renderer for `activityType: "a2ui-surface"` snapshots.
- * Feeds the emitted A2UI operations into the existing `@a2ui/angular/v0_9`
- * renderer and shows the resulting surface. Kept as legacy A2UI wiring: it does
- * not adapt the catalog to `@copilotkit/a2ui-renderer`.
- */
+export function getSurfaceOperations(
+  content: A2uiSurfaceContent,
+): A2uiMessage[] {
+  return content.a2ui_operations ?? content.operations ?? [];
+}
+
 @Component({
   selector: 'app-a2ui-activity-renderer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SurfaceComponent],
+  imports: [SurfaceComponent, CopilotA2UIRecovery],
   host: { class: 'a2ui-surface' },
   template: `
     @let surface = surfaceId();
     @if (surface) {
       <a2ui-v09-surface [surfaceId]="surface" />
+    } @else if (content().status) {
+      <copilot-a2ui-recovery [content]="content()" />
     }
   `,
 })
@@ -50,13 +59,17 @@ export class A2uiActivityRenderer implements ActivityRenderer<A2uiSurfaceContent
   private renderedSurfaceId: string | null = null;
 
   constructor() {
-    // An activity message describes exactly one surface, so it is built once:
-    // CopilotKit re-delivers the parsed content whenever the message is
-    // re-cloned, and the A2UI processor rejects a second `createSurface`.
     effect(() => {
-      const operations = this.content().operations;
+      const operations = getSurfaceOperations(this.content());
       const surfaceId = getRenderedSurfaceId(operations);
-      if (!surfaceId || surfaceId === this.renderedSurfaceId) {
+      if (!surfaceId) {
+        return;
+      }
+
+      if (surfaceId === this.renderedSurfaceId) {
+        this.renderer.processMessages(
+          operations.filter((operation) => !('createSurface' in operation)),
+        );
         return;
       }
 
@@ -78,7 +91,7 @@ export class A2uiActivityRenderer implements ActivityRenderer<A2uiSurfaceContent
   }
 
   protected readonly surfaceId = computed(() =>
-    getRenderedSurfaceId(this.content().operations),
+    getRenderedSurfaceId(getSurfaceOperations(this.content())),
   );
 }
 

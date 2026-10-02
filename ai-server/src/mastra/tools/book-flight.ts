@@ -1,7 +1,7 @@
+import { USE_APPROVAL } from '@flights42/feature-flags';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import { USE_APPROVAL } from '../../../../libs/feature-flags/feature-flags.js';
 import {
   addBooking,
   fetchFlight,
@@ -39,10 +39,8 @@ const paymentSelectionSchema = z.enum(['creditCard', 'miles', 'cancel']);
 
 // Generic option descriptor the client renders as a choice button.
 const suspendOptionSchema = z.object({
-  id: z.string(),
   label: z.string(),
   payload: z.record(z.string(), z.unknown()),
-  variant: z.enum(['primary', 'default', 'danger']).optional(),
 });
 
 export const bookFlightTool = createTool({
@@ -104,23 +102,11 @@ export const bookFlightTool = createTool({
         message: `How would you like to pay for flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}?`,
         options: [
           {
-            id: 'creditCard',
             label: 'Pay with credit card',
             payload: { selection: 'creditCard' },
-            variant: 'default',
           },
-          {
-            id: 'miles',
-            label: 'Pay with bonus miles',
-            payload: { selection: 'miles' },
-            variant: 'default',
-          },
-          {
-            id: 'cancel',
-            label: 'Cancel',
-            payload: { selection: 'cancel' },
-            variant: 'default',
-          },
+          { label: 'Pay with bonus miles', payload: { selection: 'miles' } },
+          { label: 'Cancel', payload: { selection: 'cancel' } },
         ],
       });
       return {
