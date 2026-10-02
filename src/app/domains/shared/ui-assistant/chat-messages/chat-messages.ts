@@ -1,6 +1,10 @@
 import { type Interrupt } from '@ag-ui/core';
-import { Component, computed, input, output, signal } from '@angular/core';
-import { type Message, RenderToolCalls } from '@copilotkit/angular';
+import { Component, computed, input, signal } from '@angular/core';
+import {
+  injectInterrupt,
+  type Message,
+  RenderToolCalls,
+} from '@copilotkit/angular';
 import { MarkdownComponent } from 'ngx-markdown';
 
 import { CopilotActivity } from '../../util-copilotkit/activity/copilot-activity';
@@ -39,11 +43,6 @@ interface InterruptModel {
   options: InterruptOption[];
 }
 
-export interface ResumeInterruptEvent {
-  interruptId: string;
-  payload: Record<string, unknown>;
-}
-
 const DEFAULT_INTERRUPT_OPTIONS: InterruptOption[] = [
   { label: 'Accept', payload: { approved: true } },
   { label: 'Decline', payload: { approved: false } },
@@ -74,25 +73,30 @@ export class ChatMessages {
   readonly agentId = input.required<string>();
   readonly pending = input<boolean>(false);
   readonly greeting = input<string>('Hi! How can I help you?');
-  readonly pendingInterrupts = input<Interrupt[]>([]);
-  readonly resumeInterrupt = output<ResumeInterruptEvent>();
 
+  private readonly interruptController = injectInterrupt(this.agentId);
   private readonly resolvedInterruptId = signal<string | null>(null);
 
   protected readonly messageViews = computed(() =>
     toMessageViews(this.messages()),
   );
 
-  protected readonly interrupts = computed(() =>
-    toInterruptModels(this.pendingInterrupts(), this.resolvedInterruptId()),
-  );
+  protected readonly interrupts = computed(() => {
+    if (this.pending()) {
+      return [];
+    }
+    return toInterruptModels(
+      [...this.interruptController.interrupts()],
+      this.resolvedInterruptId(),
+    );
+  });
 
-  protected resolveInterrupt(
+  protected async resolveInterrupt(
     interruptId: string,
     payload: Record<string, unknown>,
-  ): void {
+  ): Promise<void> {
     this.resolvedInterruptId.set(interruptId);
-    this.resumeInterrupt.emit({ interruptId, payload });
+    await this.interruptController.resolve(payload, interruptId);
   }
 }
 

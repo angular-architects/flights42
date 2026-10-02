@@ -1,5 +1,5 @@
 import { effect, inject, Injectable } from '@angular/core';
-import { CopilotKit, injectInterrupt } from '@copilotkit/angular';
+import { CopilotKit } from '@copilotkit/angular';
 
 import {
   ChatConfig,
@@ -13,7 +13,6 @@ import { registerHandlers } from '../../shared/util-copilotkit/a2ui/a2ui-action-
 import { reset } from '../../shared/util-copilotkit/agent-store-helper';
 import { checkInAction } from './actions/check-in-action';
 import { submitAnswerAction } from './actions/submit-answer-action';
-import { PLANNING_AGENT_ID, TICKETING_AGENT_ID } from './agent-ids';
 import { injectPlanningAgentStore } from './planning-agent-store';
 import { injectTicketingAgentStore } from './ticketing-agent-store';
 
@@ -25,12 +24,10 @@ export class TicketingChatService {
 
   private readonly executionChat: ChatConfig = {
     store: injectTicketingAgentStore(),
-    interrupts: injectInterrupt({ agentId: TICKETING_AGENT_ID }),
   };
 
   private readonly planningChat: ChatConfig = {
     store: injectPlanningAgentStore(),
-    interrupts: injectInterrupt({ agentId: PLANNING_AGENT_ID }),
   };
 
   private previousMode: AgentMode | undefined;

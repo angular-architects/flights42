@@ -1,4 +1,3 @@
-import { type Interrupt } from '@ag-ui/core';
 import {
   afterRenderEffect,
   Component,
@@ -10,12 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  type AgentStore,
-  CopilotKit,
-  type InterruptController,
-  type Message,
-} from '@copilotkit/angular';
+import { type AgentStore, CopilotKit, type Message } from '@copilotkit/angular';
 
 import {
   AgentMode,
@@ -26,10 +20,7 @@ import {
   sendMessage,
   stop,
 } from '../../util-copilotkit/agent-store-helper';
-import {
-  ChatMessages,
-  type ResumeInterruptEvent,
-} from '../chat-messages/chat-messages';
+import { ChatMessages } from '../chat-messages/chat-messages';
 import { ChatRegistry } from '../chat-registry';
 
 const DEFAULT_GREETING = 'Hi! How can I help you?';
@@ -60,10 +51,6 @@ export class AssistantChat {
   protected readonly store = signal<Signal<AgentStore> | undefined>(undefined);
   protected readonly agentId = signal<string | undefined>(undefined);
 
-  private readonly interruptController = signal<
-    InterruptController | undefined
-  >(undefined);
-
   protected readonly messages = computed<Message[]>(() => {
     const store = this.store();
     const agentId = this.agentId();
@@ -75,28 +62,19 @@ export class AssistantChat {
     return store ? store().isRunning() : false;
   });
 
-  protected readonly interrupts = computed<Interrupt[]>(() => {
-    const controller = this.interruptController();
-    if (!controller || this.isRunning()) {
-      return [];
-    }
-    return [...controller.interrupts()];
-  });
-
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
       this.store.set(chatInfo.store);
       this.agentId.set(chatInfo.agentId);
       this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
       this.showModeSelector.set(chatInfo.showModeSelector ?? true);
-      this.interruptController.set(chatInfo.interrupts);
     });
 
     this.chatRegistry.openRequested.subscribe(() => this.open());
 
     afterRenderEffect(() => {
       this.messages();
-      this.interrupts();
+      this.isRunning();
 
       if (!this.panelVisible()) {
         return;
@@ -140,15 +118,6 @@ export class AssistantChat {
     const store = this.store();
     if (store) {
       stop(store);
-    }
-  }
-
-  protected async onResumeInterrupt(
-    event: ResumeInterruptEvent,
-  ): Promise<void> {
-    const controller = this.interruptController();
-    if (controller) {
-      await controller.resolve(event.payload, event.interruptId);
     }
   }
 

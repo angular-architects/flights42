@@ -1,5 +1,4 @@
 import { effect, inject, Injectable } from '@angular/core';
-import { injectInterrupt } from '@copilotkit/angular';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import {
@@ -8,10 +7,7 @@ import {
 } from '../../shared/util-copilotkit/agent-store-helper';
 import { type TravelPlan, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
-import {
-  injectTravelRefinementAgentStore,
-  TRAVEL_REFINEMENT_AGENT_ID,
-} from './travel-refinement-agent-store';
+import { injectTravelRefinementAgentStore } from './travel-refinement-agent-store';
 
 @Injectable({ providedIn: 'root' })
 export class TravelRefinementChatService {
@@ -19,9 +15,6 @@ export class TravelRefinementChatService {
   private readonly requestStore = inject(TravelPlannerRequestStore);
   private readonly planStore = inject(TravelPlanStore);
   private readonly store = injectTravelRefinementAgentStore();
-  private readonly interrupts = injectInterrupt({
-    agentId: TRAVEL_REFINEMENT_AGENT_ID,
-  });
 
   constructor() {
     effect(() => {
@@ -43,7 +36,6 @@ export class TravelRefinementChatService {
   public init(): void {
     this.chatRegistry.setChat({
       store: this.store,
-      interrupts: this.interrupts,
       greeting: 'Do you want to refine your travel plan?',
       showModeSelector: false,
     });
