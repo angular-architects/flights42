@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
+import { DISPLAY_DSL } from '@flights42/feature-flags';
 
 import { A2UI_DEFAULT_CATALOG_ID } from '../a2ui/catalog-context.js';
 import {
@@ -75,6 +76,9 @@ export async function compileDashboard(
   spec: DashboardSpec,
   options: CompileDashboardOptions = {},
 ): Promise<CompiledDashboard> {
+  if (DISPLAY_DSL) {
+    console.log('DSL', spec);
+  }
   const dataSteps: DataStep[] = [];
   const data = await fetchAllDashboardData(spec, dataSteps);
   return assembleDashboard(spec, data, options, dataSteps);

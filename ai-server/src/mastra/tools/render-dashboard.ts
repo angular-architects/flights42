@@ -9,7 +9,7 @@ export const RENDER_DASHBOARD_TOOL_NAME = 'renderDashboard';
 // intercepts those args, deterministically compiles the spec, and
 // emits the resulting A2UI surface itself. The tool execute returns a
 // minimal acknowledgement so the LLM's tool-result message stays small.
-export const renderDashboardTool = createTool({
+export const renderDashboard = createTool({
   id: RENDER_DASHBOARD_TOOL_NAME,
   description: `
     Render the Flight42 dashboard from a compact spec.

@@ -7,10 +7,7 @@ import { USE_MCP } from '@flights42/feature-flags';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import {
-  RENDER_A2UI_TOOL_NAME,
-  renderA2uiTool,
-} from '../a2ui/render-a2ui.tool.js';
+import { render_a2ui } from '../a2ui/render-a2ui.tool.js';
 import { withA2uiInstructions } from '../a2ui/with-a2ui-instructions.js';
 import { defaultOptions, model } from '../config.js';
 import { agUiRouteConfig } from '../routes/ag-ui-route-config.js';
@@ -39,7 +36,7 @@ export const ticketingAgent = new Agent({
     findBookedFlightsTool,
     bookFlightTool,
     cancelFlightTool,
-    [RENDER_A2UI_TOOL_NAME]: renderA2uiTool,
+    render_a2ui,
   },
   agents: USE_MCP ? {} : { hotelAgent },
   memory: new Memory(),
