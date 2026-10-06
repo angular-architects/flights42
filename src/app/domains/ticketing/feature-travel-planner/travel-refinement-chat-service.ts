@@ -1,6 +1,7 @@
 import { effect, inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
+import { deepEqual } from '../../shared/util-common/deep-equal';
 import {
   addDeveloperMessage,
   reset,
@@ -27,7 +28,7 @@ export class TravelRefinementChatService {
     effect(() => {
       const plan = this.planStore.plan();
       const agent = this.store().agent;
-      if (JSON.stringify(agent.state) !== JSON.stringify(plan)) {
+      if (!deepEqual(agent.state, plan)) {
         agent.setState(plan);
       }
     });
