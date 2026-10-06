@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { afterNextRender, inject, Injectable, Injector } from '@angular/core';
 import { CopilotKit, injectAgentStore } from '@copilotkit/angular';
 
 import { AgentModeService } from '../../../shared/util-common/agent-mode-service';
@@ -10,10 +10,14 @@ import { PlanSnapshot, PlanStep } from './plan-schemas';
 export class PlanHandoff {
   private readonly copilotKit = inject(CopilotKit);
   private readonly agentMode = inject(AgentModeService);
+  private readonly injector = inject(Injector);
   private readonly executionStore = injectAgentStore(TICKETING_AGENT_ID);
 
   async execute(plan: PlanSnapshot): Promise<void> {
     this.agentMode.mode.set('execution');
+    await new Promise<void>((resolve) =>
+      afterNextRender(() => resolve(), { injector: this.injector }),
+    );
     await sendDeveloperMessage(
       this.copilotKit,
       this.executionStore,
