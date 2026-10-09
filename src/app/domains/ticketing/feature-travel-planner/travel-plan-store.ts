@@ -7,15 +7,34 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
+import { z } from 'zod';
 
 import { FlightInfo } from '../data/flight-info';
 import { HotelInfo } from '../data/hotel-info';
 
-export interface TravelPlan {
-  summary: string;
-  flights: FlightInfo[];
-  hotels: HotelInfo[];
-}
+const flightSchema = z.object({
+  id: z.number(),
+  from: z.string(),
+  to: z.string(),
+  date: z.string().refine((date) => !Number.isNaN(Date.parse(date))),
+  delay: z.number(),
+});
+
+const hotelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  stars: z.number(),
+  imageUrl: z.string(),
+  city: z.string(),
+});
+
+export const travelPlanSchema = z.object({
+  summary: z.string(),
+  flights: z.array(flightSchema),
+  hotels: z.array(hotelSchema),
+});
+
+export type TravelPlan = z.infer<typeof travelPlanSchema>;
 
 export const TravelPlanStore = signalStore(
   { providedIn: 'root' },

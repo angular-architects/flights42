@@ -6,7 +6,7 @@ import {
   addDeveloperMessage,
   reset,
 } from '../../shared/util-copilotkit/agent-store-helper';
-import { type TravelPlan, TravelPlanStore } from './travel-plan-store';
+import { travelPlanSchema, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { injectTravelRefinementAgentStore } from './travel-refinement-agent-store';
 
@@ -15,19 +15,19 @@ export class TravelRefinementChatService {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly requestStore = inject(TravelPlannerRequestStore);
   private readonly planStore = inject(TravelPlanStore);
-  private readonly store = injectTravelRefinementAgentStore();
+  private readonly agentStore = injectTravelRefinementAgentStore();
 
   constructor() {
     effect(() => {
-      const state = this.store().state();
-      if (isCompletePlan(state)) {
-        this.planStore.setPlan(state);
+      const result = travelPlanSchema.safeParse(this.agentStore().state());
+      if (result.success) {
+        this.planStore.setPlan(result.data);
       }
     });
 
     effect(() => {
       const plan = this.planStore.plan();
-      const agent = this.store().agent;
+      const agent = this.agentStore().agent;
       if (!deepEqual(agent.state, plan)) {
         agent.setState(plan);
       }
@@ -36,45 +36,19 @@ export class TravelRefinementChatService {
 
   public init(): void {
     this.chatRegistry.setChat({
-      store: this.store,
+      store: this.agentStore,
       greeting: 'Do you want to refine your travel plan?',
       showModeSelector: false,
     });
   }
 
   public reset(): void {
-    reset(this.store);
+    reset(this.agentStore);
     const preamble = buildPreferencePreamble(this.requestStore.preferences());
     if (preamble) {
-      addDeveloperMessage(this.store, preamble);
+      addDeveloperMessage(this.agentStore, preamble);
     }
   }
-}
-
-function isCompletePlan(state: unknown): state is TravelPlan {
-  if (!state || typeof state !== 'object') {
-    return false;
-  }
-  const { flights, hotels } = state as Partial<TravelPlan>;
-  return (
-    Array.isArray(flights) &&
-    Array.isArray(hotels) &&
-    flights.every(
-      (flight) =>
-        typeof flight.id === 'number' &&
-        typeof flight.from === 'string' &&
-        typeof flight.to === 'string' &&
-        typeof flight.delay === 'number' &&
-        !Number.isNaN(Date.parse(flight.date)),
-    ) &&
-    hotels.every(
-      (hotel) =>
-        typeof hotel.id === 'string' &&
-        typeof hotel.name === 'string' &&
-        typeof hotel.city === 'string' &&
-        typeof hotel.stars === 'number',
-    )
-  );
 }
 
 function buildPreferencePreamble(preferences: string): string | undefined {
