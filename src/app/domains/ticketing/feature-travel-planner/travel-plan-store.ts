@@ -1,16 +1,10 @@
-import { computed } from '@angular/core';
-import { withDevtools } from '@angular-architects/ngrx-toolkit';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { computed, Injectable } from '@angular/core';
+import { injectAgentStore } from '@copilotkit/angular';
 import { z } from 'zod';
 
 import { FlightInfo } from '../data/flight-info';
 import { HotelInfo } from '../data/hotel-info';
+import { TRAVEL_REFINEMENT_AGENT_ID } from './travel-refinement-agent-store';
 
 const flightSchema = z.object({
   id: z.number(),
@@ -28,7 +22,7 @@ const hotelSchema = z.object({
   city: z.string(),
 });
 
-export const travelPlanSchema = z.object({
+const travelPlanSchema = z.object({
   summary: z.string(),
   flights: z.array(flightSchema),
   hotels: z.array(hotelSchema),
@@ -36,84 +30,84 @@ export const travelPlanSchema = z.object({
 
 export type TravelPlan = z.infer<typeof travelPlanSchema>;
 
-export const TravelPlanStore = signalStore(
-  { providedIn: 'root' },
+const EMPTY_PLAN: TravelPlan = { summary: '', flights: [], hotels: [] };
 
-  withState<TravelPlan>({
-    summary: '',
-    flights: [],
-    hotels: [],
-  }),
+@Injectable({ providedIn: 'root' })
+export class TravelPlanStore {
+  private readonly agentStore = injectAgentStore(TRAVEL_REFINEMENT_AGENT_ID);
 
-  withComputed((store) => ({
-    plan: computed<TravelPlan>(() => ({
-      summary: store.summary(),
-      flights: store.flights(),
-      hotels: store.hotels(),
-    })),
-  })),
+  public readonly plan = computed<TravelPlan>(() => {
+    const result = travelPlanSchema.safeParse(this.agentStore().state());
+    return result.success ? result.data : EMPTY_PLAN;
+  });
 
-  withMethods((store) => ({
-    setPlan(plan: TravelPlan): void {
-      patchState(store, {
-        summary: plan.summary,
-        flights: plan.flights,
-        hotels: orderHotelsByRoute(plan.hotels, plan.flights),
-      });
-    },
+  public readonly summary = computed(() => this.plan().summary);
+  public readonly flights = computed(() => this.plan().flights);
+  public readonly hotels = computed(() => this.plan().hotels);
 
-    addFlight(flight: FlightInfo): void {
-      patchState(store, (state) => {
-        const flights = upsertById(state.flights, flight);
-        return { flights, hotels: orderHotelsByRoute(state.hotels, flights) };
-      });
-    },
+  public setPlan(plan: TravelPlan): void {
+    this.agentStore().agent.setState({
+      summary: plan.summary,
+      flights: plan.flights,
+      hotels: orderHotelsByRoute(plan.hotels, plan.flights),
+    });
+  }
 
-    removeFlight(flightId: number): void {
-      patchState(store, (state) => {
-        const flights = state.flights.filter(
-          (flight) => flight.id !== flightId,
-        );
-        return { flights, hotels: orderHotelsByRoute(state.hotels, flights) };
-      });
-    },
+  public addFlight(flight: FlightInfo): void {
+    const flights = upsertById(this.flights(), flight);
+    this.agentStore().agent.setState({
+      ...this.plan(),
+      flights,
+      hotels: orderHotelsByRoute(this.hotels(), flights),
+    });
+  }
 
-    replaceFlight(oldFlightId: number, flight: FlightInfo): void {
-      patchState(store, (state) => {
-        const flights = state.flights.map((current) =>
-          current.id === oldFlightId ? flight : current,
-        );
-        return { flights, hotels: orderHotelsByRoute(state.hotels, flights) };
-      });
-    },
+  public removeFlight(flightId: number): void {
+    const flights = this.flights().filter((flight) => flight.id !== flightId);
+    this.agentStore().agent.setState({
+      ...this.plan(),
+      flights,
+      hotels: orderHotelsByRoute(this.hotels(), flights),
+    });
+  }
 
-    addHotel(hotel: HotelInfo): void {
-      // The plan holds at most one hotel per overnight city, so adding a hotel
-      // for a city that already has one replaces it instead of duplicating.
-      patchState(store, (state) => ({
-        hotels: orderHotelsByRoute(
-          [
-            ...state.hotels.filter((current) => current.city !== hotel.city),
-            hotel,
-          ],
-          state.flights,
-        ),
-      }));
-    },
+  public replaceFlight(oldFlightId: number, flight: FlightInfo): void {
+    const flights = this.flights().map((current) =>
+      current.id === oldFlightId ? flight : current,
+    );
+    this.agentStore().agent.setState({
+      ...this.plan(),
+      flights,
+      hotels: orderHotelsByRoute(this.hotels(), flights),
+    });
+  }
 
-    removeHotel(hotelId: string): void {
-      patchState(store, (state) => ({
-        hotels: state.hotels.filter((hotel) => hotel.id !== hotelId),
-      }));
-    },
+  public addHotel(hotel: HotelInfo): void {
+    // The plan holds at most one hotel per overnight city, so adding a hotel
+    // for a city that already has one replaces it instead of duplicating.
+    this.agentStore().agent.setState({
+      ...this.plan(),
+      hotels: orderHotelsByRoute(
+        [
+          ...this.hotels().filter((current) => current.city !== hotel.city),
+          hotel,
+        ],
+        this.flights(),
+      ),
+    });
+  }
 
-    clear(): void {
-      patchState(store, { summary: '', flights: [], hotels: [] });
-    },
-  })),
+  public removeHotel(hotelId: string): void {
+    this.agentStore().agent.setState({
+      ...this.plan(),
+      hotels: this.hotels().filter((hotel) => hotel.id !== hotelId),
+    });
+  }
 
-  withDevtools('travelPlan'),
-);
+  public clear(): void {
+    this.agentStore().agent.setState(EMPTY_PLAN);
+  }
+}
 
 function upsertById<T extends { id: number | string }>(
   items: T[],

@@ -1,12 +1,10 @@
-import { effect, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
-import { deepEqual } from '../../shared/util-common/deep-equal';
 import {
   addDeveloperMessage,
   reset,
 } from '../../shared/util-copilotkit/agent-store-helper';
-import { travelPlanSchema, TravelPlanStore } from './travel-plan-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { injectTravelRefinementAgentStore } from './travel-refinement-agent-store';
 
@@ -14,25 +12,7 @@ import { injectTravelRefinementAgentStore } from './travel-refinement-agent-stor
 export class TravelRefinementChatService {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly requestStore = inject(TravelPlannerRequestStore);
-  private readonly planStore = inject(TravelPlanStore);
   private readonly agentStore = injectTravelRefinementAgentStore();
-
-  constructor() {
-    effect(() => {
-      const result = travelPlanSchema.safeParse(this.agentStore().state());
-      if (result.success) {
-        this.planStore.setPlan(result.data);
-      }
-    });
-
-    effect(() => {
-      const plan = this.planStore.plan();
-      const agent = this.agentStore().agent;
-      if (!deepEqual(agent.state, plan)) {
-        agent.setState(plan);
-      }
-    });
-  }
 
   public init(): void {
     this.chatRegistry.setChat({
