@@ -74,6 +74,7 @@
     "@vitest/browser-playwright": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10",
     "angular-eslint": "22.1.0",
+    "archunit": "^2.5.4",
     "commitlint": "^21.2.1",
     "eslint": "^10.8.0",
     "eslint-plugin-simple-import-sort": "^14.0.0",
