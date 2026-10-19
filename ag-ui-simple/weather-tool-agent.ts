@@ -1,5 +1,10 @@
 import { AbstractAgent } from '@ag-ui/client';
-import { BaseEvent, EventType, type RunAgentInput } from '@ag-ui/core';
+import {
+  BaseEvent,
+  contentToText,
+  EventType,
+  type RunAgentInput,
+} from '@ag-ui/core';
 import { Observable } from 'rxjs';
 
 const TOOL_CALL_ID = '2001';
@@ -68,7 +73,7 @@ function findToolResult(
 ): string | undefined {
   for (const message of input.messages) {
     if (message.role === 'tool' && message.toolCallId === toolCallId) {
-      return message.content;
+      return contentToText(message.content);
     }
   }
 

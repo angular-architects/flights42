@@ -1,4 +1,5 @@
 import { AgentSubscriber, randomUUID } from '@ag-ui/client';
+import { contentToText } from '@ag-ui/core';
 
 import { FlightWeatherAgent } from './agent.js';
 import { title } from './utils.js';
@@ -53,7 +54,7 @@ const subscriber: AgentSubscriber = {
     console.log();
   },
   onToolCallResultEvent: ({ event }) => {
-    const content = JSON.parse(event.content);
+    const content = JSON.parse(contentToText(event.content));
     console.log(
       `${title('▶ TOOL_CALL_RESULT')}\nid=${event.toolCallId}\nrole=${event.role}\ncontent=${JSON.stringify(content, undefined, 2)}`,
     );

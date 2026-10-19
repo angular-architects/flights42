@@ -6,16 +6,12 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CopilotKit, type Message } from '@copilotkit/angular';
+import { CopilotActivity, CopilotKit, type Message } from '@copilotkit/angular';
 
-import { registerHandlers } from '../../domains/shared/util-copilotkit/a2ui/a2ui-action-handlers';
-import { CopilotActivity } from '../../domains/shared/util-copilotkit/activity/copilot-activity';
 import {
   reset as resetChat,
   sendMessage,
 } from '../../domains/shared/util-copilotkit/agent-store-helper';
-import { checkInAction } from '../../domains/ticketing/ai/actions/check-in-action';
-import { dashboardFlightSearchAction } from './actions/dashboard-flight-search-action';
 import { injectDashboardAgentStore } from './dashboard-agent-store';
 import { DashboardPrefs } from './dashboard-prefs';
 import { examplePrompts } from './example-prompts';
@@ -60,13 +56,6 @@ export class Dashboard {
 
   protected readonly showToolDetails = signal(false);
 
-  constructor() {
-    registerHandlers({
-      checkIn: (action) => checkInAction(action),
-      dashboardFlightSearch: (action) => dashboardFlightSearchAction(action),
-    });
-  }
-
   protected submit(): void {
     const content = this.message().trim();
     if (!content) {
@@ -74,7 +63,9 @@ export class Dashboard {
     }
     resetChat(this.chat);
     this.showToolDetails.set(false);
-    void sendMessage(this.copilotKit, this.chat, content);
+    void sendMessage(this.copilotKit, this.chat, content, {
+      preventCaching: this.preventCaching(),
+    });
   }
 
   protected useExamplePrompt(index: number): void {

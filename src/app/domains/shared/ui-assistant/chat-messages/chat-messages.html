@@ -43,7 +43,7 @@
       <div class="avatar">{{ message.avatar }}</div>
       <div>
         <div class="bubble" [class.bubble--a2ui]="activity.isSurface">
-          <app-copilot-activity
+          <copilot-activity
             [message]="activity.message"
             [agentId]="agentId()" />
         </div>

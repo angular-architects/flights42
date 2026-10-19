@@ -79,16 +79,6 @@ export class SentFilterMiddleware extends Middleware {
   }
 }
 
-export function forwardedPropsMiddleware(
-  props: () => Record<string, unknown>,
-): MiddlewareFunction {
-  return (input, next) =>
-    next.run({
-      ...input,
-      forwardedProps: { ...props(), ...input.forwardedProps },
-    });
-}
-
 export const developerMessagesAsUser: MiddlewareFunction = (input, next) =>
   next.run({
     ...input,

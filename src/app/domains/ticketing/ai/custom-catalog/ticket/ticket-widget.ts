@@ -15,10 +15,7 @@ import { subMinutes } from 'date-fns';
 import { TicketBarcode } from './ticket-barcode';
 import { TicketLogo } from './ticket-logo';
 import { TicketQr } from './ticket-qr';
-import {
-  initialTicketContext,
-  type TicketWidgetContext,
-} from './ticket-widget-context';
+import { type TicketWidgetProps } from './ticket-widget-context';
 
 @Component({
   selector: 'app-ticket-widget',
@@ -28,10 +25,7 @@ import {
   styleUrl: './ticket-widget.css',
 })
 export class TicketWidget implements AfterViewInit {
-  readonly props = input<TicketWidgetContext>(initialTicketContext);
-  readonly surfaceId = input.required<string>();
-  readonly componentId = input.required<string>();
-  readonly dataContextPath = input('/');
+  readonly props = input.required<TicketWidgetProps>();
 
   private readonly hostEl = inject(ElementRef<HTMLElement>);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -52,21 +46,15 @@ export class TicketWidget implements AfterViewInit {
   protected readonly gate = 'B7';
   protected readonly seat = '14A';
 
-  // The agent may legitimately omit optional props (e.g. `delay` when the
-  // flight is on time). `props().<prop>` is `undefined` in that case and
-  // calling `.value()` on it would throw. Guard every accessor with `?.` and
-  // a sensible fallback so the ticket still renders.
-  protected readonly ticketId = computed(
-    () => this.props().ticketId?.value() ?? '',
-  );
-  protected readonly from = computed(() => this.props().from?.value() ?? '');
-  protected readonly to = computed(() => this.props().to?.value() ?? '');
-  protected readonly delay = computed(() => this.props().delay?.value() ?? 0);
+  protected readonly ticketId = computed(() => this.props().ticketId ?? '');
+  protected readonly from = computed(() => this.props().from ?? '');
+  protected readonly to = computed(() => this.props().to ?? '');
+  protected readonly delay = computed(() => this.props().delay ?? 0);
 
   protected readonly showDelay = computed(() => this.delay() > 0);
 
   protected readonly parsedDate = computed(() =>
-    parseTicketDate(this.props().date?.value()),
+    parseTicketDate(this.props().date),
   );
 
   protected readonly boardingTime = computed(() =>

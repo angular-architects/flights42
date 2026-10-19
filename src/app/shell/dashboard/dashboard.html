@@ -90,6 +90,6 @@
 
 <section class="dashboard-output">
   @for (activity of activities(); track activity.id) {
-    <app-copilot-activity [message]="activity" [agentId]="agentId()" />
+    <copilot-activity [message]="activity" [agentId]="agentId()" />
   }
 </section>

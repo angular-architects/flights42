@@ -274,18 +274,20 @@
  * which stacks all tiles vertically. We override the root Column to behave
  * as a 3-column responsive CSS grid; each direct child becomes a grid cell.
  *
- * Selectors look at the surface DOM tree (component-host wrappers have
+ * Selectors look at the surface DOM tree (child/node/slot wrappers have
  * `display: contents`, so they don't form layout boxes but still appear in
  * the DOM and can be matched via `>`).
  * ------------------------------------------------------------------------- */
 
-/* The root column = the only `a2ui-v09-column` that lives directly under a
- * surface. */
+/* The root column = the only `copilot-a2ui-column` that lives directly under
+ * a surface. */
 .dashboard-output
   ::ng-deep
-  a2ui-v09-surface
-  > a2ui-v09-component-host
-  > a2ui-v09-column {
+  copilot-a2ui-surface
+  .a2ui-surface
+  > copilot-a2ui-node
+  > copilot-slot
+  > copilot-a2ui-column {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-auto-rows: minmax(0, auto);
@@ -297,9 +299,11 @@
 @media (max-width: 1100px) {
   .dashboard-output
     ::ng-deep
-    a2ui-v09-surface
-    > a2ui-v09-component-host
-    > a2ui-v09-column {
+    copilot-a2ui-surface
+    .a2ui-surface
+    > copilot-a2ui-node
+    > copilot-slot
+    > copilot-a2ui-column {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -307,9 +311,11 @@
 @media (max-width: 700px) {
   .dashboard-output
     ::ng-deep
-    a2ui-v09-surface
-    > a2ui-v09-component-host
-    > a2ui-v09-column {
+    copilot-a2ui-surface
+    .a2ui-surface
+    > copilot-a2ui-node
+    > copilot-slot
+    > copilot-a2ui-column {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -321,11 +327,15 @@
  * ticket-widget.css container queries on narrow cells. */
 .dashboard-output
   ::ng-deep
-  a2ui-v09-surface
-  > a2ui-v09-component-host
-  > a2ui-v09-column
-  > a2ui-v09-component-host
-  > a2ui-v09-row {
+  copilot-a2ui-surface
+  .a2ui-surface
+  > copilot-a2ui-node
+  > copilot-slot
+  > copilot-a2ui-column
+  > copilot-a2ui-child
+  > copilot-a2ui-node
+  > copilot-slot
+  > copilot-a2ui-row {
   grid-column: 1 / -1;
 }
 
@@ -337,26 +347,18 @@
  * makes every tile fill its grid cell regardless of the agent's exact tree.
  * ------------------------------------------------------------------------- */
 
-.dashboard-output ::ng-deep a2ui-v09-card,
-.dashboard-output ::ng-deep a2ui-v09-image,
-.dashboard-output ::ng-deep a2ui-v09-text-field,
-.dashboard-output ::ng-deep a2ui-v09-button,
-.dashboard-output ::ng-deep a2ui-v09-text {
+.dashboard-output ::ng-deep copilot-a2ui-card,
+.dashboard-output ::ng-deep copilot-a2ui-image,
+.dashboard-output ::ng-deep copilot-a2ui-text-field,
+.dashboard-output ::ng-deep copilot-a2ui-button,
+.dashboard-output ::ng-deep copilot-a2ui-text {
   display: block;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* The host of a Card is a flex column so the inner card body can fill its
- * height and the card grows to its grid cell. */
-.dashboard-output ::ng-deep a2ui-v09-card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
 /* Boarding-pass stack: one root Column tile (id from dashboard agent prompt). */
-.dashboard-output ::ng-deep a2ui-v09-column#boarding-stack {
+.dashboard-output ::ng-deep copilot-a2ui-column#boarding-stack {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -366,12 +368,11 @@
   gap: 0.65rem;
 }
 
-/* Card chrome (the actual inner box). Strip the default A2UI margin and use
- * our own visuals. The library binds `style="gap: var(--a2ui-column-gap, …)"`
- * inline on every `a2ui-v09-column`, so we override the gap via that custom
- * property — that's the only way to win over an inline style without
- * sprinkling `!important` everywhere. The card sets the OUTER (item) gap. */
-.dashboard-output ::ng-deep .a2ui-card {
+/* Card chrome: the Card host is the box, a flex column so its body can fill
+ * the height and the card grows to its grid cell. Strip the default A2UI
+ * margin and use our own visuals. Columns read their gap from
+ * `--a2ui-column-gap`, so the card sets the OUTER (item) gap through it. */
+.dashboard-output ::ng-deep copilot-a2ui-card {
   margin: 0;
   width: 100%;
   height: 100%;
@@ -388,14 +389,14 @@
 }
 
 /* Columns inside a tile fill the tile width. */
-.dashboard-output ::ng-deep .a2ui-card a2ui-v09-column {
+.dashboard-output ::ng-deep copilot-a2ui-card copilot-a2ui-column {
   width: 100%;
 }
 
 /* Inside a list row's text column we want the OPPOSITE: a tight gap so the
  * per-item h3 sits right above its body text. Resetting the custom property
  * on the row scopes the tighter gap to per-item content only. */
-.dashboard-output ::ng-deep .a2ui-card a2ui-v09-row {
+.dashboard-output ::ng-deep copilot-a2ui-card copilot-a2ui-row {
   --a2ui-column-gap: 0.15rem;
 }
 
@@ -406,15 +407,14 @@
  * inherit the same box but render their content within `object-fit:
  * cover`, which is fine because chart SVGs already use a 16:9 viewBox
  * via the rendering helpers. */
-.dashboard-output ::ng-deep a2ui-v09-image,
-.dashboard-output ::ng-deep .a2ui-image {
+.dashboard-output ::ng-deep copilot-a2ui-image,
+.dashboard-output ::ng-deep copilot-a2ui-image .image {
   display: block;
   width: 100%;
   max-width: 100%;
   aspect-ratio: 16 / 9;
 }
-.dashboard-output ::ng-deep a2ui-v09-image img,
-.dashboard-output ::ng-deep .a2ui-image img {
+.dashboard-output ::ng-deep copilot-a2ui-image img {
   display: block;
   width: 100%;
   height: 100%;
@@ -424,7 +424,7 @@
 /* Table-style rows inside cards: defensive defaults so columns share width
  * even when the agent forgets `weight`. The Angular renderer sets an inline
  * `style.flex` from the agent's `weight`, which beats this rule when set. */
-.dashboard-output ::ng-deep .a2ui-card a2ui-v09-row {
+.dashboard-output ::ng-deep copilot-a2ui-card copilot-a2ui-row {
   width: 100%;
   align-items: stretch;
   gap: 0.5rem;
@@ -432,9 +432,11 @@
 
 .dashboard-output
   ::ng-deep
-  .a2ui-card
-  a2ui-v09-row
-  > a2ui-v09-component-host
+  copilot-a2ui-card
+  copilot-a2ui-row
+  > copilot-a2ui-child
+  > copilot-a2ui-node
+  > copilot-slot
   > * {
   flex: 1 1 0;
   min-width: 0;
@@ -444,11 +446,15 @@
  * row that fills the grid; cards inside flex equally. */
 .dashboard-output
   ::ng-deep
-  a2ui-v09-surface
-  > a2ui-v09-component-host
-  > a2ui-v09-column
-  > a2ui-v09-component-host
-  > a2ui-v09-row {
+  copilot-a2ui-surface
+  .a2ui-surface
+  > copilot-a2ui-node
+  > copilot-slot
+  > copilot-a2ui-column
+  > copilot-a2ui-child
+  > copilot-a2ui-node
+  > copilot-slot
+  > copilot-a2ui-row {
   width: 100%;
   align-items: stretch;
   gap: var(--dashboard-grid-gap);
@@ -456,12 +462,18 @@
 
 .dashboard-output
   ::ng-deep
-  a2ui-v09-surface
-  > a2ui-v09-component-host
-  > a2ui-v09-column
-  > a2ui-v09-component-host
-  > a2ui-v09-row
-  > a2ui-v09-component-host
+  copilot-a2ui-surface
+  .a2ui-surface
+  > copilot-a2ui-node
+  > copilot-slot
+  > copilot-a2ui-column
+  > copilot-a2ui-child
+  > copilot-a2ui-node
+  > copilot-slot
+  > copilot-a2ui-row
+  > copilot-a2ui-child
+  > copilot-a2ui-node
+  > copilot-slot
   > * {
   flex: 1 1 0;
   min-width: 0;
@@ -470,16 +482,16 @@
 /* Typography: tile title (h2) must read larger than per-item headings (h3).
  *
  * Global fallbacks in src/styles.css use `!important` on
- * `app-widget-container … a2ui-v09-text h2` (1.1rem) and `… a2ui-v09-card h3`
+ * `app-widget-container … copilot-a2ui-text h2` (1.1rem) and `… copilot-a2ui-card h3`
  * (1.42rem), which inverted the intended hierarchy on this page. We beat
  * those rules with higher specificity (`.dashboard-output` prefix) + the same
  * `!important` flag. `::ng-deep` is required so selectors reach past the
- * WidgetContainer encapsulation boundary to `a2ui-v09-*` descendants. */
+ * WidgetContainer encapsulation boundary to `copilot-a2ui-*` descendants. */
 .dashboard-output
   ::ng-deep
   app-widget-container
-  a2ui-v09-surface
-  a2ui-v09-text
+  copilot-a2ui-surface
+  copilot-a2ui-text
   h2 {
   font-size: 1.45rem !important;
   font-weight: 700 !important;
@@ -490,8 +502,8 @@
 .dashboard-output
   ::ng-deep
   app-widget-container
-  a2ui-v09-surface
-  a2ui-v09-card
+  copilot-a2ui-surface
+  copilot-a2ui-card
   h3 {
   font-size: 1.05rem !important;
   font-weight: 600 !important;
@@ -499,9 +511,12 @@
   margin: 0 0 0.09rem !important;
 }
 
-.dashboard-output ::ng-deep .a2ui-button {
-  margin: 0.25rem 0 0;
+.dashboard-output ::ng-deep copilot-a2ui-button {
   align-self: flex-start;
+}
+
+.dashboard-output ::ng-deep copilot-a2ui-button .button {
+  margin: 0.25rem 0 0;
 }
 
 /* --- Boarding-pass stack (dashboard only): wide horizontal tickets ---

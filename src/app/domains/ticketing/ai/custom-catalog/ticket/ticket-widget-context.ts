@@ -1,11 +1,6 @@
-import type { BoundProperty } from '@a2ui/angular/v0_9';
-import { signal } from '@angular/core';
 import { z } from 'zod/v3';
 
-import {
-  binding,
-  type BoundProps,
-} from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
+import { binding } from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
 
 export const ticketWidgetSchema = z
   .object({
@@ -17,22 +12,11 @@ export const ticketWidgetSchema = z
   })
   .strict();
 
-export type TicketWidgetContext = BoundProps<
-  z.infer<typeof ticketWidgetSchema>
->;
+type TicketWidgetSchema = z.infer<typeof ticketWidgetSchema>;
 
-function initialProperty<T>(value: T): BoundProperty<T> {
-  return {
-    value: signal(value).asReadonly(),
-    raw: value,
-    onUpdate: () => undefined,
-  };
-}
-
-export const initialTicketContext: TicketWidgetContext = {
-  ticketId: initialProperty<string | number>(''),
-  from: initialProperty(''),
-  to: initialProperty(''),
-  date: initialProperty(''),
-  delay: initialProperty<number | undefined>(0),
+export type TicketWidgetProps = {
+  [K in keyof TicketWidgetSchema]: Exclude<
+    TicketWidgetSchema[K],
+    { path: string }
+  >;
 };

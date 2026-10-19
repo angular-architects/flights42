@@ -1,3 +1,4 @@
+import { contentToText } from '@ag-ui/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -204,7 +205,7 @@ function collectShownComponents(
   const results = new Map<string, string>();
   for (const message of messages) {
     if (message.role === 'tool') {
-      results.set(message.toolCallId, message.content);
+      results.set(message.toolCallId, contentToText(message.content));
     }
   }
 

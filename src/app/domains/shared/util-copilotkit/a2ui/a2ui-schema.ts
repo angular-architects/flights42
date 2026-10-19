@@ -1,9 +1,4 @@
-import type { BoundProperty } from '@a2ui/angular/v0_9';
 import { z } from 'zod/v3';
-
-export type BoundProps<T> = {
-  [K in keyof T]: BoundProperty<Exclude<T[K], { path: string }>>;
-};
 
 /**
  * Wraps a value schema in a union with a path-binding schema.

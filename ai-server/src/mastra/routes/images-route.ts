@@ -3,13 +3,6 @@ import { join, resolve } from 'node:path';
 
 import type { ContextWithMastra } from '@mastra/core/server';
 
-// `mastra dev` and `mastra start` set the process cwd to the
-// `<mastra-dir>/public/` folder (the same place where the libsql db files
-// live). Resolving relative to `process.cwd()` keeps the path stable
-// regardless of which directory the launcher was invoked from. Using
-// `import.meta.url` would break here because the source file is bundled
-// into `.mastra/output/` and the relative path no longer reaches the
-// repo's `ai-server/src/mastra/public/images/` directory.
 const IMAGES_DIR = resolve(process.cwd(), 'images');
 
 const ALLOWED_CATEGORIES = new Set(['cars', 'hotels']);

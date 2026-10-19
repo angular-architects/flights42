@@ -1,5 +1,4 @@
 import { effect, inject, Injectable } from '@angular/core';
-import { CopilotKit } from '@copilotkit/angular';
 
 import {
   ChatConfig,
@@ -9,10 +8,7 @@ import {
   AgentMode,
   AgentModeService,
 } from '../../shared/util-common/agent-mode-service';
-import { registerHandlers } from '../../shared/util-copilotkit/a2ui/a2ui-action-handlers';
 import { reset } from '../../shared/util-copilotkit/agent-store-helper';
-import { checkInAction } from './actions/check-in-action';
-import { submitAnswerAction } from './actions/submit-answer-action';
 import { injectPlanningAgentStore } from './planning-agent-store';
 import { injectTicketingAgentStore } from './ticketing-agent-store';
 
@@ -20,7 +16,6 @@ import { injectTicketingAgentStore } from './ticketing-agent-store';
 export class TicketingChatService {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
-  private readonly copilotKit = inject(CopilotKit);
 
   private readonly executionChat: ChatConfig = {
     store: injectTicketingAgentStore(),
@@ -33,12 +28,6 @@ export class TicketingChatService {
   private previousMode: AgentMode | undefined;
 
   constructor() {
-    registerHandlers({
-      checkIn: (action) => checkInAction(action),
-      submitAnswer: (action) =>
-        submitAnswerAction(action, this.copilotKit, this.executionChat.store),
-    });
-
     effect(() => {
       const mode = this.agentMode.mode();
       if (this.previousMode !== undefined && this.previousMode !== mode) {

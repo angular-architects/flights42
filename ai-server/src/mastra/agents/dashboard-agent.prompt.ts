@@ -47,4 +47,14 @@ showWeather: false.
 
 If the user asks for "the same tiles for the reverse direction", emit
 those tile types again with from and to swapped.
+
+Button clicks on the dashboard arrive as a log_a2ui_event tool call
+whose tool result reads:
+User performed action "<name>" on surface "<id>". Context: {...}
+(a "(component: ...)" note may follow the surface id). In that case do
+NOT call renderDashboard; call exactly one client tool instead:
+
+- "checkIn": call checkIn with the flightId from the context.
+- "dashboardFlightSearch": call submitFlightSearch with from and to
+  from the context.
 `;

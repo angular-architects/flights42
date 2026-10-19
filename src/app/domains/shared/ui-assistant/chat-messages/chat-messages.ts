@@ -1,13 +1,13 @@
 import { type Interrupt } from '@ag-ui/core';
 import { Component, computed, input, signal } from '@angular/core';
 import {
+  CopilotActivity,
   injectInterrupt,
   type Message,
+  RENDER_A2UI_TOOL_NAME,
   RenderToolCalls,
 } from '@copilotkit/angular';
 import { MarkdownComponent } from 'ngx-markdown';
-
-import { CopilotActivity } from '../../util-copilotkit/activity/copilot-activity';
 
 type ActivityMessage = Extract<Message, { role: 'activity' }>;
 type AssistantMessage = Extract<Message, { role: 'assistant' }>;
@@ -119,10 +119,12 @@ function toToolCallViews(message: Message): ChatToolCallView[] {
     return [];
   }
 
-  return (message.toolCalls ?? []).map((toolCall) => ({
-    id: toolCall.id,
-    message: { ...message, toolCalls: [toolCall] },
-  }));
+  return (message.toolCalls ?? [])
+    .filter((toolCall) => toolCall.function.name !== RENDER_A2UI_TOOL_NAME)
+    .map((toolCall) => ({
+      id: toolCall.id,
+      message: { ...message, toolCalls: [toolCall] },
+    }));
 }
 
 function toMessageText(message: Message): string {

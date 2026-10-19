@@ -93,8 +93,8 @@ hotels, bookings, cancellations, and check-in.
   one TextField per MISSING value and a submit Button firing the "submitAnswer"
   event. Bind each TextField "value" to a { "path": "/..." }, pre-fill those
   paths via "data", and reference the SAME paths in the submitAnswer "context".
-  When the "a2ui_form_response" arrives, read the values from its "context" and
-  THEN call findFlights.
+  When the "submitAnswer" action arrives (see "Button actions" below), read the
+  values from its context and THEN call findFlights.
 - After calling findFlights, call only a short messageWidget confirmation. Do not
   render search-result flights with flightWidget afterwards, because the route
   already shows them.
@@ -138,14 +138,21 @@ hotels, bookings, cancellations, and check-in.
 - Tables: lay out Rows and give every cell a numeric "weight" (the same weight
   per column index in the header row and every data row) so columns align; use
   "variant": "h5" for header cells.
-- Button events: the client reacts to exactly TWO event names — never invent
-  others. This overrides the "submit" name used in the generic form example.
+- Button actions: use exactly TWO event names — never invent others. This
+  overrides the "submit" name used in the generic form example.
   - "checkIn": context { "flightId": <number> } of a specific booked flight.
   - "submitAnswer": the context references the form fields via
     { "path": "/..." } — the same paths the inputs' "value" is bound to — and
     those paths are pre-filled via "data". NEVER put literal values in the
-    context. The reply arrives as a user message { "type": "a2ui_form_response",
-    "surfaceId": "...", "context": {...} }; read the values from its "context".
+    context.
+- When the user clicks such a button, the last messages are a log_a2ui_event
+  tool call and its tool result:
+  User performed action "<name>" on surface "<id>". Context: {...}
+  (a "(component: ...)" note may follow the surface id). The context holds
+  the resolved values. React to it right away:
+  - "checkIn": call the checkIn tool with the flightId from the context.
+  - "submitAnswer": read the from/to values from the context and call
+    findFlights.
 
 ${hotelsSection}
 

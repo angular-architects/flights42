@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 import { DISPLAY_DSL } from '@flights42/feature-flags';
 
-import { A2UI_DEFAULT_CATALOG_ID } from '../a2ui/catalog-context.js';
+import { A2UI_DEFAULT_CATALOG_ID } from '../a2ui/render-a2ui.tool.js';
 import {
   type BookedFlight,
   getBookedFlights,
@@ -69,7 +69,6 @@ interface TileBuildResult {
  */
 export interface CompileDashboardOptions {
   surfaceId?: string;
-  catalogId?: string;
 }
 
 export async function compileDashboard(
@@ -156,7 +155,7 @@ function assembleDashboard(
   dataSteps: DataStep[],
 ): CompiledDashboard {
   const surfaceId = options.surfaceId ?? `dash-${randomUUID()}`;
-  const catalogId = options.catalogId ?? A2UI_DEFAULT_CATALOG_ID;
+  const catalogId = A2UI_DEFAULT_CATALOG_ID;
 
   const allComponents: Component[] = [];
   const allDataOps: A2uiMessage[] = [];

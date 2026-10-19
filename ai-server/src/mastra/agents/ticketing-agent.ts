@@ -49,6 +49,6 @@ const MCP_APPS_MIDDLEWARES = USE_MCP
 agUiRouteConfig[ticketingAgent.id] = {
   middlewares: [
     ...MCP_APPS_MIDDLEWARES,
-    new A2UIMiddleware({ injectA2UITool: false, a2uiToolNames: [] }),
+    new A2UIMiddleware({ a2uiToolNames: [] }),
   ],
 };

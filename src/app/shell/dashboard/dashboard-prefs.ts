@@ -1,9 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 
 /**
- * Root-scoped dashboard preferences shared between the dashboard component and
- * the agent store, so the store's per-run `forwardedProps` can read the current
- * "prevent caching" toggle.
+ * Root-scoped dashboard preferences. The dashboard sends the current
+ * "prevent caching" toggle as `forwardedProps` with every message.
  */
 @Injectable({ providedIn: 'root' })
 export class DashboardPrefs {
