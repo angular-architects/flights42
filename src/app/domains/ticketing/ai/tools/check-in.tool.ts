@@ -12,8 +12,8 @@ export const checkInTool = createFrontendTool({
   }),
   followUp: false,
   handler: async ({ flightId }) => {
-    const router = inject(Router);
-    await router.navigate(['/checkin', { ticketId: flightId }]);
+    // TODO: Navigate to /checkin and pass the flightId as the
+    //       matrix parameter ticketId
     return { ok: true };
   },
 });
