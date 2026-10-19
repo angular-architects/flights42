@@ -1,18 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   ChangeDetectionStrategy,
   Component,
   inject,
   input,
+  signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
-import { z } from 'zod';
+import { unknown, z } from 'zod';
 
 import { createComponentTool } from '../../shared/util-copilotkit/tool-definition';
 import { FlightStore } from '../data/flight-store';
 import { FlightCard } from './flight-card/flight-card';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const flightSchema = z.object({
   id: z.number().describe('The flight id'),
   from: z.string().describe('Departure city'),
@@ -27,20 +29,15 @@ const flightSchema = z.object({
   delay: z.number().describe('Delay in minutes'),
 });
 
-const flightWidgetSchema: z.ZodType<FlightWidgetArgs> = z.object({
+const flightWidgetSchema = z.object({
   // TODO: describe the widget inputs (flight and status)
   // HINT: use the above declared flightSchema
   //       and a zod-based enum with the possible
-  //       values 'booked', 'other', and 'none'
+  //       states 'booked', 'other', and 'none'
 });
 
-// TODO: once the schema above is complete, derive the args type from it
-//       (and remove the type annotation on flightWidgetSchema):
-//       type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
-type FlightWidgetArgs = Partial<{
-  flight: z.infer<typeof flightSchema>;
-  status: 'booked' | 'other' | 'none';
-}>;
+// TODO: Infer typescript type FlightWidgetArgs from flightWidgetSchema
+type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
 
 @Component({
   selector: 'app-flight-widget',
@@ -80,10 +77,15 @@ type FlightWidgetArgs = Partial<{
     }
   `,
 })
-export class FlightWidget implements ToolRenderer<FlightWidgetArgs> {
+export class FlightWidget {
+  // TODO: Implement implements ToolRenderer<FlightWidgetArgs>
+
   private readonly store = inject(FlightStore);
 
-  readonly toolCall = input.required<AngularToolCall<FlightWidgetArgs>>();
+  // TODO: Get tool call from copilot kit
+  readonly toolCall = signal<any>({});
+
+  // TODO: Find out, how the toolCall object is used in the template
 
   protected isSelected(id: number): boolean {
     return this.store.basket()[id];
@@ -102,7 +104,9 @@ export const flightWidget = createComponentTool({
     For booked flights use status: "booked"; for search/current flights use status: "other".
     Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.
   `,
-  parameters: flightWidgetSchema,
-  component: FlightWidget,
+  // TODO: register the flightWidgetSchema from above here (i/o z.object)
+  parameters: z.object(),
+  // TODO: register our FlightWidget here
+  component: {} as any,
   followUp: false,
 });
