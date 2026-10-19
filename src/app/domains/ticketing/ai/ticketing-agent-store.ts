@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { inject } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
 
@@ -18,13 +19,16 @@ export function injectTicketingAgentStore() {
     url: inject(ConfigService).agUiUrlFor(TICKETING_AGENT_ID),
     useServerMemory: true,
     frontendTools: [
-      findFlightsTool,
+      // TODO: reigster findFlights tool
       getLoadedFlightsTool,
       toggleFlightSelectionTool,
       getCurrentBasketTool,
       displayFlightDetailTool,
     ],
-    components: [messageWidget, flightWidget],
+    components: [
+      messageWidget,
+      // TODO: reigster flightWidget tool
+    ],
   });
 
   return injectAgentStore(TICKETING_AGENT_ID);
