@@ -11,7 +11,6 @@ import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
-import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
 import { mcpAppsConfig } from './mcp-apps.config';
 
 export const appConfig: ApplicationConfig = {
@@ -23,7 +22,6 @@ export const appConfig: ApplicationConfig = {
     provideCopilotKit({
       defaultToolRendering: true,
       enableInspector: false,
-      a2ui: { catalog: customCatalog, includeSchema: false },
     }),
 
     provideMCPApps(mcpAppsConfig),
