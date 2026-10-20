@@ -1,3 +1,4 @@
+import { USE_APPROVAL } from '@flights42/feature-flags';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
@@ -16,11 +17,14 @@ const flightSchema = z.object({
   delay: z.number(),
 });
 
+const paymentMethodSchema = z.enum(['creditCard', 'miles']);
+
 const resultSchema = z.union([
   z.object({
     ok: z.literal(true),
     result: z.string(),
     flight: flightSchema,
+    paymentMethod: paymentMethodSchema.optional(),
   }),
   z.object({
     ok: z.literal(false),
@@ -29,20 +33,42 @@ const resultSchema = z.union([
   }),
 ]);
 
+const paymentSelectionSchema = z.enum(['creditCard', 'miles', 'cancel']);
+
+const suspendOptionSchema = z.object({
+  label: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+});
+
 export const bookFlightTool = createTool({
   id: 'bookFlight',
   description:
-    'Books a flight for the current passenger. Fails if the flight does not exist or is already booked.',
+    'Books a flight for the current passenger. Requires the user to choose a payment method (credit card or bonus miles) once pre-checks pass; the user may also cancel. Fails if the flight does not exist or is already booked.',
   inputSchema: z.object({
     flightId: z.number().describe('The id of the flight to book.'),
   }),
   outputSchema: resultSchema,
-  // TODO: Add suspendSchema and resumeSchema for the approval flow
-  execute: async ({ flightId }) => {
-    // TODO (simple approval): read resumeData and suspend from the context;
-    //       suspend right here, before the pre-checks, unless the tool was
-    //       resumed, and return early with code 'USER_CANCELLED' if the user
-    //       declined
+  suspendSchema: z.object({
+    action: z.literal('book'),
+    flightId: z.number(),
+    flight: flightSchema,
+    message: z.string(),
+    options: z.array(suspendOptionSchema),
+  }),
+  resumeSchema: z.object({
+    selection: paymentSelectionSchema,
+  }),
+  execute: async ({ flightId }, context) => {
+    const resumeData = context?.agent?.resumeData;
+    const suspend = context?.agent?.suspend;
+
+    if (resumeData?.selection === 'cancel') {
+      return {
+        ok: false as const,
+        result: `Booking of flight ${flightId} was cancelled by the user.`,
+        code: 'USER_CANCELLED',
+      };
+    }
 
     if (isBooked(flightId)) {
       return {
@@ -61,17 +87,43 @@ export const bookFlightTool = createTool({
       };
     }
 
-    // TODO (situational approval): move the suspend down here, after the
-    //       pre-checks, and hand the user a meaningful message in the
-    //       suspend payload
+    const requestedSelection = resumeData?.selection;
+    const hasPaymentSelection =
+      requestedSelection === 'creditCard' || requestedSelection === 'miles';
+
+    if (USE_APPROVAL && !hasPaymentSelection) {
+      await suspend?.({
+        action: 'book',
+        flightId,
+        flight,
+        message: `How would you like to pay for flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}?`,
+        options: [
+          {
+            label: 'Pay with credit card',
+            payload: { selection: 'creditCard' },
+          },
+          { label: 'Pay with bonus miles', payload: { selection: 'miles' } },
+          { label: 'Cancel', payload: { selection: 'cancel' } },
+        ],
+      });
+      return {
+        ok: false as const,
+        result: 'Awaiting user approval.',
+        code: 'AWAITING_APPROVAL',
+      };
+    }
+
+    const selection = hasPaymentSelection ? requestedSelection : 'creditCard';
+    const paymentSuffix = ` (paid with ${selection === 'creditCard' ? 'credit card' : 'bonus miles'})`;
 
     // await abortableDelay(6000, abortSignal);
 
     addBooking(flightId);
     return {
       ok: true as const,
-      result: `Booked flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}.`,
+      result: `Booked flight ${flightId} from ${flight.from} to ${flight.to} on ${formatFlightDate(flight.date)}${paymentSuffix}.`,
       flight,
+      paymentMethod: selection,
     };
   },
 });
