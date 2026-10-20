@@ -1,6 +1,9 @@
 import { z } from 'zod/v3';
 
-import { binding } from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
+import {
+  binding,
+  type WithoutBinding,
+} from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
 
 export const ticketSchema = z.object({
   id: z.number(),
@@ -12,8 +15,10 @@ export const ticketSchema = z.object({
 
 export const ticketWidgetSchema = z
   .object({
-    flight: binding(ticketSchema),
+    ticket: binding(ticketSchema),
   })
   .strict();
 
-export type Ticket = z.infer<typeof ticketSchema>;
+export type TicketWidgetProps = WithoutBinding<
+  z.infer<typeof ticketWidgetSchema>
+>;

@@ -15,7 +15,7 @@ import { subMinutes } from 'date-fns';
 import { TicketBarcode } from './ticket-barcode';
 import { TicketLogo } from './ticket-logo';
 import { TicketQr } from './ticket-qr';
-import { type Ticket } from './ticket-widget-schema';
+import { type TicketWidgetProps } from './ticket-widget-schema';
 
 @Component({
   selector: 'app-ticket-widget',
@@ -25,7 +25,7 @@ import { type Ticket } from './ticket-widget-schema';
   styleUrl: './ticket-widget.css',
 })
 export class TicketWidget implements AfterViewInit {
-  readonly props = input.required<{ flight: Ticket }>();
+  readonly props = input.required<TicketWidgetProps>();
 
   private readonly hostEl = inject(ElementRef<HTMLElement>);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -42,7 +42,7 @@ export class TicketWidget implements AfterViewInit {
   protected readonly gate = 'B7';
   protected readonly seat = '14A';
 
-  protected readonly flight = computed(() => this.props().flight);
+  protected readonly flight = computed(() => this.props().ticket);
   protected readonly flightId = computed(() => this.flight()?.id ?? '');
   protected readonly from = computed(() => this.flight()?.from ?? '');
   protected readonly to = computed(() => this.flight()?.to ?? '');

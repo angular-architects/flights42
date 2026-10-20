@@ -8,3 +8,7 @@ import { z } from 'zod/v3';
  */
 export const binding = <T extends z.ZodTypeAny>(value: T) =>
   z.union([value, z.object({ path: z.string() }).strict()]);
+
+export type WithoutBinding<T> = {
+  [K in keyof T]: Exclude<T[K], { path: string }>;
+};

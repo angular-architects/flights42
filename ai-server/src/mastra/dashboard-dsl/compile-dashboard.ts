@@ -475,7 +475,7 @@ function buildBoardingPasses(
       const widget: Component = {
         id: ticketIds[j],
         component: 'TicketWidget',
-        flight: { path: pathFor(idx, `tickets/${j}`) },
+        ticket: { path: pathFor(idx, `tickets/${j}`) },
       };
       return widget;
     }),
