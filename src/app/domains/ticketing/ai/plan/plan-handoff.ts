@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { inject, Injectable } from '@angular/core';
 import { CopilotKit, injectAgentStore } from '@copilotkit/angular';
 
@@ -15,7 +16,10 @@ export class PlanHandoff {
   async execute(plan: Plan): Promise<void> {
     this.ticketingChat.setMode('execution');
     const message = buildExecutionMessage(plan.steps);
-    await sendDeveloperMessage(this.copilotKit, this.executionStore, message);
+
+    // TODO: Send the message as a developer message to the execution agent
+    //       (await sendDeveloperMessage with copilotKit, executionStore
+    //       and message)
   }
 }
 

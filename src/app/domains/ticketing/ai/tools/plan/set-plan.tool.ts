@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { inject } from '@angular/core';
 import { z } from 'zod';
 
@@ -32,8 +33,10 @@ export const setPlanTool = createFrontendTool({
       .describe('Ordered steps; the array order IS the execution order.'),
   }),
   handler: async (args) => {
-    const store = inject(PlanStore);
-    store.setPlan(args);
-    return { stepCount: args.steps.length };
+    // TODO: Inject the PlanStore
+    // TODO: Replace the store's plan with the received args (setPlan)
+    // TODO: Return the number of steps instead of 0
+
+    return { stepCount: 0 };
   },
 });
