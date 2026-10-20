@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideCopilotKit } from '@copilotkit/angular';
+import { basicCatalog } from '@copilotkit/angular/a2ui';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
@@ -21,7 +22,7 @@ export const appConfig: ApplicationConfig = {
     provideCopilotKit({
       defaultToolRendering: true,
       enableInspector: false,
-      // TODO: Enable A2UI rendering with the custom catalog
+      // TODO: Enable A2UI rendering with the basic catalog
     }),
 
     provideMarkdown(),
