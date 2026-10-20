@@ -17,7 +17,7 @@ export const findBookedFlightsTool = createTool({
   description:
     'Returns the flights that are already booked by the current passenger.',
   inputSchema: z.object({}),
-  // TODO: declare the output as an array of flights
+  // TODO: declare the output as an object with a flights array
   //       (see flightSchema above)
   outputSchema: z.any(),
   execute: async () => {
