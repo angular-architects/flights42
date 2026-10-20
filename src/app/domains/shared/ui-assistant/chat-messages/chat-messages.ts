@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { type Interrupt } from '@ag-ui/core';
 import { Component, computed, input, type Signal, signal } from '@angular/core';
 import {
@@ -85,19 +87,19 @@ export class ChatMessages {
     toMessageViews(this.messages()),
   );
 
-  protected readonly interrupts = computed(() =>
-    toInterruptModels(
-      this.interruptController().interrupts(),
-      this.resolvedInterruptIds(),
-    ),
-  );
+  // TODO: Get the interrupts from the interruptController (interrupts())
+  //       and turn them into view models (toInterruptModels with the
+  //       interrupts and the resolvedInterruptIds)
+  protected readonly interrupts = computed(() => [] as any);
 
   protected async resolveInterrupt(
     interruptId: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    this.resolvedInterruptIds.update((ids) => new Set([...ids, interruptId]));
-    await this.interruptController().resolve(payload, interruptId);
+    // TODO: Add the interruptId to the resolvedInterruptIds (update)
+    // TODO: Resolve the interrupt with the payload
+    //       (await this.interruptController().resolve with payload
+    //       and interruptId)
   }
 }
 
