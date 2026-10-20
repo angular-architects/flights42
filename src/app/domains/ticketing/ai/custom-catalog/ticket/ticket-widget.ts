@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DatePipe } from '@angular/common';
 import {
   AfterViewInit,
@@ -25,7 +26,9 @@ import { type TicketWidgetProps } from './ticket-widget-context';
   styleUrl: './ticket-widget.css',
 })
 export class TicketWidget implements AfterViewInit {
-  readonly props = input.required<TicketWidgetProps>();
+  // TODO: Get the props from CopilotKit
+  //       (required input of type TicketWidgetProps)
+  readonly props = signal<any>({});
 
   private readonly hostEl = inject(ElementRef<HTMLElement>);
   private readonly cdr = inject(ChangeDetectorRef);
