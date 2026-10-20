@@ -20,7 +20,7 @@ export function injectTicketingAgentStore() {
     url: inject(ConfigService).agUiUrlFor(TICKETING_AGENT_ID),
     useServerMemory: true,
     frontendTools: [
-      // TODO: reigster findFlights tool
+      // TODO: register findFlights tool
       getLoadedFlightsTool,
       toggleFlightSelectionTool,
       getCurrentBasketTool,
@@ -29,7 +29,7 @@ export function injectTicketingAgentStore() {
     ],
     components: [
       messageWidget,
-      // TODO: reigster flightWidget tool
+      // TODO: register flightWidget
     ],
   });
 
