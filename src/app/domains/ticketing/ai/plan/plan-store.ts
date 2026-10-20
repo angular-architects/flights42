@@ -8,7 +8,7 @@ import {
   withState,
 } from '@ngrx/signals';
 
-import { PlanStep, PlanStepInput } from './plan-schemas';
+import { PlanStep, PlanStepSpec } from './plan-model';
 
 interface PlanState {
   title: string;
@@ -28,14 +28,14 @@ export const PlanStore = signalStore(
   })),
 
   withMethods((store) => ({
-    setPlan(plan: { title?: string; steps: PlanStepInput[] }): void {
+    setPlan(plan: { title?: string; steps: PlanStepSpec[] }): void {
       patchState(store, {
         title: plan.title ?? store.title(),
         steps: plan.steps.map(withId),
       });
     },
 
-    addStep(step: PlanStepInput, position?: number): void {
+    addStep(step: PlanStepSpec, position?: number): void {
       patchState(store, (state) => {
         const next = [...state.steps];
         const index =
@@ -53,7 +53,7 @@ export const PlanStore = signalStore(
       }));
     },
 
-    updateStep(id: string, patch: Partial<PlanStepInput>): void {
+    updateStep(id: string, patch: Partial<PlanStepSpec>): void {
       patchState(store, (state) => ({
         steps: state.steps.map((step) =>
           step.id === id ? { ...step, ...patch } : step,
@@ -99,7 +99,7 @@ export const PlanStore = signalStore(
   withDevtools('coPlan'),
 );
 
-function withId(step: PlanStepInput): PlanStep {
+function withId(step: PlanStepSpec): PlanStep {
   return { ...step, id: crypto.randomUUID() };
 }
 

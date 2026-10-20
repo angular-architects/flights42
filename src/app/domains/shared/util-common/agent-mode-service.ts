@@ -4,5 +4,10 @@ export type AgentMode = 'plan' | 'execution';
 
 @Injectable({ providedIn: 'root' })
 export class AgentModeService {
-  readonly mode = signal<AgentMode>('execution');
+  private readonly _mode = signal<AgentMode>('execution');
+  readonly mode = this._mode.asReadonly();
+
+  setMode(mode: AgentMode): void {
+    this._mode.set(mode);
+  }
 }

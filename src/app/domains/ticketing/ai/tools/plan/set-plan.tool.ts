@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { z } from 'zod';
 
 import { createFrontendTool } from '../../../../shared/util-copilotkit/tool-definition';
-import { planStepInputSchema } from '../../plan/plan-schemas';
+import { planStepSpecSchema } from '../../plan/plan-model';
 import { PlanStore } from '../../plan/plan-store';
 
 export const setPlanTool = createFrontendTool({
@@ -28,7 +28,7 @@ export const setPlanTool = createFrontendTool({
       .optional()
       .describe('Short title for the plan, e.g. "Rebook Paris trip".'),
     steps: z
-      .array(planStepInputSchema)
+      .array(planStepSpecSchema)
       .describe('Ordered steps; the array order IS the execution order.'),
   }),
   handler: async (args) => {

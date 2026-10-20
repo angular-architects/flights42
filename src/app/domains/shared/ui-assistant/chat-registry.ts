@@ -2,6 +2,8 @@ import { Injectable, type Signal } from '@angular/core';
 import { type AgentStore } from '@copilotkit/angular';
 import { BehaviorSubject, Subject } from 'rxjs';
 
+import { type AgentMode } from '../util-common/agent-mode-service';
+
 export interface ChatConfig {
   store: Signal<AgentStore>;
   /** Greeting shown as the first assistant message. Undefined = component default. */
@@ -24,6 +26,8 @@ export class ChatRegistry {
   public readonly chatInfo = this._chatInfo.asObservable();
   private readonly _openRequested = new Subject<void>();
   public readonly openRequested = this._openRequested.asObservable();
+  private readonly _modeRequested = new Subject<AgentMode>();
+  public readonly modeRequested = this._modeRequested.asObservable();
 
   public get store(): Signal<AgentStore> | undefined {
     return this._store;
@@ -48,5 +52,9 @@ export class ChatRegistry {
 
   public requestOpen(): void {
     this._openRequested.next();
+  }
+
+  public requestMode(mode: AgentMode): void {
+    this._modeRequested.next(mode);
   }
 }

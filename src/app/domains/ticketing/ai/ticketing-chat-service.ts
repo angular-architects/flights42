@@ -1,9 +1,6 @@
-import { effect, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
-import {
-  ChatConfig,
-  ChatRegistry,
-} from '../../shared/ui-assistant/chat-registry';
+import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import {
   AgentMode,
   AgentModeService,
@@ -17,41 +14,38 @@ export class TicketingChatService {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
 
-  private readonly executionChat: ChatConfig = {
-    store: injectTicketingAgentStore(),
+  private readonly stores = {
+    execution: injectTicketingAgentStore(),
+    plan: injectPlanningAgentStore(),
   };
-
-  private readonly planningChat: ChatConfig = {
-    store: injectPlanningAgentStore(),
-  };
-
-  private previousMode = this.agentMode.mode();
 
   constructor() {
-    effect(() => {
-      const mode = this.agentMode.mode();
-      if (this.previousMode !== mode) {
-        reset(this.chatFor(this.previousMode).store);
-      }
-      this.previousMode = mode;
-      if (this.ownsActiveChat()) {
-        this.chatRegistry.setChat(this.chatFor(mode));
-      }
-    });
+    this.chatRegistry.modeRequested.subscribe((mode) => this.setMode(mode));
   }
 
   public init(): void {
-    this.chatRegistry.setChat(this.chatFor(this.agentMode.mode()));
+    this.chatRegistry.setChat({ store: this.stores[this.agentMode.mode()] });
   }
 
-  private chatFor(mode: AgentMode): ChatConfig {
-    return mode === 'plan' ? this.planningChat : this.executionChat;
+  public setMode(newMode: AgentMode): void {
+    const currentMode = this.agentMode.mode();
+    const currentStore = this.stores[currentMode];
+    const newStore = this.stores[newMode];
+
+    if (currentMode === newMode) {
+      return;
+    }
+
+    reset(currentStore);
+    this.agentMode.setMode(newMode);
+
+    if (this.isTicketingChatActive()) {
+      this.chatRegistry.setChat({ store: newStore });
+    }
   }
 
-  private ownsActiveChat(): boolean {
+  private isTicketingChatActive(): boolean {
     const active = this.chatRegistry.store;
-    return (
-      active === this.executionChat.store || active === this.planningChat.store
-    );
+    return active === this.stores.execution || active === this.stores.plan;
   }
 }

@@ -1,82 +1,34 @@
 import { computed, Injectable } from '@angular/core';
 import { injectAgentStore } from '@copilotkit/angular';
-import { z } from 'zod';
 
-import { FlightInfo } from '../data/flight-info';
-import { HotelInfo } from '../data/hotel-info';
+import { sortHotelsByRoute } from './sort-hotels-by-route';
+import { initialTravelPlan, type TravelPlan } from './travel-plan-model';
 import { TRAVEL_REFINEMENT_AGENT_ID } from './travel-refinement-agent-store';
-
-const flightSchema = z.object({
-  id: z.number(),
-  from: z.string(),
-  to: z.string(),
-  date: z.string().refine((date) => !Number.isNaN(Date.parse(date))),
-  delay: z.number(),
-});
-
-const hotelSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  stars: z.number(),
-  imageUrl: z.string(),
-  city: z.string(),
-});
-
-const travelPlanSchema = z.object({
-  summary: z.string(),
-  flights: z.array(flightSchema),
-  hotels: z.array(hotelSchema),
-});
-
-export type TravelPlan = z.infer<typeof travelPlanSchema>;
-
-const EMPTY_PLAN: TravelPlan = { summary: '', flights: [], hotels: [] };
 
 @Injectable({ providedIn: 'root' })
 export class TravelPlanStore {
   private readonly agentStore = injectAgentStore(TRAVEL_REFINEMENT_AGENT_ID);
 
-  public readonly plan = computed<TravelPlan>(() => {
-    const result = travelPlanSchema.safeParse(this.agentStore().state());
-    return result.success ? result.data : EMPTY_PLAN;
-  });
+  public readonly plan = computed(
+    () => this.agentStore().state() as TravelPlan,
+  );
 
   public readonly summary = computed(() => this.plan().summary);
   public readonly flights = computed(() => this.plan().flights);
   public readonly hotels = computed(() => this.plan().hotels);
 
   public setPlan(plan: TravelPlan): void {
+    // In case the model mixed up the order
+    const sortedHotels = sortHotelsByRoute(plan.hotels, plan.flights);
+
     this.agentStore().agent.setState({
       summary: plan.summary,
       flights: plan.flights,
-      hotels: orderHotelsByRoute(plan.hotels, plan.flights),
+      hotels: sortedHotels,
     });
   }
 
   public clear(): void {
-    this.agentStore().agent.setState(EMPTY_PLAN);
+    this.agentStore().agent.setState(initialTravelPlan);
   }
-}
-
-/**
- * Orders hotels to match the city sequence of the itinerary: a hotel is ranked by
- * the first flight leg that arrives in its city. Hotels in a town that is not a
- * flight destination (e.g. staying outside the city) keep their relative order
- * after the matched ones (the sort is stable).
- */
-function orderHotelsByRoute(
-  hotels: HotelInfo[],
-  flights: FlightInfo[],
-): HotelInfo[] {
-  const arrivalOrder = new Map<string, number>();
-  flights.forEach((flight, index) => {
-    if (!arrivalOrder.has(flight.to)) {
-      arrivalOrder.set(flight.to, index);
-    }
-  });
-
-  const rank = (hotel: HotelInfo): number =>
-    arrivalOrder.get(hotel.city) ?? Number.MAX_SAFE_INTEGER;
-
-  return [...hotels].sort((a, b) => rank(a) - rank(b));
 }

@@ -6,6 +6,7 @@ import { ConfigService } from '../../shared/util-common/config-service';
 import { initAgentStore } from '../../shared/util-copilotkit/init-agent-store';
 import { flightWidget } from '../ui/flight-widget';
 import { hotelWidget } from '../ui/hotel-widget';
+import { initialTravelPlan } from './travel-plan-model';
 
 export const TRAVEL_REFINEMENT_AGENT_ID = 'travelRefinementAgent';
 
@@ -17,6 +18,7 @@ export function injectTravelRefinementAgentStore() {
     url: inject(ConfigService).agUiUrlFor(TRAVEL_REFINEMENT_AGENT_ID),
     useServerMemory: true,
     components: [...widgets],
+    initialState: initialTravelPlan,
   });
 
   return injectAgentStore(TRAVEL_REFINEMENT_AGENT_ID);

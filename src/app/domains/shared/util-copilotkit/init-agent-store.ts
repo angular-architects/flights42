@@ -1,4 +1,4 @@
-import { HttpAgent, randomUUID } from '@ag-ui/client';
+import { HttpAgent, randomUUID, type State } from '@ag-ui/client';
 import { inject } from '@angular/core';
 import {
   CopilotKit,
@@ -26,6 +26,7 @@ export interface InitAgentStoreConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components?: readonly RegisterComponentConfig<any>[];
   useServerMemory?: boolean;
+  initialState?: State;
 }
 
 export function initAgentStore(config: InitAgentStoreConfig): void {
@@ -35,6 +36,7 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
     agentId: config.agentId,
     url: config.url,
     threadId: randomUUID(),
+    initialState: config.initialState,
   });
 
   // Mastra drops 'developer' messages, so send them as 'user' messages

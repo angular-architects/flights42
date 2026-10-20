@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { z } from 'zod';
 
 import { createFrontendTool } from '../../../../shared/util-copilotkit/tool-definition';
-import { planStepActionSchema } from '../../plan/plan-schemas';
+import { planStepActionSchema } from '../../plan/plan-model';
 import { PlanStore } from '../../plan/plan-store';
 
 export const updatePlanStepTool = createFrontendTool({
