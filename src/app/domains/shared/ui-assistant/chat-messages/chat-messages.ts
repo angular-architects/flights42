@@ -18,7 +18,6 @@ interface ChatToolCallView {
 }
 
 interface SuspendPayload {
-  message?: unknown;
   options?: unknown;
 }
 
@@ -75,27 +74,26 @@ export class ChatMessages {
   readonly greeting = input<string>('Hi! How can I help you?');
 
   private readonly interruptController = injectInterrupt(this.agentId);
-  private readonly resolvedInterruptId = signal<string | null>(null);
+  private readonly resolvedInterruptIds = signal<ReadonlySet<string>>(
+    new Set(),
+  );
 
   protected readonly messageViews = computed(() =>
     toMessageViews(this.messages()),
   );
 
-  protected readonly interrupts = computed(() => {
-    if (this.pending()) {
-      return [];
-    }
-    return toInterruptModels(
-      [...this.interruptController.interrupts()],
-      this.resolvedInterruptId(),
-    );
-  });
+  protected readonly interrupts = computed(() =>
+    toInterruptModels(
+      this.interruptController.interrupts(),
+      this.resolvedInterruptIds(),
+    ),
+  );
 
   protected async resolveInterrupt(
     interruptId: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    this.resolvedInterruptId.set(interruptId);
+    this.resolvedInterruptIds.update((ids) => new Set([...ids, interruptId]));
     await this.interruptController.resolve(payload, interruptId);
   }
 }
@@ -106,12 +104,17 @@ function toMessageViews(messages: Message[]): ChatMessageView[] {
     variant: message.role === 'user' ? 'user' : 'assistant',
     avatar: message.role === 'user' ? '💬' : '🤖',
     text: toMessageText(message),
-    activity:
-      message.role === 'activity'
-        ? { message, isSurface: message.activityType === 'a2ui-surface' }
-        : null,
+    activity: getActivity(message),
     toolCalls: toToolCallViews(message),
   }));
+}
+
+function getActivity(message: Message): ChatActivityView | null {
+  if (message.role !== 'activity') {
+    return null;
+  }
+
+  return { message, isSurface: message.activityType === 'a2ui-surface' };
 }
 
 function toToolCallViews(message: Message): ChatToolCallView[] {
@@ -145,30 +148,25 @@ function toMessageText(message: Message): string {
 }
 
 function toInterruptModels(
-  pending: Interrupt[],
-  resolvedId: string | null,
+  interrupts: readonly Interrupt[],
+  resolvedIds: ReadonlySet<string>,
 ): InterruptModel[] {
-  const interrupt = pending[0];
-  if (!interrupt || interrupt.id === resolvedId) {
-    return [];
-  }
-  return [toInterruptModel(interrupt)];
+  return interrupts
+    .filter((interrupt) => !resolvedIds.has(interrupt.id))
+    .map((interrupt) => ({
+      id: interrupt.id,
+      message: interrupt.message ?? 'Approval needed',
+      options: getOptions(interrupt),
+    }));
 }
 
-function toInterruptModel(interrupt: Interrupt): InterruptModel {
+function getOptions(interrupt: Interrupt): InterruptOption[] {
   const metadata = interrupt.metadata as InterruptMetadata | undefined;
-  const suspendPayload = metadata?.mastra?.suspendPayload;
+  const options = metadata?.mastra?.suspendPayload?.options;
 
-  const options = Array.isArray(suspendPayload?.options)
-    ? (suspendPayload.options as InterruptOption[])
-    : [];
+  if (Array.isArray(options) && options.length > 0) {
+    return options as InterruptOption[];
+  }
 
-  return {
-    id: interrupt.id,
-    message:
-      typeof suspendPayload?.message === 'string'
-        ? suspendPayload.message
-        : (interrupt.message ?? 'Approval needed'),
-    options: options.length > 0 ? options : DEFAULT_INTERRUPT_OPTIONS,
-  };
+  return DEFAULT_INTERRUPT_OPTIONS;
 }

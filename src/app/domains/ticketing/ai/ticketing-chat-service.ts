@@ -25,12 +25,12 @@ export class TicketingChatService {
     store: injectPlanningAgentStore(),
   };
 
-  private previousMode: AgentMode | undefined;
+  private previousMode = this.agentMode.mode();
 
   constructor() {
     effect(() => {
       const mode = this.agentMode.mode();
-      if (this.previousMode !== undefined && this.previousMode !== mode) {
+      if (this.previousMode !== mode) {
         reset(this.chatFor(this.previousMode).store);
       }
       this.previousMode = mode;

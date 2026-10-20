@@ -53,73 +53,9 @@ export class TravelPlanStore {
     });
   }
 
-  public addFlight(flight: FlightInfo): void {
-    const flights = upsertById(this.flights(), flight);
-    this.agentStore().agent.setState({
-      ...this.plan(),
-      flights,
-      hotels: orderHotelsByRoute(this.hotels(), flights),
-    });
-  }
-
-  public removeFlight(flightId: number): void {
-    const flights = this.flights().filter((flight) => flight.id !== flightId);
-    this.agentStore().agent.setState({
-      ...this.plan(),
-      flights,
-      hotels: orderHotelsByRoute(this.hotels(), flights),
-    });
-  }
-
-  public replaceFlight(oldFlightId: number, flight: FlightInfo): void {
-    const flights = this.flights().map((current) =>
-      current.id === oldFlightId ? flight : current,
-    );
-    this.agentStore().agent.setState({
-      ...this.plan(),
-      flights,
-      hotels: orderHotelsByRoute(this.hotels(), flights),
-    });
-  }
-
-  public addHotel(hotel: HotelInfo): void {
-    // The plan holds at most one hotel per overnight city, so adding a hotel
-    // for a city that already has one replaces it instead of duplicating.
-    this.agentStore().agent.setState({
-      ...this.plan(),
-      hotels: orderHotelsByRoute(
-        [
-          ...this.hotels().filter((current) => current.city !== hotel.city),
-          hotel,
-        ],
-        this.flights(),
-      ),
-    });
-  }
-
-  public removeHotel(hotelId: string): void {
-    this.agentStore().agent.setState({
-      ...this.plan(),
-      hotels: this.hotels().filter((hotel) => hotel.id !== hotelId),
-    });
-  }
-
   public clear(): void {
     this.agentStore().agent.setState(EMPTY_PLAN);
   }
-}
-
-function upsertById<T extends { id: number | string }>(
-  items: T[],
-  item: T,
-): T[] {
-  const index = items.findIndex((current) => current.id === item.id);
-  if (index === -1) {
-    return [...items, item];
-  }
-  const next = [...items];
-  next[index] = item;
-  return next;
 }
 
 /**
