@@ -46,15 +46,16 @@ export class TicketWidget implements AfterViewInit {
   protected readonly gate = 'B7';
   protected readonly seat = '14A';
 
-  protected readonly ticketId = computed(() => this.props().ticketId ?? '');
-  protected readonly from = computed(() => this.props().from ?? '');
-  protected readonly to = computed(() => this.props().to ?? '');
-  protected readonly delay = computed(() => this.props().delay ?? 0);
+  protected readonly flight = computed(() => this.props().flight);
+  protected readonly flightId = computed(() => this.flight()?.id ?? '');
+  protected readonly from = computed(() => this.flight()?.from ?? '');
+  protected readonly to = computed(() => this.flight()?.to ?? '');
+  protected readonly delay = computed(() => this.flight()?.delay ?? 0);
 
   protected readonly showDelay = computed(() => this.delay() > 0);
 
   protected readonly parsedDate = computed(() =>
-    parseTicketDate(this.props().date),
+    parseTicketDate(this.flight()?.date),
   );
 
   protected readonly boardingTime = computed(() =>
@@ -62,11 +63,11 @@ export class TicketWidget implements AfterViewInit {
   );
 
   protected readonly barcodeSeed = computed(() => {
-    return `FL-${this.ticketId()}-${this.from()}-${this.to()}`;
+    return `FL-${this.flightId()}-${this.from()}-${this.to()}`;
   });
 
   protected readonly qrSeed = computed(() => {
-    return `FL${this.ticketId()}|${this.seat}`;
+    return `FL${this.flightId()}|${this.seat}`;
   });
 }
 

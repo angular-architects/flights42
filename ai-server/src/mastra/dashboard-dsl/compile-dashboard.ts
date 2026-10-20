@@ -472,22 +472,17 @@ function buildBoardingPasses(
   const components: Component[] = [
     { id: stackId, component: 'Column', children: ticketIds },
     ...flights.map((_flight, j) => {
-      const path = (key: string) => pathFor(idx, `tickets/${j}/${key}`);
       const widget: Component = {
         id: ticketIds[j],
         component: 'TicketWidget',
-        ticketId: { path: path('ticketId') },
-        from: { path: path('from') },
-        to: { path: path('to') },
-        date: { path: path('date') },
-        delay: { path: path('delay') },
+        flight: { path: pathFor(idx, `tickets/${j}`) },
       };
       return widget;
     }),
   ];
 
   const tickets = flights.map((flight) => ({
-    ticketId: flight.id,
+    id: flight.id,
     from: flight.from,
     to: flight.to,
     date: flight.date.slice(0, 10),
