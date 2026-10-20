@@ -15,7 +15,7 @@ import { subMinutes } from 'date-fns';
 import { TicketBarcode } from './ticket-barcode';
 import { TicketLogo } from './ticket-logo';
 import { TicketQr } from './ticket-qr';
-import { type TicketWidgetProps } from './ticket-widget-context';
+import { type Ticket } from './ticket-widget-schema';
 
 @Component({
   selector: 'app-ticket-widget',
@@ -25,15 +25,11 @@ import { type TicketWidgetProps } from './ticket-widget-context';
   styleUrl: './ticket-widget.css',
 })
 export class TicketWidget implements AfterViewInit {
-  readonly props = input.required<TicketWidgetProps>();
+  readonly props = input.required<{ flight: Ticket }>();
 
   private readonly hostEl = inject(ElementRef<HTMLElement>);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  /**
-   * Barcode + QR render only when true. Disabled on the dynamic dashboard
-   * (`.dashboard-output`) for a compact tile; chat and other surfaces stay full.
-   */
   protected readonly showScanCodes = signal(true);
 
   ngAfterViewInit(): void {

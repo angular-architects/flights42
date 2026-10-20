@@ -2,7 +2,7 @@ import { z } from 'zod/v3';
 
 import { binding } from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
 
-export const ticketFlightSchema = z.object({
+export const ticketSchema = z.object({
   id: z.number(),
   from: z.string(),
   to: z.string(),
@@ -12,15 +12,8 @@ export const ticketFlightSchema = z.object({
 
 export const ticketWidgetSchema = z
   .object({
-    flight: binding(ticketFlightSchema),
+    flight: binding(ticketSchema),
   })
   .strict();
 
-type TicketWidgetSchema = z.infer<typeof ticketWidgetSchema>;
-
-export type TicketWidgetProps = {
-  [K in keyof TicketWidgetSchema]: Exclude<
-    TicketWidgetSchema[K],
-    { path: string }
-  >;
-};
+export type Ticket = z.infer<typeof ticketSchema>;

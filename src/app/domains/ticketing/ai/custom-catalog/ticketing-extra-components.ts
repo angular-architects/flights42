@@ -1,6 +1,6 @@
 import type { A2UICatalogDefinitions } from '@copilotkit/angular/a2ui';
 
-import { ticketWidgetSchema } from './ticket/ticket-widget-context';
+import { ticketWidgetSchema } from './ticket/ticket-widget-schema';
 
 export const ticketingExtraComponents = {
   TicketWidget: {
