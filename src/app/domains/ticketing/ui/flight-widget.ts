@@ -36,7 +36,6 @@ const flightWidgetSchema = z.object({
   //       states 'booked', 'other', and 'none'
 });
 
-// TODO: Infer typescript type FlightWidgetArgs from flightWidgetSchema
 type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
 
 @Component({
@@ -78,14 +77,14 @@ type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
   `,
 })
 export class FlightWidget {
-  // TODO: Implement implements ToolRenderer<FlightWidgetArgs>
+  // TODO: Implement ToolRenderer<FlightWidgetArgs>
 
   private readonly store = inject(FlightStore);
 
   // TODO: Get tool call from copilot kit
   readonly toolCall = signal<any>({});
 
-  // TODO: Find out, how the toolCall object is used in the template
+  // TODO: Find out how the toolCall object is used in the template
 
   protected isSelected(id: number): boolean {
     return this.store.basket()[id];
@@ -104,7 +103,7 @@ export const flightWidget = createComponentTool({
     For booked flights use status: "booked"; for search/current flights use status: "other".
     Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.
   `,
-  // TODO: register the flightWidgetSchema from above here (i/o z.object)
+  // TODO: register the flightWidgetSchema from above here (instead of z.object)
   parameters: z.object(),
   // TODO: register our FlightWidget here
   component: {} as any,
