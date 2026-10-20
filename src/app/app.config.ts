@@ -11,7 +11,6 @@ import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
-import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
 
 export const appConfig: ApplicationConfig = {
   providers: [
