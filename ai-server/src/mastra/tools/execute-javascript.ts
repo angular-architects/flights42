@@ -46,8 +46,8 @@ export const executeJavaScriptTool = createTool({
     rejected. It is killed after 30 s wall-clock time and is hard-capped at 64 MB memory and
     1 MB stack.
 
-    The tool returns \`{ data, code, title }\`; the caller is expected to forward \`data\` and
-    \`title\` to the client \`renderChart\` tool.
+    The tool returns \`{ data, code, title }\`; the client renders \`data\` as a chart titled
+    \`title\` directly from this result.
   `,
   inputSchema: z.object({
     code: z.string().describe(
