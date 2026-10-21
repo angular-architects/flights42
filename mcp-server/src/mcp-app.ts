@@ -103,18 +103,22 @@ async function refreshHotels(): Promise<void> {
   render();
 }
 
-app.ontoolinput = (input) => {
+app.addEventListener('toolinput', (input) => {
   const args = input.arguments as unknown as ToolInput;
   currentCity = args.city;
   render();
-};
+});
 
-app.ontoolresult = (result) => {
+app.addEventListener('toolresult', (result) => {
   const content = result.structuredContent as unknown as FindHotelsResult;
   currentCity = content.city;
   currentHotels = content.hotels;
   render();
-};
+});
+
+app.addEventListener('hostcontextchanged', (context) => {
+  applyHostContext(context);
+});
 
 render();
 
