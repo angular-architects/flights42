@@ -31,7 +31,7 @@ export const ticketingAgent = new Agent({
     render_a2ui,
   },
   agents: { hotelAgent },
-  // inputProcessors: [blockedWordsGuard, offTopicGuard, promptInjectionGuard],
+  inputProcessors: [blockedWordsGuard, offTopicGuard, promptInjectionGuard],
   memory: new Memory(),
 });
 

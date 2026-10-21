@@ -79,6 +79,14 @@
   <p class="reporting-error">{{ error }}</p>
 }
 
+@if (chartMessage(); as chart) {
+  <copilot-render-tool-calls
+    [message]="chart"
+    [messages]="chat().messages()"
+    [isLoading]="chat().isRunning()"
+    [agentId]="chat().agent.agentId" />
+}
+
 @if (hasChart()) {
   @if (chartTitle(); as title) {
     <h2>{{ title }}</h2>
