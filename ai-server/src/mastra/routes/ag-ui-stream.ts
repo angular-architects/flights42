@@ -19,8 +19,16 @@ export async function streamAgentEvents(
   input: RunAgentInput,
   options: CreateAgUiEventStreamOptions = {},
 ): Promise<void> {
-  const send = (event: BaseEvent): Promise<void> =>
-    sse.writeSSE({ data: JSON.stringify(event) });
+  let runErrorSent = false;
+  const send = async (event: BaseEvent): Promise<void> => {
+    if (runErrorSent) {
+      return;
+    }
+    if (event.type === EventType.RUN_ERROR) {
+      runErrorSent = true;
+    }
+    return sse.writeSSE({ data: JSON.stringify(event) });
+  };
 
   try {
     await agent.runAgent(input, {
@@ -32,6 +40,9 @@ export async function streamAgentEvents(
       },
     });
   } catch (err) {
+    if (runErrorSent) {
+      return;
+    }
     await send({
       type: EventType.RUN_ERROR,
       message: err instanceof Error ? err.message : String(err),

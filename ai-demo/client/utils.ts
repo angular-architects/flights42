@@ -1,4 +1,4 @@
-import { AGUIEvent, EventType } from '@ag-ui/core';
+import { AGUIEvent, contentToText, EventType } from '@ag-ui/core';
 
 export function detailFor(event: AGUIEvent): string {
   if (event.type === EventType.TEXT_MESSAGE_CONTENT) {
@@ -14,7 +14,7 @@ export function detailFor(event: AGUIEvent): string {
     return event.delta;
   }
   if (event.type === EventType.TOOL_CALL_RESULT) {
-    return event.content;
+    return contentToText(event.content);
   }
   return '';
 }

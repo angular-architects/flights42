@@ -1,12 +1,6 @@
-import { HttpAgent, randomUUID } from '@ag-ui/client';
-import { type Context } from '@ag-ui/core';
+import { HttpAgent, randomUUID, type State } from '@ag-ui/client';
+import { inject } from '@angular/core';
 import {
-  EnvironmentInjector,
-  inject,
-  runInInjectionContext,
-} from '@angular/core';
-import {
-  connectAgentContext,
   CopilotKit,
   type FrontendToolConfig,
   type HumanInTheLoopConfig,
@@ -18,12 +12,7 @@ import {
   type RenderToolCallConfig,
 } from '@copilotkit/angular';
 
-import { A2UI_CATALOG_CONTEXT } from './a2ui/provide-a2ui-catalog';
-import {
-  attachSentFilter,
-  developerMessagesAsUser,
-  forwardedPropsMiddleware,
-} from './agent-middlewares';
+import { attachSentFilter, developerMessagesAsUser } from './agent-middlewares';
 
 export interface InitAgentStoreConfig {
   agentId: string;
@@ -36,41 +25,25 @@ export interface InitAgentStoreConfig {
   humanInTheLoop?: readonly HumanInTheLoopConfig<any>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components?: readonly RegisterComponentConfig<any>[];
-  context?: readonly Context[];
-  forwardedProps?: () => Record<string, unknown>;
   useServerMemory?: boolean;
+  initialState?: State;
 }
 
 export function initAgentStore(config: InitAgentStoreConfig): void {
   const copilotKit = inject(CopilotKit);
 
-  const envInjector = inject(EnvironmentInjector);
-
-  const forwardedPropsFor = (): Record<string, unknown> =>
-    config.forwardedProps
-      ? runInInjectionContext(envInjector, () => config.forwardedProps!())
-      : {};
-
   const httpAgent = new HttpAgent({
     agentId: config.agentId,
     url: config.url,
     threadId: randomUUID(),
+    initialState: config.initialState,
   });
 
-  httpAgent.use(
-    forwardedPropsMiddleware(forwardedPropsFor),
-    developerMessagesAsUser,
-  );
+  // Mastra drops 'developer' messages, so send them as 'user' messages
+  httpAgent.use(developerMessagesAsUser);
   if (config.useServerMemory) {
+    // Server memory already has the history, so only send new messages
     attachSentFilter(httpAgent);
-  }
-
-  connectCatalogContext(config.agentId);
-
-  for (const entry of config.context ?? []) {
-    connectAgentContext(
-      () => ({ ...entry, agentIds: [config.agentId] }) as Context,
-    );
   }
 
   copilotKit.updateRuntime({
@@ -98,13 +71,4 @@ export function initAgentStore(config: InitAgentStoreConfig): void {
   for (const component of config.components ?? []) {
     registerComponent({ ...component, agentId: config.agentId });
   }
-}
-
-function connectCatalogContext(agentId: string): void {
-  const entry = inject(A2UI_CATALOG_CONTEXT, { optional: true });
-  if (!entry) {
-    return;
-  }
-
-  connectAgentContext(() => ({ ...entry, agentIds: [agentId] }) as Context);
 }

@@ -15,10 +15,7 @@ import { subMinutes } from 'date-fns';
 import { TicketBarcode } from './ticket-barcode';
 import { TicketLogo } from './ticket-logo';
 import { TicketQr } from './ticket-qr';
-import {
-  initialTicketContext,
-  type TicketWidgetContext,
-} from './ticket-widget-context';
+import { type TicketWidgetProps } from './ticket-widget-schema';
 
 @Component({
   selector: 'app-ticket-widget',
@@ -28,18 +25,11 @@ import {
   styleUrl: './ticket-widget.css',
 })
 export class TicketWidget implements AfterViewInit {
-  readonly props = input<TicketWidgetContext>(initialTicketContext);
-  readonly surfaceId = input.required<string>();
-  readonly componentId = input.required<string>();
-  readonly dataContextPath = input('/');
+  readonly props = input.required<TicketWidgetProps>();
 
   private readonly hostEl = inject(ElementRef<HTMLElement>);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  /**
-   * Barcode + QR render only when true. Disabled on the dynamic dashboard
-   * (`.dashboard-output`) for a compact tile; chat and other surfaces stay full.
-   */
   protected readonly showScanCodes = signal(true);
 
   ngAfterViewInit(): void {
@@ -52,21 +42,16 @@ export class TicketWidget implements AfterViewInit {
   protected readonly gate = 'B7';
   protected readonly seat = '14A';
 
-  // The agent may legitimately omit optional props (e.g. `delay` when the
-  // flight is on time). `props().<prop>` is `undefined` in that case and
-  // calling `.value()` on it would throw. Guard every accessor with `?.` and
-  // a sensible fallback so the ticket still renders.
-  protected readonly ticketId = computed(
-    () => this.props().ticketId?.value() ?? '',
-  );
-  protected readonly from = computed(() => this.props().from?.value() ?? '');
-  protected readonly to = computed(() => this.props().to?.value() ?? '');
-  protected readonly delay = computed(() => this.props().delay?.value() ?? 0);
+  protected readonly flight = computed(() => this.props().ticket);
+  protected readonly flightId = computed(() => this.flight()?.id ?? '');
+  protected readonly from = computed(() => this.flight()?.from ?? '');
+  protected readonly to = computed(() => this.flight()?.to ?? '');
+  protected readonly delay = computed(() => this.flight()?.delay ?? 0);
 
   protected readonly showDelay = computed(() => this.delay() > 0);
 
   protected readonly parsedDate = computed(() =>
-    parseTicketDate(this.props().date?.value()),
+    parseTicketDate(this.flight()?.date),
   );
 
   protected readonly boardingTime = computed(() =>
@@ -74,11 +59,11 @@ export class TicketWidget implements AfterViewInit {
   );
 
   protected readonly barcodeSeed = computed(() => {
-    return `FL-${this.ticketId()}-${this.from()}-${this.to()}`;
+    return `FL-${this.flightId()}-${this.from()}-${this.to()}`;
   });
 
   protected readonly qrSeed = computed(() => {
-    return `FL${this.ticketId()}|${this.seat}`;
+    return `FL${this.flightId()}|${this.seat}`;
   });
 }
 

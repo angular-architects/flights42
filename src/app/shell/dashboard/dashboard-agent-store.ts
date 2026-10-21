@@ -3,7 +3,7 @@ import { injectAgentStore } from '@copilotkit/angular';
 
 import { ConfigService } from '../../domains/shared/util-common/config-service';
 import { initAgentStore } from '../../domains/shared/util-copilotkit/init-agent-store';
-import { DashboardPrefs } from './dashboard-prefs';
+import { checkInTool } from '../../domains/ticketing/ai/tools/check-in.tool';
 import { submitFlightSearchTool } from './tools/submit-flight-search.tool';
 
 const AGENT_ID = 'dashboardAgent';
@@ -12,10 +12,7 @@ export function injectDashboardAgentStore() {
   initAgentStore({
     agentId: AGENT_ID,
     url: inject(ConfigService).agUiUrlFor(AGENT_ID),
-    forwardedProps: () => ({
-      preventCaching: inject(DashboardPrefs).preventCaching(),
-    }),
-    frontendTools: [submitFlightSearchTool],
+    frontendTools: [submitFlightSearchTool, checkInTool],
   });
 
   return injectAgentStore(AGENT_ID);

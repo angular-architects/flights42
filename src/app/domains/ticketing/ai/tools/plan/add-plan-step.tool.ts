@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { z } from 'zod';
 
 import { createFrontendTool } from '../../../../shared/util-copilotkit/tool-definition';
-import { planStepInputSchema } from '../../plan/plan-schemas';
+import { planStepSpecSchema } from '../../plan/plan-model';
 import { PlanStore } from '../../plan/plan-store';
 
 export const addPlanStepTool = createFrontendTool({
@@ -27,7 +27,7 @@ export const addPlanStepTool = createFrontendTool({
       })
   `,
   parameters: z.object({
-    step: planStepInputSchema.describe('The step to add.'),
+    step: planStepSpecSchema.describe('The step to add.'),
     position: z
       .number()
       .int()

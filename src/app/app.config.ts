@@ -1,4 +1,3 @@
-import { provideMarkdownRenderer } from '@a2ui/angular/v0_9';
 import {
   ApplicationConfig,
   inject,
@@ -8,13 +7,10 @@ import {
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideCopilotKit } from '@copilotkit/angular';
 import { provideMCPApps } from '@copilotkit/angular/mcp-apps';
-import { marked } from 'marked';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
-import { a2uiActivityRendererConfig } from './domains/shared/util-copilotkit/a2ui/a2ui-activity-renderer';
-import { provideA2uiCatalog } from './domains/shared/util-copilotkit/a2ui/provide-a2ui-catalog';
 import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
 import { mcpAppsConfig } from './mcp-apps.config';
 
@@ -26,17 +22,12 @@ export const appConfig: ApplicationConfig = {
 
     provideCopilotKit({
       defaultToolRendering: true,
-      renderActivityMessages: [a2uiActivityRendererConfig],
       enableInspector: false,
+      a2ui: { catalog: customCatalog, includeSchema: false },
     }),
 
     provideMCPApps(mcpAppsConfig),
 
-    provideA2uiCatalog(customCatalog),
-
-    provideMarkdownRenderer(async (markdown) =>
-      marked.parse(String(markdown ?? '')),
-    ),
     provideMarkdown(),
   ],
 };

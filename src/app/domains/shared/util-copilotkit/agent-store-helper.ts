@@ -57,5 +57,6 @@ export function reset(store: Signal<AgentStore>): void {
   agent.abortRun();
   agent.setMessages([]);
   agent.threadId = randomUUID();
+  store().interruptController.setThreadId(agent.threadId);
   clearSentHistory(agent);
 }

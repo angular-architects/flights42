@@ -16,6 +16,7 @@ export const submitFlightSearchTool = createFrontendTool({
     from: z.string().describe('Departure city, e.g. "Graz".'),
     to: z.string().describe('Destination city, e.g. "Hamburg".'),
   }),
+  followUp: false,
   handler: async ({ from, to }) => {
     const store = inject(FlightStore);
     const router = inject(Router);

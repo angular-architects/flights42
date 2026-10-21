@@ -10,7 +10,6 @@ type StreamMessages = Parameters<Agent['stream']>[0];
 type StreamOptions = AgentExecutionOptionsBase<unknown> & {
   structuredOutput?: never;
 };
-type ResumeOptions = StreamOptions & { toolCallId?: string };
 
 export interface SseWriter {
   writeSSE(message: { data: string }): Promise<void>;
@@ -19,6 +18,7 @@ export interface SseWriter {
 export type ParseRunAgentInputResult =
   { ok: true; input: RunAgentInput } | { ok: false; response: Response };
 
+// Parse JSON body as RunAgentInput; check threadId, runId and messages.
 export async function parseRunAgentInput(
   c: ContextWithMastra,
 ): Promise<ParseRunAgentInputResult> {
@@ -51,36 +51,22 @@ export async function parseRunAgentInput(
   return { ok: true, input };
 }
 
-function withOverrides(
-  agent: Agent,
-  overrides: Record<string, unknown>,
-): Agent {
+// Remove once @ag-ui/mastra omits memory args for agents without memory:
+// https://github.com/ag-ui-protocol/ag-ui/issues/3123
+export function withoutMemoryArgs(agent: Agent): Agent {
+  if (agent.hasOwnMemory()) {
+    return agent;
+  }
   return new Proxy(agent, {
     get(target, property) {
-      if (typeof property === 'string' && property in overrides) {
-        return overrides[property];
+      if (property === 'stream') {
+        return (messages: StreamMessages, options?: StreamOptions) =>
+          target.stream(messages, { ...options, memory: undefined });
       }
       const value = Reflect.get(target, property, target);
       return typeof value === 'function' ? value.bind(target) : value;
     },
   });
-}
-
-export function withoutMemoryArgs(agent: Agent): Agent {
-  if (agent.hasOwnMemory()) {
-    return agent;
-  }
-  const stream = (messages: StreamMessages, options?: StreamOptions) =>
-    agent.stream(messages, { ...options, memory: undefined });
-  return withOverrides(agent, { stream });
-}
-
-export function withAbortSignal(agent: Agent, abortSignal: AbortSignal): Agent {
-  const stream = (messages: StreamMessages, options?: StreamOptions) =>
-    agent.stream(messages, { ...options, abortSignal });
-  const resumeStream = (resumeData: unknown, options: ResumeOptions) =>
-    agent.resumeStream(resumeData, { ...options, abortSignal });
-  return withOverrides(agent, { stream, resumeStream });
 }
 
 export interface AgUiAgentOptions {
@@ -91,6 +77,8 @@ export interface AgUiAgentOptions {
   abortSignal?: AbortSignal;
 }
 
+// Wraps the Mastra agent for one request: route config (middlewares,
+// untilIdle), thread-scoped memory, abort on client disconnect.
 export function toAgUiAgent({
   agentId,
   mastraAgent,
@@ -99,11 +87,9 @@ export function toAgUiAgent({
   abortSignal,
 }: AgUiAgentOptions): AgUiAgent {
   const { untilIdle, middlewares = [] } = agUiRouteConfig[agentId] ?? {};
-  const base = withoutMemoryArgs(mastraAgent);
-  const agent = abortSignal ? withAbortSignal(base, abortSignal) : base;
-  return new AgUiAgent({
+  const agUiAgent = new AgUiAgent({
     agentId,
-    agent,
+    agent: withoutMemoryArgs(mastraAgent),
     resourceId: input.threadId,
     requestContext,
     threadId: input.threadId,
@@ -111,4 +97,8 @@ export function toAgUiAgent({
     initialState: input.state,
     ...(untilIdle ? { untilIdle: true } : {}),
   }).use(...middlewares);
+  abortSignal?.addEventListener('abort', () => agUiAgent.abortRun(), {
+    once: true,
+  });
+  return agUiAgent;
 }

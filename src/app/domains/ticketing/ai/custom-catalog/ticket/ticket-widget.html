@@ -1,6 +1,6 @@
 <section
   class="ticket"
-  [attr.aria-label]="'Boarding pass for flight ' + ticketId()">
+  [attr.aria-label]="'Boarding pass for flight ' + flightId()">
   <div class="main-stub">
     <header class="ticket-header">
       <app-ticket-logo />
@@ -70,7 +70,7 @@
       <dl class="stub-meta">
         <div>
           <dt>Flight</dt>
-          <dd>FL{{ ticketId() }}</dd>
+          <dd>FL{{ flightId() }}</dd>
         </div>
         <div>
           <dt>Seat</dt>

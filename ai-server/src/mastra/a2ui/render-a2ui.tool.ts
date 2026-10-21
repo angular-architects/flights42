@@ -7,11 +7,8 @@ import {
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-import {
-  A2UI_DEFAULT_CATALOG_ID,
-  readAgUiContext,
-  readCatalogId,
-} from './catalog-context.js';
+export const A2UI_DEFAULT_CATALOG_ID =
+  'https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json';
 
 export const RENDER_A2UI_TOOL_NAME = 'render_a2ui';
 
@@ -35,7 +32,7 @@ export type RenderA2uiInput = z.infer<typeof renderA2uiInputSchema>;
 
 type ComponentEntry = Record<string, unknown>;
 
-const SINGLE_CHILD_COMPONENTS = new Set(['Card', 'Button', 'Modal']);
+const SINGLE_CHILD_COMPONENTS = new Set(['Card', 'Button']);
 const MULTI_CHILD_COMPONENTS = new Set(['Row', 'Column', 'List']);
 
 function childShapeErrors(components: ComponentEntry[]): string[] {
@@ -72,7 +69,7 @@ export const render_a2ui = createTool({
   description:
     'Render a custom A2UI surface. Follow the A2UI Protocol Instructions in the system prompt.',
   inputSchema: renderA2uiInputSchema,
-  execute: async ({ surfaceId, components, data }, context) => {
+  execute: async ({ surfaceId, components, data }) => {
     const report = [
       formatValidationErrors(
         validateA2UIComponents({ components, data }).errors,
@@ -85,13 +82,10 @@ export const render_a2ui = createTool({
       throw new Error(`${RENDER_A2UI_TOOL_NAME}: invalid surface\n${report}`);
     }
 
-    const catalogId =
-      readCatalogId(readAgUiContext(context.requestContext)) ??
-      A2UI_DEFAULT_CATALOG_ID;
     const operations = assembleOps({
       intent: 'create',
       surfaceId,
-      catalogId,
+      catalogId: A2UI_DEFAULT_CATALOG_ID,
       components,
       data,
     });

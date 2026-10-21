@@ -11,6 +11,7 @@ import { hotelWidget } from '../ui/hotel-widget';
 import { bookFlightActionCard } from './action-cards/book-flight-action-card';
 import { cancelFlightActionCard } from './action-cards/cancel-flight-action-card';
 import { TICKETING_AGENT_ID } from './agent-ids';
+import { checkInTool } from './tools/check-in.tool';
 import { displayFlightDetailTool } from './tools/display-flight-detail.tool';
 import { findFlightsTool } from './tools/find-flights.tool';
 import { getCurrentBasketTool } from './tools/get-current-basket.tool';
@@ -36,6 +37,7 @@ export function injectTicketingAgentStore() {
       toggleFlightSelectionTool,
       getCurrentBasketTool,
       displayFlightDetailTool,
+      checkInTool,
     ],
     toolCallRenderer: [...actionCards],
     components: [...widgets, destinationInfoCard],

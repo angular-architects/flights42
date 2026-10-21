@@ -122,6 +122,6 @@ export class AssistantChat {
   }
 
   protected setMode(mode: AgentMode): void {
-    this.agentMode.mode.set(mode);
+    this.chatRegistry.requestMode(mode);
   }
 }

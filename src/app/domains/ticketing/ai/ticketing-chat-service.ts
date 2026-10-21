@@ -1,18 +1,11 @@
-import { effect, inject, Injectable } from '@angular/core';
-import { CopilotKit } from '@copilotkit/angular';
+import { inject, Injectable } from '@angular/core';
 
-import {
-  ChatConfig,
-  ChatRegistry,
-} from '../../shared/ui-assistant/chat-registry';
+import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import {
   AgentMode,
   AgentModeService,
 } from '../../shared/util-common/agent-mode-service';
-import { registerHandlers } from '../../shared/util-copilotkit/a2ui/a2ui-action-handlers';
 import { reset } from '../../shared/util-copilotkit/agent-store-helper';
-import { checkInAction } from './actions/check-in-action';
-import { submitAnswerAction } from './actions/submit-answer-action';
 import { injectPlanningAgentStore } from './planning-agent-store';
 import { injectTicketingAgentStore } from './ticketing-agent-store';
 
@@ -20,49 +13,39 @@ import { injectTicketingAgentStore } from './ticketing-agent-store';
 export class TicketingChatService {
   private readonly chatRegistry = inject(ChatRegistry);
   private readonly agentMode = inject(AgentModeService);
-  private readonly copilotKit = inject(CopilotKit);
 
-  private readonly executionChat: ChatConfig = {
-    store: injectTicketingAgentStore(),
+  private readonly stores = {
+    execution: injectTicketingAgentStore(),
+    plan: injectPlanningAgentStore(),
   };
-
-  private readonly planningChat: ChatConfig = {
-    store: injectPlanningAgentStore(),
-  };
-
-  private previousMode: AgentMode | undefined;
 
   constructor() {
-    registerHandlers({
-      checkIn: (action) => checkInAction(action),
-      submitAnswer: (action) =>
-        submitAnswerAction(action, this.copilotKit, this.executionChat.store),
-    });
-
-    effect(() => {
-      const mode = this.agentMode.mode();
-      if (this.previousMode !== undefined && this.previousMode !== mode) {
-        reset(this.chatFor(this.previousMode).store);
-      }
-      this.previousMode = mode;
-      if (this.ownsActiveChat()) {
-        this.chatRegistry.setChat(this.chatFor(mode));
-      }
-    });
+    this.chatRegistry.modeRequested.subscribe((mode) => this.setMode(mode));
   }
 
   public init(): void {
-    this.chatRegistry.setChat(this.chatFor(this.agentMode.mode()));
+    this.chatRegistry.setChat({ store: this.stores[this.agentMode.mode()] });
   }
 
-  private chatFor(mode: AgentMode): ChatConfig {
-    return mode === 'plan' ? this.planningChat : this.executionChat;
+  public setMode(newMode: AgentMode): void {
+    const currentMode = this.agentMode.mode();
+    const currentStore = this.stores[currentMode];
+    const newStore = this.stores[newMode];
+
+    if (currentMode === newMode) {
+      return;
+    }
+
+    reset(currentStore);
+    this.agentMode.setMode(newMode);
+
+    if (this.isTicketingChatActive()) {
+      this.chatRegistry.setChat({ store: newStore });
+    }
   }
 
-  private ownsActiveChat(): boolean {
+  private isTicketingChatActive(): boolean {
     const active = this.chatRegistry.store;
-    return (
-      active === this.executionChat.store || active === this.planningChat.store
-    );
+    return active === this.stores.execution || active === this.stores.plan;
   }
 }

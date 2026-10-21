@@ -1,13 +1,13 @@
-import {
-  AngularCatalog,
-  BASIC_COMPONENTS,
-  BASIC_FUNCTIONS,
-} from '@a2ui/angular/v0_9';
+import { createAngularCatalog } from '@copilotkit/angular/a2ui';
 
-import { ticketWidgetEntry } from './ticketing-extra-components';
+import { TicketWidget } from './ticket/ticket-widget';
+import { ticketingExtraComponents } from './ticketing-extra-components';
 
-export const customCatalog = new AngularCatalog(
-  'https://example.com/catalogs/flights42-a2ui-demo',
-  [...BASIC_COMPONENTS, ticketWidgetEntry],
-  BASIC_FUNCTIONS,
+export const customCatalog = createAngularCatalog(
+  ticketingExtraComponents,
+  { TicketWidget },
+  {
+    catalogId: 'https://example.com/catalogs/flights42-a2ui-demo',
+    includeBasicCatalog: true,
+  },
 );
