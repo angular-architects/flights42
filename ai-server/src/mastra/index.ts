@@ -22,6 +22,7 @@ import {
 import { getChartHandler } from './routes/charts-route.js';
 import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
 import { getDashboardImageHandler } from './routes/images-route.js';
+import { simpleAgUiRouteHandler } from './routes/simple-ag-ui-route.js';
 import { SpansOnlyExporter } from './spans-only-exporter.js';
 import { packageTourWorkflow } from './workflows/package-tour-workflow.js';
 
@@ -73,6 +74,10 @@ export const mastra = new Mastra({
       registerApiRoute('/ag-ui/dashboardAgent', {
         method: 'POST',
         handler: dashboardAgUiRouteHandler,
+      }),
+      registerApiRoute('/ag-ui/ticketingAgent', {
+        method: 'POST',
+        handler: simpleAgUiRouteHandler,
       }),
       registerApiRoute('/ag-ui/:agentId', {
         method: 'POST',
