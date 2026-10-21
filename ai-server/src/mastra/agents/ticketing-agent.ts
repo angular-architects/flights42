@@ -1,4 +1,8 @@
 import { A2UIMiddleware } from '@ag-ui/a2ui-middleware';
+import {
+  MCPAppsMiddleware,
+  type MCPClientConfig,
+} from '@ag-ui/mcp-apps-middleware';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -11,7 +15,11 @@ import { cancelFlightTool } from '../tools/cancel-flight.js';
 import { findBookedFlightsTool } from '../tools/find-booked-flights.js';
 import { ticketingAgentPrompt } from './ticketing-agent.prompt.js';
 
-// TODO: Describe the hotels MCP server with an MCPClientConfig
+const HOTELS_MCP_SERVER: MCPClientConfig = {
+  type: 'http',
+  url: 'http://127.0.0.1:3002/mcp',
+  serverId: 'hotels',
+};
 
 export const ticketingAgent = new Agent({
   id: 'ticketingAgent',
@@ -33,7 +41,7 @@ export const ticketingAgent = new Agent({
 
 agUiRouteConfig[ticketingAgent.id] = {
   middlewares: [
-    // TODO: Add an MCPAppsMiddleware for the hotels MCP server
+    new MCPAppsMiddleware({ mcpServers: [HOTELS_MCP_SERVER] }),
     new A2UIMiddleware({ a2uiToolNames: [] }),
   ],
 };

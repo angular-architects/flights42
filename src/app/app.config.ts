@@ -6,11 +6,13 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideCopilotKit } from '@copilotkit/angular';
+import { provideMCPApps } from '@copilotkit/angular/mcp-apps';
 import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { ConfigService } from './domains/shared/util-common/config-service';
 import { customCatalog } from './domains/ticketing/ai/custom-catalog/catalog';
+import { mcpAppsConfig } from './mcp-apps.config';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,7 +26,7 @@ export const appConfig: ApplicationConfig = {
       a2ui: { catalog: customCatalog, includeSchema: false },
     }),
 
-    // TODO: Activate the MCP Apps support with our mcpAppsConfig
+    provideMCPApps(mcpAppsConfig),
 
     provideMarkdown(),
   ],
