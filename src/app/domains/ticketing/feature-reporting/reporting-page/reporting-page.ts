@@ -9,7 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CopilotKit, type Message } from '@copilotkit/angular';
+import { CopilotKit, type Message, RenderToolCalls } from '@copilotkit/angular';
 import { Chart } from 'chart.js/auto';
 
 import {
@@ -22,6 +22,8 @@ import { examplePrompts } from './example-prompts';
 import { injectReportingAgentStore } from './reporting-agent-store';
 import { ReportingChartStore } from './reporting-chart-store';
 
+type AssistantMessage = Extract<Message, { role: 'assistant' }>;
+
 interface ReportingToolCall {
   id: string;
   name: string;
@@ -32,7 +34,7 @@ interface ReportingToolCall {
 @Component({
   selector: 'app-reporting-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, RenderToolCalls],
   templateUrl: './reporting-page.html',
   styleUrl: './reporting-page.css',
 })
@@ -68,6 +70,10 @@ export class ReportingPage {
   );
 
   protected readonly showCodeDetails = signal(false);
+
+  protected readonly chartMessage = computed<AssistantMessage | undefined>(() =>
+    getChartMessage(this.chat().messages()),
+  );
 
   protected readonly hasChart = computed(() => this.chartData().length > 0);
   protected readonly formatToolArgs = formatToolArgs;
@@ -127,6 +133,20 @@ function getAssistantMessage(messages: readonly Message[]): string {
     }
   }
   return '';
+}
+
+// Returns the latest assistant message that calls executeJavaScript.
+function getChartMessage(
+  messages: readonly Message[],
+): AssistantMessage | undefined {
+  return messages
+    .filter((message) => message.role === 'assistant')
+    .filter((message) =>
+      message.toolCalls?.some(
+        (toolCall) => toolCall.function.name === 'executeJavaScript',
+      ),
+    )
+    .at(-1);
 }
 
 function collectToolCalls(messages: readonly Message[]): ReportingToolCall[] {
