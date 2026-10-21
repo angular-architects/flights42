@@ -1,26 +1,22 @@
 import {
-  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
-  ElementRef,
   inject,
   signal,
-  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CopilotKit, type Message } from '@copilotkit/angular';
-import { Chart } from 'chart.js/auto';
+import { CopilotKit, type Message, RenderToolCalls } from '@copilotkit/angular';
 
 import {
   reset,
   sendMessage,
 } from '../../../shared/util-copilotkit/agent-store-helper';
-import { CHART_COLORS } from '../chart/chart-colors';
-import { DataItem } from '../chart/data-item';
 import { examplePrompts } from './example-prompts';
+import { renderChartToolCall } from './render-chart.tool';
 import { injectReportingAgentStore } from './reporting-agent-store';
-import { ReportingChartStore } from './reporting-chart-store';
+
+type AssistantMessage = Extract<Message, { role: 'assistant' }>;
 
 interface ReportingToolCall {
   id: string;
@@ -32,19 +28,14 @@ interface ReportingToolCall {
 @Component({
   selector: 'app-reporting-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, RenderToolCalls],
   templateUrl: './reporting-page.html',
   styleUrl: './reporting-page.css',
 })
 export class ReportingPage {
   protected readonly chat = injectReportingAgentStore();
   private readonly copilotKit = inject(CopilotKit);
-  private readonly chartStore = inject(ReportingChartStore);
 
-  protected readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('chart');
-
-  protected readonly chartData = this.chartStore.data;
-  protected readonly chartTitle = this.chartStore.title;
   protected readonly message = signal('');
 
   protected readonly assistantMessage = computed<string>(() =>
@@ -69,28 +60,18 @@ export class ReportingPage {
 
   protected readonly showCodeDetails = signal(false);
 
-  protected readonly hasChart = computed(() => this.chartData().length > 0);
+  protected readonly chartMessage = computed<AssistantMessage | null>(() =>
+    getChartMessage(this.chat().messages()),
+  );
+
   protected readonly formatToolArgs = formatToolArgs;
   protected readonly getJavaScriptCode = extractJavaScriptCodeFromToolCall;
-
-  constructor() {
-    afterRenderEffect(() => {
-      const data = this.chartData();
-      const canvasElm = this.canvas();
-      const canvas = canvasElm?.nativeElement;
-
-      if (canvas && data.length > 0) {
-        renderChart(data, canvas);
-      }
-    });
-  }
 
   protected submit(): void {
     const content = this.message().trim();
     if (!content) {
       return;
     }
-    this.chartStore.clear();
     this.showToolDetails.set(false);
     this.showCodeDetails.set(false);
     reset(this.chat);
@@ -127,6 +108,23 @@ function getAssistantMessage(messages: readonly Message[]): string {
     }
   }
   return '';
+}
+
+function getChartMessage(
+  messages: readonly Message[],
+): AssistantMessage | null {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (
+      message.role === 'assistant' &&
+      message.toolCalls?.some(
+        (toolCall) => toolCall.function.name === renderChartToolCall.name,
+      )
+    ) {
+      return message;
+    }
+  }
+  return null;
 }
 
 function collectToolCalls(messages: readonly Message[]): ReportingToolCall[] {
@@ -177,31 +175,6 @@ function getLatestJavaScriptCode(
     }
   }
   return null;
-}
-
-function renderChart(data: DataItem[], canvas: HTMLCanvasElement): void {
-  const chart = new Chart(canvas, {
-    type: 'bar',
-    options: {
-      responsive: true,
-      indexAxis: 'y',
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-    },
-    data: {
-      labels: data.map((item) => item.name),
-      datasets: [
-        {
-          backgroundColor: CHART_COLORS,
-          data: data.map((item) => item.value),
-        },
-      ],
-    },
-  });
-  chart.render();
 }
 
 function formatToolArgs(args: unknown): string {
