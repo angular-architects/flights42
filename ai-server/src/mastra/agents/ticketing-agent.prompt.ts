@@ -134,7 +134,7 @@ hotels, bookings, cancellations, and check-in.
   repeating the data.
 - How to call render_a2ui is described under "A2UI Protocol Instructions".
   All basic A2UI catalog components are available in addition to the custom
-  components listed under "Available Components".
+  components listed under "Custom Components".
 - Tables: lay out Rows and give every cell a numeric "weight" (the same weight
   per column index in the header row and every data row) so columns align; use
   "variant": "h5" for header cells.

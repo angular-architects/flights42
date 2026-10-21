@@ -26,16 +26,16 @@ export async function commitPlan(
   plan: TravelPlan,
 ): Promise<TravelPlan> {
   const { threadId, resourceId } = requireScope(context);
-  const ordered: TravelPlan = {
+  const sorted: TravelPlan = {
     ...plan,
-    hotels: orderHotelsByRoute(plan.hotels, plan.flights),
+    hotels: sortHotelsByRoute(plan.hotels, plan.flights),
   };
   await travelPlanMemory.updateWorkingMemory({
     threadId,
     resourceId,
-    workingMemory: JSON.stringify(ordered),
+    workingMemory: JSON.stringify(sorted),
   });
-  return ordered;
+  return sorted;
 }
 
 function requireScope(context: PlanToolContext): PlanScope {
@@ -70,7 +70,7 @@ function isTravelPlan(value: unknown): value is TravelPlan {
   );
 }
 
-function orderHotelsByRoute(
+function sortHotelsByRoute(
   hotels: PlanHotel[],
   flights: PlanFlight[],
 ): PlanHotel[] {
