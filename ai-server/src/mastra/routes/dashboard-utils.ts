@@ -1,15 +1,27 @@
-import { A2UI_OPERATIONS_KEY, A2UIMiddleware } from '@ag-ui/a2ui-middleware';
+import { A2UI_OPERATIONS_KEY } from '@ag-ui/a2ui-middleware';
 import {
+  type AbstractAgent,
   type BaseEvent,
   EventType,
+  Middleware,
   randomUUID,
   type RunAgentInput,
 } from '@ag-ui/client';
-import { MastraAgent as AgUiAgent } from '@ag-ui/mastra';
-import type { Mastra } from '@mastra/core/mastra';
-import type { RequestContext } from '@mastra/core/request-context';
+import {
+  concat,
+  concatAll,
+  concatMap,
+  defer,
+  map,
+  type Observable,
+  of,
+  switchMap,
+  takeWhile,
+  timer,
+} from 'rxjs';
 
 import {
+  computeDashboardRequestHash,
   readDashboardCache,
   writeDashboardCache,
 } from '../cache/dashboard-cache.js';
@@ -23,10 +35,6 @@ import {
   dashboardSpecSchema,
 } from '../dashboard-dsl/dashboard-spec.js';
 import { RENDER_DASHBOARD_TOOL_NAME } from '../tools/render-dashboard.js';
-import type { CreateAgUiEventStreamOptions } from './ag-ui-stream.js';
-import { type SseWriter, withoutMemoryArgs } from './route-utils.js';
-
-const DASHBOARD_AGENT_ID = 'dashboardAgent';
 
 const CACHED_FRAME_DELAY_MS = resolveCachedFrameDelayMs();
 
@@ -45,23 +53,24 @@ function resolveCachedFrameDelayMs(): number | null {
   return parsed;
 }
 
-export function createDashboardAgent(
-  mastra: Mastra,
-  requestContext: RequestContext,
-  input: RunAgentInput,
-): AgUiAgent {
-  return new AgUiAgent({
-    agentId: DASHBOARD_AGENT_ID,
-    agent: withoutMemoryArgs(mastra.getAgent(DASHBOARD_AGENT_ID)),
-    resourceId: DASHBOARD_AGENT_ID,
-    requestContext,
-    threadId: input.threadId,
-    initialMessages: input.messages,
-    initialState: input.state,
-  }).use(new A2UIMiddleware({ a2uiToolNames: [] }));
+export class RenderDashboardMiddleware extends Middleware {
+  run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
+    const cacheKey = isCacheable(input)
+      ? computeDashboardRequestHash(input.messages)
+      : null;
+
+    return defer(() => tryReadDashboardCache(cacheKey)).pipe(
+      switchMap((cachedSpec) => {
+        if (cachedSpec) {
+          return replayCachedDashboard(input, cachedSpec);
+        }
+        return compileRenderedDashboard(this.runNext(input, next), cacheKey);
+      }),
+    );
+  }
 }
 
-export function isCacheable(input: RunAgentInput): boolean {
+function isCacheable(input: RunAgentInput): boolean {
   return !isPreventCachingRequested(input) && !isA2uiActionRequest(input);
 }
 
@@ -89,9 +98,12 @@ function isA2uiActionRequest(input: RunAgentInput): boolean {
   return Boolean((props as { a2uiAction?: unknown }).a2uiAction);
 }
 
-export async function tryReadDashboardCache(
-  hash: string,
+async function tryReadDashboardCache(
+  hash: string | null,
 ): Promise<DashboardSpec | null> {
+  if (!hash) {
+    return null;
+  }
   try {
     return (await readDashboardCache(hash))?.spec ?? null;
   } catch (err) {
@@ -100,7 +112,7 @@ export async function tryReadDashboardCache(
   }
 }
 
-export async function tryWriteDashboardCache(
+async function tryWriteDashboardCache(
   hash: string,
   spec: DashboardSpec,
 ): Promise<void> {
@@ -111,19 +123,15 @@ export async function tryWriteDashboardCache(
   }
 }
 
-export interface RenderDashboardInterceptor extends CreateAgUiEventStreamOptions {
-  spec(): DashboardSpec | undefined;
-}
-
-export function interceptRenderDashboard(
-  agUiAgent: AgUiAgent,
-): RenderDashboardInterceptor {
+function compileRenderedDashboard(
+  events: Observable<BaseEvent>,
+  cacheKey: string | null,
+): Observable<BaseEvent> {
   let renderToolCallId: string | undefined;
   let argsBuffer = '';
-  let capturedSpec: DashboardSpec | undefined;
 
-  return {
-    onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
+  return events.pipe(
+    concatMap(async (event): Promise<BaseEvent[]> => {
       const e = event as BaseEvent & {
         toolCallId?: string;
         toolCallName?: string;
@@ -137,7 +145,7 @@ export function interceptRenderDashboard(
       ) {
         renderToolCallId = e.toolCallId;
         argsBuffer = '';
-        return;
+        return [event];
       }
 
       if (
@@ -146,7 +154,7 @@ export function interceptRenderDashboard(
         typeof e.delta === 'string'
       ) {
         argsBuffer += e.delta;
-        return;
+        return [event];
       }
 
       if (
@@ -154,82 +162,89 @@ export function interceptRenderDashboard(
         e.toolCallId === renderToolCallId
       ) {
         const { events, spec } = await handleRenderToolCallEnd(argsBuffer);
-        if (spec) {
-          capturedSpec = spec;
+        if (spec && cacheKey) {
+          await tryWriteDashboardCache(cacheKey, spec);
         }
-        if (events.some((event) => event.type === EventType.RUN_ERROR)) {
-          agUiAgent.abortRun();
-        }
-        return events;
+        return [event, ...events];
       }
-    },
-    spec: () => capturedSpec,
-  };
+
+      return [event];
+    }),
+    concatAll(),
+    takeWhile((event) => event.type !== EventType.RUN_ERROR, true),
+  );
 }
 
-export async function streamCachedDashboard(
-  sse: SseWriter,
+function replayCachedDashboard(
   input: RunAgentInput,
   spec: DashboardSpec,
-): Promise<void> {
-  await emitFrame(sse, {
-    type: EventType.RUN_STARTED,
-    threadId: input.threadId,
-    runId: input.runId,
-  } as BaseEvent);
-
+): Observable<BaseEvent> {
   const renderToolCallId = randomUUID();
   const renderParentMessageId = randomUUID();
 
-  // Mirror what the LLM would emit on a cache miss so the "tool calls"
-  // panel still shows the dashboard spec the cache replayed.
-  await emitFrame(sse, {
-    type: EventType.TOOL_CALL_START,
-    parentMessageId: renderParentMessageId,
-    toolCallId: renderToolCallId,
-    toolCallName: RENDER_DASHBOARD_TOOL_NAME,
-  } as BaseEvent);
-  await emitFrame(sse, {
-    type: EventType.TOOL_CALL_ARGS,
-    toolCallId: renderToolCallId,
-    delta: JSON.stringify(spec),
-  } as BaseEvent);
-  await emitFrame(sse, {
-    type: EventType.TOOL_CALL_END,
-    toolCallId: renderToolCallId,
-  } as BaseEvent);
+  return concat(
+    of(
+      {
+        type: EventType.RUN_STARTED,
+        threadId: input.threadId,
+        runId: input.runId,
+      } as BaseEvent,
+      // Mirror what the LLM would emit on a cache miss so the "tool calls"
+      // panel still shows the dashboard spec the cache replayed.
+      {
+        type: EventType.TOOL_CALL_START,
+        parentMessageId: renderParentMessageId,
+        toolCallId: renderToolCallId,
+        toolCallName: RENDER_DASHBOARD_TOOL_NAME,
+      } as BaseEvent,
+      {
+        type: EventType.TOOL_CALL_ARGS,
+        toolCallId: renderToolCallId,
+        delta: JSON.stringify(spec),
+      } as BaseEvent,
+      {
+        type: EventType.TOOL_CALL_END,
+        toolCallId: renderToolCallId,
+      } as BaseEvent,
+    ),
+    defer(() => finishCachedDashboard(input, spec, renderToolCallId)).pipe(
+      concatAll(),
+    ),
+  ).pipe(concatMap(delayFrame));
+}
 
+async function finishCachedDashboard(
+  input: RunAgentInput,
+  spec: DashboardSpec,
+  renderToolCallId: string,
+): Promise<BaseEvent[]> {
   let compiled: CompiledDashboard;
   try {
     compiled = await compileDashboard(spec);
   } catch (err) {
-    await emitFrame(
-      sse,
+    return [
       makeRunError(
         err instanceof Error ? err.message : String(err),
         'run_error',
       ),
-    );
-    return;
+    ];
   }
 
-  for (const event of emitCompiledDashboardEvents(compiled)) {
-    await emitFrame(sse, event);
-  }
-
-  await emitFrame(sse, {
-    type: EventType.TOOL_CALL_RESULT,
-    toolCallId: renderToolCallId,
-    content: JSON.stringify({ ok: true, cached: true }),
-    messageId: randomUUID(),
-    role: 'tool',
-  } as unknown as BaseEvent);
-
-  await emitFrame(sse, {
-    type: EventType.RUN_FINISHED,
-    threadId: input.threadId,
-    runId: input.runId,
-  } as BaseEvent);
+  return [
+    ...emitCompiledDashboardEvents(compiled),
+    {
+      type: EventType.TOOL_CALL_RESULT,
+      toolCallId: renderToolCallId,
+      content: JSON.stringify({ ok: true, cached: true }),
+      messageId: randomUUID(),
+      role: 'tool',
+    } as unknown as BaseEvent,
+    {
+      type: EventType.RUN_FINISHED,
+      threadId: input.threadId,
+      runId: input.runId,
+    } as BaseEvent,
+  ];
 }
 
 /**
@@ -284,21 +299,11 @@ function buildDataStepEvents(steps: readonly DataStep[]): BaseEvent[] {
   return events;
 }
 
-function emit(sse: SseWriter, event: BaseEvent): Promise<void> {
-  return sse.writeSSE({ data: JSON.stringify(event) });
-}
-
-// Like `emit`, but yields to the macrotask queue afterwards (dev only)
-// so each cached-replay frame is flushed as its own network chunk and
-// stays visible in the browser DevTools Network tab. See
-// `CACHED_FRAME_DELAY_MS` for why this is needed and how to disable it.
-async function emitFrame(sse: SseWriter, event: BaseEvent): Promise<void> {
-  await emit(sse, event);
-  if (CACHED_FRAME_DELAY_MS !== null) {
-    await new Promise<void>((resolve) =>
-      setTimeout(resolve, CACHED_FRAME_DELAY_MS),
-    );
+function delayFrame(event: BaseEvent): Observable<BaseEvent> {
+  if (CACHED_FRAME_DELAY_MS === null) {
+    return of(event);
   }
+  return timer(CACHED_FRAME_DELAY_MS).pipe(map(() => event));
 }
 
 function parseAccumulatedSpec(raw: string): DashboardSpec | null {

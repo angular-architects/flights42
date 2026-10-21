@@ -13,14 +13,13 @@ import { reportingAgent } from './agents/reporting-agent.js';
 import { ticketingAgent } from './agents/ticketing-agent.js';
 import { travelPlannerAgent } from './agents/travel-planner-agent.js';
 import { travelRefinementAgent } from './agents/travel-refinement-agent.js';
-import { agUiRouteHandler } from './routes/ag-ui-route.js';
+import { simpleAgUiRouteHandler } from './routes/ag-ui-route.js';
 import {
   bookFlightHandler,
   cancelFlightHandler,
   listBookingsHandler,
 } from './routes/bookings-route.js';
 import { getChartHandler } from './routes/charts-route.js';
-import { dashboardAgUiRouteHandler } from './routes/dashboard-ag-ui-route.js';
 import { getDashboardImageHandler } from './routes/images-route.js';
 import { SpansOnlyExporter } from './spans-only-exporter.js';
 import { packageTourWorkflow } from './workflows/package-tour-workflow.js';
@@ -70,13 +69,9 @@ export const mastra = new Mastra({
       allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     },
     apiRoutes: [
-      registerApiRoute('/ag-ui/dashboardAgent', {
-        method: 'POST',
-        handler: dashboardAgUiRouteHandler,
-      }),
       registerApiRoute('/ag-ui/:agentId', {
         method: 'POST',
-        handler: agUiRouteHandler,
+        handler: simpleAgUiRouteHandler,
       }),
       registerApiRoute('/bookings', {
         method: 'GET',

@@ -1,53 +1,36 @@
+import type { RunAgentInput } from '@ag-ui/client';
+import { MastraAgent as AgUiAgent } from '@ag-ui/mastra';
 import type { ContextWithMastra } from '@mastra/core/server';
 import { streamSSE } from 'hono/streaming';
 
-import { streamAgentEvents } from './ag-ui-stream.js';
-import { parseRunAgentInput, toAgUiAgent } from './route-utils.js';
-
 // Run Mastra agent for agentId and stream its AG-UI events.
 // Registered for POST /ag-ui/:agentId in ../index.ts.
-export async function agUiRouteHandler(
-  c: ContextWithMastra,
+export async function simpleAgUiRouteHandler(
+  context: ContextWithMastra,
 ): Promise<Response> {
-  // Read agentId from the URL path.
-  const agentId = c.req.param('agentId') ?? '';
+  const mastra = context.get('mastra');
+  const requestContext = context.get('requestContext');
+  const agentId = context.req.param('agentId') ?? '';
 
-  // Get Mastra instance and RequestContext.
-  const mastraInstance = c.get('mastra');
-  const requestContext = c.get('requestContext');
+  const body = await context.req.json();
+  const input = body as RunAgentInput;
 
-  // Parse JSON payload as RunAgentInput; answer 400 if invalid.
-  const parsed = await parseRunAgentInput(c);
-  if (!parsed.ok) {
-    return parsed.response;
-  }
-
-  const { input } = parsed;
-
-  // Look up the Mastra agent for agentId.
-  const mastraAgent = mastraInstance.getAgent(agentId);
-  if (!mastraAgent) {
-    return c.json(
-      { error: 'not_found', message: `Agent ${agentId} not found` },
-      404,
-    );
-  }
-
-  // Wrap Mastra agent in AG-UI agent.
-  const agUiAgent = toAgUiAgent({
+  const agUiAgent = new AgUiAgent({
     agentId,
-    mastraAgent,
-    input,
+    agent: mastra.getAgent(agentId),
+    resourceId: input.threadId,
     requestContext,
-    abortSignal: c.req.raw.signal,
+    threadId: input.threadId,
+    initialMessages: input.messages,
   });
 
-  // Respond with a Server-Sent Events stream.
   return streamSSE(
-    c as unknown as Parameters<typeof streamSSE>[0],
+    // Mastra bundles its own copy of Hono's types, so its Context doesn't fit.
+    context as unknown as Parameters<typeof streamSSE>[0],
     async (sse) => {
-      // Run AG-UI agent and send each event as SSE message.
-      await streamAgentEvents(sse, agUiAgent, input);
+      await agUiAgent.runAgent(input, {
+        onEvent: ({ event }) => sse.writeSSE({ data: JSON.stringify(event) }),
+      });
     },
   );
 }
