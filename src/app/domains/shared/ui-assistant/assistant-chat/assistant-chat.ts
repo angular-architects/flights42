@@ -48,23 +48,26 @@ export class AssistantChat {
   protected readonly greeting = signal<string>(DEFAULT_GREETING);
   protected readonly showModeSelector = signal(true);
 
-  protected readonly store = signal<Signal<AgentStore> | undefined>(undefined);
+  private readonly storeSource = signal<Signal<AgentStore> | undefined>(
+    undefined,
+  );
+  // injectAgentStore replaces the AgentStore when the agent is re-resolved, so unwrap reactively
+  protected readonly store = computed(() => this.storeSource()?.());
   protected readonly agentId = signal<string | undefined>(undefined);
 
   protected readonly messages = computed<Message[]>(() => {
-    const store = this.store();
+    const storeSource = this.storeSource();
     const agentId = this.agentId();
-    return store && agentId ? getAgentMessages(store, agentId) : [];
+    return storeSource && agentId ? getAgentMessages(storeSource, agentId) : [];
   });
 
-  protected readonly isRunning = computed<boolean>(() => {
-    const store = this.store();
-    return store ? store().isRunning() : false;
-  });
+  protected readonly isRunning = computed<boolean>(
+    () => this.store()?.isRunning() ?? false,
+  );
 
   constructor() {
     this.chatRegistry.chatInfo.subscribe((chatInfo) => {
-      this.store.set(chatInfo.store);
+      this.storeSource.set(chatInfo.store);
       this.agentId.set(chatInfo.agentId);
       this.greeting.set(chatInfo.greeting ?? DEFAULT_GREETING);
       this.showModeSelector.set(chatInfo.showModeSelector ?? true);
@@ -108,16 +111,16 @@ export class AssistantChat {
   protected submit() {
     const message = this.message();
     this.message.set('');
-    const store = this.store();
-    if (store) {
-      void sendMessage(this.copilotKit, store, message);
+    const storeSource = this.storeSource();
+    if (storeSource) {
+      void sendMessage(this.copilotKit, storeSource, message);
     }
   }
 
   protected stopRun(): void {
-    const store = this.store();
-    if (store) {
-      stop(store);
+    const storeSource = this.storeSource();
+    if (storeSource) {
+      stop(storeSource);
     }
   }
 

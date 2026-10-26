@@ -1,8 +1,8 @@
 import { type Interrupt } from '@ag-ui/core';
-import { Component, computed, input, type Signal, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import {
-  type AgentStore,
   CopilotActivity,
+  type InterruptController,
   type Message,
   RENDER_A2UI_TOOL_NAME,
   RenderToolCalls,
@@ -69,14 +69,11 @@ interface ChatMessageView {
 })
 export class ChatMessages {
   readonly messages = input.required<Message[]>();
-  readonly store = input.required<Signal<AgentStore>>();
+  readonly interruptController = input.required<InterruptController>();
   readonly agentId = input.required<string>();
   readonly pending = input<boolean>(false);
   readonly greeting = input<string>('Hi! How can I help you?');
 
-  private readonly interruptController = computed(
-    () => this.store()().interruptController,
-  );
   private readonly resolvedInterruptIds = signal<ReadonlySet<string>>(
     new Set(),
   );
