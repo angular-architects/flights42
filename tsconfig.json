@@ -15,7 +15,8 @@
     "target": "ES2022",
     "module": "preserve",
     "paths": {
-      "@flights42/feature-flags": ["./feature-flags/feature-flags.ts"]
+      "@flights42/feature-flags": ["./feature-flags/feature-flags.ts"],
+      "@flights42/a2ui-catalog/*": ["./a2ui-catalog/*"]
     }
   },
   "angularCompilerOptions": {

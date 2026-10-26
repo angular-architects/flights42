@@ -1,9 +1,6 @@
 import { z } from 'zod/v3';
 
-import {
-  binding,
-  type WithoutBinding,
-} from '../../../../shared/util-copilotkit/a2ui/a2ui-schema';
+import { binding, type WithoutBinding } from './a2ui-schema';
 
 export const ticketSchema = z.object({
   id: z.number(),

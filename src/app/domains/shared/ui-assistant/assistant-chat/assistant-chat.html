@@ -75,7 +75,7 @@
       #messagesContainer>
       <app-chat-messages
         [messages]="messages()"
-        [store]="store()!"
+        [interruptController]="store()!.interruptController"
         [agentId]="agentId()!"
         [greeting]="greeting()"
         [pending]="isRunning()" />

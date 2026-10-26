@@ -79,15 +79,14 @@ export class SentFilterMiddleware extends Middleware {
   }
 }
 
-export const developerMessagesAsUser: MiddlewareFunction = (input, next) =>
-  next.run({
-    ...input,
-    messages: input.messages.map((message) =>
-      message.role === 'developer'
-        ? { ...message, role: 'user' as const }
-        : message,
-    ),
+export const developerMessagesAsUser: MiddlewareFunction = (input, next) => {
+  const messages = input.messages.map((message) => {
+    return message.role === 'developer'
+      ? { ...message, role: 'user' as const }
+      : message;
   });
+  return next.run({ ...input, messages });
+};
 
 const sentFilters = new WeakMap<AbstractAgent, SentFilterMiddleware>();
 

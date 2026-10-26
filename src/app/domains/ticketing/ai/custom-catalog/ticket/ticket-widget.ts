@@ -10,12 +10,12 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { type TicketWidgetProps } from '@flights42/a2ui-catalog/ticket-widget-schema';
 import { subMinutes } from 'date-fns';
 
 import { TicketBarcode } from './ticket-barcode';
 import { TicketLogo } from './ticket-logo';
 import { TicketQr } from './ticket-qr';
-import { type TicketWidgetProps } from './ticket-widget-schema';
 
 @Component({
   selector: 'app-ticket-widget',
