@@ -54,7 +54,7 @@
 <app-travel-workflow-progress
   [messages]="chat().messages()"
   [loading]="chat().isRunning()"
-  [hasWidgets]="widgetCount() > 0" />
+  [hasPlan]="hasPlan()" />
 
 @if (errorMessage(); as error) {
   <p class="planner-error">{{ error }}</p>

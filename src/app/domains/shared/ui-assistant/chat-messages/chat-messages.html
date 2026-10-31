@@ -75,6 +75,10 @@
   </article>
 }
 
+@if (!pending()) {
+  <app-run-info [agentId]="agentId()" />
+}
+
 @if (pending()) {
   <article class="msg assistant">
     <div class="avatar">🤖</div>

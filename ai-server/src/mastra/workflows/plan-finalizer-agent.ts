@@ -1,19 +1,12 @@
 import { Agent } from '@mastra/core/agent';
 
-import { defaultOptions, modelAdvancedTasks } from '../config.js';
+import { defaultOptions, model } from '../config.js';
 import { planFinalizerAgentPrompt } from './plan-finalizer-agent.prompt.js';
 
 export const planFinalizerAgent = new Agent({
   id: 'planFinalizerAgent',
   name: 'Flight42 Plan Finalizer',
   instructions: planFinalizerAgentPrompt,
-  model: modelAdvancedTasks,
-  defaultOptions: {
-    providerOptions: {
-      openai: {
-        ...defaultOptions.providerOptions.openai,
-        reasoningEffort: 'high',
-      },
-    },
-  },
+  model,
+  defaultOptions,
 });

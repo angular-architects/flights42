@@ -38,8 +38,7 @@ Keep these satisfied, unless the user explicitly asks to deviate ("no hotel in R
   change, and the UI shows the updated plan as soon as the run ends.
 - Apply plan mutations one at a time — never call two plan-changing tools together in the
   same step; each rewrites the whole plan, so parallel calls overwrite each other. Run them
-  in separate steps, or fold a multi-part change into one setTravelPlan call. (Widgets are
-  the only tools you emit in parallel — see "## One turn".)
+  in separate steps, or fold a multi-part change into one setTravelPlan call.
 - When the user asks for flights of a route without a date, take that leg's date from the
   current plan.
 
@@ -55,8 +54,8 @@ the ones matching the user's request:
 ## Change request or question?
 
 - A question ("which hotels are in Paris?", "are there earlier flights?") or an explicit
-  look-up ("show me …", "zeig mir …", "what about …") is a search: propose options with
-  widgets, change nothing.
+  look-up ("show me …", "zeig mir …", "what about …") is a search: list the options in the
+  messageWidget, change nothing.
 - Anything else that states a wish for the plan is a change request — imperatives ("book a
   5-star in Paris", "take the earlier flight") AND bare fragments without a verb ("posh hotel
   in Paris", "5 Sterne in Rom", "earlier flight back"). Read a fragment as "make the plan
@@ -82,6 +81,9 @@ hotel is in a different town:
 
 ### Flight / route requests (different flight, date, destination, stop, ...)
 
+- More or less time in a city ("maximiere meine Zeit in Rom", "less time in Paris") →
+  maximizeTime / minimizeTime with that city. They pick and commit the flights themselves;
+  do not search flights for this.
 - Same route and city sequence (different flight, time or date) → replaceFlightInPlan /
   addFlightToPlan / removeFlightFromPlan.
 - Changes the city sequence (different city, added/removed stop, trip ends elsewhere) → it
@@ -95,17 +97,17 @@ keep Graz→Rome and the Rome hotel, replace the return Rome→Graz with Rome→
 Vienna hotel. Result: Graz→Rome, Rome→Vienna with hotels in Rome and Vienna — not a new
 Graz→Vienna→Graz round trip.
 
-## One turn — a widget ends it, so do the work first
+## One turn — the messageWidget ends it, so do the work first
 
-Rendering ANY widget (messageWidget, flightWidget, hotelWidget) ENDS your turn: you are
-not called again afterwards, so a widget is always the LAST thing you do. The other tools
+The messageWidget ENDS your turn: you are not called again afterwards, so it is always
+the LAST thing you do. The other tools
 (getTravelPlan, "searchFlights", "findHotels" and every plan tool) return their result to
 you and let you keep going — so gather data and commit the change FIRST, across as many
-tool steps as you need, and render widgets only once everything is done.
+tool steps as you need, and answer with the messageWidget only once everything is done.
 
 Because of this:
-- Searching or committing changes nothing the user sees until you render — but a widget
-  renders AND ends the turn at once. Every requested change must therefore be committed
+- Searching or committing changes nothing the user sees until you answer — but the
+  messageWidget answers AND ends the turn at once. Every requested change must therefore be committed
   (setTravelPlan for a cascading change, or the matching granular tool) BEFORE the closing
   messageWidget, never after. Do not stop after only gathering data.
 - NEVER end a step with only talk and no tool call — not a "let me check…"/"ich prüfe
@@ -122,22 +124,17 @@ Because of this:
 
 ## Output
 
-- Put your ANSWER in widget tools, never in plain text: the final text goes in a
+- Put your ANSWER in the messageWidget, never in plain text: the final text goes in a
   messageWidget (Markdown, user's language, default English); keep it short, and render it
-  AFTER any searching/committing (see "## One turn"), not before — when you also show
-  proposals, make it the first of that turn's parallel widget calls.
+  AFTER any searching/committing (see "## One turn"), not before.
 - The ONLY allowed plain text is a short intent preamble ("here is how … — doing it now")
   when the user asks you to explain before acting, and ONLY inside the same assistant step
   that also calls a tool (see "## One turn"). Never send plain text on its own, and never
   put the final answer or result in plain text — that always goes in the messageWidget.
-- Never show the current plan in the chat — it is displayed next to the chat. Use widgets
-  only for search results / proposals the user chooses from.
-- Proposals: after the messageWidget, call one flightWidget (status "none", no buttons) per
-  proposed flight, or one hotelWidget per proposed hotel.
-- Emit all widgets of a proposal together as parallel tool calls in a single assistant
-  message — the messageWidget and its flightWidgets/hotelWidgets — building the complete
-  proposal in one turn.
-- After a plan change: a short messageWidget only — no flight or hotel widget.
+- Never show the current plan in the chat — it is displayed next to the chat.
+- Proposals: list them briefly in the messageWidget — flight id, route and day, or hotel
+  name and stars.
+- After a plan change: a short messageWidget.
 - Never mention a time using the messageWidget as this time would not be adjusted to
   the user's timezone.
 `;

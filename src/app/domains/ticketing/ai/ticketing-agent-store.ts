@@ -18,9 +18,7 @@ import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { toggleFlightSelectionTool } from './tools/toggle-flight-selection.tool';
 
-const widgets = USE_MCP
-  ? [messageWidget, flightWidget]
-  : [messageWidget, flightWidget, hotelWidget];
+const widgets = USE_MCP ? [messageWidget] : [messageWidget, hotelWidget];
 
 const actionCards = USE_ACTION_CARDS
   ? [bookFlightActionCard, cancelFlightActionCard]
@@ -39,7 +37,7 @@ export function injectTicketingAgentStore() {
       displayFlightDetailTool,
       checkInTool,
     ],
-    toolCallRenderer: [...actionCards],
+    toolCallRenderer: [...actionCards, flightWidget],
     components: [...widgets, destinationInfoCard],
   });
 

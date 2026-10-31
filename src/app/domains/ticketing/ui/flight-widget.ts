@@ -1,99 +1,82 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  inject,
+  computed,
   input,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { type AngularToolCall, type ToolRenderer } from '@copilotkit/angular';
 import { z } from 'zod';
 
-import { createComponentTool } from '../../shared/util-copilotkit/tool-definition';
-import { FlightStore } from '../data/flight-store';
+import { createRenderToolCall } from '../../shared/util-copilotkit/tool-definition';
 import { FlightCard } from './flight-card/flight-card';
 
 const flightSchema = z.object({
-  id: z.number().describe('The flight id'),
-  from: z.string().describe('Departure city'),
-  to: z.string().describe('Arrival city'),
-  date: z.string().describe(
-    `
-        Full ISO date-time including the time, e.g. "2026-06-24T08:20:00.000Z".
-        Copy it character-for-character from the flight data you received; a
-        value without a time component is an error.
-      `,
-  ),
-  delay: z.number().describe('Delay in minutes'),
+  id: z.number(),
+  from: z.string(),
+  to: z.string(),
+  date: z.string(),
+  delay: z.number(),
 });
 
-const flightWidgetSchema = z.object({
-  flight: flightSchema,
-  status: z.enum(['booked', 'other', 'none']).describe('Status of the flight'),
+const bookedFlightsSchema = z.object({
+  flights: z.array(flightSchema),
 });
 
-type FlightWidgetArgs = z.infer<typeof flightWidgetSchema>;
+const findBookedFlightsArgsSchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+  flightId: z.number().optional(),
+});
+
+type FindBookedFlightsArgs = z.infer<typeof findBookedFlightsArgsSchema>;
 
 @Component({
   selector: 'app-flight-widget',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FlightCard, RouterLink],
   template: `
-    @let flight = toolCall().args.flight;
-    @if (flight) {
-      @let status = toolCall().args.status ?? 'other';
-      <app-flight-card
-        [item]="flight"
-        [selected]="isSelected(flight.id)"
-        [readonly]="true">
-        @if (status === 'booked') {
-          <button
-            class="btn btn-default"
-            [routerLink]="['/checkin', { ticketId: flight.id }]">
-            Check in
-          </button>
-        } @else if (status === 'other') {
-          @if (isSelected(flight.id)) {
-            <button class="btn btn-default" (click)="select(flight.id, false)">
-              Remove
-            </button>
-          } @else {
-            <button class="btn btn-default" (click)="select(flight.id, true)">
-              Select
-            </button>
-          }
-        }
+    @for (flight of flights(); track flight.id) {
+      <app-flight-card [item]="flight" [readonly]="true">
+        <button
+          class="btn btn-default"
+          [routerLink]="['/checkin', { ticketId: flight.id }]">
+          Check in
+        </button>
       </app-flight-card>
     }
   `,
   styles: `
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
   `,
 })
-export class FlightWidget implements ToolRenderer<FlightWidgetArgs> {
-  private readonly store = inject(FlightStore);
+export class FlightWidget implements ToolRenderer<FindBookedFlightsArgs> {
+  readonly toolCall = input.required<AngularToolCall<FindBookedFlightsArgs>>();
 
-  readonly toolCall = input.required<AngularToolCall<FlightWidgetArgs>>();
+  protected readonly flights = computed(() =>
+    parseFlights(this.toolCall().result),
+  );
+}
 
-  protected isSelected(id: number): boolean {
-    return this.store.basket()[id];
+function parseFlights(result: string | undefined) {
+  if (!result) {
+    return [];
   }
-
-  protected select(id: number, selected: boolean): void {
-    this.store.updateBasket(id, selected);
+  try {
+    return (
+      bookedFlightsSchema.safeParse(JSON.parse(result)).data?.flights ?? []
+    );
+  } catch {
+    return [];
   }
 }
 
-export const flightWidget = createComponentTool({
-  name: 'flightWidget',
-  description: `
-    Interactive card displaying one concrete flight.
-    Call this whenever users should see flights: booked flight lists, specific booked-flight confirmations (e.g. "Did I book Paris?"), or current search/working-set flights.
-    For booked flights use status: "booked"; for search/current flights use status: "other".
-    Use status: "none" for purely informational proposals (e.g. flight suggestions in a chat) that must NOT show any action button.
-  `,
-  parameters: flightWidgetSchema,
+export const flightWidget = createRenderToolCall({
+  name: 'findBookedFlightsTool',
+  args: findBookedFlightsArgsSchema,
   component: FlightWidget,
-  followUp: false,
 });

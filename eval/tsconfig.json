@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "../out-tsc/eval",
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["**/*.ts", "../src/**/*.d.ts"]
+}

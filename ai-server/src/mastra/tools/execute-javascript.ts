@@ -1,4 +1,4 @@
-import { createTool } from '@mastra/core/tools';
+import { createTool, isValidationError } from '@mastra/core/tools';
 import { z } from 'zod';
 
 import { runSandbox } from '../utils/sandbox.js';
@@ -11,17 +11,28 @@ const dataItemSchema = z.object({
 
 const dataItemsSchema = z.array(dataItemSchema);
 
-export interface ExecuteJavaScriptResult {
-  data: z.infer<typeof dataItemsSchema>;
-  code: string;
-  title: string;
-}
+const detailSchema = z.enum(['minimal', 'full']).describe(`
+  "minimal" if the chart answers the request, even when it is phrased as a
+  question like "how many flights are delayed?": you get no values. "full" only
+  if your text reply must state or compare values, e.g. "which day had the most
+  delays?": you get the data.
+`);
+
+const outputSchema = z.object({
+  data: dataItemsSchema,
+  code: z.string(),
+  title: z.string(),
+  detail: detailSchema,
+});
+
+export type ExecuteJavaScriptResult = z.infer<typeof outputSchema>;
 
 export const executeJavaScriptTool = createTool({
   id: 'executeJavaScript',
   description: `
     Runs a snippet of JavaScript inside a hardened QuickJS sandbox to aggregate flight data into
-    chart-ready \`{ name, value }\` pairs.
+    chart-ready \`{ name, value }\` pairs, and shows them to the user as a bar chart. Calling it
+    is what displays the chart, in the current answer only.
 
     The snippet is executed AS AN ES MODULE, so top-level \`await\` is supported. There is NO
     wrapping function — write straight-line statements; do NOT use \`return\`.
@@ -46,8 +57,6 @@ export const executeJavaScriptTool = createTool({
     rejected. It is killed after 30 s wall-clock time and is hard-capped at 64 MB memory and
     1 MB stack.
 
-    The tool returns \`{ data, code, title }\`; the caller is expected to forward \`data\` and
-    \`title\` to the client \`renderChart\` tool.
   `,
   inputSchema: z.object({
     code: z.string().describe(
@@ -57,13 +66,10 @@ export const executeJavaScriptTool = createTool({
         `,
     ),
     title: z.string().describe('Human-readable chart title.'),
+    detail: detailSchema,
   }),
-  outputSchema: z.object({
-    data: dataItemsSchema,
-    code: z.string(),
-    title: z.string(),
-  }),
-  execute: async ({ code, title }) => {
+  outputSchema,
+  execute: async ({ code, title, detail }) => {
     let captured: z.infer<typeof dataItemsSchema> = [];
 
     await runSandbox(code, {
@@ -77,6 +83,23 @@ export const executeJavaScriptTool = createTool({
       },
     });
 
-    return { data: captured, code, title };
+    return { data: captured, code, title, detail };
   },
+  toModelOutput,
 });
+
+function toModelOutput(output: ExecuteJavaScriptResult) {
+  if (isValidationError(output)) {
+    return { type: 'json', value: output };
+  }
+  if (output.detail === 'full') {
+    return { type: 'json', value: { title: output.title, data: output.data } };
+  }
+  return {
+    type: 'text',
+    value:
+      `The chart "${output.title}" with ${output.data.length} bars was shown to the user in this answer. ` +
+      'Its values are not part of this result: never mention any of them. ' +
+      'It is not visible in later answers: call executeJavaScript again when asked.',
+  };
+}

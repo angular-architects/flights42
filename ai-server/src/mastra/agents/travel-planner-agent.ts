@@ -18,14 +18,7 @@ export const travelPlannerAgent = new Agent({
       packageTourWorkflow: { enabled: true, timeoutMs: 600_000 },
     },
   },
-  defaultOptions: {
-    providerOptions: {
-      openai: {
-        ...defaultOptions.providerOptions.openai,
-        reasoningEffort: 'medium',
-      },
-    },
-  },
+  defaultOptions,
 });
 
 agUiRouteConfig[travelPlannerAgent.id] = { untilIdle: true };
