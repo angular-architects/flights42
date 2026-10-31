@@ -2,17 +2,7 @@
 
 ## Providing API Key and Selecting Model
 
-For executing the example, you need an OpenAI API Key for GPT or a GOOGLE API Key for Gemini. Set it as an environment variable:
-
-```bash
-# Bash (MacOS, Linux, ...)
-export OPENAI_API_KEY=...
-```
-
-```bash
-# CMD (Windows)
-set OPENAI_API_KEY=...
-```
+The example uses Gemma 4 (`@cf/google/gemma-4-26b-a4b-it`) on Cloudflare Workers AI. Copy `.env.example` to `.env` and set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. `MODEL_THINKING=true` turns Gemma's thinking on, `CLOUDFLARE_TEMPERATURE` sets the temperature.
 
 ### Starting and Running the Example
 
@@ -45,6 +35,10 @@ Ideas for questions:
 - Did I already book for Paris?
 - Show me hotel there
 - Show me hotels in London
+
+### Evaluation
+
+With the ai-server running, `npm run eval` sends the typical prompts of all agents through the real agent stores and checks tool calls, plans and charts. `EVAL_RUNS` sets the runs per case (default 3), `EVAL_CASE` filters the cases by name and `EVAL_OUT` writes all traces to a JSON file.
 
 ## Mini-Applications
 

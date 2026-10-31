@@ -18,6 +18,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:aimock": "ng run flights:test-node",
+    "eval": "ng run flights:eval",
     "lint": "ng lint",
     "format": "prettier --write \"**/*.{ts,html,scss,css,json,md}\"",
     "ag-ui-simple:client": "node --import tsx ag-ui-simple/index.ts",

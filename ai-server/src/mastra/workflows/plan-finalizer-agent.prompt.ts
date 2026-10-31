@@ -20,6 +20,7 @@ Rules:
     "standard" or no preference          → 4★
     "premium" / "luxus" / "5 Sterne"     → 5★
   Pick the closest available hotel per city.
-- "summary" is ONE short sentence in the user's language summarizing the trip
+- "summary" is ONE short sentence in the language of the original user request
+  (an English request gets an English summary) summarizing the trip
   (e.g. dates and destinations). Do not list flight numbers or stars.
 `;

@@ -7,3 +7,4 @@ export * from './remove-flight-from-plan.tool.js';
 export * from './remove-hotel-from-plan.tool.js';
 export * from './replace-flight-in-plan.tool.js';
 export * from './set-travel-plan.tool.js';
+export * from './time-in-city.tool.js';
