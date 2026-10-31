@@ -41,7 +41,9 @@ export const loadedDataSchema = z.object({
 });
 
 export const finalPlanSchema = z.object({
-  summary: z.string().describe("Short summary in the user's language."),
+  summary: z
+    .string()
+    .describe('Short summary in the language of the original user request.'),
   flights: z.array(flightSchema).describe('Chosen flights, in travel order.'),
   hotels: z
     .array(hotelSchema)

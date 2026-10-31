@@ -9,6 +9,7 @@ import { findFlightsTool } from './tools/find-flights.tool';
 import { getCurrentBasketTool } from './tools/get-current-basket.tool';
 import { getLoadedFlightsTool } from './tools/get-loaded-flights.tool';
 import { addPlanStepTool } from './tools/plan/add-plan-step.tool';
+import { addRebookingTool } from './tools/plan/add-rebooking.tool';
 import { clearPlanTool } from './tools/plan/clear-plan.tool';
 import { getPlanTool } from './tools/plan/get-plan.tool';
 import { movePlanStepTool } from './tools/plan/move-plan-step.tool';
@@ -23,6 +24,7 @@ const planTools = [
   getPlanTool,
   setPlanTool,
   addPlanStepTool,
+  addRebookingTool,
   removePlanStepTool,
   updatePlanStepTool,
   movePlanStepTool,

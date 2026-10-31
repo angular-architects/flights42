@@ -94,6 +94,14 @@
             "include": ["**/*.aimock.spec.ts"]
           }
         },
+        "eval": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "eval/tsconfig.json",
+            "include": ["../eval/**/*.eval.ts"],
+            "watch": false
+          }
+        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {

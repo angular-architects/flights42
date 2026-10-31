@@ -79,14 +79,13 @@
   <p class="reporting-error">{{ error }}</p>
 }
 
-@if (hasChart()) {
-  @if (chartTitle(); as title) {
-    <h2>{{ title }}</h2>
-  }
-
-  <div class="chart-wrapper">
-    <canvas #chart></canvas>
-  </div>
+@let chartToolCall = chartMessage();
+@if (hasChart() && chartToolCall) {
+  <copilot-render-tool-calls
+    [message]="chartToolCall"
+    [messages]="chat().messages()"
+    [agentId]="chat().agent.agentId"
+    [isLoading]="chat().isRunning()" />
 
   @if (assistantMessage(); as text) {
     <p class="mt-20">{{ text }}</p>

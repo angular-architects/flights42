@@ -1,4 +1,3 @@
-import { contentToText } from '@ag-ui/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,26 +7,28 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CopilotKit, type Message } from '@copilotkit/angular';
+import { CopilotKit } from '@copilotkit/angular';
 import { addDays, format } from 'date-fns';
+import { z } from 'zod';
 
 import { ChatRegistry } from '../../shared/ui-assistant/chat-registry';
 import { featureFlags } from '../../shared/util-common/feature-flags';
+import { type BackgroundTaskContent } from '../../shared/util-copilotkit/activity/background-task';
 import {
   reset,
   sendMessage,
   stop as stopRun,
 } from '../../shared/util-copilotkit/agent-store-helper';
-import { FlightInfo } from '../data/flight-info';
 import { FlightStore } from '../data/flight-store';
-import { HotelInfo } from '../data/hotel-info';
 import { FlightCard } from '../ui/flight-card/flight-card';
 import { HotelCard } from '../ui/hotel-card';
+import { type TravelPlan } from './travel-plan-model';
 import { TravelPlanStore } from './travel-plan-store';
 import { injectTravelPlannerAgentStore } from './travel-planner-agent-store';
 import { TravelPlannerRequestStore } from './travel-planner-request-store';
 import { TravelRefinementChatService } from './travel-refinement-chat-service';
 import { TravelWorkflowProgress } from './travel-workflow-progress/travel-workflow-progress';
+import { selectBackgroundTask } from './travel-workflow-progress/travel-workflow-progress.helpers';
 
 const DURATION_OPTIONS = [
   { value: 1, label: '1 day' },
@@ -35,10 +36,29 @@ const DURATION_OPTIONS = [
   { value: 3, label: '3 days' },
 ] as const;
 
-interface ShownComponent {
-  name: string;
-  props: Record<string, unknown>;
-}
+const generatedPlanSchema = z.object({
+  result: z.object({
+    summary: z.string(),
+    flights: z.array(
+      z.object({
+        id: z.number(),
+        from: z.string(),
+        to: z.string(),
+        date: z.string(),
+        delay: z.number(),
+      }),
+    ),
+    hotels: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        stars: z.number(),
+        imageUrl: z.string(),
+        city: z.string(),
+      }),
+    ),
+  }),
+});
 
 @Component({
   selector: 'app-travel-planner-page',
@@ -73,25 +93,11 @@ export class TravelPlannerPage {
     preferences: [this.requestStore.preferences()],
   });
 
-  private readonly shownComponents = computed<ShownComponent[]>(() =>
-    collectShownComponents(this.chat().messages()),
+  private readonly generatedPlan = computed(() =>
+    readGeneratedPlan(selectBackgroundTask(this.chat().messages())),
   );
 
-  protected readonly flightWidgets = computed(() =>
-    selectByName(this.shownComponents(), 'flightWidget'),
-  );
-
-  protected readonly hotelWidgets = computed(() =>
-    selectByName(this.shownComponents(), 'hotelWidget'),
-  );
-
-  protected readonly messageWidgets = computed(() =>
-    selectByName(this.shownComponents(), 'messageWidget'),
-  );
-
-  protected readonly widgetCount = computed(
-    () => this.flightWidgets().length + this.hotelWidgets().length,
-  );
+  protected readonly hasPlan = computed(() => !!this.generatedPlan());
 
   protected readonly errorMessage = computed<string | null>(() => null);
 
@@ -114,23 +120,12 @@ export class TravelPlannerPage {
       return;
     }
 
-    const flights = this.flightWidgets()
-      .map((widget) => widget.props['flight'] as FlightInfo | undefined)
-      .filter((flight): flight is FlightInfo => !!flight);
-    const hotels = this.hotelWidgets()
-      .map((widget) => widget.props['hotel'] as HotelInfo | undefined)
-      .filter((hotel): hotel is HotelInfo => !!hotel);
-
-    if (flights.length === 0 && hotels.length === 0) {
-      // Nothing was generated (e.g. an error) — stay ready for a retry.
-      this.awaitingPlan.set(false);
+    const plan = this.generatedPlan();
+    if (!plan) {
       return;
     }
 
-    const summary =
-      (this.messageWidgets()[0]?.props['text'] as string | undefined) ?? '';
-
-    this.planStore.setPlan({ summary, flights, hotels });
+    this.planStore.setPlan(plan);
     this.awaitingPlan.set(false);
     if (featureFlags.autoOpenRefinementChat) {
       this.chatRegistry.requestOpen();
@@ -192,54 +187,11 @@ function trimTime(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
-const WIDGET_TOOL_NAMES = ['flightWidget', 'hotelWidget', 'messageWidget'];
-
-/**
- * Extracts the widgets the agent rendered via the per-widget tools (each tool's
- * arguments ARE the widget props). Reads the tool result when available, falling
- * back to the (identical) call arguments while the run is still in progress.
- */
-function collectShownComponents(
-  messages: readonly Message[],
-): ShownComponent[] {
-  const results = new Map<string, string>();
-  for (const message of messages) {
-    if (message.role === 'tool') {
-      results.set(message.toolCallId, contentToText(message.content));
-    }
+function readGeneratedPlan(
+  task: BackgroundTaskContent | undefined,
+): TravelPlan | undefined {
+  if (task?.status !== 'completed') {
+    return undefined;
   }
-
-  const components: ShownComponent[] = [];
-  for (const message of messages) {
-    if (message.role !== 'assistant' || !message.toolCalls) {
-      continue;
-    }
-    for (const toolCall of message.toolCalls) {
-      const name = toolCall.function.name;
-      if (!WIDGET_TOOL_NAMES.includes(name)) {
-        continue;
-      }
-      const raw = results.get(toolCall.id) ?? toolCall.function.arguments;
-      const props = safeParseJson(raw);
-      if (props && typeof props === 'object') {
-        components.push({ name, props: props as Record<string, unknown> });
-      }
-    }
-  }
-  return components;
-}
-
-function selectByName(
-  components: ShownComponent[],
-  name: string,
-): ShownComponent[] {
-  return components.filter((component) => component.name === name);
-}
-
-function safeParseJson(value: string): unknown {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
+  return generatedPlanSchema.safeParse(task.result).data?.result;
 }

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-const positiveInt = z.number().int().positive();
+const positiveInt = z.coerce.number().int().positive();
+
+const flag = z.preprocess(
+  (value) => (value === 'true' ? true : value === 'false' ? false : value),
+  z.boolean(),
+);
 
 export const dashboardTileSchema = z.discriminatedUnion('type', [
   z.object({
@@ -39,14 +44,12 @@ export const dashboardTileSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('bookedFlightsList'),
-    showCheckInButton: z
-      .boolean()
+    showCheckInButton: flag
       .nullish()
       .describe(
         'Whether to render a "Check in" button per booked flight. Defaults to true.',
       ),
-    showWeather: z
-      .boolean()
+    showWeather: flag
       .nullish()
       .describe(
         'Whether to enrich each flight entry with a weather forecast for the destination. Defaults to true.',

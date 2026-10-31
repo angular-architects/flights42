@@ -21,9 +21,9 @@ import {
 
 /**
  * Renders the workflow step tracker and the tool-call history behind the
- * "More" button. The pipeline is derived from which widgets have appeared plus
+ * "More" button. The pipeline is derived from the background task's steps plus
  * the run state (see `buildPipeline`), so the page passes the raw messages,
- * loading state, and per-widget readiness flags.
+ * loading state, and whether a plan is ready.
  */
 @Component({
   selector: 'app-travel-workflow-progress',
@@ -34,7 +34,7 @@ import {
 export class TravelWorkflowProgress {
   readonly messages = input.required<Message[]>();
   readonly loading = input.required<boolean>();
-  readonly hasWidgets = input.required<boolean>();
+  readonly hasPlan = input.required<boolean>();
 
   private readonly widgetToolNames = injectWidgetToolNames();
 
@@ -57,7 +57,7 @@ export class TravelWorkflowProgress {
   });
 
   protected readonly showTracker = computed(
-    () => this.loading() || this.hasWidgets() || this.toolCalls().length > 0,
+    () => this.loading() || this.hasPlan() || this.toolCalls().length > 0,
   );
 
   protected readonly canToggleDetails = computed(

@@ -6,7 +6,7 @@ import { createComponentTool } from '../../shared/util-copilotkit/tool-definitio
 import { HotelCard } from './hotel-card';
 
 const hotelSchema = z.object({
-  id: z.string().describe('Stable hotel id (e.g. "grand-palace").'),
+  id: z.string().describe('Stable hotel id (e.g. "grand-palace-paris").'),
   name: z.string().describe('Full hotel name including the city.'),
   stars: z.number().int().min(1).max(5).describe('Star rating from 1 to 5.'),
   imageUrl: z

@@ -8,6 +8,10 @@
   gap: 10px;
 }
 
+.msg:has(copilot-render-tool-calls > :empty) {
+  display: none;
+}
+
 .bubble > hb-render-message {
   display: flex;
   flex-direction: column;
