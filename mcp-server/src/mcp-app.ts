@@ -116,10 +116,6 @@ app.addEventListener('toolresult', (result) => {
   render();
 });
 
-app.addEventListener('hostcontextchanged', (context) => {
-  applyHostContext(context);
-});
-
 render();
 
 await app.connect();
