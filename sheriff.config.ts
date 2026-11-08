@@ -19,6 +19,7 @@ export const config: SheriffConfig = {
 
     'libs/<name>': ['lib:<name>'],
     'feature-flags': ['lib:feature-flags'],
+    'a2ui-catalog': ['lib:a2ui-catalog'],
 
     'src/app/testing': ['testing'],
   },

@@ -14,8 +14,13 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "paths": {
-      "@flights42/feature-flags": ["../feature-flags/feature-flags.ts"]
+      "@flights42/feature-flags": ["../feature-flags/feature-flags.ts"],
+      "@flights42/a2ui-catalog/*": ["../a2ui-catalog/*"]
     }
   },
-  "include": ["src/**/*.ts", "../feature-flags/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "../feature-flags/**/*.ts",
+    "../a2ui-catalog/**/*.ts"
+  ]
 }
