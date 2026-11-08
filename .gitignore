@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 /ai-server/out-tsc
+/mcp-server/dist
 /bazel-out
 
 # Node
