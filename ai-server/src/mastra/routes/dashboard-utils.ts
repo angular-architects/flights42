@@ -9,7 +9,7 @@ import { MastraAgent as AgUiAgent } from '@ag-ui/mastra';
 import type { Mastra } from '@mastra/core/mastra';
 import type { RequestContext } from '@mastra/core/request-context';
 
-import { expressToDashboardSpec } from '../a2ui/interim-macros/dashboard-program.js';
+import { expressToDashboardSpec } from '../a2ui/interim-macros/express-to-dashboard-spec.js';
 import {
   readDashboardCache,
   writeDashboardCache,

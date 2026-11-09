@@ -9,7 +9,6 @@ import {
   bookedFlightsListSchema,
   dashboardSchema,
   type DashboardSpec,
-  dashboardSpecSchema,
   delayedFlightsTableSchema,
   delayShareChartSchema,
   delaysPerDayChartSchema,
@@ -58,7 +57,11 @@ export function expressToDashboardSpec(express: string): DashboardSpec {
   const tiles = messages
     .flatMap((message) => extractComponents(message))
     .filter((node) => node.component !== 'Dashboard');
-  return dashboardSpecSchema.parse({ tiles });
+
+  if (tiles.length === 0) {
+    throw new Error('The dashboard program renders no tiles');
+  }
+  return { tiles } as DashboardSpec;
 }
 
 function extractComponents(message: AgentToRendererMessage): ComponentNode[] {
