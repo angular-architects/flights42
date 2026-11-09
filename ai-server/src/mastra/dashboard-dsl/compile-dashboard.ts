@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
+import { A2UI_CATALOG_ID } from '@flights42/a2ui-catalog/ticketing-extra-components';
 import { DISPLAY_DSL } from '@flights42/feature-flags';
 
-import { A2UI_DEFAULT_CATALOG_ID } from '../a2ui/validate-and-build-surface.js';
 import {
   type BookedFlight,
   getBookedFlights,
@@ -92,21 +92,24 @@ async function fetchAllDashboardData(
 
   for (const tile of spec.tiles) {
     if (
-      tile.type === 'flightsTable' ||
-      tile.type === 'delayedFlightsTable' ||
-      tile.type === 'delayShareChart' ||
-      tile.type === 'delaysPerDayChart'
+      tile.component === 'FlightsTable' ||
+      tile.component === 'DelayedFlightsTable' ||
+      tile.component === 'DelayShareChart' ||
+      tile.component === 'DelaysPerDayChart'
     ) {
       routes.add(routeKey(tile.from, tile.to));
     }
     if (
-      tile.type === 'boardingPasses' ||
-      tile.type === 'bookedFlightsList' ||
-      tile.type === 'weatherList'
+      tile.component === 'BoardingPasses' ||
+      tile.component === 'BookedFlightsList' ||
+      tile.component === 'WeatherList'
     ) {
       needsBookedFlights = true;
     }
-    if ((tile.type === 'rentalCars' || tile.type === 'hotels') && !tile.city) {
+    if (
+      (tile.component === 'RentalCars' || tile.component === 'Hotels') &&
+      !tile.city
+    ) {
       needsBookedFlights = true;
     }
   }
@@ -155,7 +158,7 @@ function assembleDashboard(
   dataSteps: DataStep[],
 ): CompiledDashboard {
   const surfaceId = options.surfaceId ?? `dash-${randomUUID()}`;
-  const catalogId = A2UI_DEFAULT_CATALOG_ID;
+  const catalogId = A2UI_CATALOG_ID;
 
   const allComponents: Component[] = [];
   const allDataOps: A2uiMessage[] = [];
@@ -196,26 +199,26 @@ function buildTile(
   surfaceId: string,
   dataSteps: DataStep[],
 ): TileBuildResult {
-  switch (tile.type) {
-    case 'flightsTable':
+  switch (tile.component) {
+    case 'FlightsTable':
       return buildFlightsTable(idx, tile, data, surfaceId, false);
-    case 'delayedFlightsTable':
+    case 'DelayedFlightsTable':
       return buildFlightsTable(idx, tile, data, surfaceId, true);
-    case 'delayShareChart':
+    case 'DelayShareChart':
       return buildDelayShareChart(idx, tile, data, surfaceId, dataSteps);
-    case 'delaysPerDayChart':
+    case 'DelaysPerDayChart':
       return buildDelaysPerDayChart(idx, tile, data, surfaceId, dataSteps);
-    case 'boardingPasses':
+    case 'BoardingPasses':
       return buildBoardingPasses(idx, tile, data, surfaceId);
-    case 'bookedFlightsList':
+    case 'BookedFlightsList':
       return buildBookedFlightsList(idx, tile, data, surfaceId, dataSteps);
-    case 'flightSearch':
+    case 'FlightSearch':
       return buildFlightSearch(idx, tile, surfaceId);
-    case 'rentalCars':
+    case 'RentalCars':
       return buildRentalCars(idx, tile, data, surfaceId, dataSteps);
-    case 'hotels':
+    case 'Hotels':
       return buildHotels(idx, tile, data, surfaceId, dataSteps);
-    case 'weatherList':
+    case 'WeatherList':
       return buildWeatherList(idx, tile, data, surfaceId, dataSteps);
   }
 }
@@ -224,7 +227,7 @@ function buildFlightsTable(
   idx: number,
   tile: Extract<
     DashboardTile,
-    { type: 'flightsTable' | 'delayedFlightsTable' }
+    { component: 'FlightsTable' | 'DelayedFlightsTable' }
   >,
   data: DashboardData,
   surfaceId: string,
@@ -346,7 +349,7 @@ function buildFlightsTable(
 
 function buildDelayShareChart(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'delayShareChart' }>,
+  tile: Extract<DashboardTile, { component: 'DelayShareChart' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],
@@ -385,7 +388,7 @@ function buildDelayShareChart(
 
 function buildDelaysPerDayChart(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'delaysPerDayChart' }>,
+  tile: Extract<DashboardTile, { component: 'DelaysPerDayChart' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],
@@ -454,7 +457,7 @@ function chartTile(
 
 function buildBoardingPasses(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'boardingPasses' }>,
+  tile: Extract<DashboardTile, { component: 'BoardingPasses' }>,
   data: DashboardData,
   surfaceId: string,
 ): TileBuildResult {
@@ -496,7 +499,7 @@ function buildBoardingPasses(
 
 function buildBookedFlightsList(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'bookedFlightsList' }>,
+  tile: Extract<DashboardTile, { component: 'BookedFlightsList' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],
@@ -641,7 +644,7 @@ function buildBookedFlightsList(
 
 function buildFlightSearch(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'flightSearch' }>,
+  tile: Extract<DashboardTile, { component: 'FlightSearch' }>,
   surfaceId: string,
 ): TileBuildResult {
   const cardId = tileId(idx, 'card');
@@ -710,7 +713,7 @@ function buildFlightSearch(
 
 function buildRentalCars(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'rentalCars' }>,
+  tile: Extract<DashboardTile, { component: 'RentalCars' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],
@@ -739,7 +742,7 @@ function buildRentalCars(
 
 function buildHotels(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'hotels' }>,
+  tile: Extract<DashboardTile, { component: 'Hotels' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],
@@ -768,7 +771,7 @@ function buildHotels(
 
 function buildWeatherList(
   idx: number,
-  tile: Extract<DashboardTile, { type: 'weatherList' }>,
+  tile: Extract<DashboardTile, { component: 'WeatherList' }>,
   data: DashboardData,
   surfaceId: string,
   dataSteps: DataStep[],

@@ -9,6 +9,7 @@ import { MastraAgent as AgUiAgent } from '@ag-ui/mastra';
 import type { Mastra } from '@mastra/core/mastra';
 import type { RequestContext } from '@mastra/core/request-context';
 
+import { expressToDashboardSpec } from '../a2ui/interim-macros/dashboard-program.js';
 import {
   readDashboardCache,
   writeDashboardCache,
@@ -18,12 +19,13 @@ import {
   type CompiledDashboard,
   type DataStep,
 } from '../dashboard-dsl/compile-dashboard.js';
+import type { DashboardSpec } from '../dashboard-dsl/dashboard-spec.js';
 import {
-  type DashboardSpec,
-  dashboardSpecSchema,
-} from '../dashboard-dsl/dashboard-spec.js';
-import { RENDER_DASHBOARD_TOOL_NAME } from '../tools/render-dashboard.js';
+  RENDER_DASHBOARD_TOOL_NAME,
+  renderDashboardInputSchema,
+} from '../tools/render-dashboard.js';
 import type { CreateAgUiEventStreamOptions } from './ag-ui-stream.js';
+import type { DashboardTrace } from './dashboard-trace.js';
 import { type SseWriter, withoutMemoryArgs } from './route-utils.js';
 
 const DASHBOARD_AGENT_ID = 'dashboardAgent';
@@ -117,6 +119,7 @@ export interface RenderDashboardInterceptor extends CreateAgUiEventStreamOptions
 
 export function interceptRenderDashboard(
   agUiAgent: AgUiAgent,
+  trace: DashboardTrace,
 ): RenderDashboardInterceptor {
   let renderToolCallId: string | undefined;
   let argsBuffer = '';
@@ -153,7 +156,9 @@ export function interceptRenderDashboard(
         e.type === EventType.TOOL_CALL_END &&
         e.toolCallId === renderToolCallId
       ) {
+        trace.specReady();
         const { events, spec } = await handleRenderToolCallEnd(argsBuffer);
+        trace.compiled();
         if (spec) {
           capturedSpec = spec;
         }
@@ -171,7 +176,9 @@ export async function streamCachedDashboard(
   sse: SseWriter,
   input: RunAgentInput,
   spec: DashboardSpec,
+  trace: DashboardTrace,
 ): Promise<void> {
+  trace.specReady();
   await emitFrame(sse, {
     type: EventType.RUN_STARTED,
     threadId: input.threadId,
@@ -212,6 +219,7 @@ export async function streamCachedDashboard(
     );
     return;
   }
+  trace.compiled();
 
   for (const event of emitCompiledDashboardEvents(compiled)) {
     await emitFrame(sse, event);
@@ -305,18 +313,14 @@ function parseAccumulatedSpec(raw: string): DashboardSpec | null {
   if (!raw) {
     return null;
   }
-  let parsed: unknown;
   try {
-    parsed = JSON.parse(raw);
-  } catch {
+    return expressToDashboardSpec(
+      renderDashboardInputSchema.parse(JSON.parse(raw)).express,
+    );
+  } catch (err) {
+    console.error('Invalid dashboard program:', err);
     return null;
   }
-  const result = dashboardSpecSchema.safeParse(parsed);
-  if (!result.success) {
-    console.error('Invalid dashboard spec:', result.error.issues);
-    return null;
-  }
-  return result.data;
 }
 
 interface RenderToolCallEndResult {

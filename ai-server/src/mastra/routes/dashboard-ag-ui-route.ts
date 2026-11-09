@@ -3,6 +3,7 @@ import { streamSSE } from 'hono/streaming';
 
 import { computeDashboardRequestHash } from '../cache/dashboard-cache.js';
 import { streamAgentEvents } from './ag-ui-stream.js';
+import { createDashboardTrace } from './dashboard-trace.js';
 import {
   createDashboardAgent,
   interceptRenderDashboard,
@@ -16,6 +17,8 @@ import { parseRunAgentInput } from './route-utils.js';
 export async function dashboardAgUiRouteHandler(
   c: ContextWithMastra,
 ): Promise<Response> {
+  const trace = createDashboardTrace();
+
   // Get Mastra instance and RequestContext.
   const mastraInstance = c.get('mastra');
   const requestContext = c.get('requestContext');
@@ -38,7 +41,8 @@ export async function dashboardAgUiRouteHandler(
     async (sse) => {
       if (cachedSpec) {
         // Replay the cached spec without calling the LLM.
-        await streamCachedDashboard(sse, input, cachedSpec);
+        await streamCachedDashboard(sse, input, cachedSpec, trace);
+        trace.finish(true);
         return;
       }
 
@@ -48,8 +52,9 @@ export async function dashboardAgUiRouteHandler(
         requestContext,
         input,
       );
-      const renderDashboard = interceptRenderDashboard(agUiAgent);
+      const renderDashboard = interceptRenderDashboard(agUiAgent, trace);
       await streamAgentEvents(sse, agUiAgent, input, renderDashboard);
+      trace.finish(false);
 
       // Cache the spec for the next identical request.
       const spec = renderDashboard.spec();
