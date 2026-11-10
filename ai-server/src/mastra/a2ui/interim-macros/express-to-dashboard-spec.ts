@@ -2,6 +2,7 @@ import {
   A2uiGenerator,
   type AgentToRendererMessage,
   CatalogConfig,
+  InMemoryCatalogProvider,
 } from '@a2ui/agent';
 
 import {
@@ -18,7 +19,8 @@ import {
   rentalCarsSchema,
   weatherListSchema,
 } from '../../dashboard-dsl/dashboard-spec.js';
-import { compileExpress, createCatalog } from '../a2ui-express.js';
+import { PROTOCOL_VERSION } from '../a2ui-catalog-schema.js';
+import { compileExpress } from '../a2ui-express.js';
 
 interface ComponentNode {
   component: string;
@@ -27,8 +29,9 @@ interface ComponentNode {
 const DASHBOARD_CATALOG_ID =
   'https://example.com/catalogs/flights42-dashboard-macros';
 
-const dashboardCatalog = createCatalog(
-  {
+const catalogSchema = {
+  catalogId: DASHBOARD_CATALOG_ID,
+  components: {
     Dashboard: dashboardSchema.toJSONSchema(),
     FlightsTable: flightsTableSchema.toJSONSchema(),
     DelayedFlightsTable: delayedFlightsTableSchema.toJSONSchema(),
@@ -41,19 +44,25 @@ const dashboardCatalog = createCatalog(
     Hotels: hotelsSchema.toJSONSchema(),
     WeatherList: weatherListSchema.toJSONSchema(),
   },
-  DASHBOARD_CATALOG_ID,
+};
+
+const catalogProvider = new InMemoryCatalogProvider(
+  catalogSchema,
+  PROTOCOL_VERSION,
 );
+const dashboardCatalog = catalogProvider.load();
 
 const catalogConfig = new CatalogConfig(dashboardCatalog);
 
 const generator = new A2uiGenerator([catalogConfig]);
 
-const dashboardProcessor = generator.createProcessor({
+export const dashboardProcessor = generator.createProcessor({
   supportedCatalogIds: [DASHBOARD_CATALOG_ID],
 });
 
 export function expressToDashboardSpec(express: string): DashboardSpec {
   const messages = compileExpress(dashboardProcessor, express);
+
   const tiles = messages
     .flatMap((message) => extractComponents(message))
     .filter((node) => node.component !== 'Dashboard');

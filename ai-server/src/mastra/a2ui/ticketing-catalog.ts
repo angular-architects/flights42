@@ -1,18 +1,28 @@
+import { InMemoryCatalogProvider } from '@a2ui/agent';
 import {
   A2UI_CATALOG_ID,
   extraTicketingComponentDefinitions,
 } from '@flights42/a2ui-catalog/ticketing-extra-components';
 
+import basicCatalog from '../../../../node_modules/@a2ui/web_core/src/v0_9/schemas/catalogs/basic/catalog.json';
 import {
-  basicComponents,
-  createCatalog,
+  extendCatalogSchema,
+  PROTOCOL_VERSION,
   toCatalogComponents,
-} from './a2ui-express.js';
+} from './a2ui-catalog-schema.js';
 
 const extraTicketingComponents = toCatalogComponents(
   extraTicketingComponentDefinitions,
 );
 
-const components = { ...basicComponents, ...extraTicketingComponents };
+const catalogSchema = extendCatalogSchema(
+  basicCatalog,
+  extraTicketingComponents,
+  A2UI_CATALOG_ID,
+);
 
-export const ticketingCatalog = createCatalog(components, A2UI_CATALOG_ID);
+const catalogProvider = new InMemoryCatalogProvider(
+  catalogSchema,
+  PROTOCOL_VERSION,
+);
+export const ticketingCatalog = catalogProvider.load();
