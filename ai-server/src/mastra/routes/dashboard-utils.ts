@@ -9,7 +9,6 @@ import { MastraAgent as AgUiAgent } from '@ag-ui/mastra';
 import type { Mastra } from '@mastra/core/mastra';
 import type { RequestContext } from '@mastra/core/request-context';
 
-import { expressToDashboardSpec } from '../a2ui/interim-macros/express-to-dashboard-spec.js';
 import {
   readDashboardCache,
   writeDashboardCache,
@@ -17,9 +16,7 @@ import {
 import {
   compileDashboard,
   type CompiledDashboard,
-  type DataStep,
 } from '../dashboard-dsl/compile-dashboard.js';
-import type { DashboardSpec } from '../dashboard-dsl/dashboard-spec.js';
 import {
   RENDER_DASHBOARD_TOOL_NAME,
   renderDashboardInputSchema,
@@ -93,9 +90,9 @@ function isA2uiActionRequest(input: RunAgentInput): boolean {
 
 export async function tryReadDashboardCache(
   hash: string,
-): Promise<DashboardSpec | null> {
+): Promise<string | null> {
   try {
-    return (await readDashboardCache(hash))?.spec ?? null;
+    return (await readDashboardCache(hash))?.express ?? null;
   } catch (err) {
     console.error(`Failed to read dashboard cache (hash=${hash}):`, err);
     return null;
@@ -104,17 +101,17 @@ export async function tryReadDashboardCache(
 
 export async function tryWriteDashboardCache(
   hash: string,
-  spec: DashboardSpec,
+  express: string,
 ): Promise<void> {
   try {
-    await writeDashboardCache(hash, spec);
+    await writeDashboardCache(hash, express);
   } catch (err) {
     console.error(`Failed to write dashboard cache (hash=${hash}):`, err);
   }
 }
 
 export interface RenderDashboardInterceptor extends CreateAgUiEventStreamOptions {
-  spec(): DashboardSpec | undefined;
+  express(): string | undefined;
 }
 
 export function interceptRenderDashboard(
@@ -123,7 +120,7 @@ export function interceptRenderDashboard(
 ): RenderDashboardInterceptor {
   let renderToolCallId: string | undefined;
   let argsBuffer = '';
-  let capturedSpec: DashboardSpec | undefined;
+  let capturedExpress: string | undefined;
 
   return {
     onEvent: async (event): Promise<readonly BaseEvent[] | void> => {
@@ -157,25 +154,25 @@ export function interceptRenderDashboard(
         e.toolCallId === renderToolCallId
       ) {
         trace.specReady();
-        const { events, spec } = await handleRenderToolCallEnd(argsBuffer);
+        const result = await handleRenderToolCallEnd(argsBuffer);
         trace.compiled();
-        if (spec) {
-          capturedSpec = spec;
+        if (result.express) {
+          capturedExpress = result.express;
         }
-        if (events.some((event) => event.type === EventType.RUN_ERROR)) {
+        if (result.events.some((event) => event.type === EventType.RUN_ERROR)) {
           agUiAgent.abortRun();
         }
-        return events;
+        return result.events;
       }
     },
-    spec: () => capturedSpec,
+    express: () => capturedExpress,
   };
 }
 
 export async function streamCachedDashboard(
   sse: SseWriter,
   input: RunAgentInput,
-  spec: DashboardSpec,
+  express: string,
   trace: DashboardTrace,
 ): Promise<void> {
   trace.specReady();
@@ -189,7 +186,7 @@ export async function streamCachedDashboard(
   const renderParentMessageId = randomUUID();
 
   // Mirror what the LLM would emit on a cache miss so the "tool calls"
-  // panel still shows the dashboard spec the cache replayed.
+  // panel still shows the dashboard program the cache replayed.
   await emitFrame(sse, {
     type: EventType.TOOL_CALL_START,
     parentMessageId: renderParentMessageId,
@@ -199,7 +196,7 @@ export async function streamCachedDashboard(
   await emitFrame(sse, {
     type: EventType.TOOL_CALL_ARGS,
     toolCallId: renderToolCallId,
-    delta: JSON.stringify(spec),
+    delta: JSON.stringify({ express }),
   } as BaseEvent);
   await emitFrame(sse, {
     type: EventType.TOOL_CALL_END,
@@ -208,7 +205,7 @@ export async function streamCachedDashboard(
 
   let compiled: CompiledDashboard;
   try {
-    compiled = await compileDashboard(spec);
+    compiled = await compileDashboard(express);
   } catch (err) {
     await emitFrame(
       sse,
@@ -221,9 +218,8 @@ export async function streamCachedDashboard(
   }
   trace.compiled();
 
-  for (const event of emitCompiledDashboardEvents(compiled)) {
-    await emitFrame(sse, event);
-  }
+  const snapshot = buildSurfaceSnapshot(compiled);
+  await emitFrame(sse, snapshot);
 
   await emitFrame(sse, {
     type: EventType.TOOL_CALL_RESULT,
@@ -240,56 +236,15 @@ export async function streamCachedDashboard(
   } as BaseEvent);
 }
 
-/**
- * Build the synthetic event sequence for a freshly compiled dashboard:
- * one `TOOL_CALL_*` group per compiler `DataStep` followed by the
- * `a2ui-surface` `ACTIVITY_SNAPSHOT` carrying the full A2UI operation
- * list. The caller is responsible for emitting any surrounding
- * lifecycle events (`RUN_STARTED`, the `renderDashboard`
- * `TOOL_CALL_*`, the matching `TOOL_CALL_RESULT`, `RUN_FINISHED`).
- */
-function emitCompiledDashboardEvents(compiled: CompiledDashboard): BaseEvent[] {
-  const events = buildDataStepEvents(compiled.dataSteps);
-  events.push({
+function buildSurfaceSnapshot(compiled: CompiledDashboard): BaseEvent {
+  return {
     type: EventType.ACTIVITY_SNAPSHOT,
     messageId: compiled.surfaceId,
     activityType: 'a2ui-surface',
     content: {
-      [A2UI_OPERATIONS_KEY]: [...compiled.structural, ...compiled.dataModel],
+      [A2UI_OPERATIONS_KEY]: compiled.messages,
     },
-  } as unknown as BaseEvent);
-  return events;
-}
-
-function buildDataStepEvents(steps: readonly DataStep[]): BaseEvent[] {
-  const events: BaseEvent[] = [];
-  for (const step of steps) {
-    const toolCallId = `data-step-${randomUUID()}`;
-    const parentMessageId = randomUUID();
-    events.push({
-      type: EventType.TOOL_CALL_START,
-      parentMessageId,
-      toolCallId,
-      toolCallName: step.name,
-    } as BaseEvent);
-    events.push({
-      type: EventType.TOOL_CALL_ARGS,
-      toolCallId,
-      delta: JSON.stringify(step.args ?? {}),
-    } as BaseEvent);
-    events.push({
-      type: EventType.TOOL_CALL_END,
-      toolCallId,
-    } as BaseEvent);
-    events.push({
-      type: EventType.TOOL_CALL_RESULT,
-      toolCallId,
-      content: JSON.stringify(step.result ?? { ok: true }),
-      messageId: randomUUID(),
-      role: 'tool',
-    } as unknown as BaseEvent);
-  }
-  return events;
+  } as unknown as BaseEvent;
 }
 
 function emit(sse: SseWriter, event: BaseEvent): Promise<void> {
@@ -309,43 +264,43 @@ async function emitFrame(sse: SseWriter, event: BaseEvent): Promise<void> {
   }
 }
 
-function parseAccumulatedSpec(raw: string): DashboardSpec | null {
+function parseAccumulatedExpress(raw: string): string | null {
   if (!raw) {
     return null;
   }
   try {
-    return expressToDashboardSpec(
-      renderDashboardInputSchema.parse(JSON.parse(raw)).express,
-    );
+    const args = JSON.parse(raw);
+    return renderDashboardInputSchema.parse(args).express;
   } catch (err) {
-    console.error('Invalid dashboard program:', err);
+    console.error('Invalid renderDashboard args:', err);
     return null;
   }
 }
 
 interface RenderToolCallEndResult {
   events: readonly BaseEvent[];
-  spec: DashboardSpec | null;
+  express: string | null;
 }
 
 async function handleRenderToolCallEnd(
   argsBuffer: string,
 ): Promise<RenderToolCallEndResult> {
-  const spec = parseAccumulatedSpec(argsBuffer);
-  if (!spec) {
+  const express = parseAccumulatedExpress(argsBuffer);
+  if (!express) {
     return {
       events: [
         makeRunError(
-          `renderDashboard received invalid spec: ${truncate(argsBuffer)}`,
+          `renderDashboard received invalid args: ${truncate(argsBuffer)}`,
           'invalid_dashboard_spec',
         ),
       ],
-      spec: null,
+      express: null,
     };
   }
   try {
-    const compiled = await compileDashboard(spec);
-    return { events: emitCompiledDashboardEvents(compiled), spec };
+    const compiled = await compileDashboard(express);
+    const snapshot = buildSurfaceSnapshot(compiled);
+    return { events: [snapshot], express };
   } catch (err) {
     return {
       events: [
@@ -354,7 +309,7 @@ async function handleRenderToolCallEnd(
           'run_error',
         ),
       ],
-      spec: null,
+      express: null,
     };
   }
 }

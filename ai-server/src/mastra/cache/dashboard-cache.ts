@@ -3,21 +3,9 @@ import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-  type DashboardSpec,
-  dashboardSpecSchema,
-} from '../dashboard-dsl/dashboard-spec.js';
-
 // File-system based cache for the dashboard agent. Resolves to
 // `<repo>/ai-server/cache/` relative to this source file so the location is
 // stable regardless of which directory `mastra dev` is launched from.
-//
-// Since the move to the dashboard DSL we cache only the parsed
-// `DashboardSpec`. A2UI structural ops are recompiled deterministically
-// from the spec by `compileDashboard` on every refresh, and the data
-// ops are reproduced fresh from the live data sources. The .json
-// extension is new on purpose so old `.a2ui.txt` files (which used a
-// different layout) no longer collide.
 const SOURCE_DIR = dirname(fileURLToPath(import.meta.url));
 const CACHE_DIR = resolve(SOURCE_DIR, '../../../cache');
 const FILE_SUFFIX = '.dashboard.json';
@@ -28,7 +16,7 @@ interface RequestMessage {
 }
 
 export interface DashboardCacheEntry {
-  spec: DashboardSpec;
+  express: string;
 }
 
 export function computeDashboardRequestHash(
@@ -71,9 +59,9 @@ export async function readDashboardCache(
 
 export async function writeDashboardCache(
   hash: string,
-  spec: DashboardSpec,
+  express: string,
 ): Promise<DashboardCacheEntry> {
-  const entry: DashboardCacheEntry = { spec };
+  const entry: DashboardCacheEntry = { express };
   await mkdir(CACHE_DIR, { recursive: true });
   await writeFile(
     getCacheFilePath(hash),
@@ -87,15 +75,11 @@ function toCacheEntry(value: unknown): DashboardCacheEntry | null {
   if (!value || typeof value !== 'object') {
     return null;
   }
-  const candidate = value as { spec?: unknown };
-  if (!candidate.spec) {
+  const candidate = value as { express?: unknown };
+  if (typeof candidate.express !== 'string') {
     return null;
   }
-  const result = dashboardSpecSchema.safeParse(candidate.spec);
-  if (!result.success) {
-    return null;
-  }
-  return { spec: result.data };
+  return { express: candidate.express };
 }
 
 function getCacheFilePath(hash: string): string {

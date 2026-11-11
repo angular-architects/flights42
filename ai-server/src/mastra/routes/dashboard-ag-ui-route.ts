@@ -30,23 +30,23 @@ export async function dashboardAgUiRouteHandler(
   }
   const { input } = parsed;
 
-  // Look up a cached spec unless the request opts out of caching.
+  // Look up a cached program unless the request opts out of caching.
   const useCache = isCacheable(input);
   const cacheKey = computeDashboardRequestHash(input.messages);
-  const cachedSpec = useCache ? await tryReadDashboardCache(cacheKey) : null;
+  const cachedExpress = useCache ? await tryReadDashboardCache(cacheKey) : null;
 
   // Respond with a Server-Sent Events stream.
   return streamSSE(
     c as unknown as Parameters<typeof streamSSE>[0],
     async (sse) => {
-      if (cachedSpec) {
-        // Replay the cached spec without calling the LLM.
-        await streamCachedDashboard(sse, input, cachedSpec, trace);
+      if (cachedExpress) {
+        // Replay the cached program without calling the LLM.
+        await streamCachedDashboard(sse, input, cachedExpress, trace);
         trace.finish(true);
         return;
       }
 
-      // Run dashboard agent; compile its renderDashboard spec to A2UI.
+      // Run dashboard agent; compile its renderDashboard program to A2UI.
       const agUiAgent = createDashboardAgent(
         mastraInstance,
         requestContext,
@@ -56,10 +56,10 @@ export async function dashboardAgUiRouteHandler(
       await streamAgentEvents(sse, agUiAgent, input, renderDashboard);
       trace.finish(false);
 
-      // Cache the spec for the next identical request.
-      const spec = renderDashboard.spec();
-      if (spec && useCache) {
-        await tryWriteDashboardCache(cacheKey, spec);
+      // Cache the program for the next identical request.
+      const express = renderDashboard.express();
+      if (express && useCache) {
+        await tryWriteDashboardCache(cacheKey, express);
       }
     },
   );

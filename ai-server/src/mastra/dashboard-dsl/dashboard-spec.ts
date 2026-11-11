@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { MacroInput } from '../a2ui/simple-macros/macro.js';
+
 const positiveInt = z.number().int().positive();
 
 export const flightsTableSchema = z.object({
@@ -11,6 +13,8 @@ export const flightsTableSchema = z.object({
     .describe('Maximum number of flight rows to display. Defaults to 30.'),
 });
 
+export type FlightsTableNode = MacroInput<typeof flightsTableSchema>;
+
 export const delayedFlightsTableSchema = z.object({
   component: z.literal('DelayedFlightsTable'),
   from: z.string(),
@@ -20,6 +24,10 @@ export const delayedFlightsTableSchema = z.object({
     .describe('Maximum number of flight rows to display. Defaults to 30.'),
 });
 
+export type DelayedFlightsTableNode = MacroInput<
+  typeof delayedFlightsTableSchema
+>;
+
 export const delayShareChartSchema = z.object({
   component: z.literal('DelayShareChart'),
   from: z.string(),
@@ -27,11 +35,15 @@ export const delayShareChartSchema = z.object({
   chartType: z.enum(['pie', 'bar']).optional().describe('Defaults to "pie".'),
 });
 
+export type DelayShareChartNode = MacroInput<typeof delayShareChartSchema>;
+
 export const delaysPerDayChartSchema = z.object({
   component: z.literal('DelaysPerDayChart'),
   from: z.string(),
   to: z.string(),
 });
+
+export type DelaysPerDayChartNode = MacroInput<typeof delaysPerDayChartSchema>;
 
 export const boardingPassesSchema = z.object({
   component: z.literal('BoardingPasses'),
@@ -40,6 +52,8 @@ export const boardingPassesSchema = z.object({
     .optional()
     .describe('Number of upcoming booked flights to show. Defaults to 2.'),
 });
+
+export type BoardingPassesNode = MacroInput<typeof boardingPassesSchema>;
 
 export const bookedFlightsListSchema = z.object({
   component: z.literal('BookedFlightsList'),
@@ -62,11 +76,15 @@ export const bookedFlightsListSchema = z.object({
     ),
 });
 
+export type BookedFlightsListNode = MacroInput<typeof bookedFlightsListSchema>;
+
 export const flightSearchSchema = z.object({
   component: z.literal('FlightSearch'),
   defaultFrom: z.string().optional().describe('Defaults to "Graz".'),
   defaultTo: z.string().optional().describe('Defaults to "Hamburg".'),
 });
+
+export type FlightSearchNode = MacroInput<typeof flightSearchSchema>;
 
 export const rentalCarsSchema = z.object({
   component: z.literal('RentalCars'),
@@ -81,6 +99,8 @@ export const rentalCarsSchema = z.object({
     .describe('Maximum number of cars to list. Defaults to no limit.'),
 });
 
+export type RentalCarsNode = MacroInput<typeof rentalCarsSchema>;
+
 export const hotelsSchema = z.object({
   component: z.literal('Hotels'),
   city: z.string().optional(),
@@ -88,6 +108,8 @@ export const hotelsSchema = z.object({
     .optional()
     .describe('Maximum number of hotels to list. Defaults to no limit.'),
 });
+
+export type HotelsNode = MacroInput<typeof hotelsSchema>;
 
 export const weatherListSchema = z.object({
   component: z.literal('WeatherList'),
@@ -98,6 +120,13 @@ export const weatherListSchema = z.object({
     ),
 });
 
+export type WeatherListNode = MacroInput<typeof weatherListSchema>;
+
+export const flightRouteSchema = z.object({
+  component: z.literal('FlightRoute'),
+  flightId: positiveInt.describe('Id of the flight, e.g. 42.'),
+});
+
 export const dashboardSchema = z.object({
   component: z.literal('Dashboard'),
   children: z
@@ -105,22 +134,4 @@ export const dashboardSchema = z.object({
     .meta({ $ref: 'common_types.json#/$defs/ChildList' }),
 });
 
-export const dashboardTileSchema = z.discriminatedUnion('component', [
-  flightsTableSchema,
-  delayedFlightsTableSchema,
-  delayShareChartSchema,
-  delaysPerDayChartSchema,
-  boardingPassesSchema,
-  bookedFlightsListSchema,
-  flightSearchSchema,
-  rentalCarsSchema,
-  hotelsSchema,
-  weatherListSchema,
-]);
-
-export const dashboardSpecSchema = z.object({
-  tiles: z.array(dashboardTileSchema).min(1),
-});
-
-export type DashboardTile = z.infer<typeof dashboardTileSchema>;
-export type DashboardSpec = z.infer<typeof dashboardSpecSchema>;
+export type DashboardNode = MacroInput<typeof dashboardSchema>;
