@@ -184,10 +184,8 @@ async function runDashboard(
   const turn = await runTurn(store, dashboardPrompts[index], {
     preventCaching: true,
   });
-  const spec = calls(turn, 'renderDashboard').at(-1)?.args;
-  const tiles = Array.isArray(spec?.['tiles'])
-    ? (spec['tiles'] as Record<string, unknown>[])
-    : undefined;
+  const express = calls(turn, 'renderDashboard').at(-1)?.args['express'];
+  const tiles = typeof express === 'string' ? toTiles(express) : undefined;
   return [
     {
       name,
@@ -200,12 +198,64 @@ async function runDashboard(
   ];
 }
 
+const tileParams: Record<string, string[]> = {
+  FlightsTable: ['from', 'to', 'maxRows'],
+  DelayedFlightsTable: ['from', 'to', 'maxRows'],
+  DelayShareChart: ['from', 'to', 'chartType'],
+  DelaysPerDayChart: ['from', 'to'],
+  BoardingPasses: ['count'],
+  BookedFlightsList: ['showCheckInButton', 'showWeather', 'maxRows'],
+  FlightSearch: ['defaultFrom', 'defaultTo'],
+  RentalCars: ['city', 'maxItems'],
+  Hotels: ['city', 'maxItems'],
+  WeatherList: ['maxRows'],
+};
+
+function toTiles(express: string): Record<string, unknown>[] {
+  const matches = [...express.matchAll(/(\w+)\(([^()]*)\)/g)];
+  const tileMatches = matches.filter((match) => {
+    return Object.hasOwn(tileParams, match[1]);
+  });
+  return tileMatches.map((match) => {
+    return toTile(match[1], match[2]);
+  });
+}
+
+function toTile(component: string, argList: string): Record<string, unknown> {
+  const tile: Record<string, unknown> = { component };
+  const args = argList
+    .split(',')
+    .map((arg) => {
+      return arg.trim();
+    })
+    .filter((arg) => {
+      return arg !== '';
+    });
+  args.forEach((arg, index) => {
+    const named = /^(\w+)\s*=\s*(.+)$/.exec(arg);
+    if (named) {
+      tile[named[1]] = toValue(named[2]);
+    } else {
+      tile[tileParams[component][index]] = toValue(arg);
+    }
+  });
+  return tile;
+}
+
+function toValue(literal: string): unknown {
+  try {
+    return JSON.parse(literal);
+  } catch {
+    return literal;
+  }
+}
+
 function checkAnalyticsTiles(tiles: Record<string, unknown>[]): string[] {
   const types = [
-    'flightsTable',
-    'delayedFlightsTable',
-    'delaysPerDayChart',
-    'delayShareChart',
+    'FlightsTable',
+    'DelayedFlightsTable',
+    'DelaysPerDayChart',
+    'DelayShareChart',
   ];
   const expected = [
     ...types.map((type) => `${type} graz-hamburg`),
@@ -213,11 +263,12 @@ function checkAnalyticsTiles(tiles: Record<string, unknown>[]): string[] {
   ];
   const actual = tiles.map(
     (tile) =>
-      `${tile['type']} ${String(tile['from']).toLowerCase()}-${String(tile['to']).toLowerCase()}`,
+      `${tile['component']} ${String(tile['from']).toLowerCase()}-${String(tile['to']).toLowerCase()}`,
   );
   const failures = sameItems(actual, expected, 'tiles');
   const pie = tiles.filter(
-    (tile) => tile['type'] === 'delayShareChart' && tile['chartType'] === 'bar',
+    (tile) =>
+      tile['component'] === 'DelayShareChart' && tile['chartType'] === 'bar',
   );
   return pie.length > 0
     ? [...failures, 'delayShareChart rendered as bar instead of pie']
@@ -226,27 +277,28 @@ function checkAnalyticsTiles(tiles: Record<string, unknown>[]): string[] {
 
 function checkPersonalTiles(tiles: Record<string, unknown>[]): string[] {
   const expected = [
-    'boardingPasses',
-    'bookedFlightsList',
-    'flightSearch',
-    'rentalCars',
-    'hotels',
-    'weatherList',
+    'BoardingPasses',
+    'BookedFlightsList',
+    'FlightSearch',
+    'RentalCars',
+    'Hotels',
+    'WeatherList',
   ];
   const failures = sameItems(
-    tiles.map((tile) => String(tile['type'])),
+    tiles.map((tile) => String(tile['component'])),
     expected,
     'tiles',
   );
-  const byType = (type: string) => tiles.find((tile) => tile['type'] === type);
-  const count = byType('boardingPasses')?.['count'];
+  const byType = (type: string) =>
+    tiles.find((tile) => tile['component'] === type);
+  const count = byType('BoardingPasses')?.['count'];
   if (count !== undefined && count !== null && Number(count) !== 2) {
     failures.push(`boardingPasses count ${count}, expected 2`);
   }
-  if (String(byType('bookedFlightsList')?.['showCheckInButton']) === 'false') {
+  if (String(byType('BookedFlightsList')?.['showCheckInButton']) === 'false') {
     failures.push('bookedFlightsList without check-in button');
   }
-  const search = byType('flightSearch');
+  const search = byType('FlightSearch');
   const from = search?.['defaultFrom'] ?? 'Graz';
   const to = search?.['defaultTo'] ?? 'Hamburg';
   if (search && (from !== 'Graz' || to !== 'Hamburg')) {

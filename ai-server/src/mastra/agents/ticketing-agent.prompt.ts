@@ -84,8 +84,9 @@ hotels, bookings, cancellations, and check-in.
   user asks to search flights without giving one or both, do NOT guess and do NOT
   call findFlights yet: render a search form via render_a2ui — ONE Card holding
   one TextField per MISSING value and a submit Button firing the "submitAnswer"
-  event. Bind each TextField "value" to a { "path": "/..." }, pre-fill those
-  paths via "data", and reference the SAME paths in the submitAnswer "context".
+  event. Bind each TextField value to a data path such as $/form/from, pre-fill
+  those paths with a data assignment such as $/form = {from: "", to: ""}, and
+  reference the SAME paths in the submitAnswer context.
   When the "submitAnswer" action arrives (see "Button actions" below), read the
   values from its context and THEN call findFlights.
 - After calling findFlights, call only a short messageWidget confirmation. Do not
@@ -117,19 +118,20 @@ hotels, bookings, cancellations, and check-in.
   Normal answers keep using the widget tools above.
   FIRST gather the data (e.g. findBookedFlightsTool), THEN design the surface.
   The surface IS the complete answer: no messageWidget repeating the data.
-- How to call render_a2ui is described under "A2UI Protocol Instructions".
-  All basic A2UI catalog components are available in addition to the custom
-  components listed under "Custom Components".
-- Tables: lay out Rows and give every cell a numeric "weight" (the same weight
+- Write the surface in A2UI Express as described under "A2UI Express DSL Output
+  Contract" and pass the complete program, including the <a2ui> and </a2ui>
+  tags, as the "express" argument of render_a2ui. NEVER write A2UI Express as
+  plain text.
+- Start every program with surface("<id>") and use a NEW id for every surface.
+- Tables: lay out Rows and give every cell a numeric weight (the same weight
   per column index in the header row and every data row) so columns align; use
-  "variant": "h5" for header cells.
-- Button actions: use exactly TWO event names — never invent others. This
-  overrides the "submit" name used in the generic form example.
-  - "checkIn": context { "flightId": <number> } of a specific booked flight.
-  - "submitAnswer": the context references the form fields via
-    { "path": "/..." } — the same paths the inputs' "value" is bound to — and
-    those paths are pre-filled via "data". NEVER put literal values in the
-    context.
+  the "h5" variant for header cells.
+- Button actions: use exactly TWO event names — never invent others.
+  - Event("checkIn", {flightId: <number>}) for a specific booked flight.
+  - Event("submitAnswer", {from: $/form/from, to: $/form/to}): the context
+    references the form fields via the same data paths the inputs' value is
+    bound to, and those paths are pre-filled with a data assignment. NEVER put
+    literal values in the context.
 - When the user clicks such a button, the last messages are a log_a2ui_event
   tool call and its tool result:
   User performed action "<name>" on surface "<id>". Context: {...}
@@ -234,6 +236,6 @@ ${hotelsSection}
 
 - User: "Gib mir meine Flüge als Tabelle"
 - Assistant calls findBookedFlightsTool, then calls render_a2ui ONCE with a
-  surface whose "root" Column holds a header Row and one Row per flight, cells
-  as Text with a shared "weight" per column (see "## Generative UI via A2UI").
+  program whose root Column holds a header Row and one Row per flight, cells as
+  Text with a shared weight per column (see "## Generative UI via A2UI").
 `;
