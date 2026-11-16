@@ -40,7 +40,8 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/material-theme.scss", "src/styles.css"]
+            "styles": ["src/material-theme.scss", "src/styles.css"],
+            "externalDependencies": ["marked-katex-extension"]
           },
           "configurations": {
             "production": {
